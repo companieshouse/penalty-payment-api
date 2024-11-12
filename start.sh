@@ -1,15 +1,15 @@
 #!/bin/bash
 #
-# Start script for lfp-pay-api
+# Start script for pps-pay-api
 
 APP_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [[ -z "${MESOS_SLAVE_PID}" ]]; then
     source ~/.chs_env/private_env
     source ~/.chs_env/global_env
-    source ~/.chs_env/lfp-pay-api/env
+    source ~/.chs_env/pps-pay-api/env
 
-    PORT="${LFP_PAY_API_PORT}"
+    PORT="${PPS_PAY_API_PORT}"
 else
     PORT="$1"
     CONFIG_URL="$2"
@@ -33,4 +33,4 @@ IFS=',' read -ra BROKERS <<< "${KAFKA_BROKER_ADDR}"
 # Ensure we only populate the broker address via application arguments
 unset KAFKA_BROKER_ADDR
 
-exec "${APP_DIR}/lfp-pay-api" "-bind-addr=:${PORT}" $(for broker in "${BROKERS[@]}"; do echo -n "-broker-addr=${broker} "; done)
+exec "${APP_DIR}/pps-pay-api" "-bind-addr=:${PORT}" $(for broker in "${BROKERS[@]}"; do echo -n "-broker-addr=${broker} "; done)

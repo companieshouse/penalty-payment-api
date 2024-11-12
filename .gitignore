@@ -1,6 +1,6 @@
 # Build artifacts
-lfp-pay-api
-lfp-pay-api-*.zip
+pps-pay-api
+pps-pay-api-*.zip
 build.log
 
 # Test output

@@ -2,11 +2,11 @@
   "swagger": "2.0",
   "info": {
     "version": "1.0.0",
-    "title": "LFP PAY API",
-    "description": "An API that creates, patches, and retrieves LFP sessions, as well as interacting with the E5 finance system"
+    "title": "PPS PAY API",
+    "description": "An API that creates, patches, and retrieves PPS sessions, as well as interacting with the E5 finance system"
   },
   "host": "api.companieshouse.gov.uk",
-  "basePath": "/company/{company_number}/penalties/late-filing",
+  "basePath": "/company/{company_number}/penalties",
   "schemes": [
     "https"
   ],
@@ -27,7 +27,7 @@
         "tags": [
           "Healthcheck"
         ],
-        "description": "Check the health of the LFP PAY API Service",
+        "description": "Check the health of the PPS PAY API Service",
         "responses": {
           "200": {
             "description": "healthy"
@@ -59,7 +59,7 @@
         "tags": [
           "Penalties"
         ],
-        "description": "List the late filing penalties for a company. This passes through the transactions from E5 and does not cache.",
+        "description": "List the penalties for a company. This passes through the transactions from E5 and does not cache.",
         "produces": [
           "application/json"
         ],
@@ -166,7 +166,7 @@
         ],
         "responses": {
           "200": {
-            "description": "A respresentation of the full LFP payable resource",
+            "description": "A representation of the full PPS payable resource",
             "schema": {
               "$ref": "#/definitions/PayableResource"
             }
@@ -219,7 +219,7 @@
         "description": "Mark this resource as paid. This will also mark the transactions as paid in E5",
         "responses": {
           "204": {
-            "description": "The LFP payable resource has successfully been marked as paid"
+            "description": "The PPS payable resource has successfully been marked as paid"
           }
         }
       }

@@ -1,4 +1,4 @@
-module github.com/companieshouse/lfp-pay-api
+module github.com/companieshouse/pps-pay-api
 
 go 1.19
 
@@ -18,6 +18,8 @@ require (
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+require github.com/stretchr/objx v0.4.0 // indirect
 
 require (
 	github.com/DataDog/zstd v1.3.6-0.20190409195224-796139022798 // indirect
@@ -48,7 +50,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/smartystreets/assertions v1.2.0 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
+	github.com/stretchr/testify v1.7.1 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect

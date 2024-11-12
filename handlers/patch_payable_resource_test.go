@@ -15,11 +15,11 @@ import (
 	"github.com/companieshouse/go-session-handler/session"
 	"github.com/companieshouse/lfp-pay-api-core/constants"
 	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api/config"
-	"github.com/companieshouse/lfp-pay-api/dao"
-	"github.com/companieshouse/lfp-pay-api/e5"
-	"github.com/companieshouse/lfp-pay-api/mocks"
-	"github.com/companieshouse/lfp-pay-api/service"
+	"github.com/companieshouse/pps-pay-api/config"
+	"github.com/companieshouse/pps-pay-api/dao"
+	"github.com/companieshouse/pps-pay-api/e5"
+	"github.com/companieshouse/pps-pay-api/mocks"
+	"github.com/companieshouse/pps-pay-api/service"
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
 	. "github.com/smartystreets/goconvey/convey"
@@ -204,7 +204,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			So(body, ShouldBeNil)
 		})
 
-		Convey("LFP has already been paid", func() {
+		Convey("Penalty has already been paid", func() {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 

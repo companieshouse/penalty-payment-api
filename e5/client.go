@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/companieshouse/chs.go/log"
@@ -87,7 +86,7 @@ func (c *Client) GetTransactions(input *GetTransactionsInput) (*GetTransactionsR
 		Transactions: []Transaction{},
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(err, logContext)
 		return nil, ErrFailedToReadBody
@@ -251,7 +250,7 @@ func (c *Client) checkResponseForError(r *http.Response) error {
 
 	// parse the error response and log all output
 	e := &apiErrorResponse{}
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 
 	if err != nil {
 		log.Error(err, logContext)

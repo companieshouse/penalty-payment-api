@@ -8,8 +8,8 @@ import (
 
 	"github.com/companieshouse/lfp-pay-api-core/models"
 	"github.com/companieshouse/lfp-pay-api-core/validators"
-	"github.com/companieshouse/lfp-pay-api/e5"
-	"github.com/companieshouse/lfp-pay-api/mocks"
+	"github.com/companieshouse/pps-pay-api/e5"
+	"github.com/companieshouse/pps-pay-api/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
 	. "github.com/smartystreets/goconvey/convey"

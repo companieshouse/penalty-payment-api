@@ -5,12 +5,12 @@ import (
 
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
-	"github.com/companieshouse/lfp-pay-api/config"
-	"github.com/companieshouse/lfp-pay-api/dao"
-	"github.com/companieshouse/lfp-pay-api/e5"
-	"github.com/companieshouse/lfp-pay-api/interceptors"
-	"github.com/companieshouse/lfp-pay-api/middleware"
-	"github.com/companieshouse/lfp-pay-api/service"
+	"github.com/companieshouse/pps-pay-api/config"
+	"github.com/companieshouse/pps-pay-api/dao"
+	"github.com/companieshouse/pps-pay-api/e5"
+	"github.com/companieshouse/pps-pay-api/interceptors"
+	"github.com/companieshouse/pps-pay-api/middleware"
+	"github.com/companieshouse/pps-pay-api/service"
 	"github.com/gorilla/mux"
 )
 
