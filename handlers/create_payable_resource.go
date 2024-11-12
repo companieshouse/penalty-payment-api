@@ -9,11 +9,11 @@ import (
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api/config"
-	"github.com/companieshouse/lfp-pay-api/dao"
-	"github.com/companieshouse/lfp-pay-api/transformers"
-	"github.com/companieshouse/lfp-pay-api/utils"
-	"github.com/companieshouse/lfp-pay-api/validators"
+	"github.com/companieshouse/pps-pay-api/config"
+	"github.com/companieshouse/pps-pay-api/dao"
+	"github.com/companieshouse/pps-pay-api/transformers"
+	"github.com/companieshouse/pps-pay-api/utils"
+	"github.com/companieshouse/pps-pay-api/validators"
 	"gopkg.in/go-playground/validator.v9"
 )
 

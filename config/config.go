@@ -17,8 +17,8 @@ type Config struct {
 	E5APIURL                   string       `env:"E5_API_URL"                     flag:"e5-api-url"                      flagDesc:"Base URL for the E5 API"`
 	E5Username                 string       `env:"E5_USERNAME"                    flag:"e5-username"                     flagDesc:"Username for the E5 API"`
 	MongoDBURL                 string       `env:"MONGODB_URL"                    flag:"mongodb-url"                     flagDesc:"MongoDB server URL"`
-	Database                   string       `env:"LFP_MONGODB_DATABASE"           flag:"mongodb-database"                flagDesc:"MongoDB database for data"`
-	MongoCollection            string       `env:"LFP_MONGODB_COLLECTION"         flag:"mongodb-collection"              flagDesc:"The name of the mongodb collection"`
+	Database                   string       `env:"PPS_MONGODB_DATABASE"           flag:"mongodb-database"                flagDesc:"MongoDB database for data"`
+	MongoCollection            string       `env:"PPS_MONGODB_COLLECTION"         flag:"mongodb-collection"              flagDesc:"The name of the mongodb collection"`
 	BrokerAddr                 []string     `env:"KAFKA_BROKER_ADDR"              flag:"broker-addr"                     flagDesc:"Kafka broker address"`
 	SchemaRegistryURL          string       `env:"SCHEMA_REGISTRY_URL"            flag:"schema-registry-url"             flagDesc:"Schema registry url"`
 	CHSURL                     string       `env:"CHS_URL"                        flag:"chs-url"                         flagDesc:"CHS URL"`
