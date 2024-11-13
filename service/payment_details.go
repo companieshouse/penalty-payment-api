@@ -6,7 +6,7 @@ import (
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/pps-pay-api/transformers"
+	"github.com/companieshouse/penalty-payment-api/transformers"
 )
 
 // PaymentDetailsService contains the PayableResourceService for updating the resource with payment details after a successful/failed payment

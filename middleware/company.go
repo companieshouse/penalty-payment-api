@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/companieshouse/chs.go/log"
-	"github.com/companieshouse/pps-pay-api/config"
-	"github.com/companieshouse/pps-pay-api/utils"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/utils"
 	"github.com/gorilla/mux"
 )
 

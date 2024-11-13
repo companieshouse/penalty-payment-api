@@ -1,4 +1,4 @@
-module github.com/companieshouse/pps-pay-api
+module github.com/companieshouse/penalty-payment-api
 
 go 1.19
 
