@@ -12,7 +12,7 @@ import (
 	"github.com/companieshouse/chs.go/kafka/producer"
 	"github.com/companieshouse/filing-notification-sender/util"
 	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/pps-pay-api/config"
+	"github.com/companieshouse/penalty-payment-api/config"
 )
 
 const ppsReceivedAppID = "lfp-pay-api.late_filing_penalty_received_email"

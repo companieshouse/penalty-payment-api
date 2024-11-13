@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/pps-pay-api/config"
+	"github.com/companieshouse/penalty-payment-api/config"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

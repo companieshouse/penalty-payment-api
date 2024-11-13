@@ -27,7 +27,7 @@
         "tags": [
           "Healthcheck"
         ],
-        "description": "Check the health of the Penalty Payment Service (PPS) API Service",
+        "description": "Check the health of the Penalty Payment Service (PPS) API",
         "responses": {
           "200": {
             "description": "healthy"

@@ -9,7 +9,7 @@ In order to run this API locally you will need to install the following:
 - [Git](https://git-scm.com/downloads)
 
 ## Getting Started
-1. Clone this repository: `go get github.com/companieshouse/pps-pay-api`
+1. Clone this repository: `go get github.com/companieshouse/penalty-payment-api`
 1. Build the executable: `make build`
 
 ## Configuration

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Start script for pps-pay-api
+# Start script for penalty-payment-api
 
 APP_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -33,4 +33,4 @@ IFS=',' read -ra BROKERS <<< "${KAFKA_BROKER_ADDR}"
 # Ensure we only populate the broker address via application arguments
 unset KAFKA_BROKER_ADDR
 
-exec "${APP_DIR}/pps-pay-api" "-bind-addr=:${PORT}" $(for broker in "${BROKERS[@]}"; do echo -n "-broker-addr=${broker} "; done)
+exec "${APP_DIR}/penalty-payment-api" "-bind-addr=:${PORT}" $(for broker in "${BROKERS[@]}"; do echo -n "-broker-addr=${broker} "; done)
