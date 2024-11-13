@@ -2,8 +2,8 @@
   "swagger": "2.0",
   "info": {
     "version": "1.0.0",
-    "title": "PPS PAY API",
-    "description": "An API that creates, patches, and retrieves PPS sessions, as well as interacting with the E5 finance system"
+    "title": "Penalty Payment Service (PPS) API",
+    "description": "An API that creates, patches, and retrieves Penalty Payment Service (PPS) sessions, as well as interacting with the E5 finance system"
   },
   "host": "api.companieshouse.gov.uk",
   "basePath": "/company/{company_number}/penalties",
@@ -27,7 +27,7 @@
         "tags": [
           "Healthcheck"
         ],
-        "description": "Check the health of the PPS PAY API Service",
+        "description": "Check the health of the Penalty Payment Service (PPS) API Service",
         "responses": {
           "200": {
             "description": "healthy"
