@@ -1,6 +1,6 @@
-# PPS PAY API
+# Penalty Payment Service (PPS) API
 
-PPS PAY API which provides an interface for Creating, Getting, and Patching Penalties.
+Penalty Payment Service (PPS) API which provides an interface for Creating, Getting, and Patching Penalties.
 
 ## Requirements
 In order to run this API locally you will need to install the following:
@@ -19,7 +19,7 @@ In order to run this API locally you will need to install the following:
 | `E5_USERNAME`                    |   `-`   | E5 API Username                                                       |
 | `BIND_ADDR`                      |   `-`   | The host:port to bind to                                              |
 | `MONGODB_URL`                    |   `-`   | The mongo db connection string                                        |
-| `PPS_MONGODB_DATABASE`           |   `-`   | The database name to connect to e.g. `payment_penalties`          |
+| `PPS_MONGODB_DATABASE`           |   `-`   | The database name to connect to e.g. `late_filing_penalties`          |
 | `PPS_MONGODB_COLLECTION`         |   `-`   | The collection name e.g. `payable_resources`                          |
 | `KAFKA_BROKER_ADDR`              |   `_`   | Kafka Broker Address                                                  |
 | `SCHEMA_REGISTRY_URL`            |   `_`   | Schema Registry URL                                                   |
@@ -49,5 +49,4 @@ The only external finance system currently supported is E5.
 Pull image from private CH registry by running `docker pull 169942020521.dkr.ecr.eu-west-2.amazonaws.com/local/lfp-pay-api:latest` command or run the following steps to build image locally:
 
 1. `export SSH_PRIVATE_KEY_PASSPHRASE='[your SSH key passhprase goes here]'` (optional, set only if SSH key is passphrase protected)
-# TODO: this command is to be revisited when we know more about the AWS setup
 2. `DOCKER_BUILDKIT=0 docker build --build-arg SSH_PRIVATE_KEY="$(cat ~/.ssh/id_rsa)" --build-arg SSH_PRIVATE_KEY_PASSPHRASE -t 169942020521.dkr.ecr.eu-west-2.amazonaws.com/local/lfp-pay-api:latest .`
