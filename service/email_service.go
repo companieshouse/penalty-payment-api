@@ -16,7 +16,7 @@ import (
 )
 
 const ppsReceivedAppID = "lfp-pay-api.late_filing_penalty_received_email"
-const ppsFilingDescription = "Penalty"
+const ppsFilingDescription = "Late Filing Penalty"
 const ppsMessageType = "late_filing_penalty_received_email"
 
 // ProducerTopic is the topic to which the email-send kafka message is sent

@@ -7,7 +7,7 @@ APP_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [[ -z "${MESOS_SLAVE_PID}" ]]; then
     source ~/.chs_env/private_env
     source ~/.chs_env/global_env
-    source ~/.chs_env/pps-pay-api/env
+    source ~/.chs_env/lfp-pay-api/env
 
     PORT="${PPS_PAY_API_PORT}"
 else
