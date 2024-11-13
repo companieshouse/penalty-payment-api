@@ -15,7 +15,7 @@ import (
 	"github.com/companieshouse/pps-pay-api/config"
 )
 
-const ppsReceivedAppID = "pps-pay-api.late_filing_penalty_received_email"
+const ppsReceivedAppID = "lfp-pay-api.late_filing_penalty_received_email"
 const ppsFilingDescription = "Penalty"
 const ppsMessageType = "late_filing_penalty_received_email"
 
