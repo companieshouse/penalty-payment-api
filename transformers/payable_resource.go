@@ -7,7 +7,7 @@ import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/lfp-pay-api-core/constants"
 	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/pps-pay-api/utils"
+	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // PayableResourceRequestToDB will take the input request from the REST call and transform it to a dao ready for

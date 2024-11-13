@@ -1,6 +1,6 @@
 # Build artifacts
-pps-pay-api
-pps-pay-api-*.zip
+penalty-payment-api
+penalty-payment-api-*.zip
 build.log
 
 # Test output

@@ -8,8 +8,8 @@ import (
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/pps-pay-api/service"
-	"github.com/companieshouse/pps-pay-api/utils"
+	"github.com/companieshouse/penalty-payment-api/service"
+	"github.com/companieshouse/penalty-payment-api/utils"
 	"github.com/gorilla/mux"
 )
 
