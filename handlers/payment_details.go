@@ -6,9 +6,9 @@ import (
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api/config"
-	"github.com/companieshouse/lfp-pay-api/service"
-	"github.com/companieshouse/lfp-pay-api/utils"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/service"
+	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // HandleGetPaymentDetails retrieves costs for a supplied company number and reference.

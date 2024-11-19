@@ -10,8 +10,8 @@ import (
 	"github.com/companieshouse/lfp-pay-api-core/constants"
 	"github.com/companieshouse/lfp-pay-api-core/models"
 	"github.com/companieshouse/lfp-pay-api-core/validators"
-	"github.com/companieshouse/lfp-pay-api/config"
-	"github.com/companieshouse/lfp-pay-api/mocks"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
 	. "github.com/smartystreets/goconvey/convey"
@@ -192,10 +192,10 @@ func TestUnitPayableResourceService_UpdateAsPaid(t *testing.T) {
 
 			err := svc.UpdateAsPaid(models.PayableResource{}, validators.PaymentInformation{})
 
-			So(err, ShouldBeError, ErrLFPNotFound)
+			So(err, ShouldBeError, ErrPenaltyNotFound)
 		})
 
-		Convey("LFP payable resource must not have already been paid", func() {
+		Convey("Penalty payable resource must not have already been paid", func() {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 

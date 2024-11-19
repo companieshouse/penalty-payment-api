@@ -1,6 +1,6 @@
-# LFP PAY API
+# Penalty Payment Service (PPS) API
 
-LFP PAY API which provides an interface for Creating, Getting, and Patching LFPs.
+Penalty Payment Service (PPS) API which provides an interface for Creating, Getting, and Patching Penalties.
 
 ## Requirements
 In order to run this API locally you will need to install the following:
@@ -9,7 +9,7 @@ In order to run this API locally you will need to install the following:
 - [Git](https://git-scm.com/downloads)
 
 ## Getting Started
-1. Clone this repository: `go get github.com/companieshouse/lfp-pay-api`
+1. Clone this repository: `go get github.com/companieshouse/penalty-payment-api`
 1. Build the executable: `make build`
 
 ## Configuration
@@ -19,8 +19,8 @@ In order to run this API locally you will need to install the following:
 | `E5_USERNAME`                    |   `-`   | E5 API Username                                                       |
 | `BIND_ADDR`                      |   `-`   | The host:port to bind to                                              |
 | `MONGODB_URL`                    |   `-`   | The mongo db connection string                                        |
-| `LFP_MONGODB_DATABASE`           |   `-`   | The database name to connect to e.g. `late_filing_penalties`          |
-| `LFP_MONGODB_COLLECTION`         |   `-`   | The collection name e.g. `payable_resources`                          |
+| `PPS_MONGODB_DATABASE`           |   `-`   | The database name to connect to e.g. `late_filing_penalties`          |
+| `PPS_MONGODB_COLLECTION`         |   `-`   | The collection name e.g. `payable_resources`                          |
 | `KAFKA_BROKER_ADDR`              |   `_`   | Kafka Broker Address                                                  |
 | `SCHEMA_REGISTRY_URL`            |   `_`   | Schema Registry URL                                                   |
 | `CHS_URL`                        |   `_`   | CHS URL                                                               |

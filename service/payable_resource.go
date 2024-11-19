@@ -8,19 +8,19 @@ import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/lfp-pay-api-core/models"
 	"github.com/companieshouse/lfp-pay-api-core/validators"
-	"github.com/companieshouse/lfp-pay-api/config"
-	"github.com/companieshouse/lfp-pay-api/dao"
-	"github.com/companieshouse/lfp-pay-api/e5"
-	"github.com/companieshouse/lfp-pay-api/transformers"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/dao"
+	"github.com/companieshouse/penalty-payment-api/e5"
+	"github.com/companieshouse/penalty-payment-api/transformers"
 )
 
 var (
 	// ErrPaymentNotFulfilled represents the scenario that the payment resource itself is not paid
 	ErrPaymentNotFulfilled = errors.New("the resource you are trying to pay for has not been paid")
-	// ErrAlreadyPaid represents when the LFP payable resource is already paid
-	ErrAlreadyPaid = errors.New("the LFP has already been paid")
-	// ErrLFPNotFound represents when the payable resource does not exist in the db
-	ErrLFPNotFound = errors.New("the LFP does not exist")
+	// ErrAlreadyPaid represents when the penalty payable resource is already paid
+	ErrAlreadyPaid = errors.New("the Penalty has already been paid")
+	// ErrNotFound represents when the payable resource does not exist in the db
+	ErrPenaltyNotFound = errors.New("the Penalty does not exist")
 	// ErrPayment represents an error when the payable resource amount does not match the amount in the payment resource
 	ErrPayment = errors.New("there was a problem validating the payment")
 )
@@ -55,19 +55,19 @@ func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, p
 	if err != nil {
 		err = fmt.Errorf("error getting payable resource from db: [%v]", err)
 		log.Error(err, log.Data{
-			"lfp_reference":  resource.Reference,
-			"company_number": resource.CompanyNumber,
+			"penalty_reference": resource.Reference,
+			"company_number":    resource.CompanyNumber,
 		})
-		return ErrLFPNotFound
+		return ErrPenaltyNotFound
 	}
 
 	// check if this resource has already been paid
 	if model.IsPaid() {
-		err = errors.New("this LFP has already been paid")
+		err = errors.New("this penalty has already been paid")
 		log.Error(err, log.Data{
-			"lfp_reference":  model.Reference,
-			"company_number": model.CompanyNumber,
-			"payment_id":     model.Data.Payment.Reference,
+			"penalty_reference": model.Reference,
+			"company_number":    model.CompanyNumber,
+			"payment_id":        model.Data.Payment.Reference,
 		})
 		return ErrAlreadyPaid
 	}

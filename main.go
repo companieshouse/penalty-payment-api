@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/companieshouse/chs.go/log"
-	"github.com/companieshouse/lfp-pay-api/config"
-	"github.com/companieshouse/lfp-pay-api/dao"
-	"github.com/companieshouse/lfp-pay-api/handlers"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/dao"
+	"github.com/companieshouse/penalty-payment-api/handlers"
 	"github.com/gorilla/mux"
 )
 
 func main() {
-	namespace := "lfp-pay-api"
+	namespace := "penalty-payment-api"
 	log.Namespace = namespace
 
 	cfg, err := config.Get()

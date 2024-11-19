@@ -7,7 +7,7 @@ import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/lfp-pay-api-core/constants"
 	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api/utils"
+	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // PayableResourceRequestToDB will take the input request from the REST call and transform it to a dao ready for
@@ -103,7 +103,7 @@ func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.P
 	return &payable
 }
 
-// PayableResourceToPaymentDetails will create a PaymentDetails resource (for integrating into payment service) from an LFP PayableResource
+// PayableResourceToPaymentDetails will create a PaymentDetails resource (for integrating into payment service) from a PPS PayableResource
 func PayableResourceToPaymentDetails(payable *models.PayableResource) *models.PaymentDetails {
 	costs := []models.Cost{}
 	for _, tx := range payable.Transactions {

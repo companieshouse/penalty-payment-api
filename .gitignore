@@ -1,6 +1,6 @@
 # Build artifacts
-lfp-pay-api
-lfp-pay-api-*.zip
+penalty-payment-api
+penalty-payment-api-*.zip
 build.log
 
 # Test output

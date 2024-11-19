@@ -8,7 +8,7 @@ import (
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api/e5"
+	"github.com/companieshouse/penalty-payment-api/e5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -67,15 +67,15 @@ type MongoService struct {
 func (m *MongoService) SaveE5Error(companyNumber, reference string, action e5.Action) error {
 	dao, err := m.GetPayableResource(companyNumber, reference)
 	if err != nil {
-		log.Error(err, log.Data{"company_number": companyNumber, "lfp_reference": reference})
+		log.Error(err, log.Data{"company_number": companyNumber, "penalty_reference": reference})
 		return err
 	}
 
 	filter := bson.M{"_id": dao.ID}
 	update := bson.D{
 		{
-			"$set", bson.D{
-				{"e5_command_error", string(action)},
+			Key: "$set", Value: bson.D{
+				{Key: "e5_command_error", Value: string(action)},
 			},
 		},
 	}
@@ -141,11 +141,11 @@ func (m *MongoService) UpdatePaymentDetails(dao *models.PayableResourceDao) erro
 
 	update := bson.D{
 		{
-			"$set", bson.D{
-				{"data.payment.status", dao.Data.Payment.Status},
-				{"data.payment.reference", dao.Data.Payment.Reference},
-				{"data.payment.paid_at", dao.Data.Payment.PaidAt},
-				{"data.payment.amount", dao.Data.Payment.Amount},
+			Key: "$set", Value: bson.D{
+				{Key: "data.payment.status", Value: dao.Data.Payment.Status},
+				{Key: "data.payment.reference", Value: dao.Data.Payment.Reference},
+				{Key: "data.payment.paid_at", Value: dao.Data.Payment.PaidAt},
+				{Key: "data.payment.amount", Value: dao.Data.Payment.Amount},
 			},
 		},
 	}

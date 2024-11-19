@@ -2,8 +2,8 @@ package dao
 
 import (
 	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api/config"
-	"github.com/companieshouse/lfp-pay-api/e5"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/e5"
 )
 
 // Service interface declares how to interact with the persistence layer regardless of underlying technology
