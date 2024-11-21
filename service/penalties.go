@@ -37,7 +37,7 @@ func (transactionType TransactionType) String() string {
 
 // GetPenalties is a function that:
 // 1. makes a request to e5 to get a list of transactions for the specified company
-// 2. takes the results of this request and maps them to a format that the pps-pay-web can consume
+// 2. takes the results of this request and maps them to a format that the penalty-payment-web can consume
 func GetPenalties(companyNumber string) (*models.TransactionListResponse, ResponseType, error) {
 	cfg, err := config.Get()
 	if err != nil {
@@ -93,7 +93,7 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 
 	payableTransactionList.Etag = etag
 	payableTransactionList.TotalResults = e5Response.Page.TotalElements
-	// Each transaction needs to be checked and identified as a 'penalty' or 'other'. This allows pps-web to determine
+	// Each transaction needs to be checked and identified as a 'penalty' or 'other'. This allows penalty-payment-web to determine
 	// which transactions are payable. This is done using a yaml file to map payable transactions
 	yamlFile, err := os.ReadFile("assets/penalty_types.yml")
 	if err != nil {
