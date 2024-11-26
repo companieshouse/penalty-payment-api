@@ -5,7 +5,7 @@ import (
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/go-sdk-manager/manager"
-	"github.com/companieshouse/lfp-pay-api-core/validators"
+	"github.com/companieshouse/penalty-payment-api-core/validators"
 )
 
 // GetPaymentInformation will attempt to get the payment resource from the payment platform.

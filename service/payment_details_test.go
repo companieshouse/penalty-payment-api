@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/companieshouse/lfp-pay-api-core/models"
+	"github.com/companieshouse/penalty-payment-api-core/models"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
