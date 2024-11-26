@@ -1,7 +1,7 @@
 CHS_ENV_HOME ?= $(HOME)/.chs_env
 TESTS        ?= ./...
 
-bin          := lfp-pay-api
+bin          := penalty-payment-api
 chs_envs     := $(CHS_ENV_HOME)/global_env $(CHS_ENV_HOME)/lfp-pay-api/env
 source_env   := for chs_env in $(chs_envs); do test -f $$chs_env && . $$chs_env; done
 xunit_output := test.xml
