@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/companieshouse/lfp-pay-api-core/constants"
-	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api-core/validators"
+	"github.com/companieshouse/penalty-payment-api-core/constants"
+	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"

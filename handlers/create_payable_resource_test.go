@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/companieshouse/chs.go/authentication"
-	"github.com/companieshouse/lfp-pay-api-core/models"
+	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/mocks"

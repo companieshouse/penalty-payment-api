@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	"github.com/companieshouse/lfp-pay-api-core/models"
+	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/golang/mock/gomock"
 	"reflect"

@@ -1,7 +1,7 @@
 package dao
 
 import (
-	"github.com/companieshouse/lfp-pay-api-core/models"
+	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/e5"
 )

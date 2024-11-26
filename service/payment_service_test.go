@@ -7,8 +7,8 @@ import (
 
 	"github.com/companieshouse/go-session-handler/httpsession"
 	"github.com/companieshouse/go-session-handler/session"
-	"github.com/companieshouse/lfp-pay-api-core/constants"
-	"github.com/companieshouse/lfp-pay-api-core/validators"
+	"github.com/companieshouse/penalty-payment-api-core/constants"
+	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/jarcoal/httpmock"
 	. "github.com/smartystreets/goconvey/convey"
 )
