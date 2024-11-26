@@ -1,4 +1,4 @@
-# LFP PAY API
+# PENALTY PAYMENT API
 
 LFP PAY API which provides an interface for Creating, Getting, and Patching LFPs.
 
