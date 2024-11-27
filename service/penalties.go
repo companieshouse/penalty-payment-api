@@ -60,7 +60,7 @@ func GetPenalties(companyNumber string) (*models.TransactionListResponse, Respon
 		return nil, Error, err
 	}
 
-	log.Info("Completed GetPenalties request and mapped to CH transactions", log.Data{"company_number": companyNumber})
+	log.Info("Completed GetPenalties request and mapped to CH penalty transactions", log.Data{"company_number": companyNumber})
 	return generatedTransactionListFromE5Response, Success, nil
 }
 
