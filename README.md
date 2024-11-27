@@ -1,4 +1,4 @@
-# Penalty Payment Service (PPS) API
+# PENALTY PAYMENT API
 
 Penalty Payment Service (PPS) API which provides an interface for Creating, Getting, and Patching Penalties.
 
