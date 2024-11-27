@@ -11,13 +11,13 @@ import (
 	"github.com/companieshouse/chs.go/avro/schema"
 	"github.com/companieshouse/chs.go/kafka/producer"
 	"github.com/companieshouse/filing-notification-sender/util"
-	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api/config"
+	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/config"
 )
 
-const lfpReceivedAppID = "lfp-pay-api.late_filing_penalty_received_email"
-const lfpFilingDescription = "Late Filing Penalty"
-const lfpMessageType = "late_filing_penalty_received_email"
+const ppsReceivedAppID = "lfp-pay-api.late_filing_penalty_received_email"
+const ppsFilingDescription = "Late Filing Penalty"
+const ppsMessageType = "late_filing_penalty_received_email"
 
 // ProducerTopic is the topic to which the email-send kafka message is sent
 const ProducerTopic = "email-send"
@@ -82,7 +82,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	// Access specific transaction that was paid for
 	payedTransaction, err := GetTransactionForPenalty(payableResource.CompanyNumber, payableResource.Transactions[0].TransactionID)
 	if err != nil {
-		err = fmt.Errorf("error getting transaction for LFP: [%v]", err)
+		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)
 		return nil, err
 	}
 
@@ -106,7 +106,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		TransactionDate:   transactionDate.Format("2 January 2006"),
 		Amount:            fmt.Sprintf("%g", payedTransaction.OriginalAmount),
 		CompanyName:       companyName,
-		FilingDescription: lfpFilingDescription,
+		FilingDescription: ppsFilingDescription,
 		To:                payableResource.CreatedBy.Email,
 		Subject:           fmt.Sprintf("Confirmation of your Companies House penalty payment"),
 		CHSURL:            cfg.CHSURL,
@@ -121,9 +121,9 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	messageID := "<" + payableResource.Reference + "." + strconv.Itoa(util.Random(0, 100000)) + "@companieshouse.gov.uk>"
 
 	emailSendMessage := models.EmailSend{
-		AppID:        lfpReceivedAppID,
+		AppID:        ppsReceivedAppID,
 		MessageID:    messageID,
-		MessageType:  lfpMessageType,
+		MessageType:  ppsMessageType,
 		Data:         string(dataBytes),
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),

@@ -3,15 +3,15 @@ package service
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/companieshouse/chs.go/log"
-	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api-core/validators"
-	"github.com/companieshouse/lfp-pay-api/config"
-	"github.com/companieshouse/lfp-pay-api/e5"
-	"github.com/companieshouse/lfp-pay-api/utils"
+	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api-core/validators"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/e5"
+	"github.com/companieshouse/penalty-payment-api/utils"
 
 	"gopkg.in/yaml.v2"
 )
@@ -37,7 +37,7 @@ func (transactionType TransactionType) String() string {
 
 // GetPenalties is a function that:
 // 1. makes a request to e5 to get a list of transactions for the specified company
-// 2. takes the results of this request and maps them to a format that the lfp-pay-web can consume
+// 2. takes the results of this request and maps them to a format that the penalty-payment-web can consume
 func GetPenalties(companyNumber string) (*models.TransactionListResponse, ResponseType, error) {
 	cfg, err := config.Get()
 	if err != nil {
@@ -60,7 +60,7 @@ func GetPenalties(companyNumber string) (*models.TransactionListResponse, Respon
 		return nil, Error, err
 	}
 
-	log.Info("Completed GetPenalties request and mapped to CH LFP transactions", log.Data{"company_number": companyNumber})
+	log.Info("Completed GetPenalties request and mapped to CH penalty transactions", log.Data{"company_number": companyNumber})
 	return generatedTransactionListFromE5Response, Success, nil
 }
 
@@ -78,11 +78,11 @@ func GetTransactionForPenalty(companyNumber, penaltyNumber string) (*models.Tran
 		}
 	}
 
-	return nil, fmt.Errorf("cannot find lfp transaction for penalty number [%v]", penaltyNumber)
+	return nil, fmt.Errorf("cannot find transaction for penalty number [%v]", penaltyNumber)
 }
 
 func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsResponse) (*models.TransactionListResponse, error) {
-	// Next, map results to a format that can be used by LFP web
+	// Next, map results to a format that can be used by PPS web
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := utils.GenerateEtag()
 	if err != nil {
@@ -93,9 +93,9 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 
 	payableTransactionList.Etag = etag
 	payableTransactionList.TotalResults = e5Response.Page.TotalElements
-	// Each transaction needs to be checked and identified as a 'penalty' or 'other'. This allows lfp-web to determine
+	// Each transaction needs to be checked and identified as a 'penalty' or 'other'. This allows penalty-payment-web to determine
 	// which transactions are payable. This is done using a yaml file to map payable transactions
-	yamlFile, err := ioutil.ReadFile("assets/penalty_types.yml")
+	yamlFile, err := os.ReadFile("assets/penalty_types.yml")
 	if err != nil {
 		err = fmt.Errorf("error reading penalty types yaml file: [%v]", err)
 		log.Error(err)
@@ -140,7 +140,7 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 }
 
 // MarkTransactionsAsPaid will update the transactions in E5 as paid.
-// resource - is the payable resource from the db representing the late filing penalty(ies)
+// resource - is the payable resource from the db representing the penalty(ies)
 // payment - is the information about the payment session
 func MarkTransactionsAsPaid(svc *PayableResourceService, client *e5.Client, resource models.PayableResource, payment validators.PaymentInformation) error {
 	amountPaid, err := strconv.ParseFloat(payment.Amount, 32)
@@ -177,7 +177,7 @@ func MarkTransactionsAsPaid(svc *PayableResourceService, client *e5.Client, reso
 
 	if err != nil {
 		if svcErr := svc.RecordE5CommandError(resource, e5.CreateAction); svcErr != nil {
-			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "lfp_reference": resource.Reference})
+			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "penalty_reference": resource.Reference})
 			return err
 		}
 		logE5Error("failed to create payment in E5", err, resource, payment)
@@ -194,7 +194,7 @@ func MarkTransactionsAsPaid(svc *PayableResourceService, client *e5.Client, reso
 
 	if err != nil {
 		if svcErr := svc.RecordE5CommandError(resource, e5.AuthoriseAction); svcErr != nil {
-			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "lfp_reference": resource.Reference})
+			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "penalty_reference": resource.Reference})
 			return err
 		}
 		logE5Error("failed to authorise payment in E5", err, resource, payment)
@@ -208,17 +208,17 @@ func MarkTransactionsAsPaid(svc *PayableResourceService, client *e5.Client, reso
 
 	if err != nil {
 		if svcErr := svc.RecordE5CommandError(resource, e5.ConfirmAction); svcErr != nil {
-			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "lfp_reference": resource.Reference})
+			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "penalty_reference": resource.Reference})
 			return err
 		}
 		logE5Error("failed to confirm payment in E5", err, resource, payment)
 		return err
 	}
 
-	log.Info("marked LFP transaction(s) as paid in E5", log.Data{
-		"lfp_reference": resource.Reference,
-		"payment_id":    payment.PaymentID,
-		"e5_puon":       payment.PaymentID,
+	log.Info("marked penalty transaction(s) as paid in E5", log.Data{
+		"penalty_reference": resource.Reference,
+		"payment_id":        payment.PaymentID,
+		"e5_puon":           payment.PaymentID,
 	})
 
 	return nil
@@ -226,9 +226,9 @@ func MarkTransactionsAsPaid(svc *PayableResourceService, client *e5.Client, reso
 
 func logE5Error(message string, originalError error, resource models.PayableResource, payment validators.PaymentInformation) {
 	log.Error(errors.New(message), log.Data{
-		"lfp_reference": resource.Reference,
-		"payment_id":    payment.PaymentID,
-		"amount":        payment.Amount,
-		"error":         originalError,
+		"penalty_reference": resource.Reference,
+		"payment_id":        payment.PaymentID,
+		"amount":            payment.Amount,
+		"error":             originalError,
 	})
 }

@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/companieshouse/lfp-pay-api-core/constants"
+	"github.com/companieshouse/penalty-payment-api-core/constants"
 
 	"github.com/companieshouse/chs.go/authentication"
-	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api/config"
-	"github.com/companieshouse/lfp-pay-api/mocks"
-	"github.com/companieshouse/lfp-pay-api/service"
+	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/mocks"
+	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	"github.com/jarcoal/httpmock"

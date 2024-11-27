@@ -8,12 +8,12 @@ import (
 
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
-	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api/config"
-	"github.com/companieshouse/lfp-pay-api/dao"
-	"github.com/companieshouse/lfp-pay-api/transformers"
-	"github.com/companieshouse/lfp-pay-api/utils"
-	"github.com/companieshouse/lfp-pay-api/validators"
+	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/dao"
+	"github.com/companieshouse/penalty-payment-api/transformers"
+	"github.com/companieshouse/penalty-payment-api/utils"
+	"github.com/companieshouse/penalty-payment-api/validators"
 	"gopkg.in/go-playground/validator.v9"
 )
 

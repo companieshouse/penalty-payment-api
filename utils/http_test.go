@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/companieshouse/lfp-pay-api-core/models"
+	"github.com/companieshouse/penalty-payment-api-core/models"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

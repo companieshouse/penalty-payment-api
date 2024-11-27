@@ -5,13 +5,13 @@ import (
 	"net/http"
 
 	"github.com/companieshouse/chs.go/log"
-	"github.com/companieshouse/lfp-pay-api-core/models"
-	"github.com/companieshouse/lfp-pay-api/transformers"
+	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/transformers"
 )
 
 // PaymentDetailsService contains the PayableResourceService for updating the resource with payment details after a successful/failed payment
 type PaymentDetailsService struct {
-	PayableResourceService *PayableResourceService // needed when implemnting PATCH endpoint from payment-processed-consumer
+	PayableResourceService *PayableResourceService // needed when implementing PATCH endpoint from payment-processed-consumer
 }
 
 // GetPaymentDetailsFromPayableResource transforms a PayableResource into its corresponding Payment details resource
