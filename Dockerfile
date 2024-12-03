@@ -6,7 +6,7 @@ FROM 169942020521.dkr.ecr.eu-west-2.amazonaws.com/base/golang:debian11-runtime
 
 COPY --from=BUILDER /build/out/app ./
 
-ADD assets ./assets
+COPY assets ./assets
 
 CMD ["-bind-addr=:4086"]
 
