@@ -111,13 +111,11 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 		return nil, err
 	}
 
-	//AARON
+	// Determine the penalty type
 	var penaltyType = utils.GetCompanyCodeFromPenaltyReference(companyCode)
-	log.Info("1 payable resource: " + penaltyType)
 	//penaltyTypesMapCopy := config.GetMap()
+	// Get the PenaltyDetails value from the map
 	value, _ := config.GetValue(penaltyType)
-	//eReceivedAppId, eFilingDesc, eMsgType, pDesc, pDescId, pResourceKind, pProductType.
-	log.Info("2 payable resource: " + value.PResourceKind)
 
 	// Loop through e5 response and construct CH resources
 	for _, e5Transaction := range e5Response.Transactions {

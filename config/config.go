@@ -28,13 +28,13 @@ func init() {
 			PProductType:   "late-filing-penalty",
 		},
 		"PN": {
-			EReceivedAppId: "lfp-pay-api.late_filing_penalty_received_email",
-			EFilingDesc:    "Late Filing Penalty",
-			EMsgType:       "late_filing_penalty_received_email",
-			PDesc:          "Late Filing Penalty",
-			PDescId:        "late-filing-penalty",
-			PResourceKind:  "late-filing-penalty#late-filing-penalty",
-			PProductType:   "late-filing-penalty",
+			EReceivedAppId: "cs.late_filing_penalty_received_email",
+			EFilingDesc:    "C S Penalty",
+			EMsgType:       "cs_received_email",
+			PDesc:          "C S Penalty",
+			PDescId:        "cs-filing-penalty",
+			PResourceKind:  "cs-filing-penalty#cs-filing-penalty",
+			PProductType:   "cs-filing-penalty",
 		},
 	}
 }

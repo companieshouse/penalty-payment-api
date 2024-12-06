@@ -26,11 +26,6 @@ func WriteJSONWithStatus(w http.ResponseWriter, r *http.Request, data interface{
 // GetCompanyNumberFromVars returns the company number from the supplied request vars.
 func GetCompanyNumberFromVars(vars map[string]string) (string, error) {
 	companyNumber := vars["company_number"]
-	log.Info("companyNumber: " + companyNumber)
-
-	penaltyReference := vars["penalty_reference"]
-	log.Info("penaltyReference: " + penaltyReference)
-
 	if companyNumber == "" {
 		return "", fmt.Errorf("company number not supplied")
 	}
@@ -40,13 +35,6 @@ func GetCompanyNumberFromVars(vars map[string]string) (string, error) {
 
 // GetCompanyCodeFromVars returns the penalty reference from the supplied request vars.
 func GetCompanyCodeFromVars(vars map[string]string) (string, error) {
-	jsonData, err := json.MarshalIndent(vars, "", "  ")
-	if err != nil {
-		log.Info("Error marshalling: ")
-	}
-	log.Info("JSON Data")
-	log.Info(string(jsonData))
-
 	var penaltyRef = "A00531369"
 	log.Info("temp penRef: " + penaltyRef)
 

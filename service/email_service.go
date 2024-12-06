@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/utils"
 	"net/http"
 	"strconv"
@@ -96,14 +95,11 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
-	//AC
+	// Determine the penalty type
 	var penaltyType = utils.GetCompanyCodeFromPenaltyReference(payableResource.Reference)
-	log.Info("1 payable resource: " + penaltyType)
-
 	//penaltyTypesMapCopy := config.GetMap()
+	// Get the PenaltyDetails value from the map
 	value, _ := config.GetValue(penaltyType)
-	//eReceivedAppId, eFilingDesc, eMsgType, pDesc, pDescId, pResourceKind, pProductType.
-	log.Info("2 payable resource: " + value.EMsgType)
 
 	// Set dataField to be used in the avro schema.
 	dataFieldMessage := models.DataField{

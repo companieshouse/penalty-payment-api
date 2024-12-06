@@ -4,6 +4,7 @@ import (
 	j "encoding/json"
 	"errors"
 	"net/http"
+	"reflect"
 	"testing"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
@@ -212,4 +213,29 @@ func TestUnitMarkTransactionsAsPaid(t *testing.T) {
 
 		})
 	})
+}
+
+func Test_generateTransactionListFromE5Response(t *testing.T) {
+	type args struct {
+		e5Response  *e5.GetTransactionsResponse
+		companyCode string
+	}
+	var tests []struct {
+		name    string
+		args    args
+		want    *models.TransactionListResponse
+		wantErr bool
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := generateTransactionListFromE5Response(tt.args.e5Response, tt.args.companyCode)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("generateTransactionListFromE5Response() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("generateTransactionListFromE5Response() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
