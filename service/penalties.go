@@ -66,7 +66,7 @@ func GetPenalties(companyNumber string, companyCode string) (*models.Transaction
 
 // GetTransactionForPenalty returns a single, specified, transaction from e5 for a specific company
 func GetTransactionForPenalty(companyNumber, penaltyNumber string) (*models.TransactionListItem, error) {
-	companyCode := utils.GetCompanyCodeFromPenaltyReference(penaltyNumber)
+	companyCode := utils.GetCompanyCode(penaltyNumber)
 	response, _, err := GetPenalties(companyNumber, companyCode)
 	if err != nil {
 		log.Error(err)
@@ -112,10 +112,9 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 	}
 
 	// Determine the penalty type
-	var penaltyType = utils.GetCompanyCodeFromPenaltyReference(companyCode)
-	//penaltyTypesMapCopy := config.GetMap()
+	var penaltyType = utils.GetCompanyCode(companyCode)
 	// Get the PenaltyDetails value from the map
-	value, _ := config.GetValue(penaltyType)
+	value := config.ImmutablePenaltyTypesMap[penaltyType]
 
 	// Loop through e5 response and construct CH resources
 	for _, e5Transaction := range e5Response.Transactions {
@@ -170,7 +169,7 @@ func MarkTransactionsAsPaid(svc *PayableResourceService, client *e5.Client, reso
 	// ones that begin with 'LP' which signify penalties that have been paid outside of the digital service.
 	paymentID := "X" + payment.PaymentID
 
-	var companyCode = utils.GetCompanyCodeFromPenaltyReference(resource.Reference)
+	var companyCode = utils.GetCompanyCode(resource.Reference)
 	log.Info("service/penalty: penaltyRef: " + resource.Reference)
 	log.Info("service/penalty: penaltyType:" + companyCode)
 

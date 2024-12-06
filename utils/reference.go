@@ -40,7 +40,8 @@ func GenerateEtag() (string, error) {
 	return sha1Hash, nil
 }
 
-func GetCompanyCodeFromPenaltyReference(ref string) string {
+// GetCompanyCode gets the company code from the prefix of the penalty reference
+func GetCompanyCode(ref string) string {
 	if strings.HasPrefix(ref, "PN") {
 		return "PN"
 	} else {

@@ -107,10 +107,9 @@ func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.P
 // PayableResourceToPaymentDetails will create a PaymentDetails resource (for integrating into payment service) from a PPS PayableResource
 func PayableResourceToPaymentDetails(payable *models.PayableResource) *models.PaymentDetails {
 	// Determine the penalty type
-	var penaltyType = utils.GetCompanyCodeFromPenaltyReference(payable.Reference)
-	//penaltyTypesMapCopy := config.GetMap()
+	var penaltyType = utils.GetCompanyCode(payable.Reference)
 	// Get the PenaltyDetails value from the map
-	value, _ := config.GetValue(penaltyType)
+	value := config.ImmutablePenaltyTypesMap[penaltyType]
 
 	var costs []models.Cost
 	for _, tx := range payable.Transactions {

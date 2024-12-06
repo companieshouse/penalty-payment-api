@@ -96,10 +96,9 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	}
 
 	// Determine the penalty type
-	var penaltyType = utils.GetCompanyCodeFromPenaltyReference(payableResource.Reference)
-	//penaltyTypesMapCopy := config.GetMap()
+	var penaltyType = utils.GetCompanyCode(payableResource.Reference)
 	// Get the PenaltyDetails value from the map
-	value, _ := config.GetValue(penaltyType)
+	value, _ := config.ImmutablePenaltyTypesMap[penaltyType]
 
 	// Set dataField to be used in the avro schema.
 	dataFieldMessage := models.DataField{
