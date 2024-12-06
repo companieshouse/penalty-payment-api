@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -47,7 +48,7 @@ func main() {
 		log.Info("starting server...", log.Data{"port": cfg.BindAddr})
 		err = h.ListenAndServe()
 		log.Info("server stopping...")
-		if err != nil && err != http.ErrServerClosed {
+		if err != nil && !errors.Is(http.ErrServerClosed, err) {
 			log.Error(err)
 			svc.Shutdown()
 			os.Exit(1)

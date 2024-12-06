@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/companieshouse/penalty-payment-api/middleware"
 	"net/http"
 	"strings"
 
@@ -39,19 +40,26 @@ func CreatePayableResourceHandler(svc dao.Service) http.Handler {
 			return
 		}
 
-		companyNumber := r.Context().Value(config.CompanyNumber)
-		if companyNumber == nil {
+		log.Info("***************************** ")
+
+		companyNumber := r.Context().Value(config.CompanyDetails).(middleware.Deets).Get("CompanyNumber")
+		companyCode := r.Context().Value(config.CompanyDetails).(middleware.Deets).Get("CompanyCode")
+
+		log.Info("CreatePayableResourceHandler companyNumber: " + companyNumber)
+		log.Info("CreatePayableResourceHandler companyCode: " + companyCode)
+
+		if companyNumber == "" || companyCode == "" {
 			log.ErrorR(r, fmt.Errorf("company not in context"))
 			m := models.NewMessageResponse("company number not in request context")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusInternalServerError)
 			return
 		}
 
-		request.CompanyNumber = strings.ToUpper(companyNumber.(string))
+		request.CompanyNumber = strings.ToUpper(companyNumber)
 		request.CreatedBy = userDetails.(authentication.AuthUserDetails)
 
 		// validate that the transactions being requested do exist in E5
-		validTransactions, err := validators.TransactionsArePayable(request.CompanyNumber, request.Transactions)
+		validTransactions, err := validators.TransactionsArePayable(request.CompanyNumber, companyCode, request.Transactions)
 		if err != nil {
 			log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))
 			m := models.NewMessageResponse("the transactions you want to pay for do not exist or are not payable at this time")

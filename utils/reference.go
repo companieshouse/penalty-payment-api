@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -37,4 +38,12 @@ func GenerateEtag() (string, error) {
 	}
 	sha1Hash := hex.EncodeToString(shaDigest.Sum(nil))
 	return sha1Hash, nil
+}
+
+func GetCompanyCodeFromPenaltyReference(ref string) string {
+	if strings.HasPrefix(ref, "PN") {
+		return "PN"
+	} else {
+		return "LP"
+	}
 }

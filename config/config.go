@@ -10,6 +10,34 @@ import (
 
 var cfg *Config
 var mtx sync.Mutex
+var penaltyTypesMap map[string]PenaltyDetails
+
+type PenaltyDetails struct {
+	EReceivedAppId, EFilingDesc, EMsgType, PDesc, PDescId, PResourceKind, PProductType string
+}
+
+func init() {
+	penaltyTypesMap = map[string]PenaltyDetails{
+		"LP": {
+			EReceivedAppId: "lfp-pay-api.late_filing_penalty_received_email",
+			EFilingDesc:    "Late Filing Penalty",
+			EMsgType:       "late_filing_penalty_received_email",
+			PDesc:          "Late Filing Penalty",
+			PDescId:        "late-filing-penalty",
+			PResourceKind:  "late-filing-penalty#late-filing-penalty",
+			PProductType:   "late-filing-penalty",
+		},
+		"PN": {
+			EReceivedAppId: "lfp-pay-api.late_filing_penalty_received_email",
+			EFilingDesc:    "Late Filing Penalty",
+			EMsgType:       "late_filing_penalty_received_email",
+			PDesc:          "Late Filing Penalty",
+			PDescId:        "late-filing-penalty",
+			PResourceKind:  "late-filing-penalty#late-filing-penalty",
+			PProductType:   "late-filing-penalty",
+		},
+	}
+}
 
 // Config defines the configuration options for this service.
 type Config struct {
@@ -47,4 +75,17 @@ func Get() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func GetMap() map[string]PenaltyDetails {
+	copyMap := make(map[string]PenaltyDetails, len(penaltyTypesMap))
+	for k, v := range penaltyTypesMap {
+		copyMap[k] = v
+	}
+	return copyMap
+}
+
+func GetValue(key string) (PenaltyDetails, bool) {
+	value, exists := penaltyTypesMap[key]
+	return value, exists
 }

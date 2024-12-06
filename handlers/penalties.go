@@ -19,7 +19,10 @@ func HandleGetPenalties(w http.ResponseWriter, req *http.Request) {
 
 	// Check for a company number in request
 	vars := mux.Vars(req)
+	// only company number in the route variables
+
 	companyNumber, err := utils.GetCompanyNumberFromVars(vars)
+
 	if err != nil {
 		log.ErrorR(req, err)
 		m := models.NewMessageResponse("company number is not in request context")
@@ -27,10 +30,19 @@ func HandleGetPenalties(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	companyCode, err := utils.GetCompanyCodeFromVars(vars)
+	if err != nil {
+		log.ErrorR(req, err)
+		m := models.NewMessageResponse("company code is not in request context")
+		utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
+		return
+	}
+
 	companyNumber = strings.ToUpper(companyNumber)
+	companyCode = strings.ToUpper(companyCode)
 
 	// Call service layer to handle request to E5
-	transactionListResponse, responseType, err := service.GetPenalties(companyNumber)
+	transactionListResponse, responseType, err := service.GetPenalties(companyNumber, companyCode)
 	if err != nil {
 		log.ErrorR(req, fmt.Errorf("error calling e5 to get transactions: %v", err))
 		switch responseType {

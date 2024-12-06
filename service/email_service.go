@@ -3,6 +3,8 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/companieshouse/chs.go/log"
+	"github.com/companieshouse/penalty-payment-api/utils"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,10 +16,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 )
-
-const ppsReceivedAppID = "lfp-pay-api.late_filing_penalty_received_email"
-const ppsFilingDescription = "Late Filing Penalty"
-const ppsMessageType = "late_filing_penalty_received_email"
 
 // ProducerTopic is the topic to which the email-send kafka message is sent
 const ProducerTopic = "email-send"
@@ -98,6 +96,15 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
+	//AC
+	var penaltyType = utils.GetCompanyCodeFromPenaltyReference(payableResource.Reference)
+	log.Info("1 payable resource: " + penaltyType)
+
+	//penaltyTypesMapCopy := config.GetMap()
+	value, _ := config.GetValue(penaltyType)
+	//eReceivedAppId, eFilingDesc, eMsgType, pDesc, pDescId, pResourceKind, pProductType.
+	log.Info("2 payable resource: " + value.EMsgType)
+
 	// Set dataField to be used in the avro schema.
 	dataFieldMessage := models.DataField{
 		PayableResource:   payableResource,
@@ -106,7 +113,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		TransactionDate:   transactionDate.Format("2 January 2006"),
 		Amount:            fmt.Sprintf("%g", payedTransaction.OriginalAmount),
 		CompanyName:       companyName,
-		FilingDescription: ppsFilingDescription,
+		FilingDescription: value.EFilingDesc,
 		To:                payableResource.CreatedBy.Email,
 		Subject:           fmt.Sprintf("Confirmation of your Companies House penalty payment"),
 		CHSURL:            cfg.CHSURL,
@@ -121,9 +128,9 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	messageID := "<" + payableResource.Reference + "." + strconv.Itoa(util.Random(0, 100000)) + "@companieshouse.gov.uk>"
 
 	emailSendMessage := models.EmailSend{
-		AppID:        ppsReceivedAppID,
+		AppID:        value.EReceivedAppId,
 		MessageID:    messageID,
-		MessageType:  ppsMessageType,
+		MessageType:  value.EMsgType,
 		Data:         string(dataBytes),
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),
