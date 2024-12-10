@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -42,9 +41,5 @@ func GenerateEtag() (string, error) {
 
 // GetCompanyCode gets the company code from the prefix of the penalty reference
 func GetCompanyCode(ref string) string {
-	if strings.HasPrefix(ref, "PN") {
-		return "PN"
-	} else {
-		return "LP"
-	}
+	return "LP"
 }

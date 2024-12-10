@@ -36,7 +36,7 @@ func testContext() context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, authentication.ContextKeyUserDetails, authentication.AuthUserDetails{})
 
-	details := middleware.Deets{M: map[string]string{
+	details := middleware.CompanyDetails{M: map[string]string{
 		"CompanyNumber": "10000024",
 		"CompanyCode":   "LP",
 	}}

@@ -114,7 +114,7 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 	// Determine the penalty type
 	var penaltyType = utils.GetCompanyCode(companyCode)
 	// Get the PenaltyDetails value from the map
-	value := config.ImmutablePenaltyTypesMap[penaltyType]
+	value := config.ImmutablePenaltyTypesMap[penaltyType] //LP, PN, 200
 
 	// Loop through e5 response and construct CH resources
 	for _, e5Transaction := range e5Response.Transactions {
@@ -127,7 +127,7 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 			return nil, err
 		}
 		listItem.IsPaid = e5Transaction.IsPaid
-		listItem.Kind = value.PResourceKind
+		listItem.Kind = value.PResourceKind //"late-filing-penalty#late-filing-penalty"
 		listItem.IsDCA = e5Transaction.AccountStatus == "DCA"
 		listItem.DueDate = e5Transaction.DueDate
 		listItem.MadeUpDate = e5Transaction.MadeUpDate

@@ -42,8 +42,8 @@ func CreatePayableResourceHandler(svc dao.Service) http.Handler {
 
 		log.Info("***************************** ")
 
-		companyNumber := r.Context().Value(config.CompanyDetails).(middleware.Deets).Get("CompanyNumber")
-		companyCode := r.Context().Value(config.CompanyDetails).(middleware.Deets).Get("CompanyCode")
+		companyNumber := r.Context().Value(config.CompanyDetails).(middleware.CompanyDetails).Get("CompanyNumber")
+		companyCode := r.Context().Value(config.CompanyDetails).(middleware.CompanyDetails).Get("CompanyCode")
 
 		log.Info("CreatePayableResourceHandler companyNumber: " + companyNumber)
 		log.Info("CreatePayableResourceHandler companyCode: " + companyCode)

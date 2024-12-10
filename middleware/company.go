@@ -17,7 +17,7 @@ func CompanyMiddleware(h http.Handler) http.Handler {
 		companyNumber, err := utils.GetCompanyNumberFromVars(vars)
 		companyCode, err := utils.GetCompanyCodeFromVars(vars)
 
-		details := Deets{map[string]string{
+		details := CompanyDetails{map[string]string{
 			"CompanyNumber": companyNumber,
 			"CompanyCode":   companyCode,
 		}}
@@ -32,10 +32,10 @@ func CompanyMiddleware(h http.Handler) http.Handler {
 	})
 }
 
-type Deets struct {
+type CompanyDetails struct {
 	M map[string]string
 }
 
-func (v Deets) Get(key string) string {
+func (v CompanyDetails) Get(key string) string {
 	return v.M[key]
 }
