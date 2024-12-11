@@ -31,6 +31,7 @@ In order to run this API locally you will need to install the following:
 | `PLANNED_MAINTENANCE_END_TIME`   |   `_`   | End time and date of planned maintenance e.g. `31 Jan 19 16:59 BST`   |
 
 ## Endpoints
+
 | Method    | Path                                                                   | Description                                                           |
 |:----------|:-----------------------------------------------------------------------|:----------------------------------------------------------------------|
 | **GET**   | `/healthcheck`                                                         | Standard healthcheck endpoint                                         |
