@@ -7,6 +7,7 @@ import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/constants"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
@@ -61,7 +62,6 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 			},
 		},
 	}
-
 	return dao
 }
 
@@ -76,9 +76,9 @@ func PayableResourceDaoToCreatedResponse(model *models.PayableResourceDao) *mode
 	}
 }
 
-// PayableResourceDBToRequest will take the Dao version of a payable resource and convert to an request version
+// PayableResourceDBToRequest will take the Dao version of a payable resource and convert to a request version
 func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.PayableResource {
-	transactions := []models.TransactionItem{}
+	var transactions []models.TransactionItem
 	for key, val := range payableDao.Data.Transactions {
 		tx := models.TransactionItem{
 			TransactionID: key,
@@ -99,29 +99,31 @@ func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.P
 		Links:         models.PayableResourceLinks(payableDao.Data.Links),
 		Payment:       models.Payment(payableDao.Data.Payment),
 	}
-
 	return &payable
 }
 
 // PayableResourceToPaymentDetails will create a PaymentDetails resource (for integrating into payment service) from a PPS PayableResource
-func PayableResourceToPaymentDetails(payable *models.PayableResource) *models.PaymentDetails {
-	costs := []models.Cost{}
+func PayableResourceToPaymentDetails(payable *models.PayableResource, penaltyDetailsMap *config.PenaltyDetailsMap) *models.PaymentDetails {
+	// Determine the penalty type
+	var penaltyType = utils.GetCompanyCode(payable.Reference)
+
+	var costs []models.Cost
 	for _, tx := range payable.Transactions {
 		cost := models.Cost{
 			Amount:                  fmt.Sprintf("%g", tx.Amount),
 			AvailablePaymentMethods: []string{"credit-card"},
 			ClassOfPayment:          []string{"penalty"},
-			Description:             "Late Filing Penalty",
-			DescriptionIdentifier:   "late-filing-penalty",
+			Description:             penaltyDetailsMap.Details[penaltyType]["Description"],
+			DescriptionIdentifier:   penaltyDetailsMap.Details[penaltyType]["DescriptionId"],
 			Kind:                    "cost#cost",
-			ResourceKind:            "late-filing-penalty#late-filing-penalty",
-			ProductType:             "late-filing-penalty",
+			ResourceKind:            penaltyDetailsMap.Details[penaltyType]["ResourceKind"],
+			ProductType:             penaltyDetailsMap.Details[penaltyType]["ProductType"],
 		}
 		costs = append(costs, cost)
 	}
 
 	payment := models.PaymentDetails{
-		Description: "Late Filing Penalty",
+		Description: penaltyDetailsMap.Details[penaltyType]["Description"],
 		Etag:        payable.Etag, // use the same Etag as PayableResource its built from - if PayableResource changes PaymentDetails may change too
 		Kind:        "payment-details#payment-details",
 		Links: models.PaymentDetailsLinks{
@@ -134,6 +136,5 @@ func PayableResourceToPaymentDetails(payable *models.PayableResource) *models.Pa
 		CompanyNumber:    payable.CompanyNumber,
 		Items:            costs,
 	}
-
 	return &payment
 }

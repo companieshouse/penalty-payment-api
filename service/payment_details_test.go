@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/companieshouse/penalty-payment-api/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,6 +13,8 @@ import (
 )
 
 func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
+
+	penaltyDetailsMap := loadPenaltyDetails()
 
 	Convey("Get payment details no transactions - invalid data", t, func() {
 
@@ -42,7 +45,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable)
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap)
 
 		So(paymentDetails, ShouldBeNil)
 		So(responseType, ShouldEqual, InvalidData)
@@ -71,7 +74,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				ID:    "uz3r1D_H3r3",
 			},
 			Transactions: []models.TransactionItem{
-				models.TransactionItem{
+				{
 					Amount:        5,
 					Type:          "penalty",
 					TransactionID: "0987654321",
@@ -85,7 +88,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable)
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap)
 
 		expectedCost := models.Cost{
 			Description:             "Late Filing Penalty",
@@ -133,7 +136,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				ID:    "uz3r1D_H3r3",
 			},
 			Transactions: []models.TransactionItem{
-				models.TransactionItem{
+				{
 					Amount:        5,
 					Type:          "penalty",
 					TransactionID: "0987654321",
@@ -149,7 +152,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable)
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap)
 
 		expectedCost := models.Cost{
 			Description:             "Late Filing Penalty",
@@ -176,4 +179,17 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 		So(err, ShouldBeNil)
 
 	})
+}
+
+func loadPenaltyDetails() *config.PenaltyDetailsMap {
+	detailsMap := config.PenaltyDetailsMap{Details: map[string]map[string]string{"LP": {
+		"EmailReceivedAppId": "lfp-pay-api.late_filing_penalty_received_email",
+		"EmailFilingDesc":    "Late Filing Penalty",
+		"EmailMsgType":       "late_filing_penalty_received_email",
+		"Description":        "Late Filing Penalty",
+		"DescriptionId":      "late-filing-penalty",
+		"ResourceKind":       "late-filing-penalty#late-filing-penalty",
+		"ProductType":        "late-filing-penalty",
+	}}}
+	return &detailsMap
 }

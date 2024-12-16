@@ -12,7 +12,6 @@ import (
 
 // HandleGetPayableResource retrieves the payable resource from request context
 func HandleGetPayableResource(w http.ResponseWriter, req *http.Request) {
-
 	// get payable resource from context, put there by PayableResourceAuthenticationInterceptor
 	payableResource, ok := req.Context().Value(config.PayableResource).(*models.PayableResource)
 

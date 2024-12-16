@@ -45,6 +45,5 @@ func GetPaymentInformation(id string, req *http.Request) (*validators.PaymentInf
 		ExternalPaymentID: paymentDetails.ExternalPaymentID,
 		CardType:          paymentDetails.CardType,
 	}
-
 	return paymentInformation, nil
 }

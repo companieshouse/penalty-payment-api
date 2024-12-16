@@ -2,6 +2,8 @@
 package config
 
 import (
+	"gopkg.in/yaml.v2"
+	"os"
 	"sync"
 	"time"
 
@@ -29,6 +31,12 @@ type Config struct {
 	PlannedMaintenanceEnd      string       `env:"PLANNED_MAINTENANCE_END_TIME"   flag:"planned-maintenance-end-time"    flagDesc:"The time of the day at which Planned E5 maintenance ends"`
 }
 
+// PenaltyDetailsMap defines the struct to hold the penalty details
+type PenaltyDetailsMap struct {
+	Description string                       `yaml:"name"`
+	Details     map[string]map[string]string `yaml:"details"`
+}
+
 // Get returns a pointer to a Config instance
 // populated with values from environment or command-line flags
 func Get() (*Config, error) {
@@ -47,4 +55,20 @@ func Get() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func LoadPenaltyDetails(fileName string) (*PenaltyDetailsMap, error) {
+	yamlFile, err := os.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	var penaltyDetailsMap PenaltyDetailsMap
+
+	err = yaml.Unmarshal(yamlFile, &penaltyDetailsMap)
+	if err != nil {
+		return nil, err
+	}
+
+	return &penaltyDetailsMap, nil
 }

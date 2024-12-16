@@ -93,12 +93,17 @@ const multiplePenalties = `
 `
 
 func TestUnitPayableTransactions(t *testing.T) {
-	os.Chdir("..")
+	err := os.Chdir("..")
+	if err != nil {
+		return
+	}
 	cfg, _ := config.Get()
 	cfg.E5APIURL = "https://e5"
 	cfg.E5Username = "SYSTEM"
 
 	url := "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=LP&fromDate=1990-01-01"
+
+	penaltyDetailsMap := &config.PenaltyDetailsMap{}
 
 	Convey("error is returned when transaction does not exist", t, func() {
 		httpmock.Activate()
@@ -108,10 +113,10 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			models.TransactionItem{TransactionID: "123"},
+			{TransactionID: "123"},
 		}
 
-		validTxs, err := TransactionsArePayable("10000024", txs)
+		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap)
 
 		So(validTxs, ShouldBeNil)
 		So(err, ShouldBeError, ErrTransactionDoesNotExist)
@@ -125,10 +130,10 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			models.TransactionItem{TransactionID: "00378420"},
+			{TransactionID: "00378420"},
 		}
 
-		validTxs, err := TransactionsArePayable("10000024", txs)
+		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap)
 
 		So(validTxs, ShouldBeNil)
 		So(err, ShouldBeError, ErrTransactionNotPayable)
@@ -142,10 +147,10 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			models.TransactionItem{TransactionID: "00378420"},
+			{TransactionID: "00378420"},
 		}
 
-		validTxs, err := TransactionsArePayable("10000024", txs)
+		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap)
 
 		So(validTxs, ShouldBeNil)
 		So(err, ShouldBeError, ErrTransactionIsPaid)
@@ -159,10 +164,10 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			models.TransactionItem{TransactionID: "00378420", Amount: 150},
+			{TransactionID: "00378420", Amount: 150},
 		}
 
-		validTxs, err := TransactionsArePayable("10000024", txs)
+		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap)
 
 		So(err, ShouldBeNil)
 		So(validTxs[0].MadeUpDate, ShouldEqual, "2017-02-28")
@@ -180,10 +185,10 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			models.TransactionItem{TransactionID: "00378420", Amount: 100},
+			{TransactionID: "00378420", Amount: 100},
 		}
 
-		validTxs, err := TransactionsArePayable("10000024", txs)
+		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap)
 
 		So(validTxs, ShouldBeNil)
 		So(err, ShouldBeError, ErrTransactionAmountMismatch)
@@ -199,7 +204,7 @@ func TestUnitPayableTransactions(t *testing.T) {
 			{TransactionID: "00378420", Amount: 100},
 		}
 
-		validTxs, err := TransactionsArePayable("10000024", txs)
+		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap)
 
 		So(validTxs, ShouldBeNil)
 		So(err, ShouldBeError, ErrMultiplePenalties)
@@ -216,7 +221,7 @@ func TestUnitPayableTransactions(t *testing.T) {
 			{TransactionID: "00378420", Amount: 150},
 		}
 
-		validTxs, err := TransactionsArePayable("10000024", txs)
+		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap)
 
 		So(validTxs, ShouldBeNil)
 		So(err, ShouldBeError, ErrTransactionDCA)
@@ -233,7 +238,7 @@ func TestUnitPayableTransactions(t *testing.T) {
 			{TransactionID: "00378420", Amount: 50},
 		}
 
-		validTxs, err := TransactionsArePayable("10000024", txs)
+		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap)
 
 		So(validTxs, ShouldBeNil)
 		So(err, ShouldBeError, ErrTransactionIsPartPaid)

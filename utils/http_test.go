@@ -52,3 +52,11 @@ func TestUnitGetCompanyNumber(t *testing.T) {
 		So(err.Error(), ShouldEqual, "company number not supplied")
 	})
 }
+
+func TestUnitGetCompanyCodeFromVars(t *testing.T) {
+	Convey("Get Company Code from vars", t, func() {
+		companyNumber, err := GetCompanyCodeFromVars()
+		So(companyNumber, ShouldEqual, "LP")
+		So(err, ShouldBeNil)
+	})
+}

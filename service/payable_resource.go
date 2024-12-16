@@ -45,12 +45,12 @@ func (s *PayableResourceService) GetPayableResource(req *http.Request, companyNu
 	}
 
 	payableRest := transformers.PayableResourceDBToRequest(payable)
-
 	return payableRest, Success, nil
 }
 
 // UpdateAsPaid will update the resource as paid and persist the changes in the database
 func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, payment validators.PaymentInformation) error {
+	log.Info("update as paid start")
 	model, err := s.DAO.GetPayableResource(resource.CompanyNumber, resource.Reference)
 	if err != nil {
 		err = fmt.Errorf("error getting payable resource from db: [%v]", err)

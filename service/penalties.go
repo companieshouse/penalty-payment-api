@@ -38,13 +38,13 @@ func (transactionType TransactionType) String() string {
 // GetPenalties is a function that:
 // 1. makes a request to e5 to get a list of transactions for the specified company
 // 2. takes the results of this request and maps them to a format that the penalty-payment-web can consume
-func GetPenalties(companyNumber string) (*models.TransactionListResponse, ResponseType, error) {
+func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap) (*models.TransactionListResponse, ResponseType, error) {
 	cfg, err := config.Get()
 	if err != nil {
 		return nil, Error, nil
 	}
 	client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
-	e5Response, err := client.GetTransactions(&e5.GetTransactionsInput{CompanyNumber: companyNumber, CompanyCode: "LP"})
+	e5Response, err := client.GetTransactions(&e5.GetTransactionsInput{CompanyNumber: companyNumber, CompanyCode: companyCode})
 
 	if err != nil {
 		log.Error(fmt.Errorf("error getting transaction list: [%v]", err))
@@ -53,7 +53,7 @@ func GetPenalties(companyNumber string) (*models.TransactionListResponse, Respon
 
 	// Generate the CH preferred format of the results i.e. classify the transactions into payable "penalty" types or
 	// non-payable "other" types
-	generatedTransactionListFromE5Response, err := generateTransactionListFromE5Response(e5Response)
+	generatedTransactionListFromE5Response, err := generateTransactionListFromE5Response(e5Response, companyCode, penaltyDetailsMap)
 	if err != nil {
 		err = fmt.Errorf("error generating transaction list from the e5 response: [%v]", err)
 		log.Error(err)
@@ -65,8 +65,9 @@ func GetPenalties(companyNumber string) (*models.TransactionListResponse, Respon
 }
 
 // GetTransactionForPenalty returns a single, specified, transaction from e5 for a specific company
-func GetTransactionForPenalty(companyNumber, penaltyNumber string) (*models.TransactionListItem, error) {
-	response, _, err := GetPenalties(companyNumber)
+func GetTransactionForPenalty(companyNumber, penaltyNumber string, penaltyDetailsMap *config.PenaltyDetailsMap) (*models.TransactionListItem, error) {
+	companyCode := utils.GetCompanyCode(penaltyNumber)
+	response, _, err := GetPenalties(companyNumber, companyCode, penaltyDetailsMap)
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -81,7 +82,7 @@ func GetTransactionForPenalty(companyNumber, penaltyNumber string) (*models.Tran
 	return nil, fmt.Errorf("cannot find transaction for penalty number [%v]", penaltyNumber)
 }
 
-func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsResponse) (*models.TransactionListResponse, error) {
+func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsResponse, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap) (*models.TransactionListResponse, error) {
 	// Next, map results to a format that can be used by PPS web
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := utils.GenerateEtag()
@@ -110,6 +111,9 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 		return nil, err
 	}
 
+	// Determine the penalty type
+	var penaltyType = utils.GetCompanyCode(companyCode)
+
 	// Loop through e5 response and construct CH resources
 	for _, e5Transaction := range e5Response.Transactions {
 		listItem := models.TransactionListItem{}
@@ -121,7 +125,7 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 			return nil, err
 		}
 		listItem.IsPaid = e5Transaction.IsPaid
-		listItem.Kind = "late-filing-penalty#late-filing-penalty"
+		listItem.Kind = penaltyDetailsMap.Details[penaltyType]["ResourceKind"]
 		listItem.IsDCA = e5Transaction.AccountStatus == "DCA"
 		listItem.DueDate = e5Transaction.DueDate
 		listItem.MadeUpDate = e5Transaction.MadeUpDate
@@ -163,12 +167,14 @@ func MarkTransactionsAsPaid(svc *PayableResourceService, client *e5.Client, reso
 	// ones that begin with 'LP' which signify penalties that have been paid outside of the digital service.
 	paymentID := "X" + payment.PaymentID
 
+	var companyCode = utils.GetCompanyCode(resource.Reference)
+
 	// three http requests are needed to mark a transactions as paid. The process is 1) create the payment, 2) authorise
 	// the payments and finally 3) confirm the payment. if anyone of these fails, the company account will be locked in
 	// E5. Finance have confirmed that it is better to keep these locked as a cleanup process will happen naturally in
 	// the working day.
 	err = client.CreatePayment(&e5.CreatePaymentInput{
-		CompanyCode:   "LP",
+		CompanyCode:   companyCode,
 		CompanyNumber: resource.CompanyNumber,
 		PaymentID:     paymentID,
 		TotalValue:    amountPaid,
@@ -185,7 +191,7 @@ func MarkTransactionsAsPaid(svc *PayableResourceService, client *e5.Client, reso
 	}
 
 	err = client.AuthorisePayment(&e5.AuthorisePaymentInput{
-		CompanyCode:   "LP",
+		CompanyCode:   companyCode,
 		PaymentID:     paymentID,
 		CardReference: payment.ExternalPaymentID,
 		CardType:      payment.CardType,
@@ -202,7 +208,7 @@ func MarkTransactionsAsPaid(svc *PayableResourceService, client *e5.Client, reso
 	}
 
 	err = client.ConfirmPayment(&e5.PaymentActionInput{
-		CompanyCode: "LP",
+		CompanyCode: companyCode,
 		PaymentID:   paymentID,
 	})
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -30,7 +31,13 @@ func main() {
 	mainRouter := mux.NewRouter()
 	svc := dao.NewDAOService(cfg)
 
-	handlers.Register(mainRouter, cfg, svc)
+	penaltyDetailsMap, err := config.LoadPenaltyDetails("assets/penalty_details.yml")
+	if err != nil {
+		log.Error(fmt.Errorf("error configuring service: %s. Exiting", err), nil)
+		return
+	}
+
+	handlers.Register(mainRouter, cfg, svc, penaltyDetailsMap)
 
 	log.Info("Starting " + namespace)
 
@@ -47,7 +54,7 @@ func main() {
 		log.Info("starting server...", log.Data{"port": cfg.BindAddr})
 		err = h.ListenAndServe()
 		log.Info("server stopping...")
-		if err != nil && err != http.ErrServerClosed {
+		if err != nil && !errors.Is(http.ErrServerClosed, err) {
 			log.Error(err)
 			svc.Shutdown()
 			os.Exit(1)

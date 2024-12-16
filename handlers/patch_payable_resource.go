@@ -23,7 +23,7 @@ var wg sync.WaitGroup
 
 // PayResourceHandler will update the resource to mark it as paid and also tell the finance system that the
 // transaction(s) associated with it are paid.
-func PayResourceHandler(svc *service.PayableResourceService, e5Client *e5.Client) http.Handler {
+func PayResourceHandler(svc *service.PayableResourceService, e5Client *e5.Client, penaltyPaymentDetails *config.PenaltyDetailsMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 1. get the payable resource our of the context. authorisation is already handled in the interceptor
 		i := r.Context().Value(config.PayableResource)
@@ -42,7 +42,7 @@ func PayResourceHandler(svc *service.PayableResourceService, e5Client *e5.Client
 			"company_number":    resource.CompanyNumber,
 		})
 
-		// 2. validate the request and check the reference number against the payment api to validate that is has
+		// 2. validate the request and check the reference number against the payment api to validate that it has
 		// actually been paid
 		var request models.PatchResourceRequest
 		err := json.NewDecoder(r.Body).Decode(&request)
@@ -79,7 +79,7 @@ func PayResourceHandler(svc *service.PayableResourceService, e5Client *e5.Client
 
 		wg.Add(3)
 
-		go sendConfirmationEmail(resource, payment, r, w)
+		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails)
 		go updateDatabase(resource, payment, svc, r, w)
 		go updateE5(e5Client, resource, payment, svc, r, w)
 
@@ -89,10 +89,10 @@ func PayResourceHandler(svc *service.PayableResourceService, e5Client *e5.Client
 		w.WriteHeader(http.StatusNoContent) // This will not be set if status has already been set
 	})
 }
-func sendConfirmationEmail(resource *models.PayableResource, payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter) {
+func sendConfirmationEmail(resource *models.PayableResource, payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter, penaltyPaymentDetails *config.PenaltyDetailsMap) {
 	// Send confirmation email
 	defer wg.Done()
-	err := handleEmailKafkaMessage(*resource, r)
+	err := handleEmailKafkaMessage(*resource, r, penaltyPaymentDetails)
 	if err != nil {
 		log.ErrorR(r, err, log.Data{"penalty_reference": resource.Reference, "payment_id": payment.Reference})
 		w.WriteHeader(http.StatusInternalServerError)

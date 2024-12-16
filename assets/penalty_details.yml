@@ -1,0 +1,11 @@
+---
+name: penalty details
+details:
+  LP:
+    Description: "Late Filing Penalty"
+    DescriptionId: "late-filing-penalty"
+    ResourceKind: "late-filing-penalty#late-filing-penalty"
+    ProductType: "late-filing-penalty"
+    EmailReceivedAppId: "lfp-pay-api.late_filing_penalty_received_email"
+    EmailFilingDesc:    "Late Filing Penalty"
+    EmailMsgType:       "late_filing_penalty_received_email"

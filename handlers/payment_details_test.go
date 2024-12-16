@@ -23,7 +23,9 @@ func serveGetPaymentDetailsHandler(payableResource *models.PayableResource) *htt
 		req = req.WithContext(ctx)
 	}
 
-	HandleGetPaymentDetails(res, req)
+	penaltyDetailsMap := &config.PenaltyDetailsMap{}
+	HandleGetPaymentDetails(penaltyDetailsMap).ServeHTTP(res, req)
+	//HandleGetPaymentDetails(res, req)
 
 	return res
 }
@@ -78,7 +80,7 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 				ID:    "uz3r1D_H3r3",
 			},
 			Transactions: []models.TransactionItem{
-				models.TransactionItem{
+				{
 					Amount:        5,
 					Type:          "penalty",
 					TransactionID: "0987654321",
