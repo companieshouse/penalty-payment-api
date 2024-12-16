@@ -3,6 +3,7 @@ package validators
 import (
 	"errors"
 	"fmt"
+	"github.com/companieshouse/penalty-payment-api/config"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
@@ -21,8 +22,9 @@ var (
 
 // TransactionsArePayable validator will verify the transaction in a request do exist for the company. It will also update the
 // type and made up date fields to match what is in E5.
-func TransactionsArePayable(companyNumber string, txs []models.TransactionItem) ([]models.TransactionItem, error) {
-	response, _, err := service.GetPenalties(companyNumber)
+func TransactionsArePayable(companyNumber string, companyCode string, txs []models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap) ([]models.TransactionItem, error) {
+	response, _, err := service.GetPenalties(companyNumber, companyCode, penaltyDetailsMap)
+
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -77,7 +79,6 @@ func TransactionsArePayable(companyNumber string, txs []models.TransactionItem) 
 		}
 		validTxs = append(validTxs, validTx)
 	}
-
 	return validTxs, nil
 }
 

@@ -41,6 +41,7 @@ var e5ValidationError = `
   } ]
 }
 `
+var penaltyDetailsMap = &config.PenaltyDetailsMap{}
 
 // reduces the boilerplate code needed to create, dispatch and unmarshal response body
 func dispatchPayResourceHandler(
@@ -66,7 +67,7 @@ func dispatchPayResourceHandler(
 
 	ctx = context.WithValue(ctx, httpsession.ContextKeySession, &session.Session{})
 
-	h := PayResourceHandler(svc, e5.NewClient("foo", "e5api"))
+	h := PayResourceHandler(svc, e5.NewClient("foo", "e5api"), penaltyDetailsMap)
 	req := httptest.NewRequest(http.MethodPost, "/", body).WithContext(ctx)
 	res := httptest.NewRecorder()
 
@@ -86,12 +87,12 @@ func dispatchPayResourceHandler(
 }
 
 // Mock function for erroring when preparing and sending kafka message
-func mockSendEmailKafkaMessageError(payableResource models.PayableResource, req *http.Request) error {
+func mockSendEmailKafkaMessageError(payableResource models.PayableResource, req *http.Request, detailsMap *config.PenaltyDetailsMap) error {
 	return errors.New("error")
 }
 
 // Mock function for successful preparing and sending of kafka message
-func mockSendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request) error {
+func mockSendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request, detailsMap *config.PenaltyDetailsMap) error {
 	return nil
 }
 

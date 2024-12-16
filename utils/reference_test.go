@@ -38,5 +38,13 @@ func TestUnitGenerateEtag(t *testing.T) {
 		etag, err := GenerateEtag()
 		So(len(etag), ShouldEqual, 56)
 		So(err, ShouldBeNil)
+		So(err, ShouldBeNil)
+	})
+}
+
+func TestUnitGetCompanyCode(t *testing.T) {
+	Convey("Get Company Code", t, func() {
+		companyCode := GetCompanyCode("")
+		So(companyCode, ShouldEqual, "LP")
 	})
 }

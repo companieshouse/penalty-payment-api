@@ -14,6 +14,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/dao"
+	"github.com/companieshouse/penalty-payment-api/middleware"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
@@ -25,7 +26,8 @@ func serveCreatePayableResourceHandler(body []byte, service dao.Service) *httpte
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	res := httptest.NewRecorder()
 
-	handler := CreatePayableResourceHandler(service)
+	penaltyDetailsMap := &config.PenaltyDetailsMap{}
+	handler := CreatePayableResourceHandler(service, penaltyDetailsMap)
 	handler.ServeHTTP(res, req.WithContext(testContext()))
 
 	return res
@@ -34,7 +36,13 @@ func serveCreatePayableResourceHandler(body []byte, service dao.Service) *httpte
 func testContext() context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, authentication.ContextKeyUserDetails, authentication.AuthUserDetails{})
-	ctx = context.WithValue(ctx, config.CompanyNumber, "10000024")
+
+	details := middleware.CompanyDetails{M: map[string]string{
+		"CompanyNumber": "10000024",
+		"CompanyCode":   "LP",
+	}}
+
+	ctx = context.WithValue(ctx, config.CompanyDetails, details)
 	return ctx
 }
 
@@ -110,7 +118,10 @@ var e5ResponseMultipleTx = `
 `
 
 func TestUnitCreatePayableResourceHandler(t *testing.T) {
-	os.Chdir("..")
+	err := os.Chdir("..")
+	if err != nil {
+		return
+	}
 	cfg, _ := config.Get()
 	cfg.E5APIURL = "https://e5"
 	cfg.E5Username = "SYSTEM"

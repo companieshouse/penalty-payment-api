@@ -15,11 +15,12 @@ import (
 
 func TestUnitRegisterRoutes(t *testing.T) {
 	Convey("Register routes", t, func() {
+		penaltyDetailsMap = &config.PenaltyDetailsMap{}
 		router := mux.NewRouter()
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
 		mockService := mocks.NewMockService(mockCtrl)
-		Register(router, &config.Config{}, mockService)
+		Register(router, &config.Config{}, mockService, penaltyDetailsMap)
 
 		So(router.GetRoute("healthcheck"), ShouldNotBeNil)
 		So(router.GetRoute("healthcheck-finance-system"), ShouldNotBeNil)

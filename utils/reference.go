@@ -38,3 +38,8 @@ func GenerateEtag() (string, error) {
 	sha1Hash := hex.EncodeToString(shaDigest.Sum(nil))
 	return sha1Hash, nil
 }
+
+// GetCompanyCode gets the company code from the prefix of the penalty reference, currently hardcoded to LP until release 2.
+func GetCompanyCode(ref string) string {
+	return "LP"
+}
