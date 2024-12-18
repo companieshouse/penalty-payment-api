@@ -17,7 +17,6 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		HandleGetPenalties(penaltyDetailsMap).ServeHTTP(w, req)
-		//HandleGetPenalties(w, req)
 		So(w.Code, ShouldEqual, http.StatusBadRequest)
 	})
 

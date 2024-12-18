@@ -181,15 +181,15 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 
 func loadPenaltyDetails() *config.PenaltyDetailsMap {
 	detailsMap := config.PenaltyDetailsMap{
-		Details: map[string]map[string]string{
+		Details: map[string]config.PenaltyDetails{
 			"LP": {
-				"EmailReceivedAppId": "lfp-pay-api.late_filing_penalty_received_email",
-				"EmailFilingDesc":    "Late Filing Penalty",
-				"EmailMsgType":       "late_filing_penalty_received_email",
-				"Description":        "Late Filing Penalty",
-				"DescriptionId":      "late-filing-penalty",
-				"ResourceKind":       "late-filing-penalty#late-filing-penalty",
-				"ProductType":        "late-filing-penalty",
+				EmailReceivedAppId: "lfp-pay-api.late_filing_penalty_received_email",
+				EmailFilingDesc:    "Late Filing Penalty",
+				EmailMsgType:       "late_filing_penalty_received_email",
+				Description:        "Late Filing Penalty",
+				DescriptionId:      "late-filing-penalty",
+				ResourceKind:       "late-filing-penalty#late-filing-penalty",
+				ProductType:        "late-filing-penalty",
 			},
 		},
 	}

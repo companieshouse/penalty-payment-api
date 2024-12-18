@@ -125,7 +125,7 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 			return nil, err
 		}
 		listItem.IsPaid = e5Transaction.IsPaid
-		listItem.Kind = penaltyDetailsMap.Details[penaltyType]["ResourceKind"]
+		listItem.Kind = penaltyDetailsMap.Details[penaltyType].ResourceKind
 		listItem.IsDCA = e5Transaction.AccountStatus == "DCA"
 		listItem.DueDate = e5Transaction.DueDate
 		listItem.MadeUpDate = e5Transaction.MadeUpDate

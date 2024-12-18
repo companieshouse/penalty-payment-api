@@ -106,7 +106,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		TransactionDate:   transactionDate.Format("2 January 2006"),
 		Amount:            fmt.Sprintf("%g", payedTransaction.OriginalAmount),
 		CompanyName:       companyName,
-		FilingDescription: penaltyDetailsMap.Details[penaltyType]["EmailFilingDesc"],
+		FilingDescription: penaltyDetailsMap.Details[penaltyType].EmailFilingDesc,
 		To:                payableResource.CreatedBy.Email,
 		Subject:           fmt.Sprintf("Confirmation of your Companies House penalty payment"),
 		CHSURL:            cfg.CHSURL,
@@ -121,9 +121,9 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	messageID := "<" + payableResource.Reference + "." + strconv.Itoa(util.Random(0, 100000)) + "@companieshouse.gov.uk>"
 
 	emailSendMessage := models.EmailSend{
-		AppID:        penaltyDetailsMap.Details[penaltyType]["EmailReceivedAppId"],
+		AppID:        penaltyDetailsMap.Details[penaltyType].EmailReceivedAppId,
 		MessageID:    messageID,
-		MessageType:  penaltyDetailsMap.Details[penaltyType]["EmailMsgType"],
+		MessageType:  penaltyDetailsMap.Details[penaltyType].EmailMsgType,
 		Data:         string(dataBytes),
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),

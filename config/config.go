@@ -31,10 +31,21 @@ type Config struct {
 	PlannedMaintenanceEnd      string       `env:"PLANNED_MAINTENANCE_END_TIME"   flag:"planned-maintenance-end-time"    flagDesc:"The time of the day at which Planned E5 maintenance ends"`
 }
 
-// PenaltyDetailsMap defines the struct to hold the penalty details
+// PenaltyDetailsMap defines the struct to hold the map of penalty details.
 type PenaltyDetailsMap struct {
-	Description string                       `yaml:"name"`
-	Details     map[string]map[string]string `yaml:"details"`
+	Name    string                    `yaml:"name"`
+	Details map[string]PenaltyDetails `yaml:"details"`
+}
+
+// PenaltyDetails defines the struct to hold the penalty details.
+type PenaltyDetails struct {
+	Description        string `yaml:"Description"`
+	DescriptionId      string `yaml:"DescriptionId"`
+	ResourceKind       string `yaml:"ResourceKind"`
+	ProductType        string `yaml:"ProductType"`
+	EmailReceivedAppId string `yaml:"EmailReceivedAppId"`
+	EmailFilingDesc    string `yaml:"EmailFilingDesc"`
+	EmailMsgType       string `yaml:"EmailMsgType"`
 }
 
 // Get returns a pointer to a Config instance

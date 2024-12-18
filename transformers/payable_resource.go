@@ -113,17 +113,17 @@ func PayableResourceToPaymentDetails(payable *models.PayableResource, penaltyDet
 			Amount:                  fmt.Sprintf("%g", tx.Amount),
 			AvailablePaymentMethods: []string{"credit-card"},
 			ClassOfPayment:          []string{"penalty"},
-			Description:             penaltyDetailsMap.Details[penaltyType]["Description"],
-			DescriptionIdentifier:   penaltyDetailsMap.Details[penaltyType]["DescriptionId"],
+			Description:             penaltyDetailsMap.Details[penaltyType].Description,
+			DescriptionIdentifier:   penaltyDetailsMap.Details[penaltyType].DescriptionId,
 			Kind:                    "cost#cost",
-			ResourceKind:            penaltyDetailsMap.Details[penaltyType]["ResourceKind"],
-			ProductType:             penaltyDetailsMap.Details[penaltyType]["ProductType"],
+			ResourceKind:            penaltyDetailsMap.Details[penaltyType].ResourceKind,
+			ProductType:             penaltyDetailsMap.Details[penaltyType].ProductType,
 		}
 		costs = append(costs, cost)
 	}
 
 	payment := models.PaymentDetails{
-		Description: penaltyDetailsMap.Details[penaltyType]["Description"],
+		Description: penaltyDetailsMap.Details[penaltyType].Description,
 		Etag:        payable.Etag, // use the same Etag as PayableResource its built from - if PayableResource changes PaymentDetails may change too
 		Kind:        "payment-details#payment-details",
 		Links: models.PaymentDetailsLinks{

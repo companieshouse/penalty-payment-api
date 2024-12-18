@@ -31,7 +31,7 @@ func TestUnitLoadPenaltyDetails(t *testing.T) {
 		So(err.Error(), ShouldEqual, "yaml: line 2: found character that cannot start any token")
 
 	})
-	Convey("Load Penalty Details", t, func() {
+	Convey("Load Penalty PenaltyDetails", t, func() {
 		testYaml := []byte(`
 name: penalty details
 details:
@@ -54,7 +54,7 @@ details:
 		}
 
 		So(err, ShouldBeNil)
-		So(penaltyDetailsMap.Description, ShouldEqual, "penalty details")
-		So(penaltyDetailsMap.Details["LP"]["EmailReceivedAppId"], ShouldEqual, "lfp-pay-api.late_filing_penalty_received_email")
+		So(penaltyDetailsMap.Name, ShouldEqual, "penalty details")
+		So(penaltyDetailsMap.Details["LP"].EmailReceivedAppId, ShouldEqual, "lfp-pay-api.late_filing_penalty_received_email")
 	})
 }
