@@ -8,22 +8,25 @@ import (
 
 func TestUnitResponseType(t *testing.T) {
 	Convey("Given String is called on a ResponseType", t, func() {
-		Convey("When a valid value is provided", func() {
-			val := ResponseType(0)
-			result := val.String()
+		testCases := []struct {
+			input    ResponseType
+			expected string
+		}{
+			{input: InvalidData, expected: "invalid-data"},
+			{input: Error, expected: "error"},
+			{input: Forbidden, expected: "forbidden"},
+			{input: NotFound, expected: "not-found"},
+			{input: Success, expected: "success"},
+		}
+		Convey("When String is called", func() {
+			for _, testCase := range testCases {
+				testCase := testCase
 
-			Convey("Then the correct s should be returned", func() {
-				So(result, ShouldEqual, "Success")
-			})
-		})
-
-		Convey("When an invalid value is provided", func() {
-			val := ResponseType(123)
-			result := val.String()
-
-			Convey("Then 'invalid-data' should be returned", func() {
-				So(result, ShouldEqual, "invalid-data")
-			})
+				Convey("Then the correct string should be returned for "+testCase.expected, func() {
+					result := testCase.input.String()
+					So(result, ShouldEqual, testCase.expected)
+				})
+			}
 		})
 	})
 }
