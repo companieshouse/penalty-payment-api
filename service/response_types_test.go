@@ -7,7 +7,7 @@ import (
 )
 
 func TestUnitResponseType(t *testing.T) {
-	Convey("Given String is called on a ResponseType", t, func() {
+	Convey("Given the defined ResponseTypes", t, func() {
 		testCases := []struct {
 			input    ResponseType
 			expected string
