@@ -37,7 +37,13 @@ func main() {
 		return
 	}
 
-	handlers.Register(mainRouter, cfg, svc, penaltyDetailsMap)
+	allowedTransactionsMap, err := config.GetAllowedTransactions("assets/penalty_types.yml")
+	if err != nil {
+		log.Error(fmt.Errorf("error configuring service: %s. Exiting", err), nil)
+		return
+	}
+
+	handlers.Register(mainRouter, cfg, svc, penaltyDetailsMap, allowedTransactionsMap)
 
 	log.Info("Starting " + namespace)
 

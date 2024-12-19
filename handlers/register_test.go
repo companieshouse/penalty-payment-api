@@ -20,7 +20,7 @@ func TestUnitRegisterRoutes(t *testing.T) {
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
 		mockService := mocks.NewMockService(mockCtrl)
-		Register(router, &config.Config{}, mockService, penaltyDetailsMap)
+		Register(router, &config.Config{}, mockService, penaltyDetailsMap, allowedTransactionsMap)
 
 		So(router.GetRoute("healthcheck"), ShouldNotBeNil)
 		So(router.GetRoute("healthcheck-finance-system"), ShouldNotBeNil)

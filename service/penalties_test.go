@@ -9,6 +9,7 @@ import (
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
+	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
@@ -17,21 +18,154 @@ import (
 )
 
 var e5ValidationError = `
-{
-  "httpStatusCode" : 400,
-  "status" : "BAD_REQUEST",
-  "timestamp" : "2019-07-07T18:40:07Z",
-  "messageCode" : null,
-  "message" : "Constraint Validation error",
-  "debugMessage" : null,
-  "subErrors" : [ {
-    "object" : "String",
-    "field" : "companyCode",
-    "rejectedValue" : "LPs",
-    "message" : "size must be between 0 and 2"
-  } ]
-}
+
+	{
+	 "httpStatusCode" : 400,
+	 "status" : "BAD_REQUEST",
+	 "timestamp" : "2019-07-07T18:40:07Z",
+	 "messageCode" : null,
+	 "message" : "Constraint Validation error",
+	 "debugMessage" : null,
+	 "subErrors" : [ {
+	   "object" : "String",
+	   "field" : "companyCode",
+	   "rejectedValue" : "LPs",
+	   "message" : "size must be between 0 and 2"
+	 } ]
+	}
+
 `
+
+func TestUnitGetPenalties(t *testing.T) {
+	companyNumber := "NI123456"
+	companyCode := "LP"
+	penaltyDetailsMap := &config.PenaltyDetailsMap{}
+	allowedTransactionMap := &models.AllowedTransactionMap{
+		Types: map[string]map[string]bool{
+			"1": {
+				"EJ": true,
+				"EU": true,
+			},
+		},
+	}
+
+	transaction := e5.Transaction{
+		CompanyCode:     "LP",
+		TransactionType: "EU",
+	}
+	page := e5.Page{
+		Size:          1,
+		TotalElements: 1,
+		TotalPages:    1,
+		Number:        1,
+	}
+
+	e5TransactionsResponse := e5.GetTransactionsResponse{
+		Page: page,
+		Transactions: []e5.Transaction{
+			1: transaction,
+		},
+	}
+
+	Convey("error no mock", t, func() {
+		_, responseType, err := GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		So(err, ShouldNotBeNil)
+		So(responseType, ShouldEqual, Error)
+	})
+
+	Convey("success", t, func() {
+		mockedGetTransactions := func(companyNumber string, companyCode string,
+			penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
+			return &e5TransactionsResponse, nil
+		}
+
+		getTransactions = mockedGetTransactions
+
+		listResponse, responseType, err := GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		So(err, ShouldBeNil)
+		So(listResponse, ShouldNotBeNil)
+		So(responseType, ShouldEqual, Success)
+	})
+
+	Convey("no transactions found", t, func() {
+		errGettingTransactions := errors.New("error getting transactions")
+		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
+			return &e5.GetTransactionsResponse{}, errGettingTransactions
+		}
+
+		getTransactions = mockedGetTransactions
+
+		listResponse, responseType, err := GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		So(err, ShouldEqual, errGettingTransactions)
+		So(listResponse, ShouldBeNil)
+		So(responseType, ShouldEqual, Error)
+	})
+}
+
+func TestUnitGetTransactionForPenalty(t *testing.T) {
+	companyNumber := "NI123456"
+	companyCode := "LP"
+	penaltyDetailsMap := &config.PenaltyDetailsMap{}
+	allowedTransactionMap := &models.AllowedTransactionMap{
+		Types: map[string]map[string]bool{
+			"1": {
+				"EJ": true,
+				"EU": true,
+			},
+		},
+	}
+
+	Convey("no transactions found", t, func() {
+		errGettingTransactions := errors.New("error getting transactions")
+		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
+			return &e5.GetTransactionsResponse{}, errGettingTransactions
+		}
+
+		getTransactions = mockedGetTransactions
+
+		responseType, err := GetTransactionForPenalty(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		So(err, ShouldEqual, errGettingTransactions)
+		So(responseType, ShouldEqual, Error)
+	})
+
+	Convey("no transactions found", t, func() {
+		errGettingTransactions := errors.New("error getting transactions")
+
+		transaction := e5.Transaction{
+			CompanyCode:     "LP",
+			TransactionType: "EU",
+		}
+		page := e5.Page{
+			Size:          1,
+			TotalElements: 1,
+			TotalPages:    1,
+			Number:        1,
+		}
+
+		e5TransactionsResponse := e5.GetTransactionsResponse{
+			Page: page,
+			Transactions: []e5.Transaction{
+				1: transaction,
+			},
+		}
+
+		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
+			return &e5TransactionsResponse, nil
+		}
+
+		getTransactions = mockedGetTransactions
+
+		responseType, err := GetTransactionForPenalty(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		So(err, ShouldEqual, errGettingTransactions)
+		So(responseType, ShouldEqual, Error)
+	})
+}
+
+func TestUnitLogE5Error(t *testing.T) {
+	Convey("no transactions found", t, func() {
+		logE5Error("", errors.New("error getting transactions"), models.PayableResource{}, validators.PaymentInformation{})
+	})
+}
 
 func TestUnitMarkTransactionsAsPaid(t *testing.T) {
 	Convey("amount must be okay to parse as float", t, func() {

@@ -26,8 +26,7 @@ func serveCreatePayableResourceHandler(body []byte, service dao.Service) *httpte
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	res := httptest.NewRecorder()
 
-	penaltyDetailsMap := &config.PenaltyDetailsMap{}
-	handler := CreatePayableResourceHandler(service, penaltyDetailsMap)
+	handler := CreatePayableResourceHandler(service, penaltyDetailsMap, allowedTransactionsMap)
 	handler.ServeHTTP(res, req.WithContext(testContext()))
 
 	return res

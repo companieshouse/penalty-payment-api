@@ -22,8 +22,9 @@ var (
 
 // TransactionsArePayable validator will verify the transaction in a request do exist for the company. It will also update the
 // type and made up date fields to match what is in E5.
-func TransactionsArePayable(companyNumber string, companyCode string, txs []models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap) ([]models.TransactionItem, error) {
-	response, _, err := service.GetPenalties(companyNumber, companyCode, penaltyDetailsMap)
+func TransactionsArePayable(companyNumber string, companyCode string, txs []models.TransactionItem,
+	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) ([]models.TransactionItem, error) {
+	response, _, err := service.GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 
 	if err != nil {
 		log.Error(err)

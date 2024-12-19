@@ -23,7 +23,7 @@ const ProducerTopic = "email-send"
 const ProducerSchemaName = "email-send"
 
 // SendEmailKafkaMessage sends a kafka message to the email-sender to send an email
-func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap) error {
+func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) error {
 	cfg, err := config.Get()
 	if err != nil {
 		err = fmt.Errorf("error getting config for kafka message production: [%v]", err)
@@ -46,7 +46,7 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 	}
 
 	// Prepare a message with the avro schema
-	message, err := prepareKafkaMessage(*producerSchema, payableResource, req, penaltyDetailsMap)
+	message, err := prepareKafkaMessage(*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		err = fmt.Errorf("error preparing kafka message with schema: [%v]", err)
 		return err
@@ -62,7 +62,7 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 }
 
 // prepareKafkaMessage generates the kafka message that is to be sent
-func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap) (*producer.Message, error) {
+func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*producer.Message, error) {
 	cfg, err := config.Get()
 	if err != nil {
 		err = fmt.Errorf("error getting config: [%v]", err)
@@ -77,7 +77,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	}
 
 	// Access specific transaction that was paid for
-	payedTransaction, err := GetTransactionForPenalty(payableResource.CompanyNumber, payableResource.Transactions[0].TransactionID, penaltyDetailsMap)
+	payedTransaction, err := GetTransactionForPenalty(payableResource.CompanyNumber, payableResource.Transactions[0].TransactionID, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)
 		return nil, err
