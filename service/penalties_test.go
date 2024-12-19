@@ -231,26 +231,24 @@ var allowedTransactionMap = &models.AllowedTransactionMap{
 		},
 	},
 }
+var transaction = e5.Transaction{
+	CompanyCode:     "LP",
+	TransactionType: "EU",
+}
+var page = e5.Page{
+	Size:          1,
+	TotalElements: 1,
+	TotalPages:    1,
+	Number:        1,
+}
+var e5TransactionsResponse = e5.GetTransactionsResponse{
+	Page: page,
+	Transactions: []e5.Transaction{
+		1: transaction,
+	},
+}
 
 func TestUnitGetPenalties(t *testing.T) {
-	transaction := e5.Transaction{
-		CompanyCode:     "LP",
-		TransactionType: "EU",
-	}
-	page := e5.Page{
-		Size:          1,
-		TotalElements: 1,
-		TotalPages:    1,
-		Number:        1,
-	}
-
-	e5TransactionsResponse := e5.GetTransactionsResponse{
-		Page: page,
-		Transactions: []e5.Transaction{
-			1: transaction,
-		},
-	}
-
 	Convey("error when no transactions provided", t, func() {
 		_, responseType, err := GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldNotBeNil)
@@ -301,24 +299,6 @@ func TestUnitGetTransactionForPenalty(t *testing.T) {
 
 	Convey("error when no transactions found for penalty number", t, func() {
 		errGettingTransactions := errors.New("cannot find transaction for penalty number [LP]")
-
-		transaction := e5.Transaction{
-			CompanyCode:     "LP",
-			TransactionType: "EU",
-		}
-		page := e5.Page{
-			Size:          1,
-			TotalElements: 1,
-			TotalPages:    1,
-			Number:        1,
-		}
-
-		e5TransactionsResponse := e5.GetTransactionsResponse{
-			Page: page,
-			Transactions: []e5.Transaction{
-				1: transaction,
-			},
-		}
 
 		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
 			return &e5TransactionsResponse, nil
