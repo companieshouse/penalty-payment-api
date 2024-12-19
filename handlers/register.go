@@ -18,7 +18,7 @@ var payableResourceService *service.PayableResourceService
 var paymentDetailsService *service.PaymentDetailsService
 
 // Register defines the route mappings for the main router and it's subrouters
-func Register(mainRouter *mux.Router, cfg *config.Config, svc dao.Service) {
+func Register(mainRouter *mux.Router, cfg *config.Config, svc dao.Service, penaltyDetailsMap *config.PenaltyDetailsMap) {
 
 	payableResourceService = &service.PayableResourceService{
 		Config: cfg,
@@ -36,7 +36,7 @@ func Register(mainRouter *mux.Router, cfg *config.Config, svc dao.Service) {
 	// only oauth2 users can create payable resources
 	oauth2OnlyInterceptor := &authentication.OAuth2OnlyAuthenticationInterceptor{
 		StrictPaths: map[string][]string{
-			"/company/{company_number}/penalties/late-filing/payable": []string{http.MethodPost},
+			"/company/{company_number}/penalties/late-filing/payable": {http.MethodPost},
 		},
 	}
 
@@ -50,9 +50,9 @@ func Register(mainRouter *mux.Router, cfg *config.Config, svc dao.Service) {
 	mainRouter.HandleFunc("/healthcheck", healthCheck).Methods(http.MethodGet).Name("healthcheck")
 	mainRouter.HandleFunc("/healthcheck/finance-system", HandleHealthCheckFinanceSystem).Methods(http.MethodGet).Name("healthcheck-finance-system")
 
-	appRouter := mainRouter.PathPrefix("/company/{company_number}/penalties/late-filing").Subrouter()
-	appRouter.HandleFunc("", HandleGetPenalties).Methods(http.MethodGet).Name("get-penalties")
-	appRouter.Handle("/payable", CreatePayableResourceHandler(svc)).Methods(http.MethodPost).Name("create-payable")
+	appRouter := mainRouter.PathPrefix("/company/{company_number}/penalties/{penaltyReference}").Subrouter()
+	appRouter.HandleFunc("", HandleGetPenalties(penaltyDetailsMap)).Methods(http.MethodGet).Name("get-penalties")
+	appRouter.Handle("/payable", CreatePayableResourceHandler(svc, penaltyDetailsMap)).Methods(http.MethodPost).Name("create-payable")
 	appRouter.Use(
 		oauth2OnlyInterceptor.OAuth2OnlyAuthenticationIntercept,
 		userAuthInterceptor.UserAuthenticationIntercept,
@@ -63,14 +63,15 @@ func Register(mainRouter *mux.Router, cfg *config.Config, svc dao.Service) {
 	// PayableAuthenticationInterceptor
 	existingPayableRouter := appRouter.PathPrefix("/payable/{payable_id}").Subrouter()
 	existingPayableRouter.HandleFunc("", HandleGetPayableResource).Name("get-payable").Methods(http.MethodGet)
-	existingPayableRouter.HandleFunc("/payment", HandleGetPaymentDetails).Methods(http.MethodGet).Name("get-payment-details")
+	//existingPayableRouter.HandleFunc("/payment", HandleGetPaymentDetails).Methods(http.MethodGet).Name("get-payment-details")
+	existingPayableRouter.HandleFunc("/payment", HandleGetPaymentDetails(penaltyDetailsMap)).Methods(http.MethodGet).Name("get-payment-details")
 	existingPayableRouter.Use(payableAuthInterceptor.PayableAuthenticationIntercept)
 
 	// separate router for the patch request so that we can apply the interceptor to it without interfering with
 	// other routes
 	payResourceRouter := appRouter.PathPrefix("/payable/{payable_id}/payment").Methods(http.MethodPatch).Subrouter()
 	payResourceRouter.Use(payableAuthInterceptor.PayableAuthenticationIntercept, authentication.ElevatedPrivilegesInterceptor)
-	payResourceRouter.Handle("", PayResourceHandler(payableResourceService, e5Client)).Name("mark-as-paid")
+	payResourceRouter.Handle("", PayResourceHandler(payableResourceService, e5Client, penaltyDetailsMap)).Name("mark-as-paid")
 
 	// Set middleware across all routers and sub routers
 	mainRouter.Use(log.Handler)

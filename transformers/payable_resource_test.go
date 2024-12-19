@@ -2,6 +2,7 @@ package transformers
 
 import (
 	"fmt"
+	"github.com/companieshouse/penalty-payment-api/config"
 	"testing"
 	"time"
 
@@ -50,7 +51,7 @@ func TestUnitPayableResourceDaoToCreatedResponse(t *testing.T) {
 					ResumeJourney: "/company/12345678/penalty/123/lfp/view-penalties",
 				},
 				Transactions: map[string]models.TransactionDao{
-					"123": models.TransactionDao{Amount: 100, Type: "penalty", MadeUpDate: "2019-01-01"},
+					"123": {Amount: 100, Type: "penalty", MadeUpDate: "2019-01-01"},
 				},
 			},
 		}
@@ -88,7 +89,7 @@ func TestUnitPayableResourceDBToPayableResource(t *testing.T) {
 					PaidAt:    &t,
 				},
 				Transactions: map[string]models.TransactionDao{
-					"123": models.TransactionDao{
+					"123": {
 						Amount:     100,
 						Type:       "penalty",
 						MadeUpDate: "2019-01-01",
@@ -146,7 +147,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				PaidAt:    &t,
 			},
 			Transactions: []models.TransactionItem{
-				models.TransactionItem{
+				{
 					Amount:     100,
 					Type:       "penalty",
 					MadeUpDate: "2019-01-01",
@@ -154,7 +155,8 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 			},
 		}
 
-		response := PayableResourceToPaymentDetails(payable)
+		penaltyDetailsMap := loadPenaltyDetails()
+		response := PayableResourceToPaymentDetails(payable, penaltyDetailsMap)
 
 		So(response, ShouldNotBeNil)
 		So(response.Description, ShouldEqual, "Late Filing Penalty")
@@ -175,4 +177,21 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 		So(response.Items[0].ResourceKind, ShouldEqual, "late-filing-penalty#late-filing-penalty")
 		So(response.Items[0].ProductType, ShouldEqual, "late-filing-penalty")
 	})
+}
+
+func loadPenaltyDetails() *config.PenaltyDetailsMap {
+	detailsMap := config.PenaltyDetailsMap{
+		Details: map[string]config.PenaltyDetails{
+			"LP": {
+				EmailReceivedAppId: "lfp-pay-api.late_filing_penalty_received_email",
+				EmailFilingDesc:    "Late Filing Penalty",
+				EmailMsgType:       "late_filing_penalty_received_email",
+				Description:        "Late Filing Penalty",
+				DescriptionId:      "late-filing-penalty",
+				ResourceKind:       "late-filing-penalty#late-filing-penalty",
+				ProductType:        "late-filing-penalty",
+			},
+		},
+	}
+	return &detailsMap
 }

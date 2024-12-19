@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/companieshouse/penalty-payment-api/utils"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,10 +16,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api/config"
 )
 
-const ppsReceivedAppID = "lfp-pay-api.late_filing_penalty_received_email"
-const ppsFilingDescription = "Late Filing Penalty"
-const ppsMessageType = "late_filing_penalty_received_email"
-
 // ProducerTopic is the topic to which the email-send kafka message is sent
 const ProducerTopic = "email-send"
 
@@ -26,7 +23,7 @@ const ProducerTopic = "email-send"
 const ProducerSchemaName = "email-send"
 
 // SendEmailKafkaMessage sends a kafka message to the email-sender to send an email
-func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request) error {
+func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap) error {
 	cfg, err := config.Get()
 	if err != nil {
 		err = fmt.Errorf("error getting config for kafka message production: [%v]", err)
@@ -49,7 +46,7 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 	}
 
 	// Prepare a message with the avro schema
-	message, err := prepareKafkaMessage(*producerSchema, payableResource, req)
+	message, err := prepareKafkaMessage(*producerSchema, payableResource, req, penaltyDetailsMap)
 	if err != nil {
 		err = fmt.Errorf("error preparing kafka message with schema: [%v]", err)
 		return err
@@ -65,7 +62,7 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 }
 
 // prepareKafkaMessage generates the kafka message that is to be sent
-func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request) (*producer.Message, error) {
+func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap) (*producer.Message, error) {
 	cfg, err := config.Get()
 	if err != nil {
 		err = fmt.Errorf("error getting config: [%v]", err)
@@ -80,7 +77,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	}
 
 	// Access specific transaction that was paid for
-	payedTransaction, err := GetTransactionForPenalty(payableResource.CompanyNumber, payableResource.Transactions[0].TransactionID)
+	payedTransaction, err := GetTransactionForPenalty(payableResource.CompanyNumber, payableResource.Transactions[0].TransactionID, penaltyDetailsMap)
 	if err != nil {
 		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)
 		return nil, err
@@ -98,6 +95,9 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
+	// Determine the penalty type
+	var penaltyType = utils.GetCompanyCode(payableResource.Reference)
+
 	// Set dataField to be used in the avro schema.
 	dataFieldMessage := models.DataField{
 		PayableResource:   payableResource,
@@ -106,7 +106,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		TransactionDate:   transactionDate.Format("2 January 2006"),
 		Amount:            fmt.Sprintf("%g", payedTransaction.OriginalAmount),
 		CompanyName:       companyName,
-		FilingDescription: ppsFilingDescription,
+		FilingDescription: penaltyDetailsMap.Details[penaltyType].EmailFilingDesc,
 		To:                payableResource.CreatedBy.Email,
 		Subject:           fmt.Sprintf("Confirmation of your Companies House penalty payment"),
 		CHSURL:            cfg.CHSURL,
@@ -121,9 +121,9 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	messageID := "<" + payableResource.Reference + "." + strconv.Itoa(util.Random(0, 100000)) + "@companieshouse.gov.uk>"
 
 	emailSendMessage := models.EmailSend{
-		AppID:        ppsReceivedAppID,
+		AppID:        penaltyDetailsMap.Details[penaltyType].EmailReceivedAppId,
 		MessageID:    messageID,
-		MessageType:  ppsMessageType,
+		MessageType:  penaltyDetailsMap.Details[penaltyType].EmailMsgType,
 		Data:         string(dataBytes),
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),

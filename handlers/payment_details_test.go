@@ -23,7 +23,8 @@ func serveGetPaymentDetailsHandler(payableResource *models.PayableResource) *htt
 		req = req.WithContext(ctx)
 	}
 
-	HandleGetPaymentDetails(res, req)
+	penaltyDetailsMap := &config.PenaltyDetailsMap{}
+	HandleGetPaymentDetails(penaltyDetailsMap).ServeHTTP(res, req)
 
 	return res
 }
@@ -35,7 +36,7 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 		So(res.Code, ShouldEqual, http.StatusInternalServerError)
 	})
 
-	Convey("Payment Details not found due to no costs", t, func() {
+	Convey("Payment PenaltyDetails not found due to no costs", t, func() {
 		t := time.Now().Truncate(time.Millisecond)
 
 		payable := models.PayableResource{
@@ -61,7 +62,7 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 		So(res.Code, ShouldEqual, http.StatusNotFound)
 	})
 
-	Convey("Payment Details success", t, func() {
+	Convey("Payment PenaltyDetails success", t, func() {
 		t := time.Now().Truncate(time.Millisecond)
 
 		payable := models.PayableResource{
@@ -78,7 +79,7 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 				ID:    "uz3r1D_H3r3",
 			},
 			Transactions: []models.TransactionItem{
-				models.TransactionItem{
+				{
 					Amount:        5,
 					Type:          "penalty",
 					TransactionID: "0987654321",

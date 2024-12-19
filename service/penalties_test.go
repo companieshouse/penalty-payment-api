@@ -3,6 +3,7 @@ package service
 import (
 	j "encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"testing"
 
@@ -175,7 +176,9 @@ func TestUnitMarkTransactionsAsPaid(t *testing.T) {
 			// check the payment id value before responding.
 			paymentIDResponder := func(req *http.Request) (*http.Response, error) {
 				resp := httpmock.NewBytesResponse(http.StatusOK, nil)
-				defer req.Body.Close()
+				defer func(Body io.ReadCloser) {
+					_ = Body.Close()
+				}(req.Body)
 				var b body
 				err := j.NewDecoder(req.Body).Decode(&b)
 				if err != nil {
