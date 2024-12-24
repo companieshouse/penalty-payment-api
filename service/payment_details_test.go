@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/companieshouse/penalty-payment-api/config"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,7 +15,10 @@ import (
 
 func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
-	penaltyDetailsMap := loadPenaltyDetails()
+	penaltyDetailsMap, err := config.LoadPenaltyDetails("../assets/penalty_details.yml")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	Convey("Get payment details no transactions - invalid data", t, func() {
 
@@ -179,21 +183,4 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 		So(err, ShouldBeNil)
 
 	})
-}
-
-func loadPenaltyDetails() *config.PenaltyDetailsMap {
-	detailsMap := config.PenaltyDetailsMap{
-		Details: map[string]config.PenaltyDetails{
-			"LP": {
-				EmailReceivedAppId: "lfp-pay-api.late_filing_penalty_received_email",
-				EmailFilingDesc:    "Late Filing Penalty",
-				EmailMsgType:       "late_filing_penalty_received_email",
-				Description:        "Late Filing Penalty",
-				DescriptionId:      "late-filing-penalty",
-				ResourceKind:       "late-filing-penalty#late-filing-penalty",
-				ProductType:        "late-filing-penalty",
-			},
-		},
-	}
-	return &detailsMap
 }

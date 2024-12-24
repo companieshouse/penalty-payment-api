@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/companieshouse/penalty-payment-api-core/constants"
+	"github.com/companieshouse/penalty-payment-api/mocks"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,12 +15,10 @@ import (
 	"github.com/companieshouse/api-sdk-go/companieshouseapi"
 	"github.com/companieshouse/go-session-handler/httpsession"
 	"github.com/companieshouse/go-session-handler/session"
-	"github.com/companieshouse/penalty-payment-api-core/constants"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/e5"
-	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
@@ -42,6 +42,14 @@ var e5ValidationError = `
 }
 `
 var penaltyDetailsMap = &config.PenaltyDetailsMap{}
+var allowedTransactionsMap = &models.AllowedTransactionMap{
+	Types: map[string]map[string]bool{
+		"1": {
+			"EJ": true,
+			"EU": true,
+		},
+	},
+}
 
 // reduces the boilerplate code needed to create, dispatch and unmarshal response body
 func dispatchPayResourceHandler(
@@ -67,7 +75,7 @@ func dispatchPayResourceHandler(
 
 	ctx = context.WithValue(ctx, httpsession.ContextKeySession, &session.Session{})
 
-	h := PayResourceHandler(svc, e5.NewClient("foo", "e5api"), penaltyDetailsMap)
+	h := PayResourceHandler(svc, e5.NewClient("foo", "e5api"), penaltyDetailsMap, allowedTransactionsMap)
 	req := httptest.NewRequest(http.MethodPost, "/", body).WithContext(ctx)
 	res := httptest.NewRecorder()
 
@@ -87,12 +95,14 @@ func dispatchPayResourceHandler(
 }
 
 // Mock function for erroring when preparing and sending kafka message
-func mockSendEmailKafkaMessageError(payableResource models.PayableResource, req *http.Request, detailsMap *config.PenaltyDetailsMap) error {
+func mockSendEmailKafkaMessageError(payableResource models.PayableResource, req *http.Request,
+	detailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) error {
 	return errors.New("error")
 }
 
 // Mock function for successful preparing and sending of kafka message
-func mockSendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request, detailsMap *config.PenaltyDetailsMap) error {
+func mockSendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request,
+	detailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) error {
 	return nil
 }
 

@@ -14,8 +14,18 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var getCompanyNumberFromVars = func(vars map[string]string) (string, error) {
+	return utils.GetCompanyNumberFromVars(vars)
+}
+var getCompanyCodeFromVars = func() (string, error) {
+	return utils.GetCompanyCodeFromVars()
+}
+var getPenalties = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, service.ResponseType, error) {
+	return service.GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
+}
+
 // HandleGetPenalties retrieves the penalty details for the supplied company number from e5
-func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap) http.HandlerFunc {
+func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.InfoR(req, "start GET penalties request from e5")
 
@@ -23,7 +33,7 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap) http.Handle
 		vars := mux.Vars(req)
 		// only company number in the route variables
 
-		companyNumber, err := utils.GetCompanyNumberFromVars(vars)
+		companyNumber, err := getCompanyNumberFromVars(vars)
 
 		if err != nil {
 			log.ErrorR(req, err)
@@ -32,7 +42,7 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap) http.Handle
 			return
 		}
 
-		companyCode, err := utils.GetCompanyCodeFromVars()
+		companyCode, err := getCompanyCodeFromVars()
 		if err != nil {
 			log.ErrorR(req, err)
 			m := models.NewMessageResponse("company code is not in request context")
@@ -44,7 +54,7 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap) http.Handle
 		companyCode = strings.ToUpper(companyCode)
 
 		// Call service layer to handle request to E5
-		transactionListResponse, responseType, err := service.GetPenalties(companyNumber, companyCode, penaltyDetailsMap)
+		transactionListResponse, responseType, err := getPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 		if err != nil {
 			log.ErrorR(req, fmt.Errorf("error calling e5 to get transactions: %v", err))
 			switch responseType {

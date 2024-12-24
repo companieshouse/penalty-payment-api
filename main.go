@@ -21,9 +21,11 @@ func main() {
 	namespace := "penalty-payment-api"
 	log.Namespace = namespace
 
+	const exitErrorFormat = "error configuring service: %s. Exiting"
 	cfg, err := config.Get()
+
 	if err != nil {
-		log.Error(fmt.Errorf("error configuring service: %s. Exiting", err), nil)
+		log.Error(fmt.Errorf(exitErrorFormat, err), nil)
 		return
 	}
 
@@ -33,11 +35,17 @@ func main() {
 
 	penaltyDetailsMap, err := config.LoadPenaltyDetails("assets/penalty_details.yml")
 	if err != nil {
-		log.Error(fmt.Errorf("error configuring service: %s. Exiting", err), nil)
+		log.Error(fmt.Errorf(exitErrorFormat, err), nil)
 		return
 	}
 
-	handlers.Register(mainRouter, cfg, svc, penaltyDetailsMap)
+	allowedTransactionsMap, err := config.GetAllowedTransactions("assets/penalty_types.yml")
+	if err != nil {
+		log.Error(fmt.Errorf(exitErrorFormat, err), nil)
+		return
+	}
+
+	handlers.Register(mainRouter, cfg, svc, penaltyDetailsMap, allowedTransactionsMap)
 
 	log.Info("Starting " + namespace)
 
