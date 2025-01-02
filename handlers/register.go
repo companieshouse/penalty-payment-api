@@ -64,7 +64,6 @@ func Register(mainRouter *mux.Router, cfg *config.Config, svc dao.Service, penal
 	// PayableAuthenticationInterceptor
 	existingPayableRouter := appRouter.PathPrefix("/payable/{payable_id}").Subrouter()
 	existingPayableRouter.HandleFunc("", HandleGetPayableResource).Name("get-payable").Methods(http.MethodGet)
-	//existingPayableRouter.HandleFunc("/payment", HandleGetPaymentDetails).Methods(http.MethodGet).Name("get-payment-details")
 	existingPayableRouter.HandleFunc("/payment", HandleGetPaymentDetails(penaltyDetailsMap)).Methods(http.MethodGet).Name("get-payment-details")
 	existingPayableRouter.Use(payableAuthInterceptor.PayableAuthenticationIntercept)
 
