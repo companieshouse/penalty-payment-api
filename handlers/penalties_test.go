@@ -71,7 +71,7 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 				handler.ServeHTTP(rr, req)
 
 				if rr.Code != tc.expectedStatusCode {
-					t.Errorf("handler returned wrong status code: got %v want 200", rr.Code)
+					t.Errorf("handler returned wrong status code: got %v want %v", rr.Code, tc.expectedStatusCode)
 				}
 
 			})

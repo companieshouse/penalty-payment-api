@@ -52,7 +52,7 @@ func TestUnitGetCompanyNumber(t *testing.T) {
 		Convey("When no company number is provided", func() {
 			vars := map[string]string{}
 			result, err := GetCompanyNumberFromVars(vars)
-			Convey("Then err should be nil and company number should equal "+companyNumber, func() {
+			Convey("Then err should be thrown", func() {
 				So(result, ShouldBeEmpty)
 				So(err.Error(), ShouldEqual, "company number not supplied")
 			})
