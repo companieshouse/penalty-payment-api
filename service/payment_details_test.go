@@ -185,9 +185,9 @@ func loadPenaltyDetails() *config.PenaltyDetailsMap {
 	detailsMap := config.PenaltyDetailsMap{
 		Details: map[string]config.PenaltyDetails{
 			"LP": {
-				EmailReceivedAppId: "lfp-pay-api.late_filing_penalty_received_email",
-				EmailFilingDesc:    "Late Filing Penalty",
-				EmailMsgType:       "late_filing_penalty_received_email",
+				EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
+				EmailFilingDesc:    "Late filing of accounts",
+				EmailMsgType:       "penalty_payment_received_email",
 				Description:        "Late Filing Penalty",
 				DescriptionId:      "late-filing-penalty",
 				ResourceKind:       "late-filing-penalty#late-filing-penalty",
