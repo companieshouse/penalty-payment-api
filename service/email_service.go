@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/utils"
 	"net/http"
 	"strconv"
@@ -150,13 +149,6 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),
 	}
-
-	log.Info("penaltyDetailsMap.Details[penaltyType].EmailReceivedAppId: " + penaltyDetailsMap.Details[penaltyType].EmailReceivedAppId)
-	log.Info("messageID: " + messageID)
-	log.Info("penaltyDetailsMap.Details[penaltyType].EmailMsgType: " + penaltyDetailsMap.Details[penaltyType].EmailMsgType)
-	log.Info("string(dataBytes): " + string(dataBytes))
-	log.Info("payableResource.CreatedBy.Email: " + payableResource.CreatedBy.Email)
-	log.Info("time: " + time.Now().String())
 
 	messageBytes, err := emailSendSchema.Marshal(emailSendMessage)
 	if err != nil {
