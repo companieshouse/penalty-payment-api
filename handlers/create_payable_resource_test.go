@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -24,7 +25,8 @@ import (
 var companyNumber = "10000024"
 
 func serveCreatePayableResourceHandler(body []byte, service dao.Service, withAuthUserDetails bool) *httptest.ResponseRecorder {
-	path := "/company/1000024/penalties/late-filing/payable"
+	template := "/company/%s/penalties/late-filing/payable"
+	path := fmt.Sprintf(template, companyNumber)
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	res := httptest.NewRecorder()
 
