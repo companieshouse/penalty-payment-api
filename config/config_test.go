@@ -42,7 +42,7 @@ func TestUnitLoadPenaltyDetails(t *testing.T) {
 name: penalty details
 details:
   LP:
-    EmailReceivedAppId: "lfp-pay-api.late_filing_penalty_received_email"
+    EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
 `)
 			tmpFile, err := os.CreateTemp("", "config_*.yaml")
 			if err != nil {
@@ -61,8 +61,8 @@ details:
 
 			Convey("Then the penalty details should be returned", func() {
 				So(err, ShouldBeNil)
-				So(penaltyDetailsMap.Name, ShouldEqual, "penalty details")
-				So(penaltyDetailsMap.Details["LP"].EmailReceivedAppId, ShouldEqual, "lfp-pay-api.late_filing_penalty_received_email")
+		    So(penaltyDetailsMap.Name, ShouldEqual, "penalty details")
+		    So(penaltyDetailsMap.Details["LP"].EmailReceivedAppId, ShouldEqual, "penalty-payment-api.penalty_payment_received_email")
 			})
 		})
 	})
