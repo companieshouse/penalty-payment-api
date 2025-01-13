@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -21,24 +22,30 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func serveCreatePayableResourceHandler(body []byte, service dao.Service) *httptest.ResponseRecorder {
-	path := "/company/1000024/penalties/late-filing/payable"
+var companyNumber = "10000024"
+
+func serveCreatePayableResourceHandler(body []byte, service dao.Service, withAuthUserDetails bool) *httptest.ResponseRecorder {
+	template := "/company/%s/penalties/late-filing/payable"
+	path := fmt.Sprintf(template, companyNumber)
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	res := httptest.NewRecorder()
 
-	penaltyDetailsMap := &config.PenaltyDetailsMap{}
-	handler := CreatePayableResourceHandler(service, penaltyDetailsMap)
-	handler.ServeHTTP(res, req.WithContext(testContext()))
+	handler := CreatePayableResourceHandler(service, penaltyDetailsMap, allowedTransactionsMap)
+	handler.ServeHTTP(res, req.WithContext(testContext(withAuthUserDetails)))
 
 	return res
 }
 
-func testContext() context.Context {
+func testContext(withAuthUserDetails bool) context.Context {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, authentication.ContextKeyUserDetails, authentication.AuthUserDetails{})
+	if withAuthUserDetails {
+		ctx = context.WithValue(ctx, authentication.ContextKeyUserDetails, authentication.AuthUserDetails{})
+	} else {
+		ctx = context.WithValue(ctx, authentication.ContextKeyUserDetails, nil)
+	}
 
 	details := middleware.CompanyDetails{M: map[string]string{
-		"CompanyNumber": "10000024",
+		"CompanyNumber": companyNumber,
 		"CompanyCode":   "LP",
 	}}
 
@@ -128,6 +135,50 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 
 	url := "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=LP&fromDate=1990-01-01"
 
+	Convey("Error decoding request body", t, func() {
+		httpmock.Activate()
+		mockCtrl := gomock.NewController(t)
+		defer httpmock.DeactivateAndReset()
+		defer mockCtrl.Finish()
+
+		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
+
+		body := []byte{'{'}
+		res := serveCreatePayableResourceHandler(body, mocks.NewMockService(mockCtrl), true)
+
+		So(res.Code, ShouldEqual, http.StatusBadRequest)
+	})
+
+	Convey("Error when user details not in context", t, func() {
+		httpmock.Activate()
+		mockCtrl := gomock.NewController(t)
+		defer httpmock.DeactivateAndReset()
+		defer mockCtrl.Finish()
+
+		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
+
+		body, _ := json.Marshal(&models.PayableRequest{})
+		res := serveCreatePayableResourceHandler(body, mocks.NewMockService(mockCtrl), false)
+
+		So(res.Code, ShouldEqual, http.StatusInternalServerError)
+	})
+
+	Convey("Error when company number not in context", t, func() {
+		httpmock.Activate()
+		mockCtrl := gomock.NewController(t)
+		defer httpmock.DeactivateAndReset()
+		defer mockCtrl.Finish()
+
+		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
+
+		body, _ := json.Marshal(&models.PayableRequest{})
+		companyNumber = ""
+		res := serveCreatePayableResourceHandler(body, mocks.NewMockService(mockCtrl), true)
+		companyNumber = "10000024"
+
+		So(res.Code, ShouldEqual, http.StatusInternalServerError)
+	})
+
 	Convey("Must need at least one transaction", t, func() {
 		httpmock.Activate()
 		mockCtrl := gomock.NewController(t)
@@ -137,7 +188,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		body, _ := json.Marshal(&models.PayableRequest{})
-		res := serveCreatePayableResourceHandler(body, mocks.NewMockService(mockCtrl))
+		res := serveCreatePayableResourceHandler(body, mocks.NewMockService(mockCtrl), true)
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
@@ -160,7 +211,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 			},
 		})
 
-		res := serveCreatePayableResourceHandler(body, mockService)
+		res := serveCreatePayableResourceHandler(body, mockService, true)
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
@@ -185,7 +236,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 			},
 		})
 
-		res := serveCreatePayableResourceHandler(body, mockService)
+		res := serveCreatePayableResourceHandler(body, mockService, true)
 
 		So(res.Code, ShouldEqual, http.StatusInternalServerError)
 	})
@@ -210,7 +261,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 			},
 		})
 
-		res := serveCreatePayableResourceHandler(body, mockService)
+		res := serveCreatePayableResourceHandler(body, mockService, true)
 
 		So(res.Code, ShouldEqual, http.StatusCreated)
 		So(res.Header().Get("Content-Type"), ShouldEqual, "application/json")

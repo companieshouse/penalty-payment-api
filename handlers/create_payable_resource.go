@@ -19,7 +19,8 @@ import (
 )
 
 // CreatePayableResourceHandler takes a http requests and creates a new payable resource
-func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.PenaltyDetailsMap) http.Handler {
+func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var request models.PayableRequest
 		err := json.NewDecoder(r.Body).Decode(&request)
@@ -54,7 +55,8 @@ func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.Pen
 		request.CreatedBy = userDetails.(authentication.AuthUserDetails)
 
 		// validate that the transactions being requested do exist in E5
-		validTransactions, err := validators.TransactionsArePayable(request.CompanyNumber, companyCode, request.Transactions, penaltyDetailsMap)
+		validTransactions, err := validators.TransactionsArePayable(request.CompanyNumber, companyCode,
+			request.Transactions, penaltyDetailsMap, allowedTransactionMap)
 		if err != nil {
 			log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))
 			m := models.NewMessageResponse("the transactions you want to pay for do not exist or are not payable at this time")

@@ -3,6 +3,9 @@ package transformers
 import (
 	"fmt"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"log"
+	"os"
+	"runtime"
 	"testing"
 	"time"
 
@@ -155,8 +158,21 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 			},
 		}
 
-		penaltyDetailsMap := loadPenaltyDetails()
+		penaltyDetailsMap, err := config.LoadPenaltyDetails("../assets/penalty_details.yml")
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		response := PayableResourceToPaymentDetails(payable, penaltyDetailsMap)
+
+		_, filename, _, _ := runtime.Caller(0)
+		fmt.Printf("Current test filename: %s\n", filename)
+
+		dir, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Dir: " + dir)
 
 		So(response, ShouldNotBeNil)
 		So(response.Description, ShouldEqual, "Late Filing Penalty")
@@ -177,21 +193,4 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 		So(response.Items[0].ResourceKind, ShouldEqual, "late-filing-penalty#late-filing-penalty")
 		So(response.Items[0].ProductType, ShouldEqual, "late-filing-penalty")
 	})
-}
-
-func loadPenaltyDetails() *config.PenaltyDetailsMap {
-	detailsMap := config.PenaltyDetailsMap{
-		Details: map[string]config.PenaltyDetails{
-			"LP": {
-				EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
-				EmailFilingDesc:    "Late filing of accounts",
-				EmailMsgType:       "penalty_payment_received_email",
-				Description:        "Late Filing Penalty",
-				DescriptionId:      "late-filing-penalty",
-				ResourceKind:       "late-filing-penalty#late-filing-penalty",
-				ProductType:        "late-filing-penalty",
-			},
-		},
-	}
-	return &detailsMap
 }

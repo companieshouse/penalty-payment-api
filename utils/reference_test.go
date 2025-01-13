@@ -42,6 +42,7 @@ func TestUnitGenerateEtag(t *testing.T) {
 	})
 }
 
+// this function always return "LP" at the moment
 func TestUnitGetCompanyCode(t *testing.T) {
 	Convey("Get Company Code", t, func() {
 		companyCode := GetCompanyCode("")

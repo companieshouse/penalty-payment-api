@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/companieshouse/chs.go/log"
@@ -12,8 +11,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/utils"
-
-	"gopkg.in/yaml.v2"
 )
 
 // TransactionType Enum Type
@@ -35,16 +32,21 @@ func (transactionType TransactionType) String() string {
 	return transactionTypes[transactionType-1]
 }
 
+var getTransactions = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
+	return client.GetTransactions(&e5.GetTransactionsInput{CompanyNumber: companyNumber, CompanyCode: companyCode})
+}
+
 // GetPenalties is a function that:
 // 1. makes a request to e5 to get a list of transactions for the specified company
 // 2. takes the results of this request and maps them to a format that the penalty-payment-web can consume
-func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap) (*models.TransactionListResponse, ResponseType, error) {
+func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, ResponseType, error) {
 	cfg, err := config.Get()
 	if err != nil {
 		return nil, Error, nil
 	}
 	client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
-	e5Response, err := client.GetTransactions(&e5.GetTransactionsInput{CompanyNumber: companyNumber, CompanyCode: companyCode})
+	e5Response, err := getTransactions(companyNumber, companyCode, penaltyDetailsMap, client)
 
 	if err != nil {
 		log.Error(fmt.Errorf("error getting transaction list: [%v]", err))
@@ -53,7 +55,8 @@ func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *c
 
 	// Generate the CH preferred format of the results i.e. classify the transactions into payable "penalty" types or
 	// non-payable "other" types
-	generatedTransactionListFromE5Response, err := generateTransactionListFromE5Response(e5Response, companyCode, penaltyDetailsMap)
+	generatedTransactionListFromE5Response, err :=
+		generateTransactionListFromE5Response(e5Response, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		err = fmt.Errorf("error generating transaction list from the e5 response: [%v]", err)
 		log.Error(err)
@@ -65,9 +68,10 @@ func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *c
 }
 
 // GetTransactionForPenalty returns a single, specified, transaction from e5 for a specific company
-func GetTransactionForPenalty(companyNumber, penaltyNumber string, penaltyDetailsMap *config.PenaltyDetailsMap) (*models.TransactionListItem, error) {
+func GetTransactionForPenalty(companyNumber, penaltyNumber string, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
 	companyCode := utils.GetCompanyCode(penaltyNumber)
-	response, _, err := GetPenalties(companyNumber, companyCode, penaltyDetailsMap)
+	response, _, err := GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -82,7 +86,8 @@ func GetTransactionForPenalty(companyNumber, penaltyNumber string, penaltyDetail
 	return nil, fmt.Errorf("cannot find transaction for penalty number [%v]", penaltyNumber)
 }
 
-func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsResponse, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap) (*models.TransactionListResponse, error) {
+func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsResponse, companyCode string,
+	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, error) {
 	// Next, map results to a format that can be used by PPS web
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := utils.GenerateEtag()
@@ -94,22 +99,6 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 
 	payableTransactionList.Etag = etag
 	payableTransactionList.TotalResults = e5Response.Page.TotalElements
-	// Each transaction needs to be checked and identified as a 'penalty' or 'other'. This allows penalty-payment-web to determine
-	// which transactions are payable. This is done using a yaml file to map payable transactions
-	yamlFile, err := os.ReadFile("assets/penalty_types.yml")
-	if err != nil {
-		err = fmt.Errorf("error reading penalty types yaml file: [%v]", err)
-		log.Error(err)
-		return nil, err
-	}
-
-	allowedTransactions := models.AllowedTransactionMap{}
-	err = yaml.Unmarshal(yamlFile, &allowedTransactions)
-	if err != nil {
-		err = fmt.Errorf("error unmarshalling yaml file: [%v]", err)
-		log.Error(err)
-		return nil, err
-	}
 
 	// Determine the penalty type
 	var penaltyType = utils.GetCompanyCode(companyCode)
@@ -132,8 +121,10 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 		listItem.TransactionDate = e5Transaction.TransactionDate
 		listItem.OriginalAmount = e5Transaction.Amount
 		listItem.Outstanding = e5Transaction.OutstandingAmount
+		// Each transaction needs to be checked and identified as a 'penalty' or 'other'. This allows penalty-payment-web to determine
+		// which transactions are payable. This is done using a yaml file to map payable transactions
 		// Check if the transaction is allowed and set to 'penalty' if it is
-		if _, ok := allowedTransactions.Types[e5Transaction.TransactionType][e5Transaction.TransactionSubType]; ok {
+		if _, ok := allowedTransactionsMap.Types[e5Transaction.TransactionType][e5Transaction.TransactionSubType]; ok {
 			listItem.Type = Penalty.String()
 		} else {
 			listItem.Type = Other.String()

@@ -36,23 +36,31 @@ func TestUnitWriteJSON(t *testing.T) {
 }
 
 func TestUnitGetCompanyNumber(t *testing.T) {
-	Convey("Get Company Number", t, func() {
-		vars := map[string]string{
-			"company_number": "12345",
-		}
-		companyNumber, err := GetCompanyNumberFromVars(vars)
-		So(companyNumber, ShouldEqual, "12345")
-		So(err, ShouldBeNil)
-	})
+	Convey("Given GetCompanyNumber is called", t, func() {
+		companyNumber := "NI12356"
+		Convey("When a company number is provided", func() {
+			vars := map[string]string{
+				"company_number": companyNumber,
+			}
+			result, err := GetCompanyNumberFromVars(vars)
 
-	Convey("No Company Number", t, func() {
-		vars := map[string]string{}
-		companyNumber, err := GetCompanyNumberFromVars(vars)
-		So(companyNumber, ShouldBeEmpty)
-		So(err.Error(), ShouldEqual, "company number not supplied")
+			Convey("Then err should be nil and company number should equal "+companyNumber, func() {
+				So(result, ShouldEqual, companyNumber)
+				So(err, ShouldBeNil)
+			})
+		})
+		Convey("When no company number is provided", func() {
+			vars := map[string]string{}
+			result, err := GetCompanyNumberFromVars(vars)
+			Convey("Then err should be thrown", func() {
+				So(result, ShouldBeEmpty)
+				So(err.Error(), ShouldEqual, "company number not supplied")
+			})
+		})
 	})
 }
 
+// this function always return "LP" at the moment
 func TestUnitGetCompanyCodeFromVars(t *testing.T) {
 	Convey("Get Company Code from vars", t, func() {
 		companyNumber, err := GetCompanyCodeFromVars()

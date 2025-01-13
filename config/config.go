@@ -2,6 +2,7 @@
 package config
 
 import (
+	"github.com/companieshouse/penalty-payment-api-core/models"
 	"gopkg.in/yaml.v2"
 	"os"
 	"sync"
@@ -66,6 +67,22 @@ func Get() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func GetAllowedTransactions(fileName string) (*models.AllowedTransactionMap, error) {
+	yamlFile, err := os.ReadFile(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	var allowedTransactions = models.AllowedTransactionMap{}
+
+	err = yaml.Unmarshal(yamlFile, &allowedTransactions)
+	if err != nil {
+		return nil, err
+	}
+
+	return &allowedTransactions, nil
 }
 
 func LoadPenaltyDetails(fileName string) (*PenaltyDetailsMap, error) {
