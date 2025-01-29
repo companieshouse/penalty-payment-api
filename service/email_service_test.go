@@ -101,6 +101,12 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			Definition: emailSendSchema,
 		}
 
+		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+			return "LP", nil
+		}
+
+		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
+
 		Convey("When config is called with invalid config", func() {
 			errMsg := "config is invalid"
 			mockedConfigGet := func() (*config.Config, error) {

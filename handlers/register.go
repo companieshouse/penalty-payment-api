@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"github.com/companieshouse/penalty-payment-api-core/models"
-	"net/http"
-
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
+	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/e5"
@@ -13,6 +11,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/middleware"
 	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 var payableResourceService *service.PayableResourceService
@@ -52,8 +51,8 @@ func Register(mainRouter *mux.Router, cfg *config.Config, svc dao.Service, penal
 	mainRouter.HandleFunc("/healthcheck/finance-system", HandleHealthCheckFinanceSystem).Methods(http.MethodGet).Name("healthcheck-finance-system")
 
 	appRouter := mainRouter.PathPrefix("/company/{company_number}/penalties/late-filing").Subrouter()
-	appRouter.HandleFunc("", HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties")
-	appRouter.Handle("/payable", CreatePayableResourceHandler(svc, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodPost).Name("create-payable")
+	appRouter.HandleFunc("/{penalty_number}", HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties")
+	appRouter.Handle("/{penalty_number}/payable", CreatePayableResourceHandler(svc, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodPost).Name("create-payable")
 	appRouter.Use(
 		oauth2OnlyInterceptor.OAuth2OnlyAuthenticationIntercept,
 		userAuthInterceptor.UserAuthenticationIntercept,

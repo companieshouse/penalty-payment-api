@@ -31,6 +31,12 @@ func serveGetPaymentDetailsHandler(payableResource *models.PayableResource) *htt
 
 func TestUnitHandleGetPaymentDetails(t *testing.T) {
 
+	mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+		return "LP", nil
+	}
+
+	getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
+
 	Convey("No payable resource in request context", t, func() {
 		res := serveGetPaymentDetailsHandler(nil)
 		So(res.Code, ShouldEqual, http.StatusInternalServerError)

@@ -15,8 +15,9 @@ type PaymentDetailsService struct {
 }
 
 // GetPaymentDetailsFromPayableResource transforms a PayableResource into its corresponding Payment details resource
-func (service *PaymentDetailsService) GetPaymentDetailsFromPayableResource(req *http.Request, payable *models.PayableResource, penaltyDetailsMap *config.PenaltyDetailsMap) (*models.PaymentDetails, ResponseType, error) {
-	paymentDetails := transformers.PayableResourceToPaymentDetails(payable, penaltyDetailsMap)
+func (service *PaymentDetailsService) GetPaymentDetailsFromPayableResource(req *http.Request,
+	payable *models.PayableResource, penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string) (*models.PaymentDetails, ResponseType, error) {
+	paymentDetails := transformers.PayableResourceToPaymentDetails(payable, penaltyDetailsMap, companyCode)
 
 	if len(paymentDetails.Items) == 0 {
 		err := fmt.Errorf("no items in payment details transformed from payable resource [%s]", payable.Reference)

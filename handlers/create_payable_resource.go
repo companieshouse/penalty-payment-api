@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/companieshouse/penalty-payment-api/middleware"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
 
@@ -42,11 +43,15 @@ func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.Pen
 		}
 
 		companyNumber := r.Context().Value(config.CompanyDetails).(middleware.CompanyDetails).Get("CompanyNumber")
-		companyCode := r.Context().Value(config.CompanyDetails).(middleware.CompanyDetails).Get("CompanyCode")
 
-		if companyNumber == "" || companyCode == "" {
-			log.ErrorR(r, fmt.Errorf("company not in context"))
-			m := models.NewMessageResponse("company number not in request context")
+		// Determine the CompanyCode from the penaltyNumber which should be on the path
+		vars := mux.Vars(r)
+		penaltyNumber := vars["penalty_number"]
+		companyCode, err := getCompanyCode(penaltyNumber)
+
+		if err != nil {
+			log.ErrorR(r, fmt.Errorf("company code cannot be determined"))
+			m := models.NewMessageResponse("company code not not on request")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusInternalServerError)
 			return
 		}

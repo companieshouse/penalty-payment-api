@@ -3,9 +3,8 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-
 	"github.com/companieshouse/chs.go/log"
+	"net/http"
 )
 
 // WriteJSON writes the interface as a json string with status of 200.
@@ -21,19 +20,4 @@ func WriteJSONWithStatus(w http.ResponseWriter, r *http.Request, data interface{
 	if err != nil {
 		log.ErrorR(r, fmt.Errorf("error writing response: %v", err))
 	}
-}
-
-// GetCompanyNumberFromVars returns the company number from the supplied request vars.
-func GetCompanyNumberFromVars(vars map[string]string) (string, error) {
-	companyNumber := vars["company_number"]
-	if companyNumber == "" {
-		return "", fmt.Errorf("company number not supplied")
-	}
-
-	return companyNumber, nil
-}
-
-// GetCompanyCodeFromVars returns the penalty reference, currently hardcoded to LP until release 2.
-func GetCompanyCodeFromVars() (string, error) {
-	return "LP", nil
 }

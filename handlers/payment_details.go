@@ -11,6 +11,10 @@ import (
 	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
+var getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
+	return utils.GetCompanyCodeFromTransaction(transactions)
+}
+
 // HandleGetPaymentDetails retrieves costs for a supplied company number and reference.
 func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -24,8 +28,17 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 			return
 		}
 
+		companyCode, err := getCompanyCodeFromTransaction(payableResource.Transactions)
+		if err != nil {
+			log.ErrorR(req, err)
+			m := models.NewMessageResponse(err.Error())
+			utils.WriteJSONWithStatus(w, req, m, http.StatusInternalServerError)
+			return
+		}
+
 		// Get the payment details from the payable resource
-		paymentDetails, responseType, err := paymentDetailsService.GetPaymentDetailsFromPayableResource(req, payableResource, penaltyDetailsMap)
+		paymentDetails, responseType, err := paymentDetailsService.GetPaymentDetailsFromPayableResource(req,
+			payableResource, penaltyDetailsMap, companyCode)
 		logData := log.Data{"company_number": payableResource.CompanyNumber, "reference": payableResource.Reference}
 		if err != nil {
 			switch responseType {

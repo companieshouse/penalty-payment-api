@@ -1,37 +1,50 @@
 package middleware
 
 import (
+	"github.com/gorilla/mux"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestUnitCompanyMiddleware(t *testing.T) {
-	Convey("Test Company Middleware", t, func() {
-
-		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("OK"))
-		})
-
-		wrappedHandler := CompanyMiddleware(testHandler)
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		recorder := httptest.NewRecorder()
-		wrappedHandler.ServeHTTP(recorder, req)
-
-		resp := recorder.Result()
-
-		if resp.StatusCode != http.StatusOK {
-			t.Errorf("Expected status code 200, but got %v", resp.StatusCode)
+	Convey(" Get Company number from request path ", t, func() {
+		testCases := []struct {
+			name               string
+			input              map[string]string
+			expectedStatusCode int
+		}{
+			{
+				name:               "Success",
+				input:              map[string]string{"company_number": "NI123456"},
+				expectedStatusCode: http.StatusOK,
+			},
+			{
+				name:               "Error no company number",
+				input:              map[string]string{},
+				expectedStatusCode: http.StatusBadRequest,
+			},
 		}
 
-		body := recorder.Body.String()
-		if !strings.Contains(body, "OK") {
-			t.Errorf("Expected body 'OK', but got %v", body)
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte("OK"))
+				})
+				wrappedHandler := CompanyMiddleware(testHandler)
+				vars := tc.input
+				req := httptest.NewRequest(http.MethodGet, "/", nil)
+				req = mux.SetURLVars(req, vars)
+				rr := httptest.NewRecorder()
+				wrappedHandler.ServeHTTP(rr, req)
+
+				if rr.Code != tc.expectedStatusCode {
+					t.Errorf("handler returned wrong status code: got %v want %v", rr.Code, tc.expectedStatusCode)
+				}
+			})
 		}
 	})
-
 }

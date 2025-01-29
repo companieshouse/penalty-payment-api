@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/companieshouse/penalty-payment-api/middleware"
 	"net/http"
 	"strings"
 
@@ -14,11 +15,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var getCompanyNumberFromVars = func(vars map[string]string) (string, error) {
-	return utils.GetCompanyNumberFromVars(vars)
-}
-var getCompanyCodeFromVars = func() (string, error) {
-	return utils.GetCompanyCodeFromVars()
+var getCompanyCode = func(penaltyNumber string) (string, error) {
+	return utils.GetCompanyCode(penaltyNumber)
 }
 var getPenalties = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, service.ResponseType, error) {
 	return service.GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
@@ -29,23 +27,16 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTran
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.InfoR(req, "start GET penalties request from e5")
 
-		// Check for a company number in request
+		companyNumber := req.Context().Value(config.CompanyDetails).(middleware.CompanyDetails).Get("CompanyNumber")
+
+		// Determine the CompanyCode from the penaltyNumber which should be on the path
 		vars := mux.Vars(req)
-		// only company number in the route variables
-
-		companyNumber, err := getCompanyNumberFromVars(vars)
+		penaltyNumber := vars["penalty_number"]
+		companyCode, err := getCompanyCode(penaltyNumber)
 
 		if err != nil {
 			log.ErrorR(req, err)
-			m := models.NewMessageResponse("company number is not in request context")
-			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
-			return
-		}
-
-		companyCode, err := getCompanyCodeFromVars()
-		if err != nil {
-			log.ErrorR(req, err)
-			m := models.NewMessageResponse("company code is not in request context")
+			m := models.NewMessageResponse("invalid penalty number supplied")
 			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 			return
 		}

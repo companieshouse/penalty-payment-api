@@ -163,7 +163,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 			log.Fatal(err)
 		}
 
-		response := PayableResourceToPaymentDetails(payable, penaltyDetailsMap)
+		response := PayableResourceToPaymentDetails(payable, penaltyDetailsMap, "LP")
 
 		_, filename, _, _ := runtime.Caller(0)
 		fmt.Printf("Current test filename: %s\n", filename)

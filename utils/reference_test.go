@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/companieshouse/penalty-payment-api-core/models"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -42,10 +43,152 @@ func TestUnitGenerateEtag(t *testing.T) {
 	})
 }
 
-// this function always return "LP" at the moment
+func TestUnitGetCompanyNumber(t *testing.T) {
+	Convey("Get Company Number", t, func() {
+		testCases := []struct {
+			name                  string
+			input                 map[string]string
+			expectedCompanyNumber string
+			expectedError         bool
+		}{
+			{
+				name:                  "Successful company number",
+				input:                 map[string]string{"company_number": "NI123546"},
+				expectedCompanyNumber: "NI123546",
+				expectedError:         false,
+			},
+			{
+				name:                  "Successful lower case company number",
+				input:                 map[string]string{"company_number": "nI123546"},
+				expectedCompanyNumber: "NI123546",
+				expectedError:         false,
+			},
+			{
+				name:                  "Empty company number",
+				input:                 map[string]string{},
+				expectedCompanyNumber: "",
+				expectedError:         true,
+			},
+		}
+
+		for _, tc := range testCases {
+			Convey(tc.name, func() {
+				companyNumber, err := GetCompanyNumberFromVars(tc.input)
+				Convey(tc.expectedCompanyNumber, func() {
+					if tc.expectedError {
+						So(err, ShouldNotBeNil)
+					} else {
+						So(err, ShouldBeNil)
+					}
+					So(companyNumber, ShouldEqual, tc.expectedCompanyNumber)
+				})
+			})
+		}
+	})
+}
+
 func TestUnitGetCompanyCode(t *testing.T) {
-	Convey("Get Company Code", t, func() {
-		companyCode := GetCompanyCode("")
-		So(companyCode, ShouldEqual, "LP")
+	Convey("Get Company Code from penalty number", t, func() {
+		testCases := []struct {
+			name          string
+			input         string
+			expectedCode  string
+			expectedError bool
+		}{
+			{
+				name:          "Late Filing",
+				input:         "A1000007",
+				expectedCode:  "LP",
+				expectedError: false,
+			},
+			{
+				name:         "Confirmation Statement",
+				input:        "P1000007",
+				expectedCode: "C1",
+			},
+			{
+				name:          "Error no penalty number",
+				input:         "R1234567",
+				expectedCode:  "",
+				expectedError: true,
+			},
+		}
+
+		for _, tc := range testCases {
+			Convey(tc.name, func() {
+				companyCode, err := GetCompanyCode(tc.input)
+				Convey(tc.expectedCode, func() {
+					if tc.expectedError {
+						So(err, ShouldNotBeNil)
+					} else {
+						So(err, ShouldBeNil)
+					}
+					So(companyCode, ShouldEqual, tc.expectedCode)
+				})
+			})
+		}
+	})
+}
+
+func TestUnitGetCompanyCodeFromTranaction(t *testing.T) {
+	Convey("Get Company Code from transaction ID", t, func() {
+		testCases := []struct {
+			name          string
+			input         []models.TransactionItem
+			expectedCode  string
+			expectedError bool
+		}{
+			{
+				name: "Late Filing",
+				input: []models.TransactionItem{
+					{
+						Amount:        5,
+						Type:          "penalty",
+						TransactionID: "A1000007",
+					},
+				},
+				expectedCode:  "LP",
+				expectedError: false,
+			},
+			{
+				name: "Confirmation Statement",
+				input: []models.TransactionItem{
+					{
+						Amount:        5,
+						Type:          "penalty",
+						TransactionID: "P1000007",
+					},
+				},
+				expectedCode: "C1",
+			},
+			{
+				name: "Error no tranaction ID",
+				input: []models.TransactionItem{
+					{},
+				},
+				expectedCode:  "",
+				expectedError: true,
+			},
+			{
+				name:          "Error no transaction present",
+				input:         []models.TransactionItem{},
+				expectedCode:  "",
+				expectedError: true,
+			},
+		}
+
+		for _, tc := range testCases {
+			Convey(tc.name, func() {
+				companyCode, err := GetCompanyCodeFromTransaction(tc.input)
+				Convey(tc.expectedCode, func() {
+					if tc.expectedError {
+						So(err, ShouldNotBeNil)
+					} else {
+						So(err, ShouldBeNil)
+					}
+					So(companyCode, ShouldEqual, tc.expectedCode)
+				})
+			})
+		}
 	})
 }

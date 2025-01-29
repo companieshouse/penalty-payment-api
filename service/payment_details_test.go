@@ -49,7 +49,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap)
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap, "LP")
 
 		So(paymentDetails, ShouldBeNil)
 		So(responseType, ShouldEqual, InvalidData)
@@ -81,7 +81,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				{
 					Amount:        5,
 					Type:          "penalty",
-					TransactionID: "0987654321",
+					TransactionID: "A1234567",
 				},
 			},
 			Payment: models.Payment{
@@ -92,7 +92,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap)
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap, "LP")
 
 		expectedCost := models.Cost{
 			Description:             "Late Filing Penalty",
@@ -156,7 +156,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap)
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap, "LP")
 
 		expectedCost := models.Cost{
 			Description:             "Late Filing Penalty",

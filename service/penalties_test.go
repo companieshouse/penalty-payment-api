@@ -284,6 +284,12 @@ func TestUnitGetPenalties(t *testing.T) {
 }
 
 func TestUnitGetTransactionForPenalty(t *testing.T) {
+	mockedGetCompanyCode := func(penaltyNumber string) (string, error) {
+		return "LP", nil
+	}
+
+	getCompanyCode = mockedGetCompanyCode
+
 	Convey("error when transactions cannot be retrieved", t, func() {
 		errGettingTransactions := errors.New("error getting transactions")
 		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {

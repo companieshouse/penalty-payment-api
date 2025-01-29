@@ -4,8 +4,11 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
+	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/pkg/errors"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -39,7 +42,47 @@ func GenerateEtag() (string, error) {
 	return sha1Hash, nil
 }
 
-// GetCompanyCode gets the company code from the prefix of the penalty reference, currently hardcoded to LP until release 2.
-func GetCompanyCode(ref string) string {
-	return "LP"
+// GetCompanyNumberFromVars returns the company number from the supplied request vars.
+func GetCompanyNumberFromVars(vars map[string]string) (string, error) {
+	companyNumber := vars["company_number"]
+	if len(companyNumber) == 0 {
+		return "", fmt.Errorf("company number not supplied")
+	}
+
+	return strings.ToUpper(companyNumber), nil
+}
+
+// GetCompanyCode gets the company code from the prefix of the penalty reference
+func GetCompanyCode(penaltyNumber string) (string, error) {
+	if len(penaltyNumber) == 0 {
+		return "", fmt.Errorf("penalty number not supplied")
+	}
+
+	penaltyPrefix := penaltyNumber[0]
+
+	switch penaltyPrefix {
+	case 'A':
+		return "LP", nil
+	case 'P':
+		return "C1", nil
+	default:
+		return "", fmt.Errorf("invalid penalty number supplied")
+	}
+}
+
+// GetCompanyCodeFromTransaction determines the penalty type by the penaltyNumber which is held in
+// the first element of the transactions under the property TransactionID that is pulled back
+func GetCompanyCodeFromTransaction(transactions []models.TransactionItem) (string, error) {
+	if len(transactions) == 0 {
+		return "", errors.New("no transactions found")
+	}
+
+	penaltyNumber := transactions[0].TransactionID
+	penaltyType, err := GetCompanyCode(penaltyNumber)
+
+	if err != nil {
+		err = fmt.Errorf("error converting penalty number: [%v]", err)
+		return "", err
+	}
+	return penaltyType, nil
 }
