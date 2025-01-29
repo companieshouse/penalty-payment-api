@@ -18,3 +18,4 @@
 !go.mod
 !go.sum
 !main.go
+!issuer_gateway
