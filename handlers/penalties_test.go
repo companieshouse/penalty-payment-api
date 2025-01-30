@@ -9,7 +9,7 @@ import (
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/service"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/utils"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -20,17 +20,17 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 	allowedTransactionsMap := &models.AllowedTransactionMap{}
 
 	Convey("Given a request to get penalties", t, func() {
-		mockGetPenalties := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, service.ResponseType, error) {
+		mockedAccountPenalties := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, types.ResponseType, error) {
 			if companyNumber == "INVALID_COMPANY" {
-				return nil, service.Error, errors.New("error getting penalties")
+				return nil, types.Error, errors.New("error getting penalties")
 			}
 			if companyNumber == "INVALID_DATA" {
-				return nil, service.InvalidData, errors.New("error getting penalties")
+				return nil, types.InvalidData, errors.New("error getting penalties")
 			}
 			if companyNumber == "INTERNAL_SERVER_ERROR" {
-				return nil, service.NotFound, errors.New("error getting penalties")
+				return nil, types.NotFound, errors.New("error getting penalties")
 			}
-			return nil, service.Success, nil
+			return nil, types.Success, nil
 		}
 
 		mockedGetCompanyCode := func(penaltyReferenceType string) (string, error) {
@@ -38,7 +38,7 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 		}
 
 		getCompanyCode = mockedGetCompanyCode
-		getPenalties = mockGetPenalties
+		accountPenalties = mockedAccountPenalties
 
 		ctx := context.Background()
 		ctx = context.WithValue(ctx, config.CompanyNumber, "NI123546")
