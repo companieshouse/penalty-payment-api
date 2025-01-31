@@ -1,7 +1,6 @@
 package service
 
 import (
-	"github.com/companieshouse/penalty-payment-api/config"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +8,8 @@ import (
 	"time"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/utils"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -49,7 +50,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap, "LP")
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable,
+			penaltyDetailsMap, utils.LateFilingPenalty)
 
 		So(paymentDetails, ShouldBeNil)
 		So(responseType, ShouldEqual, InvalidData)
@@ -92,7 +94,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap, "LP")
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable,
+			penaltyDetailsMap, utils.LateFilingPenalty)
 
 		expectedCost := models.Cost{
 			Description:             "Late Filing Penalty",
@@ -156,7 +159,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetailsMap, "LP")
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable,
+			penaltyDetailsMap, utils.LateFilingPenalty)
 
 		expectedCost := models.Cost{
 			Description:             "Late Filing Penalty",

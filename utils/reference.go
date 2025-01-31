@@ -4,12 +4,15 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
-	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/pkg/errors"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/companieshouse/chs.go/log"
+	"github.com/companieshouse/penalty-payment-api-core/models"
 )
 
 // GenerateReferenceNumber produces a random reference number in the format of [A-Z]{2}[0-9]{8}
@@ -52,37 +55,49 @@ func GetCompanyNumberFromVars(vars map[string]string) (string, error) {
 	return strings.ToUpper(companyNumber), nil
 }
 
-// GetCompanyCode gets the company code from the prefix of the penalty reference
-func GetCompanyCode(penaltyNumber string) (string, error) {
-	if len(penaltyNumber) == 0 {
-		return "", fmt.Errorf("penalty number not supplied")
+// GetCompanyCode gets the company code from the penalty reference type
+func GetCompanyCode(penaltyReferenceType string) (string, error) {
+	if len(penaltyReferenceType) == 0 {
+		return "", fmt.Errorf("penalty reference type not supplied")
 	}
 
-	penaltyPrefix := penaltyNumber[0]
+	log.Info(" *****************: " + penaltyReferenceType)
 
-	switch penaltyPrefix {
-	case 'A':
-		return "LP", nil
-	case 'P':
-		return "C1", nil
+	switch penaltyReferenceType {
+	case "LATE_FILING":
+		return LateFilingPenalty, nil
+	case "SANCTIONS":
+		return Sanctions, nil
 	default:
-		return "", fmt.Errorf("invalid penalty number supplied")
+		return "", fmt.Errorf("invalid penalty reference type supplied")
 	}
 }
 
-// GetCompanyCodeFromTransaction determines the penalty type by the penaltyNumber which is held in
+// GetCompanyCodeFromTransaction determines the penalty type by the penaltyReference which is held in
 // the first element of the transactions under the property TransactionID that is pulled back
 func GetCompanyCodeFromTransaction(transactions []models.TransactionItem) (string, error) {
 	if len(transactions) == 0 {
 		return "", errors.New("no transactions found")
 	}
 
-	penaltyNumber := transactions[0].TransactionID
-	penaltyType, err := GetCompanyCode(penaltyNumber)
+	penaltyReference := transactions[0].TransactionID
 
-	if err != nil {
-		err = fmt.Errorf("error converting penalty number: [%v]", err)
-		return "", err
+	if len(penaltyReference) == 0 {
+		return "", errors.New("no penalty reference found")
 	}
-	return penaltyType, nil
+	penaltyPrefix := penaltyReference[0]
+
+	switch penaltyPrefix {
+	case 'A':
+		return LateFilingPenalty, nil
+	case 'P':
+		return Sanctions, nil
+	default:
+		return "", fmt.Errorf("error converting penalty reference")
+	}
 }
+
+const (
+	LateFilingPenalty = "LP"
+	Sanctions         = "C1"
+)

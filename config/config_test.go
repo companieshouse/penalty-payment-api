@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/companieshouse/penalty-payment-api/utils"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -61,8 +63,8 @@ details:
 
 			Convey("Then the penalty details should be returned", func() {
 				So(err, ShouldBeNil)
-		    So(penaltyDetailsMap.Name, ShouldEqual, "penalty details")
-		    So(penaltyDetailsMap.Details["LP"].EmailReceivedAppId, ShouldEqual, "penalty-payment-api.penalty_payment_received_email")
+				So(penaltyDetailsMap.Name, ShouldEqual, "penalty details")
+				So(penaltyDetailsMap.Details[utils.LateFilingPenalty].EmailReceivedAppId, ShouldEqual, "penalty-payment-api.penalty_payment_received_email")
 			})
 		})
 	})

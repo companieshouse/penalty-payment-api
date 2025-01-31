@@ -2,13 +2,15 @@ package service
 
 import (
 	"errors"
+	"net/http"
+	"testing"
+
 	"github.com/companieshouse/chs.go/avro"
 	"github.com/companieshouse/chs.go/avro/schema"
 	"github.com/companieshouse/chs.go/kafka/producer"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"net/http"
-	"testing"
+	"github.com/companieshouse/penalty-payment-api/utils"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -17,7 +19,7 @@ var req = &http.Request{}
 var penaltyDetailsMap = &config.PenaltyDetailsMap{}
 var allowedTransactionsMap = &models.AllowedTransactionMap{}
 var transactionItem = models.TransactionItem{
-	TransactionID: "1235689",
+	TransactionID: "A1234567",
 }
 var payableResource = models.PayableResource{
 	CompanyNumber: companyNumber,
@@ -94,6 +96,13 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 	})
 }
 
+func setGetCompanyCodeFromTransactionMock(companyCode string) {
+	mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+		return companyCode, nil
+	}
+	getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
+}
+
 func TestUnitPrepareKafkaMessage(t *testing.T) {
 	Convey("Given the PrepareKafkaMessage is called", t, func() {
 		emailSendSchema, _ := schema.Get("chs.gov.uk", ProducerSchemaName)
@@ -107,20 +116,42 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 
 		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
-		Convey("When config is called with invalid config", func() {
-			errMsg := "config is invalid"
-			mockedConfigGet := func() (*config.Config, error) {
-				return &config.Config{}, errors.New(errMsg)
-			}
+		testCases := []struct {
+			name        string
+			companyCode string
+		}{
+			{
+				name:        "Late Filing",
+				companyCode: utils.LateFilingPenalty,
+			},
+			{
+				name:        "Sanctions",
+				companyCode: utils.Sanctions,
+			},
+		}
 
-			getConfig = mockedConfigGet
+		for _, tc := range testCases {
+			Convey(tc.name, func() {
+				setGetCompanyCodeFromTransactionMock(tc.companyCode)
 
-			Convey("Then an error should be returned", func() {
-				_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+				Convey("When config is called with invalid config", func() {
+					errMsg := "config is invalid"
+					mockedConfigGet := func() (*config.Config, error) {
+						return &config.Config{}, errors.New(errMsg)
+					}
 
-				So(err, ShouldResemble, errors.New("error getting config: ["+errMsg+"]"))
+					getConfig = mockedConfigGet
+
+					Convey("Then an error should be returned", func() {
+						_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+
+						So(err, ShouldResemble, errors.New("error getting config: ["+errMsg+"]"))
+					})
+				})
+
 			})
-		})
+		}
+
 		Convey("When config is called with valid config and invalid company number", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
@@ -158,10 +189,10 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetTransactionForPenalty := func(companyNumber, penaltyNumber string, penaltyDetailsMap *config.PenaltyDetailsMap,
+			mockedGetTransactionForPenalty := func(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
 				allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
 
-				return &models.TransactionListItem{ID: "1235689"}, nil
+				return &models.TransactionListItem{ID: "A1234567"}, nil
 			}
 
 			getConfig = mockedConfigGet
@@ -181,10 +212,10 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetTransactionForPenalty := func(companyNumber, penaltyNumber string, penaltyDetailsMap *config.PenaltyDetailsMap,
+			mockedGetTransactionForPenalty := func(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
 				allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
 
-				return &models.TransactionListItem{ID: "1235689", MadeUpDate: "2006-01-02"}, nil
+				return &models.TransactionListItem{ID: "P123567", MadeUpDate: "2006-01-02"}, nil
 			}
 
 			getConfig = mockedConfigGet
@@ -204,10 +235,10 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetTransactionForPenalty := func(companyNumber, penaltyNumber string, penaltyDetailsMap *config.PenaltyDetailsMap,
+			mockedGetTransactionForPenalty := func(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
 				allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
 
-				return &models.TransactionListItem{ID: "1235689", MadeUpDate: "2006-01-02", TransactionDate: "2006-01-02"}, nil
+				return &models.TransactionListItem{ID: "A123567", MadeUpDate: "2006-01-02", TransactionDate: "2006-01-02"}, nil
 			}
 
 			getConfig = mockedConfigGet

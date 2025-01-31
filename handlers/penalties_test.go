@@ -9,8 +9,9 @@ import (
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/middleware"
 	"github.com/companieshouse/penalty-payment-api/service"
+	"github.com/companieshouse/penalty-payment-api/utils"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -32,13 +33,15 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 			return nil, service.Success, nil
 		}
 
+		mockedGetCompanyCode := func(penaltyReference string) (string, error) {
+			return utils.LateFilingPenalty, nil
+		}
+
+		getCompanyCode = mockedGetCompanyCode
 		getPenalties = mockGetPenalties
 
 		ctx := context.Background()
-		details := middleware.CompanyDetails{M: map[string]string{
-			"CompanyNumber": "NI123546",
-		}}
-		ctx = context.WithValue(ctx, config.CompanyDetails, details)
+		ctx = context.WithValue(ctx, config.CompanyNumber, "NI123546")
 
 		req := httptest.NewRequest("GET", "/penalties", nil)
 		rr := httptest.NewRecorder()

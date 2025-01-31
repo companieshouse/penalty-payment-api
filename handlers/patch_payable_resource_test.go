@@ -5,23 +5,25 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/companieshouse/penalty-payment-api-core/constants"
-	"github.com/companieshouse/penalty-payment-api/mocks"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	"github.com/jarcoal/httpmock"
+
 	"github.com/companieshouse/api-sdk-go/companieshouseapi"
 	"github.com/companieshouse/go-session-handler/httpsession"
 	"github.com/companieshouse/go-session-handler/session"
+	"github.com/companieshouse/penalty-payment-api-core/constants"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/e5"
+	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/companieshouse/penalty-payment-api/service"
-	"github.com/golang/mock/gomock"
-	"github.com/jarcoal/httpmock"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -47,6 +49,7 @@ var allowedTransactionsMap = &models.AllowedTransactionMap{
 		"1": {
 			"EJ": true,
 			"EU": true,
+			"S1": true,
 		},
 	},
 }

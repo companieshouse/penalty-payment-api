@@ -3,20 +3,19 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/companieshouse/penalty-payment-api/middleware"
 	"net/http"
-	"strings"
+
+	"github.com/gorilla/mux"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/companieshouse/penalty-payment-api/utils"
-	"github.com/gorilla/mux"
 )
 
-var getCompanyCode = func(penaltyNumber string) (string, error) {
-	return utils.GetCompanyCode(penaltyNumber)
+var getCompanyCode = func(penaltyReference string) (string, error) {
+	return utils.GetCompanyCode(penaltyReference)
 }
 var getPenalties = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, service.ResponseType, error) {
 	return service.GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
@@ -27,22 +26,19 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTran
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.InfoR(req, "start GET penalties request from e5")
 
-		companyNumber := req.Context().Value(config.CompanyDetails).(middleware.CompanyDetails).Get("CompanyNumber")
+		companyNumber := req.Context().Value(config.CompanyNumber).(string)
 
-		// Determine the CompanyCode from the penaltyNumber which should be on the path
+		// Determine the CompanyCode from the penaltyReferenceType which should be on the path
 		vars := mux.Vars(req)
-		penaltyNumber := vars["penalty_number"]
-		companyCode, err := getCompanyCode(penaltyNumber)
+		penaltyReferenceType := vars["penalty_reference_type"]
+		companyCode, err := getCompanyCode(penaltyReferenceType)
 
 		if err != nil {
 			log.ErrorR(req, err)
-			m := models.NewMessageResponse("invalid penalty number supplied")
+			m := models.NewMessageResponse("invalid penalty reference type supplied")
 			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 			return
 		}
-
-		companyNumber = strings.ToUpper(companyNumber)
-		companyCode = strings.ToUpper(companyCode)
 
 		// Call service layer to handle request to E5
 		transactionListResponse, responseType, err := getPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)

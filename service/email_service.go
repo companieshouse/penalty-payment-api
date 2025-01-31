@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/companieshouse/penalty-payment-api/utils"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/companieshouse/filing-notification-sender/util"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // ProducerTopic is the topic to which the email-send kafka message is sent
@@ -80,9 +80,9 @@ var getCompanyName = func(companyNumber string, req *http.Request) (string, erro
 	return GetCompanyName(companyNumber, req)
 }
 
-var getTransactionForPenalty = func(companyNumber, penaltyNumber string, penaltyDetailsMap *config.PenaltyDetailsMap,
+var getTransactionForPenalty = func(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
-	return GetTransactionForPenalty(companyNumber, penaltyNumber, penaltyDetailsMap, allowedTransactionsMap)
+	return GetTransactionForPenalty(companyNumber, companyCode, penaltyReference, penaltyDetailsMap, allowedTransactionsMap)
 }
 
 // prepareKafkaMessage generates the kafka message that is to be sent
@@ -101,8 +101,14 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
+	companyCode, err := getCompanyCodeFromTransaction(payableResource.Transactions)
+	if err != nil {
+		return nil, err
+	}
+
 	// Access specific transaction that was paid for
-	payedTransaction, err := getTransactionForPenalty(payableResource.CompanyNumber, payableResource.Transactions[0].TransactionID, penaltyDetailsMap, allowedTransactionsMap)
+	payedTransaction, err := getTransactionForPenalty(payableResource.CompanyNumber, companyCode,
+		payableResource.Transactions[0].TransactionID, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)
 		return nil, err
@@ -117,11 +123,6 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	transactionDate, err := time.Parse("2006-01-02", payedTransaction.TransactionDate)
 	if err != nil {
 		err = fmt.Errorf("error parsing penalty date: [%v]", err)
-		return nil, err
-	}
-
-	companyCode, err := getCompanyCodeFromTransaction(payableResource.Transactions)
-	if err != nil {
 		return nil, err
 	}
 

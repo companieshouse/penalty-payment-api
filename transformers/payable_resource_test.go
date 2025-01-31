@@ -2,7 +2,6 @@ package transformers
 
 import (
 	"fmt"
-	"github.com/companieshouse/penalty-payment-api/config"
 	"log"
 	"os"
 	"runtime"
@@ -10,6 +9,8 @@ import (
 	"time"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/utils"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -163,7 +164,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 			log.Fatal(err)
 		}
 
-		response := PayableResourceToPaymentDetails(payable, penaltyDetailsMap, "LP")
+		response := PayableResourceToPaymentDetails(payable, penaltyDetailsMap, utils.LateFilingPenalty)
 
 		_, filename, _, _ := runtime.Caller(0)
 		fmt.Printf("Current test filename: %s\n", filename)

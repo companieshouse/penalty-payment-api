@@ -3,17 +3,20 @@ package service
 import (
 	j "encoding/json"
 	"errors"
-	"github.com/companieshouse/penalty-payment-api/config"
 	"io"
 	"net/http"
 	"testing"
 
-	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api-core/validators"
-	"github.com/companieshouse/penalty-payment-api/e5"
-	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
+
+	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api-core/validators"
+	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/e5"
+	"github.com/companieshouse/penalty-payment-api/mocks"
+	"github.com/companieshouse/penalty-payment-api/utils"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -221,7 +224,7 @@ func TestUnitMarkTransactionsAsPaid(t *testing.T) {
 }
 
 var companyNumber = "NI123456"
-var companyCode = "LP"
+var companyCode = utils.LateFilingPenalty
 var allowedTransactionMap = &models.AllowedTransactionMap{
 	Types: map[string]map[string]bool{
 		"1": {
@@ -231,7 +234,7 @@ var allowedTransactionMap = &models.AllowedTransactionMap{
 	},
 }
 var transaction = e5.Transaction{
-	CompanyCode:     "LP",
+	CompanyCode:     utils.LateFilingPenalty,
 	TransactionType: "EU",
 }
 var page = e5.Page{
@@ -284,12 +287,6 @@ func TestUnitGetPenalties(t *testing.T) {
 }
 
 func TestUnitGetTransactionForPenalty(t *testing.T) {
-	mockedGetCompanyCode := func(penaltyNumber string) (string, error) {
-		return "LP", nil
-	}
-
-	getCompanyCode = mockedGetCompanyCode
-
 	Convey("error when transactions cannot be retrieved", t, func() {
 		errGettingTransactions := errors.New("error getting transactions")
 		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
@@ -298,12 +295,13 @@ func TestUnitGetTransactionForPenalty(t *testing.T) {
 
 		getTransactions = mockedGetTransactions
 
-		_, err := GetTransactionForPenalty(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		_, err := GetTransactionForPenalty(companyNumber, utils.LateFilingPenalty, "A1234567", penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldEqual, errGettingTransactions)
 	})
 
-	Convey("error when no transactions found for penalty number", t, func() {
-		errGettingTransactions := errors.New("cannot find transaction for penalty number [LP]")
+	Convey("error when no transactions found for penalty reference", t, func() {
+		penaltyReference := "P1234567"
+		errGettingTransactions := errors.New("cannot find transaction for penalty reference [" + penaltyReference + "]")
 
 		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
 			return &e5TransactionsResponse, nil
@@ -311,7 +309,7 @@ func TestUnitGetTransactionForPenalty(t *testing.T) {
 
 		getTransactions = mockedGetTransactions
 
-		_, err := GetTransactionForPenalty(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		_, err := GetTransactionForPenalty(companyNumber, utils.Sanctions, penaltyReference, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldResemble, errGettingTransactions)
 	})
 }

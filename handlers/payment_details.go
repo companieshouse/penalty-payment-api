@@ -24,7 +24,7 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 		if !ok {
 			log.ErrorR(req, fmt.Errorf("invalid PayableResource in request context"))
 			m := models.NewMessageResponse("the payable resource is not present in the request context")
-			utils.WriteJSONWithStatus(w, req, m, http.StatusInternalServerError)
+			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 			return
 		}
 
@@ -32,7 +32,7 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 		if err != nil {
 			log.ErrorR(req, err)
 			m := models.NewMessageResponse(err.Error())
-			utils.WriteJSONWithStatus(w, req, m, http.StatusInternalServerError)
+			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 			return
 		}
 

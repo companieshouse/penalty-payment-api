@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"github.com/companieshouse/penalty-payment-api-core/models"
 	"testing"
+
+	"github.com/companieshouse/penalty-payment-api-core/models"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -88,7 +89,7 @@ func TestUnitGetCompanyNumber(t *testing.T) {
 }
 
 func TestUnitGetCompanyCode(t *testing.T) {
-	Convey("Get Company Code from penalty number", t, func() {
+	Convey("Get Company Code from penalty reference", t, func() {
 		testCases := []struct {
 			name          string
 			input         string
@@ -97,18 +98,24 @@ func TestUnitGetCompanyCode(t *testing.T) {
 		}{
 			{
 				name:          "Late Filing",
-				input:         "A1000007",
-				expectedCode:  "LP",
+				input:         "LATE_FILING",
+				expectedCode:  LateFilingPenalty,
 				expectedError: false,
 			},
 			{
-				name:         "Confirmation Statement",
-				input:        "P1000007",
-				expectedCode: "C1",
+				name:         "Sanctions",
+				input:        "SANCTIONS",
+				expectedCode: Sanctions,
 			},
 			{
-				name:          "Error no penalty number",
+				name:          "Error invalid penalty reference",
 				input:         "R1234567",
+				expectedCode:  "",
+				expectedError: true,
+			},
+			{
+				name:          "Error no penalty reference",
+				input:         "",
 				expectedCode:  "",
 				expectedError: true,
 			},
@@ -147,11 +154,11 @@ func TestUnitGetCompanyCodeFromTranaction(t *testing.T) {
 						TransactionID: "A1000007",
 					},
 				},
-				expectedCode:  "LP",
+				expectedCode:  LateFilingPenalty,
 				expectedError: false,
 			},
 			{
-				name: "Confirmation Statement",
+				name: "Sanctions",
 				input: []models.TransactionItem{
 					{
 						Amount:        5,
@@ -160,6 +167,18 @@ func TestUnitGetCompanyCodeFromTranaction(t *testing.T) {
 					},
 				},
 				expectedCode: "C1",
+			},
+			{
+				name: "Error unknown transaction ID",
+				input: []models.TransactionItem{
+					{
+						Amount:        5,
+						Type:          "penalty",
+						TransactionID: "Q1000007",
+					},
+				},
+				expectedCode:  "",
+				expectedError: true,
 			},
 			{
 				name: "Error no tranaction ID",

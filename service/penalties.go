@@ -67,20 +67,9 @@ func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *c
 	return generatedTransactionListFromE5Response, Success, nil
 }
 
-var getCompanyCode = func(penaltyNumber string) (string, error) {
-	return utils.GetCompanyCode(penaltyNumber)
-}
-
 // GetTransactionForPenalty returns a single, specified, transaction from e5 for a specific company
-func GetTransactionForPenalty(companyNumber, penaltyNumber string, penaltyDetailsMap *config.PenaltyDetailsMap,
+func GetTransactionForPenalty(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
-	companyCode, err := getCompanyCode(penaltyNumber)
-
-	if err != nil {
-		log.Error(err)
-		return nil, err
-	}
-
 	response, _, err := GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		log.Error(err)
@@ -88,12 +77,12 @@ func GetTransactionForPenalty(companyNumber, penaltyNumber string, penaltyDetail
 	}
 
 	for _, transaction := range response.Items {
-		if transaction.ID == penaltyNumber {
+		if transaction.ID == penaltyReference {
 			return &transaction, nil
 		}
 	}
 
-	return nil, fmt.Errorf("cannot find transaction for penalty number [%v]", penaltyNumber)
+	return nil, fmt.Errorf("cannot find transaction for penalty reference [%v]", penaltyReference)
 }
 
 func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsResponse, companyCode string,
