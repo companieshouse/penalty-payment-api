@@ -6,7 +6,7 @@
     "description": "An API that creates, patches, and retrieves Penalty Payment Service (PPS) sessions, as well as interacting with the E5 finance system"
   },
   "host": "api.companieshouse.gov.uk",
-  "basePath": "/company/{company_number}/penalties",
+  "basePath": "/company/{company_number}/penalties/late-filing",
   "schemes": [
     "https"
   ],
@@ -54,7 +54,7 @@
         }
       }
     },
-    "/": {
+    "/{penalty_reference_type}": {
       "get": {
         "tags": [
           "Penalties"
@@ -69,12 +69,15 @@
             "in": "path",
             "type": "string",
             "required": true
+          },
+          {
+            "name": "penalty_reference_type",
+            "in": "path",
+            "type": "string",
+            "required": true
           }
         ],
         "responses": {
-          "404": {
-            "description": "the company does not exist"
-          },
           "200": {
             "description": "a list of payable transactions",
             "schema": {
@@ -95,6 +98,15 @@
                 }
               ]
             }
+          },
+          "400": {
+            "description": "Bad request - Invalid input"
+          },
+          "404": {
+            "description": "the company does not exist"
+          },
+          "500": {
+            "description": "there was a problem communicating with the finance backend"
           }
         }
       }
@@ -103,12 +115,6 @@
       "parameters": [
         {
           "name": "company_number",
-          "in": "path",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "payment_id",
           "in": "path",
           "type": "string",
           "required": true
@@ -137,11 +143,17 @@
             "schema": {
               "$ref": "#/definitions/CreatedPayableResource"
             }
+          },
+          "400": {
+            "description": "Bad request - Invalid input"
+          },
+          "500": {
+            "description": "there was a problem handling your request"
           }
         }
       }
     },
-    "/payable/{id}": {
+    "/payable/{payable_id}": {
       "parameters": [
         {
           "in": "path",
@@ -151,7 +163,7 @@
         },
         {
           "in": "path",
-          "name": "id",
+          "name": "payable_id",
           "required": true,
           "type": "string"
         }
@@ -170,11 +182,14 @@
             "schema": {
               "$ref": "#/definitions/PayableResource"
             }
-          }
+          },
+          "500": {
+          "description": "the payable resource is not present in the request context"
+        }
         }
       }
     },
-    "/payable/{id}/payment": {
+    "/payable/{payable_id}/payment": {
       "parameters": [
         {
           "in": "path",
@@ -184,7 +199,7 @@
         },
         {
           "in": "path",
-          "name": "id",
+          "name": "payable_id",
           "required": true,
           "type": "string"
         }
@@ -200,7 +215,18 @@
             "schema": {
               "$ref": "#/definitions/PaymentDetails"
             }
+          },
+          "400": {
+            "description": "Bad request - Invalid input"
+          },
+          "404": {
+            "description": "payable resource does not exist or has insufficient data"
+          },
+          "500": {
+            "description": "payable resource does not exist or has insufficient dat"
           }
+
+
         }
       },
       "patch": {
