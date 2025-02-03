@@ -6,7 +6,6 @@
     "description": "An API that creates, patches, and retrieves Penalty Payment Service (PPS) sessions, as well as interacting with the E5 finance system"
   },
   "host": "api.companieshouse.gov.uk",
-  "basePath": "/company/{company_number}/penalties/late-filing",
   "schemes": [
     "https"
   ],
@@ -47,14 +46,14 @@
           },
           "503": {
             "description": "service unavailable",
-             "schema": {
+            "schema": {
               "$ref": "#/definitions/ServiceUnavailable"
             }
           }
         }
       }
     },
-    "/{penalty_reference_type}": {
+    "/company/{company_number}/penalties/late-filing/{penalty_reference_type}": {
       "get": {
         "tags": [
           "Penalties"
@@ -74,6 +73,7 @@
             "name": "penalty_reference_type",
             "in": "path",
             "type": "string",
+            "enum": ["LATE_FILING", "SANCTIONS"],
             "required": true
           }
         ],
@@ -111,7 +111,7 @@
         }
       }
     },
-    "/payable": {
+    "/company/{company_number}/penalties/late-filing/payable": {
       "parameters": [
         {
           "name": "company_number",
@@ -153,7 +153,7 @@
         }
       }
     },
-    "/payable/{payable_id}": {
+    "/company/{company_number}/penalties/late-filing/payable/{payable_id}": {
       "parameters": [
         {
           "in": "path",
@@ -184,12 +184,12 @@
             }
           },
           "500": {
-          "description": "the payable resource is not present in the request context"
-        }
+            "description": "the payable resource is not present in the request context"
+          }
         }
       }
     },
-    "/payable/{payable_id}/payment": {
+    "/company/{company_number}/penalties/late-filing/payable/{payable_id}/payment": {
       "parameters": [
         {
           "in": "path",
