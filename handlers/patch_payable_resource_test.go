@@ -313,7 +313,12 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
 
 			// the payable resource in the request context
-			model := &models.PayableResource{Reference: "123"}
+			model := &models.PayableResource{
+				Reference: "123",
+				Transactions: []models.TransactionItem{
+					{TransactionID: "A1234567"},
+				},
+			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
