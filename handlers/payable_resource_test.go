@@ -35,10 +35,10 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 				ID:    "uz3r1D_H3r3",
 			},
 			Transactions: []models.TransactionItem{
-				models.TransactionItem{
+				{
 					Amount:        5,
 					Type:          "penalty",
-					TransactionID: "0987654321",
+					TransactionID: "A1234567",
 				},
 			},
 			Payment: models.Payment{

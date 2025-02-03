@@ -23,6 +23,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/companieshouse/penalty-payment-api/service"
+	"github.com/companieshouse/penalty-payment-api/utils"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -178,6 +179,12 @@ func TestUnitPayResourceHandler(t *testing.T) {
 		})
 
 		Convey("problem with sending confirmation email", func() {
+			mockedGetCompanyCode := func(penaltyReference string) (string, error) {
+				return utils.LateFilingPenalty, nil
+			}
+
+			getCompanyCode = mockedGetCompanyCode
+
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
@@ -201,11 +208,15 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockService := mocks.NewMockService(mockCtrl)
 			mockService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
 			mockService.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
-			// commenting out for now, still looking at why this call is not made
-			//mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
+			mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
 
 			// the payable resource in the request context
-			model := &models.PayableResource{Reference: "123"}
+			model := &models.PayableResource{
+				Reference: "123",
+				Transactions: []models.TransactionItem{
+					{TransactionID: "A1234567"},
+				},
+			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
@@ -249,11 +260,15 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			mockService := mocks.NewMockService(mockCtrl)
 			mockService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			// commenting out for now, still looking at why this call is not made
-			//mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
+			mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
 
 			// the payable resource in the request context
-			model := &models.PayableResource{Reference: "123"}
+			model := &models.PayableResource{
+				Reference: "123",
+				Transactions: []models.TransactionItem{
+					{TransactionID: "A1234567"},
+				},
+			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
@@ -295,8 +310,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockService := mocks.NewMockService(mockCtrl)
 			mockService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
 			mockService.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
-			// commenting out for now, still looking at why this call is not made
-			//mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
+			mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
 
 			// the payable resource in the request context
 			model := &models.PayableResource{Reference: "123"}
