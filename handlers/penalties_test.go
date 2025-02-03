@@ -33,7 +33,7 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 			return nil, service.Success, nil
 		}
 
-		mockedGetCompanyCode := func(penaltyReference string) (string, error) {
+		mockedGetCompanyCode := func(penaltyReferenceType string) (string, error) {
 			return utils.LateFilingPenalty, nil
 		}
 

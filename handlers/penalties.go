@@ -14,8 +14,8 @@ import (
 	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
-var getCompanyCode = func(penaltyReference string) (string, error) {
-	return utils.GetCompanyCode(penaltyReference)
+var getCompanyCode = func(penaltyReferenceType string) (string, error) {
+	return utils.GetCompanyCode(penaltyReferenceType)
 }
 var getPenalties = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, service.ResponseType, error) {
 	return service.GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
