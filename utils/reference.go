@@ -11,7 +11,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 )
 
@@ -60,8 +59,6 @@ func GetCompanyCode(penaltyReferenceType string) (string, error) {
 	if len(penaltyReferenceType) == 0 {
 		return "", fmt.Errorf("penalty reference type not supplied")
 	}
-
-	log.Info(" *****************: " + penaltyReferenceType)
 
 	switch penaltyReferenceType {
 	case "LATE_FILING":
