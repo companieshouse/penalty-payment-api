@@ -46,7 +46,7 @@ func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.Pen
 		companyCode, err := getCompanyCodeFromTransaction(request.Transactions)
 		if err != nil {
 			log.ErrorR(r, fmt.Errorf("company code cannot be determined"))
-			m := models.NewMessageResponse("company code not not on request")
+			m := models.NewMessageResponse("company code cannot be determined")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
