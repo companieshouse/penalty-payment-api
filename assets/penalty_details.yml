@@ -9,3 +9,11 @@ details:
     EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
     EmailFilingDesc:    "Late filing of accounts"
     EmailMsgType:       "penalty_payment_received_email"
+  C1:
+    Description: "Sanctions Penalty Payment"
+    DescriptionId: "penalty-sanctions"
+    ResourceKind: "penalty#sanctions"
+    ProductType: "penalty-sanctions"
+    EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
+    EmailFilingDesc: "Sanctions Penalty Payment"
+    EmailMsgType: "penalty_payment_received_email"

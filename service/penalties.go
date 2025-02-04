@@ -68,9 +68,8 @@ func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *c
 }
 
 // GetTransactionForPenalty returns a single, specified, transaction from e5 for a specific company
-func GetTransactionForPenalty(companyNumber, penaltyNumber string, penaltyDetailsMap *config.PenaltyDetailsMap,
+func GetTransactionForPenalty(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
-	companyCode := utils.GetCompanyCode(penaltyNumber)
 	response, _, err := GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		log.Error(err)
@@ -78,12 +77,12 @@ func GetTransactionForPenalty(companyNumber, penaltyNumber string, penaltyDetail
 	}
 
 	for _, transaction := range response.Items {
-		if transaction.ID == penaltyNumber {
+		if transaction.ID == penaltyReference {
 			return &transaction, nil
 		}
 	}
 
-	return nil, fmt.Errorf("cannot find transaction for penalty number [%v]", penaltyNumber)
+	return nil, fmt.Errorf("cannot find transaction for penalty reference [%v]", penaltyReference)
 }
 
 func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsResponse, companyCode string,
@@ -100,9 +99,6 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 	payableTransactionList.Etag = etag
 	payableTransactionList.TotalResults = e5Response.Page.TotalElements
 
-	// Determine the penalty type
-	var penaltyType = utils.GetCompanyCode(companyCode)
-
 	// Loop through e5 response and construct CH resources
 	for _, e5Transaction := range e5Response.Transactions {
 		listItem := models.TransactionListItem{}
@@ -114,7 +110,7 @@ func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsRespons
 			return nil, err
 		}
 		listItem.IsPaid = e5Transaction.IsPaid
-		listItem.Kind = penaltyDetailsMap.Details[penaltyType].ResourceKind
+		listItem.Kind = penaltyDetailsMap.Details[companyCode].ResourceKind
 		listItem.IsDCA = e5Transaction.AccountStatus == "DCA"
 		listItem.DueDate = e5Transaction.DueDate
 		listItem.MadeUpDate = e5Transaction.MadeUpDate
@@ -158,7 +154,12 @@ func MarkTransactionsAsPaid(svc *PayableResourceService, client *e5.Client, reso
 	// ones that begin with 'LP' which signify penalties that have been paid outside of the digital service.
 	paymentID := "X" + payment.PaymentID
 
-	var companyCode = utils.GetCompanyCode(resource.Reference)
+	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
+
+	if err != nil {
+		log.Error(err)
+		return err
+	}
 
 	// three http requests are needed to mark a transactions as paid. The process is 1) create the payment, 2) authorise
 	// the payments and finally 3) confirm the payment. if anyone of these fails, the company account will be locked in

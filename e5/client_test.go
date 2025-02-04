@@ -4,9 +4,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/jarcoal/httpmock"
-	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/companieshouse/penalty-payment-api/utils"
+
+	"github.com/jarcoal/httpmock"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func hasFieldError(field, tag string, errs validator.ValidationErrors) bool {
@@ -26,7 +30,7 @@ func TestUnitClient_CreatePayment(t *testing.T) {
 
 	Convey("creating a payment", t, func() {
 		input := &CreatePaymentInput{
-			CompanyCode:   "LP",
+			CompanyCode:   utils.LateFilingPenalty,
 			CompanyNumber: "1000024",
 			PaymentID:     "1234",
 			TotalValue:    100,

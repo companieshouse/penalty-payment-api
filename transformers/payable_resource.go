@@ -103,27 +103,25 @@ func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.P
 }
 
 // PayableResourceToPaymentDetails will create a PaymentDetails resource (for integrating into payment service) from a PPS PayableResource
-func PayableResourceToPaymentDetails(payable *models.PayableResource, penaltyDetailsMap *config.PenaltyDetailsMap) *models.PaymentDetails {
-	// Determine the penalty type
-	var penaltyType = utils.GetCompanyCode(payable.Reference)
-
+func PayableResourceToPaymentDetails(payable *models.PayableResource,
+	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string) *models.PaymentDetails {
 	var costs []models.Cost
 	for _, tx := range payable.Transactions {
 		cost := models.Cost{
 			Amount:                  fmt.Sprintf("%g", tx.Amount),
 			AvailablePaymentMethods: []string{"credit-card"},
 			ClassOfPayment:          []string{"penalty"},
-			Description:             penaltyDetailsMap.Details[penaltyType].Description,
-			DescriptionIdentifier:   penaltyDetailsMap.Details[penaltyType].DescriptionId,
+			Description:             penaltyDetailsMap.Details[companyCode].Description,
+			DescriptionIdentifier:   penaltyDetailsMap.Details[companyCode].DescriptionId,
 			Kind:                    "cost#cost",
-			ResourceKind:            penaltyDetailsMap.Details[penaltyType].ResourceKind,
-			ProductType:             penaltyDetailsMap.Details[penaltyType].ProductType,
+			ResourceKind:            penaltyDetailsMap.Details[companyCode].ResourceKind,
+			ProductType:             penaltyDetailsMap.Details[companyCode].ProductType,
 		}
 		costs = append(costs, cost)
 	}
 
 	payment := models.PaymentDetails{
-		Description: penaltyDetailsMap.Details[penaltyType].Description,
+		Description: penaltyDetailsMap.Details[companyCode].Description,
 		Etag:        payable.Etag, // use the same Etag as PayableResource its built from - if PayableResource changes PaymentDetails may change too
 		Kind:        "payment-details#payment-details",
 		Links: models.PaymentDetailsLinks{
