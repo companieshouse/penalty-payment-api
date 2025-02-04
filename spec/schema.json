@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "1.0.0",
+    "version": "2.0.0",
     "title": "Penalty Payment Service (PPS) API",
     "description": "An API that creates, patches, and retrieves Penalty Payment Service (PPS) sessions, as well as interacting with the E5 finance system"
   },
@@ -223,7 +223,7 @@
             "description": "payable resource does not exist or has insufficient data"
           },
           "500": {
-            "description": "payable resource does not exist or has insufficient dat"
+            "description": "payable resource does not exist or has insufficient data"
           }
 
 
