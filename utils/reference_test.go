@@ -114,10 +114,10 @@ func TestUnitGetCompanyCode(t *testing.T) {
 				expectedError: true,
 			},
 			{
-				name:          "Error no penalty reference",
+				name:          "No penalty reference - default to LFP",
 				input:         "",
-				expectedCode:  "",
-				expectedError: true,
+				expectedCode:  LateFilingPenalty,
+				expectedError: false,
 			},
 		}
 
@@ -137,7 +137,7 @@ func TestUnitGetCompanyCode(t *testing.T) {
 	})
 }
 
-func TestUnitGetCompanyCodeFromTranaction(t *testing.T) {
+func TestUnitGetCompanyCodeFromTransaction(t *testing.T) {
 	Convey("Get Company Code from transaction ID", t, func() {
 		testCases := []struct {
 			name          string
@@ -181,7 +181,7 @@ func TestUnitGetCompanyCodeFromTranaction(t *testing.T) {
 				expectedError: true,
 			},
 			{
-				name: "Error no tranaction ID",
+				name: "Error no transaction ID",
 				input: []models.TransactionItem{
 					{},
 				},

@@ -56,8 +56,10 @@ func GetCompanyNumberFromVars(vars map[string]string) (string, error) {
 
 // GetCompanyCode gets the company code from the penalty reference type
 func GetCompanyCode(penaltyReferenceType string) (string, error) {
+	// If no penalty reference type is supplied then the request is coming in on the old url
+	// so defaulting to LateFiling until agreement is made to update other services calling the api
 	if len(penaltyReferenceType) == 0 {
-		return "", fmt.Errorf("penalty reference type not supplied")
+		return LateFilingPenalty, nil
 	}
 
 	switch penaltyReferenceType {
