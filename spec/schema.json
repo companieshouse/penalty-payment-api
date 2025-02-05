@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "0.5.0",
+    "version": "1.1.0",
     "title": "Penalty Payment Service (PPS) API",
     "description": "An API that creates, patches, and retrieves Penalty Payment Service (PPS) sessions, as well as interacting with the E5 finance system"
   },
