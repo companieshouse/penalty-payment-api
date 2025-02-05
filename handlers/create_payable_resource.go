@@ -3,9 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/companieshouse/penalty-payment-api/middleware"
 	"net/http"
 	"strings"
+
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
@@ -15,7 +16,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api/transformers"
 	"github.com/companieshouse/penalty-payment-api/utils"
 	"github.com/companieshouse/penalty-payment-api/validators"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 // CreatePayableResourceHandler takes a http requests and creates a new payable resource
@@ -37,17 +37,17 @@ func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.Pen
 		if userDetails == nil {
 			log.ErrorR(r, fmt.Errorf("user details not in context"))
 			m := models.NewMessageResponse("user details not in request context")
-			utils.WriteJSONWithStatus(w, r, m, http.StatusInternalServerError)
+			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
 
-		companyNumber := r.Context().Value(config.CompanyDetails).(middleware.CompanyDetails).Get("CompanyNumber")
-		companyCode := r.Context().Value(config.CompanyDetails).(middleware.CompanyDetails).Get("CompanyCode")
+		companyNumber := r.Context().Value(config.CompanyNumber).(string)
 
-		if companyNumber == "" || companyCode == "" {
-			log.ErrorR(r, fmt.Errorf("company not in context"))
-			m := models.NewMessageResponse("company number not in request context")
-			utils.WriteJSONWithStatus(w, r, m, http.StatusInternalServerError)
+		companyCode, err := getCompanyCodeFromTransaction(request.Transactions)
+		if err != nil {
+			log.ErrorR(r, fmt.Errorf("company code cannot be determined"))
+			m := models.NewMessageResponse("company code cannot be determined")
+			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
 

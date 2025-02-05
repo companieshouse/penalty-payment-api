@@ -172,3 +172,5 @@ allowed_transactions:
       true
     SY:
       true
+    S1:
+      true

@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/companieshouse/penalty-payment-api/utils"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/companieshouse/filing-notification-sender/util"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // ProducerTopic is the topic to which the email-send kafka message is sent
@@ -72,13 +72,17 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 	return nil
 }
 
+var getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
+	return utils.GetCompanyCodeFromTransaction(transactions)
+}
+
 var getCompanyName = func(companyNumber string, req *http.Request) (string, error) {
 	return GetCompanyName(companyNumber, req)
 }
 
-var getTransactionForPenalty = func(companyNumber, penaltyNumber string, penaltyDetailsMap *config.PenaltyDetailsMap,
+var getTransactionForPenalty = func(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
-	return GetTransactionForPenalty(companyNumber, penaltyNumber, penaltyDetailsMap, allowedTransactionsMap)
+	return GetTransactionForPenalty(companyNumber, companyCode, penaltyReference, penaltyDetailsMap, allowedTransactionsMap)
 }
 
 // prepareKafkaMessage generates the kafka message that is to be sent
@@ -97,8 +101,14 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
+	companyCode, err := getCompanyCodeFromTransaction(payableResource.Transactions)
+	if err != nil {
+		return nil, err
+	}
+
 	// Access specific transaction that was paid for
-	payedTransaction, err := getTransactionForPenalty(payableResource.CompanyNumber, payableResource.Transactions[0].TransactionID, penaltyDetailsMap, allowedTransactionsMap)
+	payedTransaction, err := getTransactionForPenalty(payableResource.CompanyNumber, companyCode,
+		payableResource.Transactions[0].TransactionID, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)
 		return nil, err
@@ -116,9 +126,6 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
-	// Determine the penalty type
-	var penaltyType = utils.GetCompanyCode(payableResource.Reference)
-
 	// Set dataField to be used in the avro schema.
 	dataFieldMessage := models.DataField{
 		PayableResource:   payableResource,
@@ -127,7 +134,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		TransactionDate:   transactionDate.Format("2 January 2006"),
 		Amount:            fmt.Sprintf("%g", payedTransaction.OriginalAmount),
 		CompanyName:       companyName,
-		FilingDescription: penaltyDetailsMap.Details[penaltyType].EmailFilingDesc,
+		FilingDescription: penaltyDetailsMap.Details[companyCode].EmailFilingDesc,
 		To:                payableResource.CreatedBy.Email,
 		Subject:           fmt.Sprintf("Confirmation of your Companies House penalty payment"),
 		CHSURL:            cfg.CHSURL,
@@ -142,9 +149,9 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	messageID := "<" + payableResource.Reference + "." + strconv.Itoa(util.Random(0, 100000)) + "@companieshouse.gov.uk>"
 
 	emailSendMessage := models.EmailSend{
-		AppID:        penaltyDetailsMap.Details[penaltyType].EmailReceivedAppId,
+		AppID:        penaltyDetailsMap.Details[companyCode].EmailReceivedAppId,
 		MessageID:    messageID,
-		MessageType:  penaltyDetailsMap.Details[penaltyType].EmailMsgType,
+		MessageType:  penaltyDetailsMap.Details[companyCode].EmailMsgType,
 		Data:         string(dataBytes),
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),

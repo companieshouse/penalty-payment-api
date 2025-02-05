@@ -4,21 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
+
+	"github.com/gorilla/mux"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/companieshouse/penalty-payment-api/utils"
-	"github.com/gorilla/mux"
 )
 
-var getCompanyNumberFromVars = func(vars map[string]string) (string, error) {
-	return utils.GetCompanyNumberFromVars(vars)
-}
-var getCompanyCodeFromVars = func() (string, error) {
-	return utils.GetCompanyCodeFromVars()
+var getCompanyCode = func(penaltyReferenceType string) (string, error) {
+	return utils.GetCompanyCode(penaltyReferenceType)
 }
 var getPenalties = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, service.ResponseType, error) {
 	return service.GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
@@ -29,29 +26,19 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTran
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.InfoR(req, "start GET penalties request from e5")
 
-		// Check for a company number in request
+		companyNumber := req.Context().Value(config.CompanyNumber).(string)
+
+		// Determine the CompanyCode from the penaltyReferenceType which should be on the path
 		vars := mux.Vars(req)
-		// only company number in the route variables
-
-		companyNumber, err := getCompanyNumberFromVars(vars)
+		penaltyReferenceType := vars["penalty_reference_type"]
+		companyCode, err := getCompanyCode(penaltyReferenceType)
 
 		if err != nil {
 			log.ErrorR(req, err)
-			m := models.NewMessageResponse("company number is not in request context")
+			m := models.NewMessageResponse("invalid penalty reference type supplied")
 			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 			return
 		}
-
-		companyCode, err := getCompanyCodeFromVars()
-		if err != nil {
-			log.ErrorR(req, err)
-			m := models.NewMessageResponse("company code is not in request context")
-			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
-			return
-		}
-
-		companyNumber = strings.ToUpper(companyNumber)
-		companyCode = strings.ToUpper(companyCode)
 
 		// Call service layer to handle request to E5
 		transactionListResponse, responseType, err := getPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)

@@ -5,23 +5,26 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/companieshouse/penalty-payment-api-core/constants"
-	"github.com/companieshouse/penalty-payment-api/mocks"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	"github.com/jarcoal/httpmock"
+
 	"github.com/companieshouse/api-sdk-go/companieshouseapi"
 	"github.com/companieshouse/go-session-handler/httpsession"
 	"github.com/companieshouse/go-session-handler/session"
+	"github.com/companieshouse/penalty-payment-api-core/constants"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/e5"
+	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/companieshouse/penalty-payment-api/service"
-	"github.com/golang/mock/gomock"
-	"github.com/jarcoal/httpmock"
+	"github.com/companieshouse/penalty-payment-api/utils"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -47,6 +50,7 @@ var allowedTransactionsMap = &models.AllowedTransactionMap{
 		"1": {
 			"EJ": true,
 			"EU": true,
+			"S1": true,
 		},
 	},
 }
@@ -175,6 +179,12 @@ func TestUnitPayResourceHandler(t *testing.T) {
 		})
 
 		Convey("problem with sending confirmation email", func() {
+			mockedGetCompanyCode := func(penaltyReference string) (string, error) {
+				return utils.LateFilingPenalty, nil
+			}
+
+			getCompanyCode = mockedGetCompanyCode
+
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
@@ -201,7 +211,12 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
 
 			// the payable resource in the request context
-			model := &models.PayableResource{Reference: "123"}
+			model := &models.PayableResource{
+				Reference: "123",
+				Transactions: []models.TransactionItem{
+					{TransactionID: "A1234567"},
+				},
+			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
@@ -248,7 +263,12 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
 
 			// the payable resource in the request context
-			model := &models.PayableResource{Reference: "123"}
+			model := &models.PayableResource{
+				Reference: "123",
+				Transactions: []models.TransactionItem{
+					{TransactionID: "A1234567"},
+				},
+			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
@@ -293,7 +313,12 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
 
 			// the payable resource in the request context
-			model := &models.PayableResource{Reference: "123"}
+			model := &models.PayableResource{
+				Reference: "123",
+				Transactions: []models.TransactionItem{
+					{TransactionID: "A1234567"},
+				},
+			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
@@ -351,7 +376,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 				Reference:     "123",
 				CompanyNumber: "10000024",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "123", Amount: 150},
+					{TransactionID: "A1234567", Amount: 150},
 				},
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
