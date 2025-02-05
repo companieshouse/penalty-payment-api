@@ -13,9 +13,9 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/dao"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 	"github.com/companieshouse/penalty-payment-api/transformers"
 	"github.com/companieshouse/penalty-payment-api/utils"
-	"github.com/companieshouse/penalty-payment-api/validators"
 )
 
 // CreatePayableResourceHandler takes a http requests and creates a new payable resource
@@ -54,8 +54,8 @@ func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.Pen
 		request.CompanyNumber = strings.ToUpper(companyNumber)
 		request.CreatedBy = userDetails.(authentication.AuthUserDetails)
 
-		// validate that the transactions being requested do exist in E5
-		validTransactions, err := validators.TransactionsArePayable(request.CompanyNumber, companyCode,
+		// Ensure that the transactions in the request are valid payable penalties that exist in E5
+		payablePenalties, err := api.PayablePenalty(request.CompanyNumber, companyCode,
 			request.Transactions, penaltyDetailsMap, allowedTransactionMap)
 		if err != nil {
 			log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))
@@ -64,8 +64,8 @@ func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.Pen
 			return
 		}
 
-		// validTransactions contains extra values that have been added from E5 validation so override request body transactions with validated transactions
-		request.Transactions = validTransactions
+		// Replace request transactions with payable penalties to include updated values in the request
+		request.Transactions = payablePenalties
 
 		v := validator.New()
 		err = v.Struct(request)
