@@ -5,5 +5,5 @@ import (
 )
 
 type HealthcheckFinanceSystem interface {
-	CheckScheduledMaintenance() (time.Time, bool, bool)
+	CheckScheduledMaintenance() (systemAvailableTime time.Time, systemUnavailable bool, parseError bool)
 }

@@ -16,7 +16,7 @@ var getConfig = func() (*config.Config, error) {
 type IssuerGatewayHealthcheckFinanceSystem struct {
 }
 
-func (ig *IssuerGatewayHealthcheckFinanceSystem) CheckScheduledMaintenance() (time.Time, bool, bool) {
+func (ig *IssuerGatewayHealthcheckFinanceSystem) CheckScheduledMaintenance() (systemAvailableTime time.Time, systemUnavailable bool, parseError bool) {
 
 	cfg, err := getConfig()
 	if err != nil {
@@ -25,14 +25,11 @@ func (ig *IssuerGatewayHealthcheckFinanceSystem) CheckScheduledMaintenance() (ti
 	}
 
 	currentTime := time.Now()
-	var systemUnavailable bool
-	var systemAvailableTime time.Time
 
-	systemAvailableTime, systemUnavailable = checkWeeklyDownTime(cfg,
-		currentTime, systemAvailableTime, systemUnavailable)
+	systemAvailableTime, systemUnavailable = checkWeeklyDownTime(cfg, currentTime)
 
 	if isPlannedMaintenanceCheckRequired(cfg) {
-		timeDateLayout := "02 Jan 06 15:04 MST"
+		timeDateLayout := time.RFC822
 		maintenanceStart, err := time.Parse(timeDateLayout, cfg.PlannedMaintenanceStart)
 		if err != nil {
 			log.Error(fmt.Errorf("error parsing Maintenance Start time: [%v]", err))
@@ -52,10 +49,7 @@ func (ig *IssuerGatewayHealthcheckFinanceSystem) CheckScheduledMaintenance() (ti
 	return systemAvailableTime, systemUnavailable, false
 }
 
-func checkWeeklyDownTime(cfg *config.Config,
-	currentTime time.Time,
-	systemAvailableTime time.Time,
-	systemUnavailable bool) (time.Time, bool) {
+func checkWeeklyDownTime(cfg *config.Config, currentTime time.Time) (systemAvailableTime time.Time, systemUnavailable bool) {
 	if isWeeklyMaintenanceTimeCheckRequired(cfg) {
 		// If the weekday is maintenance day
 		if currentTime.Weekday() == cfg.WeeklyMaintenanceDay {
