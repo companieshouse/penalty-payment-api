@@ -9,16 +9,11 @@ import (
 	"github.com/companieshouse/penalty-payment-api/config"
 )
 
-var getConfig = func() (*config.Config, error) {
-	return config.Get()
-}
-
 type IssuerGatewayHealthcheckFinanceSystem struct {
 }
 
 func (ig *IssuerGatewayHealthcheckFinanceSystem) CheckScheduledMaintenance() (systemAvailableTime time.Time, systemUnavailable bool, parseError bool) {
-
-	cfg, err := getConfig()
+	cfg, err := config.Get()
 	if err != nil {
 		err = fmt.Errorf("error getting config for planned maintenance: [%v]", err)
 		return time.Time{}, false, true
