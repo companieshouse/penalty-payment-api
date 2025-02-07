@@ -13,8 +13,7 @@ import (
 // HandleHealthCheckFinanceSystem checks whether the e5 system is available to take requests
 func HandleHealthCheckFinanceSystem(w http.ResponseWriter, r *http.Request) {
 
-	ig := api.IssuerGatewayHealthcheckFinanceSystem{}
-	systemAvailableTime, systemUnavailable, parseError := ig.CheckScheduledMaintenance()
+	systemAvailableTime, systemUnavailable, parseError := api.CheckScheduledMaintenance()
 
 	if parseError {
 		log.ErrorR(r, fmt.Errorf("parseError from CheckScheduledMaintenance: [%v]", parseError))

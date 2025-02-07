@@ -9,7 +9,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestUnitIssuerGatewayHealthcheckFinanceSystem_CheckScheduledMaintenance(t *testing.T) {
+func TestUnitCheckScheduledMaintenance(t *testing.T) {
 	cfg, _ := config.Get()
 	currentTime := time.Now()
 
@@ -17,8 +17,7 @@ func TestUnitIssuerGatewayHealthcheckFinanceSystem_CheckScheduledMaintenance(t *
 		// Given
 
 		// When
-		ig := &IssuerGatewayHealthcheckFinanceSystem{}
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := ig.CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -35,8 +34,7 @@ func TestUnitIssuerGatewayHealthcheckFinanceSystem_CheckScheduledMaintenance(t *
 		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
 
 		// When
-		ig := &IssuerGatewayHealthcheckFinanceSystem{}
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := ig.CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -52,8 +50,7 @@ func TestUnitIssuerGatewayHealthcheckFinanceSystem_CheckScheduledMaintenance(t *
 		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
 
 		// When
-		ig := &IssuerGatewayHealthcheckFinanceSystem{}
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := ig.CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), endHour, 0, 0, 0, currentTime.Location()))
@@ -70,8 +67,7 @@ func TestUnitIssuerGatewayHealthcheckFinanceSystem_CheckScheduledMaintenance(t *
 		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
 
 		// When
-		ig := &IssuerGatewayHealthcheckFinanceSystem{}
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := ig.CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -90,8 +86,7 @@ func TestUnitIssuerGatewayHealthcheckFinanceSystem_CheckScheduledMaintenance(t *
 		cfg.PlannedMaintenanceEnd = endTime.Format(time.RFC3339)
 
 		// When
-		ig := &IssuerGatewayHealthcheckFinanceSystem{}
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := ig.CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -110,8 +105,7 @@ func TestUnitIssuerGatewayHealthcheckFinanceSystem_CheckScheduledMaintenance(t *
 		cfg.PlannedMaintenanceEnd = endTime.Format(time.RFC822)
 
 		// When
-		ig := &IssuerGatewayHealthcheckFinanceSystem{}
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := ig.CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -130,8 +124,7 @@ func TestUnitIssuerGatewayHealthcheckFinanceSystem_CheckScheduledMaintenance(t *
 		cfg.PlannedMaintenanceEnd = endTime.Format(time.RFC822)
 
 		// When
-		ig := &IssuerGatewayHealthcheckFinanceSystem{}
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := ig.CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, endTime)
@@ -150,8 +143,7 @@ func TestUnitIssuerGatewayHealthcheckFinanceSystem_CheckScheduledMaintenance(t *
 		cfg.PlannedMaintenanceEnd = endTime.Format(time.RFC822)
 
 		// When
-		ig := &IssuerGatewayHealthcheckFinanceSystem{}
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := ig.CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -171,8 +163,7 @@ func TestUnitIssuerGatewayHealthcheckFinanceSystem_CheckScheduledMaintenance(t *
 		cfg.PlannedMaintenanceEnd = plannedEndTime.Format(time.RFC822)
 
 		// When
-		ig := &IssuerGatewayHealthcheckFinanceSystem{}
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := ig.CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, plannedEndTime)
@@ -192,8 +183,7 @@ func TestUnitIssuerGatewayHealthcheckFinanceSystem_CheckScheduledMaintenance(t *
 		cfg.PlannedMaintenanceEnd = plannedEndTime.Format(time.RFC822)
 
 		// When
-		ig := &IssuerGatewayHealthcheckFinanceSystem{}
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := ig.CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), weeklyEndHour, 0, 0, 0, currentTime.Location()))
