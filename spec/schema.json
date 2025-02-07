@@ -21,7 +21,7 @@
     }
   ],
   "paths": {
-    "/healthcheck": {
+    "/penalty-payment-api/healthcheck": {
       "get": {
         "tags": [
           "Healthcheck"
@@ -29,12 +29,12 @@
         "description": "Check the health of the Penalty Payment Service (PPS) API",
         "responses": {
           "200": {
-            "description": "healthy"
+            "description": "Healthy"
           }
         }
       }
     },
-    "/healthcheck/finance-system": {
+    "/penalty-payment-api/healthcheck/finance-system": {
       "get": {
         "tags": [
           "Healthcheck"
@@ -42,10 +42,10 @@
         "description": "Check the health of the Finance System",
         "responses": {
           "200": {
-            "description": "healthy"
+            "description": "Healthy"
           },
           "503": {
-            "description": "service unavailable",
+            "description": "Service unavailable",
             "schema": {
               "$ref": "#/definitions/ServiceUnavailable"
             }

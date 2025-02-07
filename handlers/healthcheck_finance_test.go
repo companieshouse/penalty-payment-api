@@ -23,7 +23,7 @@ func TestUnitHandleHealthCheckFinance(t *testing.T) {
 			cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%02d00", now.Hour()-100)
 			cfg.WeeklyMaintenanceDay = now.Weekday()
 
-			req, _ := http.NewRequest("GET", "/healthcheck/finance-system", nil)
+			req, _ := http.NewRequest("GET", "/penalty-payment-api/healthcheck/finance-system", nil)
 			w := httptest.NewRecorder()
 			HandleHealthCheckFinanceSystem(w, req)
 
@@ -43,7 +43,7 @@ func TestUnitHandleHealthCheckFinance(t *testing.T) {
 			cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%02d00", now.Hour()+100)
 			cfg.WeeklyMaintenanceDay = now.Weekday()
 
-			req, _ := http.NewRequest("GET", "/healthcheck/finance-system", nil)
+			req, _ := http.NewRequest("GET", "/penalty-payment-api/healthcheck/finance-system", nil)
 			w := httptest.NewRecorder()
 			HandleHealthCheckFinanceSystem(w, req)
 
@@ -65,7 +65,7 @@ func TestUnitHandleHealthCheckFinance(t *testing.T) {
 			cfg.PlannedMaintenanceStart = (now.AddDate(0, 0, -1)).Format("02 Jan 06 15:04 MST")
 			cfg.PlannedMaintenanceEnd = (now.AddDate(0, 0, 1)).Format("02 Jan 06 15:04 MST")
 
-			req, _ := http.NewRequest("GET", "/healthcheck/finance-system", nil)
+			req, _ := http.NewRequest("GET", "/penalty-payment-api/healthcheck/finance-system", nil)
 			w := httptest.NewRecorder()
 			HandleHealthCheckFinanceSystem(w, req)
 
@@ -86,7 +86,7 @@ func TestUnitHandleHealthCheckFinance(t *testing.T) {
 			cfg.WeeklyMaintenanceDay = now.Weekday()
 			cfg.PlannedMaintenanceStart = "invalid"
 
-			req, _ := http.NewRequest("GET", "/healthcheck/finance-system", nil)
+			req, _ := http.NewRequest("GET", "/penalty-payment-api/healthcheck/finance-system", nil)
 			w := httptest.NewRecorder()
 			HandleHealthCheckFinanceSystem(w, req)
 
@@ -103,7 +103,7 @@ func TestUnitHandleHealthCheckFinance(t *testing.T) {
 			cfg.PlannedMaintenanceStart = (now).Format("02 Jan 06 15:04 MST")
 			cfg.PlannedMaintenanceEnd = "invalid"
 
-			req, _ := http.NewRequest("GET", "/healthcheck/finance-system", nil)
+			req, _ := http.NewRequest("GET", "/penalty-payment-api/healthcheck/finance-system", nil)
 			w := httptest.NewRecorder()
 			HandleHealthCheckFinanceSystem(w, req)
 
