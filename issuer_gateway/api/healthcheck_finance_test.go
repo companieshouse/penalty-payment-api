@@ -29,8 +29,8 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		// Given
 		startHour := currentTime.Hour() - 2
 		endHour := startHour + 1
-		cfg.WeeklyMaintenanceStartTime = fmt.Sprintf("%d00", startHour)
-		cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%d00", endHour)
+		cfg.WeeklyMaintenanceStartTime = fmt.Sprintf("%02d00", startHour)
+		cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%02d00", endHour)
 		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
 
 		// When
@@ -45,8 +45,8 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 	Convey("Current time is during weekly maintenance times", t, func() {
 		// Given
 		endHour := currentTime.Hour() + 1
-		cfg.WeeklyMaintenanceStartTime = fmt.Sprintf("%d00", currentTime.Hour())
-		cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%d00", endHour)
+		cfg.WeeklyMaintenanceStartTime = fmt.Sprintf("%02d00", currentTime.Hour())
+		cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%02d00", endHour)
 		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
 
 		// When
@@ -62,8 +62,8 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		// Given
 		startHour := currentTime.Hour() + 1
 		endHour := currentTime.Hour() + 2
-		cfg.WeeklyMaintenanceStartTime = fmt.Sprintf("%d00", startHour)
-		cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%d00", endHour)
+		cfg.WeeklyMaintenanceStartTime = fmt.Sprintf("%02d00", startHour)
+		cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%02d00", endHour)
 		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
 
 		// When
@@ -154,8 +154,8 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 	Convey("Current time is during scheduled maintenance times, planned ends later", t, func() {
 		// Given
 		weeklyEndHour := currentTime.Hour() + 1
-		cfg.WeeklyMaintenanceStartTime = fmt.Sprintf("%d00", currentTime.Hour())
-		cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%d00", weeklyEndHour)
+		cfg.WeeklyMaintenanceStartTime = fmt.Sprintf("%02d00", currentTime.Hour())
+		cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%02d00", weeklyEndHour)
 		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
 		plannedStartTime := currentTime.Add(time.Minute * -1).Truncate(time.Minute).Round(0)
 		cfg.PlannedMaintenanceStart = plannedStartTime.Format(time.RFC822)
@@ -174,8 +174,8 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 	Convey("Current time is during scheduled maintenance times, planned ends earlier", t, func() {
 		// Given
 		weeklyEndHour := currentTime.Hour() + 2
-		cfg.WeeklyMaintenanceStartTime = fmt.Sprintf("%d00", currentTime.Hour())
-		cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%d00", weeklyEndHour)
+		cfg.WeeklyMaintenanceStartTime = fmt.Sprintf("%02d00", currentTime.Hour())
+		cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%02d00", weeklyEndHour)
 		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
 		plannedStartTime := currentTime.Add(time.Hour * -1).Truncate(time.Minute).Round(0)
 		cfg.PlannedMaintenanceStart = plannedStartTime.Format(time.RFC822)

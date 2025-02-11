@@ -35,8 +35,8 @@ In order to run this API locally you will need to install the following:
 ## Endpoints
 | Method    | Path                                                                   | Description                                                           |
 |:----------|:-----------------------------------------------------------------------|:----------------------------------------------------------------------|
-| **GET**   | `/healthcheck`                                                         | Standard healthcheck endpoint                                         |
-| **GET**   | `/healthcheck/finance-system`                                          | Healthcheck endpoint to check whether the finance system is available |
+| **GET**   | `/penalty-payment-api/healthcheck`                                     | Standard healthcheck endpoint                                         |
+| **GET**   | `/penalty-payment-api/healthcheck/finance-system`                      | Healthcheck endpoint to check whether the finance system is available |
 | **GET**   | `/company/{company_number}/penalties/late-filing`                      | List the Late Filing Penalties for a company                          |
 | **POST**  | `/company/{company_number}/penalties/late-filing/payable`              | Create a payable penalty resource                                     |
 | **GET**   | `/company/{company_number}/penalties/late-filing/payable/{id}`         | Get a payable resource                                                |
