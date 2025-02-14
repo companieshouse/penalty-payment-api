@@ -47,6 +47,7 @@ func MatchPenalty(referenceTransactions []models.TransactionListItem,
 				MadeUpDate:    transaction.MadeUpDate,
 				IsDCA:         transaction.IsDCA,
 				IsPaid:        transaction.IsPaid,
+				Reason:        transaction.Reason,
 			}
 			matchedPenalties = append(matchedPenalties, matchedPenalty)
 		} else {

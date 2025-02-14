@@ -15,6 +15,7 @@ func TestUnitMatchPenalty(t *testing.T) {
 			TransactionID: "121",
 			Type:          "penalty",
 			Amount:        150,
+			Reason:        "Failure to file a confirmation statement",
 		},
 	}
 	matchedPenalties := []models.TransactionItem{
@@ -23,6 +24,7 @@ func TestUnitMatchPenalty(t *testing.T) {
 			Amount:        150,
 			Type:          "penalty",
 			MadeUpDate:    "2017-06-30",
+			Reason:        "Failure to file a confirmation statement",
 			IsDCA:         false,
 			IsPaid:        false,
 		},
@@ -32,6 +34,7 @@ func TestUnitMatchPenalty(t *testing.T) {
 		TransactionID  string
 		Type           string
 		MadeUpDate     string
+		Reason         string
 		IsDCA          bool
 		IsPaid         bool
 		OriginalAmount float64
@@ -39,20 +42,20 @@ func TestUnitMatchPenalty(t *testing.T) {
 		WantMatched    []models.TransactionItem
 		WantError      error
 	}{
-		{TransactionID: "120", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", OriginalAmount: 150,
-			IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionDoesNotExist},
-		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", OriginalAmount: 200,
-			IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionIsPartPaid},
-		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", OriginalAmount: 150,
-			IsDCA: false, IsPaid: true, WantMatched: nil, WantError: ErrTransactionIsPaid},
-		{TransactionID: "121", Outstanding: 100, Type: "other", MadeUpDate: "2017-06-30", OriginalAmount: 100,
-			IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionNotPayable},
-		{TransactionID: "121", Outstanding: 100, Type: "penalty", MadeUpDate: "2017-06-30", OriginalAmount: 100,
-			IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionAmountMismatch},
-		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", OriginalAmount: 150,
-			IsDCA: true, IsPaid: false, WantMatched: nil, WantError: ErrTransactionDCA},
-		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", OriginalAmount: 150,
-			IsDCA: false, IsPaid: false, WantMatched: matchedPenalties, WantError: nil},
+		{TransactionID: "120", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionDoesNotExist},
+		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 200, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionIsPartPaid},
+		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 150, IsDCA: false, IsPaid: true, WantMatched: nil, WantError: ErrTransactionIsPaid},
+		{TransactionID: "121", Outstanding: 100, Type: "other", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionNotPayable},
+		{TransactionID: "121", Outstanding: 100, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionAmountMismatch},
+		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 150, IsDCA: true, IsPaid: false, WantMatched: nil, WantError: ErrTransactionDCA},
+		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: matchedPenalties, WantError: nil},
 	}
 
 	Convey("matchPenalty works correctly for different scenarios", t, func() {
@@ -66,6 +69,7 @@ func TestUnitMatchPenalty(t *testing.T) {
 					IsDCA:          testCase.IsDCA,
 					IsPaid:         testCase.IsPaid,
 					MadeUpDate:     testCase.MadeUpDate,
+					Reason:         testCase.Reason,
 				},
 			}
 			matched, err := MatchPenalty(refTransactions, transactionsToMatch, companyNumber)

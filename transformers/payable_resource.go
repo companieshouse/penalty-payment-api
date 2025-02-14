@@ -20,6 +20,7 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 			Amount:     tx.Amount,
 			MadeUpDate: tx.MadeUpDate,
 			Type:       tx.Type,
+			Reason:     tx.Reason,
 		}
 	}
 
@@ -85,6 +86,7 @@ func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.P
 			Amount:        val.Amount,
 			MadeUpDate:    val.MadeUpDate,
 			Type:          val.Type,
+			Reason:        val.Reason,
 		}
 		transactions = append(transactions, tx)
 	}
