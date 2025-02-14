@@ -114,15 +114,10 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
-	// Convert madeUpDate and transactionDate to readable format for email
+	// Convert madeUpDate to readable format for email
 	madeUpDate, err := time.Parse("2006-01-02", payedTransaction.MadeUpDate)
 	if err != nil {
 		err = fmt.Errorf("error parsing made up date: [%v]", err)
-		return nil, err
-	}
-	transactionDate, err := time.Parse("2006-01-02", payedTransaction.TransactionDate)
-	if err != nil {
-		err = fmt.Errorf("error parsing penalty date: [%v]", err)
 		return nil, err
 	}
 
@@ -131,7 +126,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		PayableResource:   payableResource,
 		TransactionID:     payableResource.Transactions[0].TransactionID,
 		MadeUpDate:        madeUpDate.Format("2 January 2006"),
-		TransactionDate:   transactionDate.Format("2 January 2006"),
+		TransactionDate:   time.Now().Format("2 January 2006"),
 		Amount:            fmt.Sprintf("%g", payedTransaction.OriginalAmount),
 		CompanyName:       companyName,
 		FilingDescription: penaltyDetailsMap.Details[companyCode].EmailFilingDesc,

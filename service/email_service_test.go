@@ -205,29 +205,6 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 				So(err, ShouldResemble, errors.New("error parsing made up date: [parsing time \"\" as \"2006-01-02\": cannot parse \"\" as \"2006\"]"))
 			})
 		})
-		Convey("When config is called with valid config and valid company number and valid transaction but invalid penalty date", func() {
-			mockedConfigGet := func() (*config.Config, error) {
-				return &config.Config{}, nil
-			}
-			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
-				return "Brewery", nil
-			}
-			mockedGetTransactionForPenalty := func(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
-				allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
-
-				return &models.TransactionListItem{ID: "P123567", MadeUpDate: "2006-01-02"}, nil
-			}
-
-			getConfig = mockedConfigGet
-			getCompanyName = mockedGetCompanyName
-			getTransactionForPenalty = mockedGetTransactionForPenalty
-
-			Convey("Then an error should be returned", func() {
-				_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
-
-				So(err, ShouldResemble, errors.New("error parsing penalty date: [parsing time \"\" as \"2006-01-02\": cannot parse \"\" as \"2006\"]"))
-			})
-		})
 		Convey("When config is called with valid config and valid company number and valid transaction and valid penalty date but unknown type", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
