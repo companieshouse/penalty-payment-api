@@ -9,10 +9,11 @@ require (
 	github.com/companieshouse/go-sdk-manager v0.1.12
 	github.com/companieshouse/go-session-handler v0.1.5
 	github.com/companieshouse/gofigure v0.1.4
-	github.com/companieshouse/penalty-payment-api-core v1.0.8
+	github.com/companieshouse/penalty-payment-api-core v1.1.2
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.0
 	github.com/jarcoal/httpmock v1.0.4
+	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.7.2
 	go.mongodb.org/mongo-driver v1.10.2
 	gopkg.in/go-playground/validator.v9 v9.31.0
@@ -45,7 +46,6 @@ require (
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/montanaflynn/stats v0.6.6 // indirect
 	github.com/pierrec/lz4 v0.0.0-20190327172049-315a67e90e41 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/smartystreets/assertions v1.2.0 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect

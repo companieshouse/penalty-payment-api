@@ -15,5 +15,5 @@ details:
     ResourceKind: "penalty#sanctions"
     ProductType: "penalty-sanctions"
     EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
-    EmailFilingDesc: "Sanctions Penalty Payment"
+    EmailFilingDesc: "Failure to file a confirmation statement"
     EmailMsgType: "penalty_payment_received_email"

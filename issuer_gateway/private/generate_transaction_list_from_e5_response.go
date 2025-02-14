@@ -60,6 +60,7 @@ func buildTransactionListItemFromE5Transaction(e5Transaction *e5.Transaction, al
 	transactionListItem.OriginalAmount = e5Transaction.Amount
 	transactionListItem.Outstanding = e5Transaction.OutstandingAmount
 	transactionListItem.Type = getTransactionType(e5Transaction, allowedTransactionsMap)
+	transactionListItem.Reason = getReason(e5Transaction)
 
 	return transactionListItem, nil
 }
@@ -73,4 +74,13 @@ func getTransactionType(e5Transaction *e5.Transaction, allowedTransactionsMap *m
 	} else {
 		return types.Other.String()
 	}
+}
+
+func getReason(transaction *e5.Transaction) string {
+	if transaction.CompanyCode == utils.LateFilingPenalty {
+		return "Late filing of accounts"
+	} else if transaction.CompanyCode == utils.Sanctions && (transaction.TransactionSubType == "S1" && transaction.TypeDescription == "CS01") {
+		return "Failure to file a confirmation statement"
+	}
+	return "Penalty"
 }

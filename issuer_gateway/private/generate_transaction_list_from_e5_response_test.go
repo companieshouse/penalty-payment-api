@@ -2,10 +2,11 @@ package private
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/e5"
-	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -83,5 +84,54 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			&e5TransactionsResponseOther, companyCode, &config.PenaltyDetailsMap{}, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
+	})
+}
+
+func TestUnit_getReason(t *testing.T) {
+	Convey("Get reason", t, func() {
+		type args struct {
+			transaction *e5.Transaction
+		}
+		testCases := []struct {
+			name string
+			args args
+			want string
+		}{
+			{
+				name: "Late filing of accounts",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:        "LP",
+					TransactionType:    "1",
+					TransactionSubType: "Other",
+				}},
+				want: "Late filing of accounts",
+			},
+			{
+				name: "Failure to file a confirmation statement",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:        "C1",
+					TransactionType:    "1",
+					TransactionSubType: "S1",
+					TypeDescription:    "CS01",
+				}},
+				want: "Failure to file a confirmation statement",
+			},
+			{
+				name: "Penalty",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:        "C1",
+					TransactionType:    "1",
+					TransactionSubType: "S1",
+				}},
+				want: "Penalty",
+			},
+		}
+		for _, tc := range testCases {
+			Convey(tc.name, func() {
+				got := getReason(tc.args.transaction)
+
+				So(got, ShouldEqual, tc.want)
+			})
+		}
 	})
 }
