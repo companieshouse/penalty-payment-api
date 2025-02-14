@@ -7,8 +7,8 @@ details:
     ResourceKind: "late-filing-penalty#late-filing-penalty"
     ProductType: "late-filing-penalty"
     EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
-    EmailFilingDesc:    "Late filing of accounts"
-    EmailMsgType:       "penalty_payment_received_email"
+    EmailFilingDesc: "Late filing of accounts"
+    EmailMsgType: "penalty_payment_received_email"
   C1:
     Description: "Sanctions Penalty Payment"
     DescriptionId: "penalty-sanctions"
