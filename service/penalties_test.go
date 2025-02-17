@@ -14,6 +14,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/e5"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/companieshouse/penalty-payment-api/utils"
 
@@ -287,13 +288,17 @@ func TestUnitGetPenalties(t *testing.T) {
 }
 
 func TestUnitGetTransactionForPenalty(t *testing.T) {
+	transactionListResponse := models.TransactionListResponse{}
+
 	Convey("error when transactions cannot be retrieved", t, func() {
 		errGettingTransactions := errors.New("error getting transactions")
-		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
-			return &e5.GetTransactionsResponse{}, errGettingTransactions
+
+		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
+			allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, types.ResponseType, error) {
+			return &transactionListResponse, types.Error, errGettingTransactions
 		}
 
-		getTransactions = mockedGetTransactions
+		getAccountPenalties = mockedGetTransactions
 
 		_, err := GetTransactionForPenalty(companyNumber, utils.LateFilingPenalty, "A1234567", penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldEqual, errGettingTransactions)
@@ -303,11 +308,12 @@ func TestUnitGetTransactionForPenalty(t *testing.T) {
 		penaltyReference := "P1234567"
 		errGettingTransactions := errors.New("cannot find transaction for penalty reference [" + penaltyReference + "]")
 
-		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
-			return &e5TransactionsResponse, nil
+		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
+			allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, types.ResponseType, error) {
+			return &transactionListResponse, types.Error, nil
 		}
 
-		getTransactions = mockedGetTransactions
+		getAccountPenalties = mockedGetTransactions
 
 		_, err := GetTransactionForPenalty(companyNumber, utils.Sanctions, penaltyReference, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldResemble, errGettingTransactions)
