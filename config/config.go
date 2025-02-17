@@ -2,13 +2,13 @@
 package config
 
 import (
-	"github.com/companieshouse/penalty-payment-api-core/models"
-	"gopkg.in/yaml.v2"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/companieshouse/gofigure"
+	"github.com/companieshouse/penalty-payment-api-core/models"
+	"gopkg.in/yaml.v2"
 )
 
 var cfg *Config
@@ -45,7 +45,6 @@ type PenaltyDetails struct {
 	ResourceKind       string `yaml:"ResourceKind"`
 	ProductType        string `yaml:"ProductType"`
 	EmailReceivedAppId string `yaml:"EmailReceivedAppId"`
-	EmailFilingDesc    string `yaml:"EmailFilingDesc"`
 	EmailMsgType       string `yaml:"EmailMsgType"`
 }
 

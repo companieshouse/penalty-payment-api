@@ -10,6 +10,8 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/e5"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
@@ -34,6 +36,11 @@ func (transactionType TransactionType) String() string {
 
 var getTransactions = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
 	return client.GetTransactions(&e5.GetTransactionsInput{CompanyNumber: companyNumber, CompanyCode: companyCode})
+}
+
+var getAccountPenalties = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, types.ResponseType, error) {
+	return api.AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 }
 
 // GetPenalties is a function that:
@@ -70,7 +77,7 @@ func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *c
 // GetTransactionForPenalty returns a single, specified, transaction from e5 for a specific company
 func GetTransactionForPenalty(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
-	response, _, err := GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
+	response, _, err := getAccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		log.Error(err)
 		return nil, err

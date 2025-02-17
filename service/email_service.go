@@ -129,7 +129,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		TransactionDate:   time.Now().Format("2 January 2006"),
 		Amount:            fmt.Sprintf("%g", payedTransaction.OriginalAmount),
 		CompanyName:       companyName,
-		FilingDescription: penaltyDetailsMap.Details[companyCode].EmailFilingDesc,
+		FilingDescription: payedTransaction.Reason,
 		To:                payableResource.CreatedBy.Email,
 		Subject:           fmt.Sprintf("Confirmation of your Companies House penalty payment"),
 		CHSURL:            cfg.CHSURL,

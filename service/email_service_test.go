@@ -192,7 +192,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetTransactionForPenalty := func(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
 				allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
 
-				return &models.TransactionListItem{ID: "A1234567"}, nil
+				return &models.TransactionListItem{ID: "A1234567", Reason: "Late filing of accounts"}, nil
 			}
 
 			getConfig = mockedConfigGet
@@ -215,7 +215,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetTransactionForPenalty := func(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
 				allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
 
-				return &models.TransactionListItem{ID: "A123567", MadeUpDate: "2006-01-02", TransactionDate: "2006-01-02"}, nil
+				return &models.TransactionListItem{ID: "A123567", MadeUpDate: "2006-01-02", TransactionDate: "2006-01-02", Reason: "Late filing of accounts"}, nil
 			}
 
 			getConfig = mockedConfigGet
