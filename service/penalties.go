@@ -10,6 +10,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/e5"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
@@ -70,7 +71,7 @@ func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *c
 // GetTransactionForPenalty returns a single, specified, transaction from e5 for a specific company
 func GetTransactionForPenalty(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
-	response, _, err := GetPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
+	response, _, err := api.AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		log.Error(err)
 		return nil, err
