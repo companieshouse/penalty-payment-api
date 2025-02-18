@@ -608,7 +608,8 @@
           "items": {
             "type": "string",
             "enum": [
-              "penalty"
+              "penalty",
+              "data-maintenance"
             ]
           }
         },

@@ -46,6 +46,7 @@ type PenaltyDetails struct {
 	ProductType        string `yaml:"ProductType"`
 	EmailReceivedAppId string `yaml:"EmailReceivedAppId"`
 	EmailMsgType       string `yaml:"EmailMsgType"`
+	ClassOfPayment     string `yaml:"ClassOfPayment"`
 }
 
 // Get returns a pointer to a Config instance

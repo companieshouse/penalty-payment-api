@@ -112,7 +112,7 @@ func PayableResourceToPaymentDetails(payable *models.PayableResource,
 		cost := models.Cost{
 			Amount:                  fmt.Sprintf("%g", tx.Amount),
 			AvailablePaymentMethods: []string{"credit-card"},
-			ClassOfPayment:          []string{"penalty"},
+			ClassOfPayment:          []string{penaltyDetailsMap.Details[companyCode].ClassOfPayment},
 			Description:             penaltyDetailsMap.Details[companyCode].Description,
 			DescriptionIdentifier:   penaltyDetailsMap.Details[companyCode].DescriptionId,
 			Kind:                    "cost#cost",

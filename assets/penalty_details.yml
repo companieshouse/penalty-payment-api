@@ -8,6 +8,7 @@ details:
     ProductType: "late-filing-penalty"
     EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
     EmailMsgType: "penalty_payment_received_email"
+    ClassOfPayment: "penalty"
   C1:
     Description: "Sanctions Penalty Payment"
     DescriptionId: "penalty-sanctions"
@@ -15,3 +16,4 @@ details:
     ProductType: "penalty-sanctions"
     EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
     EmailMsgType: "penalty_payment_received_email"
+    ClassOfPayment: "data-maintenance"
