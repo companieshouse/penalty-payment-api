@@ -195,3 +195,73 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 		So(response.Items[0].ProductType, ShouldEqual, "late-filing-penalty")
 	})
 }
+
+func TestUnitPayableResourceToPaymentDetailsConfirmationStatement(t *testing.T) {
+	Convey("field mappings are correct from payable resource to payment details", t, func() {
+		t := time.Now().Truncate(time.Millisecond)
+		payable := &models.PayableResource{
+			CompanyNumber: "12345678",
+			Reference:     "1234",
+			Etag:          "qwertyetag1234",
+			CreatedAt:     &t,
+			CreatedBy: models.CreatedBy{
+				ID:       "uz3r_1d",
+				Email:    "test@user.com",
+				Forename: "some",
+				Surname:  "body",
+			},
+			Links: models.PayableResourceLinks{
+				Self:    "/foo",
+				Payment: "/foo/pay",
+			},
+			Payment: models.Payment{
+				Amount:    "100",
+				Status:    "pending",
+				Reference: "payref",
+				PaidAt:    &t,
+			},
+			Transactions: []models.TransactionItem{
+				{
+					Amount:     100,
+					Type:       "penalty",
+					MadeUpDate: "2019-01-01",
+				},
+			},
+		}
+
+		penaltyDetailsMap, err := config.LoadPenaltyDetails("../assets/penalty_details.yml")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		response := PayableResourceToPaymentDetails(payable, penaltyDetailsMap, utils.Sanctions)
+
+		_, filename, _, _ := runtime.Caller(0)
+		fmt.Printf("Current test filename: %s\n", filename)
+
+		dir, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Dir: " + dir)
+
+		So(response, ShouldNotBeNil)
+		So(response.Description, ShouldEqual, "Sanctions Penalty Payment")
+		So(response.Kind, ShouldEqual, "payment-details#payment-details")
+		So(response.PaidAt, ShouldEqual, payable.Payment.PaidAt)
+		So(response.PaymentReference, ShouldEqual, payable.Payment.Reference)
+		So(response.Links.Self, ShouldEqual, payable.Links.Payment)
+		So(response.Links.Resource, ShouldEqual, payable.Links.Self)
+		So(response.Status, ShouldEqual, payable.Payment.Status)
+		So(response.CompanyNumber, ShouldEqual, payable.CompanyNumber)
+		So(len(response.Items), ShouldEqual, 1)
+		So(response.Items[0].Amount, ShouldEqual, fmt.Sprintf("%g", payable.Transactions[0].Amount))
+		So(response.Items[0].AvailablePaymentMethods, ShouldResemble, []string{"credit-card"})
+		So(response.Items[0].ClassOfPayment, ShouldResemble, []string{"data-maintenance"})
+		So(response.Items[0].Description, ShouldEqual, "Sanctions Penalty Payment")
+		So(response.Items[0].DescriptionIdentifier, ShouldEqual, "penalty-sanctions")
+		So(response.Items[0].Kind, ShouldEqual, "cost#cost")
+		So(response.Items[0].ResourceKind, ShouldEqual, "penalty#sanctions")
+		So(response.Items[0].ProductType, ShouldEqual, "penalty-sanctions")
+	})
+}
