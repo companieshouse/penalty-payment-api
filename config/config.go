@@ -42,11 +42,11 @@ type PenaltyDetailsMap struct {
 type PenaltyDetails struct {
 	Description        string `yaml:"Description"`
 	DescriptionId      string `yaml:"DescriptionId"`
+	ClassOfPayment     string `yaml:"ClassOfPayment"`
 	ResourceKind       string `yaml:"ResourceKind"`
 	ProductType        string `yaml:"ProductType"`
 	EmailReceivedAppId string `yaml:"EmailReceivedAppId"`
 	EmailMsgType       string `yaml:"EmailMsgType"`
-	ClassOfPayment     string `yaml:"ClassOfPayment"`
 }
 
 // Get returns a pointer to a Config instance
