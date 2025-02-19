@@ -42,6 +42,7 @@ type PenaltyDetailsMap struct {
 type PenaltyDetails struct {
 	Description        string `yaml:"Description"`
 	DescriptionId      string `yaml:"DescriptionId"`
+	ClassOfPayment     string `yaml:"ClassOfPayment"`
 	ResourceKind       string `yaml:"ResourceKind"`
 	ProductType        string `yaml:"ProductType"`
 	EmailReceivedAppId string `yaml:"EmailReceivedAppId"`
