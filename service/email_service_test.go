@@ -143,7 +143,8 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 					getConfig = mockedConfigGet
 
 					Convey("Then an error should be returned", func() {
-						_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+						_, err := prepareKafkaMessage(
+							producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
 
 						So(err, ShouldResemble, errors.New("error getting config: ["+errMsg+"]"))
 					})
@@ -160,7 +161,8 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			getConfig = mockedConfigGet
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+				_, err := prepareKafkaMessage(
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
 
 				So(err.Error(), ShouldStartWith, "error getting company name: [")
 			})
@@ -177,7 +179,8 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			getCompanyName = mockedGetCompanyName
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+				_, err := prepareKafkaMessage(
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
 
 				So(err.Error(), ShouldStartWith, "error getting transaction for penalty: [")
 			})
@@ -189,18 +192,22 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetTransactionForPenalty := func(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
-				allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
+			mockedGetPayablePenalty := func(companyNumber string,
+				companyCode string,
+				txs []models.TransactionItem,
+				penaltyDetailsMap *config.PenaltyDetailsMap,
+				allowedTransactionsMap *models.AllowedTransactionMap) ([]models.TransactionItem, error) {
 
-				return &models.TransactionListItem{ID: "A1234567", Reason: "Late filing of accounts"}, nil
+				return []models.TransactionItem{{TransactionID: "A1234567", Reason: "Late filing of accounts"}}, nil
 			}
 
 			getConfig = mockedConfigGet
 			getCompanyName = mockedGetCompanyName
-			getTransactionForPenalty = mockedGetTransactionForPenalty
+			getPayablePenalty = mockedGetPayablePenalty
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+				_, err := prepareKafkaMessage(
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
 
 				So(err, ShouldResemble, errors.New("error parsing made up date: [parsing time \"\" as \"2006-01-02\": cannot parse \"\" as \"2006\"]"))
 			})
@@ -212,15 +219,19 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetTransactionForPenalty := func(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
-				allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
+			mockedGetPayablePenalty := func(companyNumber string,
+				companyCode string,
+				txs []models.TransactionItem,
+				penaltyDetailsMap *config.PenaltyDetailsMap,
+				allowedTransactionsMap *models.AllowedTransactionMap) ([]models.TransactionItem, error) {
 
-				return &models.TransactionListItem{ID: "A123567", MadeUpDate: "2006-01-02", TransactionDate: "2006-01-02", Reason: "Late filing of accounts"}, nil
+				return []models.TransactionItem{
+					{TransactionID: "A123567", MadeUpDate: "2006-01-02", Reason: "Late filing of accounts"}}, nil
 			}
 
 			getConfig = mockedConfigGet
 			getCompanyName = mockedGetCompanyName
-			getTransactionForPenalty = mockedGetTransactionForPenalty
+			getPayablePenalty = mockedGetPayablePenalty
 
 			Convey("Then an error should be returned", func() {
 				_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
