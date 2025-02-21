@@ -196,7 +196,7 @@ func TestUnitGetPaymentDetailsFromPayableResourceSanctions(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	Convey("Get payment details no transactions - invalid data", t, func() {
+	Convey("Get payment details no transactions penalty-sanctions - invalid data", t, func() {
 
 		path := "/company/12345678/penalties/late-filing/abcdef/payment"
 		req := httptest.NewRequest(http.MethodGet, path, nil)
@@ -234,7 +234,7 @@ func TestUnitGetPaymentDetailsFromPayableResourceSanctions(t *testing.T) {
 
 	})
 
-	Convey("Get payment details pending state - success", t, func() {
+	Convey("Get payment details pending state penalty-sanctions - success", t, func() {
 
 		path := "/company/12345678/penalties/late-filing/abcdef/payment"
 		req := httptest.NewRequest(http.MethodGet, path, nil)
@@ -297,7 +297,7 @@ func TestUnitGetPaymentDetailsFromPayableResourceSanctions(t *testing.T) {
 
 	})
 
-	Convey("Get payment details paid state - success", t, func() {
+	Convey("Get payment details paid state penalty-sanctions - success", t, func() {
 
 		path := "/company/12345678/penalties/late-filing/abcdef/payment"
 		req := httptest.NewRequest(http.MethodGet, path, nil)
