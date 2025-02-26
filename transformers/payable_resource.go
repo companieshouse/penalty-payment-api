@@ -106,24 +106,24 @@ func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.P
 
 // PayableResourceToPaymentDetails will create a PaymentDetails resource (for integrating into payment service) from a PPS PayableResource
 func PayableResourceToPaymentDetails(payable *models.PayableResource,
-	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string) *models.PaymentDetails {
+	penaltyDetails config.PenaltyDetails) *models.PaymentDetails {
 	var costs []models.Cost
 	for _, tx := range payable.Transactions {
 		cost := models.Cost{
 			Amount:                  fmt.Sprintf("%g", tx.Amount),
 			AvailablePaymentMethods: []string{"credit-card"},
-			ClassOfPayment:          []string{penaltyDetailsMap.Details[companyCode].ClassOfPayment},
-			Description:             penaltyDetailsMap.Details[companyCode].Description,
-			DescriptionIdentifier:   penaltyDetailsMap.Details[companyCode].DescriptionId,
+			ClassOfPayment:          []string{penaltyDetails.ClassOfPayment},
+			Description:             penaltyDetails.Description,
+			DescriptionIdentifier:   penaltyDetails.DescriptionId,
 			Kind:                    "cost#cost",
-			ResourceKind:            penaltyDetailsMap.Details[companyCode].ResourceKind,
-			ProductType:             penaltyDetailsMap.Details[companyCode].ProductType,
+			ResourceKind:            penaltyDetails.ResourceKind,
+			ProductType:             penaltyDetails.ProductType,
 		}
 		costs = append(costs, cost)
 	}
 
 	payment := models.PaymentDetails{
-		Description: penaltyDetailsMap.Details[companyCode].Description,
+		Description: penaltyDetails.Description,
 		Etag:        payable.Etag, // use the same Etag as PayableResource its built from - if PayableResource changes PaymentDetails may change too
 		Kind:        "payment-details#payment-details",
 		Links: models.PaymentDetailsLinks{

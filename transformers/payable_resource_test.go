@@ -163,8 +163,9 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		penaltyDetails := penaltyDetailsMap.Details[utils.LateFilingPenalty]
 
-		response := PayableResourceToPaymentDetails(payable, penaltyDetailsMap, utils.LateFilingPenalty)
+		response := PayableResourceToPaymentDetails(payable, penaltyDetails)
 
 		_, filename, _, _ := runtime.Caller(0)
 		fmt.Printf("Current test filename: %s\n", filename)
@@ -233,8 +234,9 @@ func TestUnitPayableResourceToPaymentDetailsConfirmationStatement(t *testing.T) 
 		if err != nil {
 			log.Fatal(err)
 		}
+		penaltyDetails := penaltyDetailsMap.Details[utils.Sanctions]
 
-		response := PayableResourceToPaymentDetails(payable, penaltyDetailsMap, utils.Sanctions)
+		response := PayableResourceToPaymentDetails(payable, penaltyDetails)
 
 		_, filename, _, _ := runtime.Caller(0)
 		fmt.Printf("Current test filename: %s\n", filename)
