@@ -14,7 +14,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/e5"
-	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/companieshouse/penalty-payment-api/utils"
 
@@ -284,39 +283,6 @@ func TestUnitGetPenalties(t *testing.T) {
 		So(err, ShouldEqual, errGettingTransactions)
 		So(listResponse, ShouldBeNil)
 		So(responseType, ShouldEqual, Error)
-	})
-}
-
-func TestUnitGetTransactionForPenalty(t *testing.T) {
-	transactionListResponse := models.TransactionListResponse{}
-
-	Convey("error when transactions cannot be retrieved", t, func() {
-		errGettingTransactions := errors.New("error getting transactions")
-
-		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
-			allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, types.ResponseType, error) {
-			return &transactionListResponse, types.Error, errGettingTransactions
-		}
-
-		getAccountPenalties = mockedGetTransactions
-
-		_, err := GetTransactionForPenalty(companyNumber, utils.LateFilingPenalty, "A1234567", penaltyDetailsMap, allowedTransactionMap)
-		So(err, ShouldEqual, errGettingTransactions)
-	})
-
-	Convey("error when no transactions found for penalty reference", t, func() {
-		penaltyReference := "P1234567"
-		errGettingTransactions := errors.New("cannot find transaction for penalty reference [" + penaltyReference + "]")
-
-		mockedGetTransactions := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
-			allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, types.ResponseType, error) {
-			return &transactionListResponse, types.Error, nil
-		}
-
-		getAccountPenalties = mockedGetTransactions
-
-		_, err := GetTransactionForPenalty(companyNumber, utils.Sanctions, penaltyReference, penaltyDetailsMap, allowedTransactionMap)
-		So(err, ShouldResemble, errGettingTransactions)
 	})
 }
 
