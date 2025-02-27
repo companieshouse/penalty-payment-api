@@ -192,13 +192,10 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetPayablePenalty := func(companyNumber string,
-				companyCode string,
-				txs []models.TransactionItem,
-				penaltyDetailsMap *config.PenaltyDetailsMap,
-				allowedTransactionsMap *models.AllowedTransactionMap) ([]models.TransactionItem, error) {
+			mockedGetPayablePenalty := func(companyNumber string, companyCode string, t models.TransactionItem,
+				penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionItem, error) {
 
-				return []models.TransactionItem{{TransactionID: "A1234567", Reason: "Late filing of accounts"}}, nil
+				return &models.TransactionItem{TransactionID: "A1234567", Reason: "Late filing of accounts"}, nil
 			}
 
 			getConfig = mockedConfigGet
@@ -219,14 +216,13 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetPayablePenalty := func(companyNumber string,
-				companyCode string,
-				txs []models.TransactionItem,
-				penaltyDetailsMap *config.PenaltyDetailsMap,
-				allowedTransactionsMap *models.AllowedTransactionMap) ([]models.TransactionItem, error) {
+			mockedGetPayablePenalty := func(companyNumber string, companyCode string, t models.TransactionItem,
+				penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionItem, error) {
 
-				return []models.TransactionItem{
-					{TransactionID: "A123567", MadeUpDate: "2006-01-02", Reason: "Late filing of accounts"}}, nil
+				return &models.TransactionItem{
+					TransactionID: "A123567",
+					MadeUpDate:    "2006-01-02",
+					Reason:        "Late filing of accounts"}, nil
 			}
 
 			getConfig = mockedConfigGet
