@@ -61,6 +61,7 @@ func buildTransactionListItemFromE5Transaction(e5Transaction *e5.Transaction, al
 	transactionListItem.Outstanding = e5Transaction.OutstandingAmount
 	transactionListItem.Type = getTransactionType(e5Transaction, allowedTransactionsMap)
 	transactionListItem.Reason = getReason(e5Transaction)
+	transactionListItem.PayableStatus = getPayableStatus(e5Transaction)
 
 	return transactionListItem, nil
 }
@@ -83,4 +84,22 @@ func getReason(transaction *e5.Transaction) string {
 		return "Failure to file a confirmation statement"
 	}
 	return "Penalty"
+}
+
+const (
+	OpenPayableStatus   = "OPEN"
+	ClosedPayableStatus = "CLOSED"
+)
+
+func getPayableStatus(transaction *e5.Transaction) string {
+	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || (transaction.AccountStatus == "DCA" && transaction.DunningStatus == "DCA") {
+		return ClosedPayableStatus
+	}
+
+	if transaction.CompanyCode == utils.LateFilingPenalty {
+		return OpenPayableStatus
+	} else if transaction.CompanyCode == utils.Sanctions {
+		return OpenPayableStatus
+	}
+	return ClosedPayableStatus
 }
