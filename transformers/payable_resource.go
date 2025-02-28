@@ -125,7 +125,7 @@ func PayableResourceToPaymentDetails(payable *models.PayableResource,
 	payment := models.PaymentDetails{
 		Description: penaltyDetails.Description,
 		Etag:        payable.Etag, // use the same Etag as PayableResource its built from - if PayableResource changes PaymentDetails may change too
-		Kind:        penaltyDetailsMap.Details[companyCode].ResourceKind,
+		Kind:        penaltyDetails.ResourceKind,
 		Links: models.PaymentDetailsLinks{
 			Self:     payable.Links.Payment, // this is the payment details resource so should use payment link from PayableResource
 			Resource: payable.Links.Self,    // PayableResources Self link is the resource this PaymentDetails is paying for
