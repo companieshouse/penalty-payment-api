@@ -10,24 +10,20 @@ import (
 func TestUnitMatchPenalty(t *testing.T) {
 
 	companyNumber := "123"
-	transactionsToMatch := []models.TransactionItem{
-		{
-			TransactionID: "121",
-			Type:          "penalty",
-			Amount:        150,
-			Reason:        "Failure to file a confirmation statement",
-		},
+	transactionsToMatch := models.TransactionItem{
+		TransactionID: "121",
+		Type:          "penalty",
+		Amount:        150,
+		Reason:        "Failure to file a confirmation statement",
 	}
-	matchedPenalties := []models.TransactionItem{
-		{
-			TransactionID: "121",
-			Amount:        150,
-			Type:          "penalty",
-			MadeUpDate:    "2017-06-30",
-			Reason:        "Failure to file a confirmation statement",
-			IsDCA:         false,
-			IsPaid:        false,
-		},
+	matchedPenalty := models.TransactionItem{
+		TransactionID: "121",
+		Amount:        150,
+		Type:          "penalty",
+		MadeUpDate:    "2017-06-30",
+		Reason:        "Failure to file a confirmation statement",
+		IsDCA:         false,
+		IsPaid:        false,
 	}
 
 	testCases := []struct {
@@ -39,7 +35,7 @@ func TestUnitMatchPenalty(t *testing.T) {
 		IsPaid         bool
 		OriginalAmount float64
 		Outstanding    float64
-		WantMatched    []models.TransactionItem
+		WantMatched    *models.TransactionItem
 		WantError      error
 	}{
 		{TransactionID: "120", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
@@ -55,7 +51,7 @@ func TestUnitMatchPenalty(t *testing.T) {
 		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
 			OriginalAmount: 150, IsDCA: true, IsPaid: false, WantMatched: nil, WantError: ErrTransactionDCA},
 		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: matchedPenalties, WantError: nil},
+			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: &matchedPenalty, WantError: nil},
 	}
 
 	Convey("matchPenalty works correctly for different scenarios", t, func() {

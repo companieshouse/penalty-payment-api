@@ -74,24 +74,6 @@ func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *c
 	return generatedTransactionListFromE5Response, Success, nil
 }
 
-// GetTransactionForPenalty returns a single, specified, transaction from e5 for a specific company
-func GetTransactionForPenalty(companyNumber, companyCode, penaltyReference string, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListItem, error) {
-	response, _, err := getAccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
-	if err != nil {
-		log.Error(err)
-		return nil, err
-	}
-
-	for _, transaction := range response.Items {
-		if transaction.ID == penaltyReference {
-			return &transaction, nil
-		}
-	}
-
-	return nil, fmt.Errorf("cannot find transaction for penalty reference [%v]", penaltyReference)
-}
-
 func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsResponse, companyCode string,
 	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, error) {
 	// Next, map results to a format that can be used by PPS web

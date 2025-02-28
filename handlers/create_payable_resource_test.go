@@ -235,7 +235,10 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
 
-		body, _ := json.Marshal(&models.PayableRequest{})
+		body, _ := json.Marshal(&models.PayableRequest{
+			CompanyNumber: "10000024",
+			CreatedBy:     authentication.AuthUserDetails{},
+		})
 		res := serveCreatePayableResourceHandler(body, mocks.NewMockService(mockCtrl), true)
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)

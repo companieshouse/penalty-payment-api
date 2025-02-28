@@ -55,13 +55,17 @@ func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.Pen
 		request.CreatedBy = userDetails.(authentication.AuthUserDetails)
 
 		// Ensure that the transactions in the request are valid payable penalties that exist in E5
-		payablePenalties, err := api.PayablePenalty(request.CompanyNumber, companyCode,
-			request.Transactions, penaltyDetailsMap, allowedTransactionMap)
-		if err != nil {
-			log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))
-			m := models.NewMessageResponse("the transactions you want to pay for do not exist or are not payable at this time")
-			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-			return
+		var payablePenalties []models.TransactionItem
+		for _, transaction := range request.Transactions {
+			payablePenalty, err := api.PayablePenalty(request.CompanyNumber, companyCode,
+				transaction, penaltyDetailsMap, allowedTransactionMap)
+			if err != nil {
+				log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))
+				m := models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time")
+				utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
+				return
+			}
+			payablePenalties = append(payablePenalties, *payablePenalty)
 		}
 
 		// Replace request transactions with payable penalties to include updated values in the request
