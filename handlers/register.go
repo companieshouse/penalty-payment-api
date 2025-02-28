@@ -3,6 +3,8 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/companieshouse/penalty-payment-api/common"
+	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/gorilla/mux"
 
 	"github.com/companieshouse/chs.go/authentication"
@@ -13,23 +15,16 @@ import (
 	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/interceptors"
 	"github.com/companieshouse/penalty-payment-api/middleware"
-	"github.com/companieshouse/penalty-payment-api/service"
 )
 
-var payableResourceService *service.PayableResourceService
 var paymentDetailsService *service.PaymentDetailsService
 
 // Register defines the route mappings for the main router and it's subrouters
-func Register(mainRouter *mux.Router, cfg *config.Config, svc dao.Service, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) {
+func Register(mainRouter *mux.Router, cfg *config.Config, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) {
 
-	payableResourceService = &service.PayableResourceService{
-		Config: cfg,
-		DAO:    svc,
-	}
-
-	paymentDetailsService = &service.PaymentDetailsService{
-		PayableResourceService: payableResourceService,
-	}
+	mongoService := dao.GetMongoInstance()
+	payableResourceService := common.GetPayableResourceInstance()
+	paymentDetailsService = service.GetPaymentDetailsInstance()
 
 	payableAuthInterceptor := interceptors.PayableAuthenticationInterceptor{
 		Service: *payableResourceService,
@@ -55,7 +50,7 @@ func Register(mainRouter *mux.Router, cfg *config.Config, svc dao.Service, penal
 	appRouter := mainRouter.PathPrefix("/company/{company_number}/penalties/late-filing").Subrouter()
 	appRouter.HandleFunc("", HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties-original")
 	appRouter.HandleFunc("/{penalty_reference_type}", HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties")
-	appRouter.Handle("/payable", CreatePayableResourceHandler(svc, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodPost).Name("create-payable")
+	appRouter.Handle("/payable", CreatePayableResourceHandler(mongoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodPost).Name("create-payable")
 	appRouter.Use(
 		oauth2OnlyInterceptor.OAuth2OnlyAuthenticationIntercept,
 		userAuthInterceptor.UserAuthenticationIntercept,

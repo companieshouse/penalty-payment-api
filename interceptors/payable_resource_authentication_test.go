@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/companieshouse/penalty-payment-api-core/constants"
+	"github.com/companieshouse/penalty-payment-api/common"
 
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/mocks"
-	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	"github.com/jarcoal/httpmock"
@@ -29,8 +29,8 @@ func GetTestHandler() http.HandlerFunc {
 	return http.HandlerFunc(fn)
 }
 
-func createMockPayableResourceService(mockDAO *mocks.MockService, cfg *config.Config) service.PayableResourceService {
-	return service.PayableResourceService{
+func createMockPayableResourceService(mockDAO *mocks.MockService, cfg *config.Config) common.PayableResourceService {
+	return common.PayableResourceService{
 		DAO:    mockDAO,
 		Config: cfg,
 	}
@@ -46,7 +46,7 @@ func createPayableAuthenticationInterceptorWithMockDAOAndService(controller *gom
 }
 
 // Function to create a PayableAuthenticationInterceptor with the supplied payment service
-func createPayableAuthenticationInterceptorWithMockService(PayableResourceService *service.PayableResourceService) PayableAuthenticationInterceptor {
+func createPayableAuthenticationInterceptorWithMockService(PayableResourceService *common.PayableResourceService) PayableAuthenticationInterceptor {
 	return PayableAuthenticationInterceptor{
 		Service: *PayableResourceService,
 	}

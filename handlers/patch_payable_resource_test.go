@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/companieshouse/penalty-payment-api/common"
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/mocks"
-	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/companieshouse/penalty-payment-api/utils"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -62,10 +62,10 @@ func dispatchPayResourceHandler(
 	reqBody *models.PatchResourceRequest,
 	daoSvc dao.Service) (*httptest.ResponseRecorder, *models.ResponseResource) {
 
-	svc := &service.PayableResourceService{}
+	payableResourceService := &common.PayableResourceService{}
 
 	if daoSvc != nil {
-		svc.DAO = daoSvc
+		payableResourceService.DAO = daoSvc
 	}
 
 	var body io.Reader
@@ -79,7 +79,7 @@ func dispatchPayResourceHandler(
 
 	ctx = context.WithValue(ctx, httpsession.ContextKeySession, &session.Session{})
 
-	h := PayResourceHandler(svc, e5.NewClient("foo", "e5api"), penaltyDetailsMap, allowedTransactionsMap)
+	h := PayResourceHandler(payableResourceService, e5.NewClient("foo", "e5api"), penaltyDetailsMap, allowedTransactionsMap)
 	req := httptest.NewRequest(http.MethodPost, "/", body).WithContext(ctx)
 	res := httptest.NewRecorder()
 

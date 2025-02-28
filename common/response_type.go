@@ -1,4 +1,4 @@
-package service
+package common
 
 // ResponseType enumerates the types of authentication supported
 type ResponseType int

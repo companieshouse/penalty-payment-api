@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"sync"
+
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/e5"
@@ -20,12 +22,17 @@ type Service interface {
 	Shutdown()
 }
 
-// NewDAOService will create a new instance of the Service interface. All details about its implementation and the
-// database driver will be hidden from outside of this package
-func NewDAOService(cfg *config.Config) Service {
-	database := getMongoDatabase(cfg.MongoDBURL, cfg.Database)
-	return &MongoService{
-		db:             database,
-		CollectionName: cfg.MongoCollection,
-	}
+var instance *MongoService
+var once sync.Once
+
+func GetMongoInstance() *MongoService {
+	once.Do(func() {
+		cfg, _ := config.Get()
+		database := getMongoDatabase(cfg.MongoDBURL, cfg.Database)
+		instance = &MongoService{
+			db:             database,
+			CollectionName: cfg.MongoCollection,
+		}
+	})
+	return instance
 }

@@ -1,6 +1,8 @@
 module github.com/companieshouse/penalty-payment-api
 
-go 1.19
+go 1.22
+
+toolchain go1.22.0
 
 require (
 	github.com/companieshouse/api-sdk-go v0.1.62

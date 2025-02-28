@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 
@@ -19,8 +18,8 @@ func TestUnitRegisterRoutes(t *testing.T) {
 		router := mux.NewRouter()
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
-		mockService := mocks.NewMockService(mockCtrl)
-		Register(router, &config.Config{}, mockService, penaltyDetailsMap, allowedTransactionsMap)
+		//mockService := mocks.NewMockService(mockCtrl)
+		Register(router, &config.Config{}, penaltyDetailsMap, allowedTransactionsMap)
 
 		So(router.GetRoute("healthcheck"), ShouldNotBeNil)
 		So(router.GetRoute("healthcheck-finance-system"), ShouldNotBeNil)
