@@ -53,7 +53,7 @@ func buildTransactionListItemFromE5Transaction(e5Transaction *e5.Transaction, al
 	transactionListItem.ID = e5Transaction.TransactionReference
 	transactionListItem.IsPaid = e5Transaction.IsPaid
 	transactionListItem.Kind = penaltyDetailsMap.Details[companyCode].ResourceKind
-	transactionListItem.IsDCA = e5Transaction.AccountStatus == "DCA"
+	transactionListItem.IsDCA = e5Transaction.AccountStatus == DcaAccountStatus
 	transactionListItem.DueDate = e5Transaction.DueDate
 	transactionListItem.MadeUpDate = e5Transaction.MadeUpDate
 	transactionListItem.TransactionDate = e5Transaction.TransactionDate
@@ -89,10 +89,17 @@ func getReason(transaction *e5.Transaction) string {
 const (
 	OpenPayableStatus   = "OPEN"
 	ClosedPayableStatus = "CLOSED"
+
+	ChsAccountStatus = "CHS"
+	DcaAccountStatus = "DCA"
+	HldAccountStatus = "HLD"
+
+	DcaDunningStatus  = "DCA"
+	Pen1DunningStatus = "PEN1"
 )
 
 func getPayableStatus(transaction *e5.Transaction) string {
-	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || (transaction.AccountStatus == "DCA" && transaction.DunningStatus == "DCA") {
+	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || transaction.DunningStatus == DcaDunningStatus {
 		return ClosedPayableStatus
 	}
 
