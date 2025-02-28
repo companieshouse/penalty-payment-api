@@ -27,6 +27,7 @@
           "Healthcheck"
         ],
         "description": "Check the health of the Penalty Payment API",
+        "operationId": "healthcheck",
         "responses": {
           "200": {
             "description": "Healthy"
@@ -40,6 +41,7 @@
           "Healthcheck"
         ],
         "description": "Check the health of the Finance System",
+        "operationId": "healthcheck-finance-system",
         "responses": {
           "200": {
             "description": "Healthy"
@@ -53,12 +55,65 @@
         }
       }
     },
+    "/company/{company_number}/penalties/late-filing": {
+      "get": {
+        "tags": [
+          "Penalties"
+        ],
+        "description": "List the penalties for a company. This passes through the transactions from E5 and does not cache. (Deprecated since 03 Feb 2025 - currently used by LFP Appeals)",
+        "operationId": "get-penalties-original",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "company_number",
+            "in": "path",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of payable transactions",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/ListResponse"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/Transaction"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid input"
+          },
+          "404": {
+            "description": "The company does not exist"
+          },
+          "500": {
+            "description": "There was a problem communicating with the finance backend"
+          }
+        }
+      }
+    },
     "/company/{company_number}/penalties/late-filing/{penalty_reference_type}": {
       "get": {
         "tags": [
           "Penalties"
         ],
-        "description": "List the penalties for a company. This passes through the transactions from E5 and does not cache.",
+        "description": "List the penalties for a company with a payable status to indicate the current state of the payable transaction from E5 and does not cache.",
+        "operationId": "get-penalties",
         "produces": [
           "application/json"
         ],
@@ -134,6 +189,7 @@
           }
         ],
         "description": "Create a new payable penalty resource with one or more transactions to pay for",
+        "operationId": "create-payable",
         "produces": [
           "application/json"
         ],
@@ -173,6 +229,7 @@
           "Payment"
         ],
         "description": "The payable resource that includes a number of transactions relating to penalties",
+        "operationId": "get-payable",
         "produces": [
           "application/json"
         ],
@@ -209,6 +266,7 @@
           "Payment"
         ],
         "description": "List the payment details resource related to the penalty resource",
+        "operationId": "get-payment-details",
         "responses": {
           "200": {
             "description": "The payment details resource read by the payment api",
@@ -243,6 +301,7 @@
           "Payment"
         ],
         "description": "Mark this resource as paid. This will also mark the transactions as paid in E5",
+        "operationId": "mark-as-paid",
         "responses": {
           "204": {
             "description": "The Penalty payable resource has successfully been marked as paid"
@@ -470,6 +529,13 @@
             "Late filing of accounts",
             "Failure to file a confirmation statement",
             "Penalty"
+          ]
+        },
+        "payable_status": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "CLOSED"
           ]
         }
       }

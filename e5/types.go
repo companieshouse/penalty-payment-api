@@ -29,6 +29,7 @@ type Transaction struct {
 	TypeDescription      string  `json:"typeDescription"`
 	DueDate              string  `json:"dueDate"`
 	AccountStatus        string  `json:"accountStatus"`
+	DunningStatus        string  `json:"dunningStatus"`
 }
 
 // Page is a representation of a Page data block in part of e5 GET request

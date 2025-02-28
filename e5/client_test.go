@@ -115,7 +115,9 @@ var e5TransactionResponse = `
     "transactionType" : "1",
     "transactionSubType" : "EU",
     "typeDescription" : "Penalty Ltd Wel & Eng <=1m     LTDWA    ",
-    "dueDate" : "2017-12-12"
+    "dueDate" : "2017-12-12",
+    "accountStatus": "CHS",
+    "dunningStatus": "PEN1"
   }]
 }
 `
