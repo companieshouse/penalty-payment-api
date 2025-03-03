@@ -178,7 +178,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 
 		So(response, ShouldNotBeNil)
 		So(response.Description, ShouldEqual, "Late Filing Penalty")
-		So(response.Kind, ShouldEqual, "payment-details#payment-details")
+		So(response.Kind, ShouldEqual, "late-filing-penalty#late-filing-penalty")
 		So(response.PaidAt, ShouldEqual, payable.Payment.PaidAt)
 		So(response.PaymentReference, ShouldEqual, payable.Payment.Reference)
 		So(response.Links.Self, ShouldEqual, payable.Links.Payment)
@@ -249,7 +249,7 @@ func TestUnitPayableResourceToPaymentDetailsConfirmationStatement(t *testing.T) 
 
 		So(response, ShouldNotBeNil)
 		So(response.Description, ShouldEqual, "Sanctions Penalty Payment")
-		So(response.Kind, ShouldEqual, "payment-details#payment-details")
+		So(response.Kind, ShouldEqual, "penalty#sanctions")
 		So(response.PaidAt, ShouldEqual, payable.Payment.PaidAt)
 		So(response.PaymentReference, ShouldEqual, payable.Payment.Reference)
 		So(response.Links.Self, ShouldEqual, payable.Links.Payment)
