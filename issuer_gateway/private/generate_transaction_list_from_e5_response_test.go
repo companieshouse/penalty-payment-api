@@ -12,7 +12,21 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var companyCode = "LP"
+var penaltyDetailsMap = &config.PenaltyDetailsMap{
+	Name: "penalty details",
+	Details: map[string]config.PenaltyDetails{
+		utils.Sanctions: {
+			Description:        "Sanctions Penalty Payment",
+			DescriptionId:      "penalty-sanctions",
+			ClassOfPayment:     "penalty-sanctions",
+			ResourceKind:       "penalty#sanctions",
+			ProductType:        "penalty-sanctions",
+			EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
+			EmailMsgType:       "penalty_payment_received_email",
+		},
+	},
+}
+
 var allowedTransactionMap = &models.AllowedTransactionMap{
 	Types: map[string]map[string]bool{
 		"1": {
@@ -23,7 +37,7 @@ var allowedTransactionMap = &models.AllowedTransactionMap{
 	},
 }
 var euTransaction = e5.Transaction{
-	CompanyCode:        "LP",
+	CompanyCode:        utils.LateFilingPenalty,
 	TransactionType:    "1",
 	TransactionSubType: "EU",
 }
@@ -72,7 +86,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 
 		transactionList, err := GenerateTransactionListFromE5Response(
-			&e5TransactionsResponseEu, companyCode, &config.PenaltyDetailsMap{}, allowedTransactionMap)
+			&e5TransactionsResponseEu, utils.LateFilingPenalty, &config.PenaltyDetailsMap{}, allowedTransactionMap)
 		So(err, ShouldNotBeNil)
 		So(transactionList, ShouldBeNil)
 	})
@@ -84,7 +98,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 
 		transactionList, err := GenerateTransactionListFromE5Response(
-			&e5TransactionsResponseEu, companyCode, &config.PenaltyDetailsMap{}, allowedTransactionMap)
+			&e5TransactionsResponseEu, utils.LateFilingPenalty, &config.PenaltyDetailsMap{}, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 	})
@@ -95,7 +109,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 		otherTransaction := e5.Transaction{
-			CompanyCode:        "LP",
+			CompanyCode:        utils.LateFilingPenalty,
 			TransactionType:    "1",
 			TransactionSubType: "Other",
 		}
@@ -107,7 +121,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 
 		transactionList, err := GenerateTransactionListFromE5Response(
-			&e5TransactionsResponseOther, companyCode, &config.PenaltyDetailsMap{}, allowedTransactionMap)
+			&e5TransactionsResponseOther, utils.LateFilingPenalty, &config.PenaltyDetailsMap{}, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 	})
@@ -119,7 +133,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 
 		transactionList, err := GenerateTransactionListFromE5Response(
-			&e5TransactionsResponseValidSanctions, utils.Sanctions, &config.PenaltyDetailsMap{}, allowedTransactionMap)
+			&e5TransactionsResponseValidSanctions, utils.Sanctions, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -128,7 +142,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		expected := models.TransactionListItem{
 			ID:              "P1234567",
 			Etag:            transactionListItem.Etag,
-			Kind:            "",
+			Kind:            "penalty#sanctions",
 			IsPaid:          false,
 			IsDCA:           false,
 			DueDate:         "2025-03-26",
@@ -157,7 +171,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			},
 		}
 		transactionList, err := GenerateTransactionListFromE5Response(
-			&e5TransactionsResponseValidSanctions, utils.Sanctions, &config.PenaltyDetailsMap{}, allowedTransactionMap)
+			&e5TransactionsResponseValidSanctions, utils.Sanctions, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -166,7 +180,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		expected := models.TransactionListItem{
 			ID:              "P1234567",
 			Etag:            transactionListItem.Etag,
-			Kind:            "",
+			Kind:            "penalty#sanctions",
 			IsPaid:          false,
 			IsDCA:           true,
 			DueDate:         "2025-03-26",
@@ -195,7 +209,7 @@ func TestUnit_getReason(t *testing.T) {
 			{
 				name: "Late filing of accounts",
 				args: args{transaction: &e5.Transaction{
-					CompanyCode:        "LP",
+					CompanyCode:        utils.LateFilingPenalty,
 					TransactionType:    "1",
 					TransactionSubType: "Other",
 				}},
@@ -204,7 +218,7 @@ func TestUnit_getReason(t *testing.T) {
 			{
 				name: "Failure to file a confirmation statement",
 				args: args{transaction: &e5.Transaction{
-					CompanyCode:        "C1",
+					CompanyCode:        utils.Sanctions,
 					TransactionType:    "1",
 					TransactionSubType: "S1",
 					TypeDescription:    "CS01",
@@ -214,7 +228,7 @@ func TestUnit_getReason(t *testing.T) {
 			{
 				name: "Penalty",
 				args: args{transaction: &e5.Transaction{
-					CompanyCode:        "C1",
+					CompanyCode:        utils.Sanctions,
 					TransactionType:    "1",
 					TransactionSubType: "S1",
 				}},
