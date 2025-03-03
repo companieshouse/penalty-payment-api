@@ -53,7 +53,7 @@ func buildTransactionListItemFromE5Transaction(e5Transaction *e5.Transaction, al
 	transactionListItem.ID = e5Transaction.TransactionReference
 	transactionListItem.IsPaid = e5Transaction.IsPaid
 	transactionListItem.Kind = penaltyDetailsMap.Details[companyCode].ResourceKind
-	transactionListItem.IsDCA = e5Transaction.AccountStatus == DcaAccountStatus
+	transactionListItem.IsDCA = e5Transaction.AccountStatus == DCAAccountStatus
 	transactionListItem.DueDate = e5Transaction.DueDate
 	transactionListItem.MadeUpDate = e5Transaction.MadeUpDate
 	transactionListItem.TransactionDate = e5Transaction.TransactionDate
@@ -90,23 +90,37 @@ const (
 	OpenPayableStatus   = "OPEN"
 	ClosedPayableStatus = "CLOSED"
 
-	ChsAccountStatus = "CHS"
-	DcaAccountStatus = "DCA"
-	HldAccountStatus = "HLD"
+	CHSAccountStatus = "CHS"
+	DCAAccountStatus = "DCA"
+	HLDAccountStatus = "HLD"
+	WDRAccountStatus = "WDR"
 
-	DcaDunningStatus  = "DCA"
-	Pen1DunningStatus = "PEN1"
+	DCADunningStatus  = "DCA"
+	PEN1DunningStatus = "PEN1"
+	PEN2DunningStatus = "PEN2"
+	PEN3DunningStatus = "PEN3"
 )
 
 func getPayableStatus(transaction *e5.Transaction) string {
-	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || transaction.DunningStatus == DcaDunningStatus {
+	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || transaction.DunningStatus == DCADunningStatus {
 		return ClosedPayableStatus
 	}
 
 	if transaction.CompanyCode == utils.LateFilingPenalty {
-		return OpenPayableStatus
+		return getLFPPayableStatus(transaction)
 	} else if transaction.CompanyCode == utils.Sanctions {
 		return OpenPayableStatus
 	}
 	return ClosedPayableStatus
+}
+
+func getLFPPayableStatus(t *e5.Transaction) string {
+	islfpPayableAcountStatus := t.AccountStatus == CHSAccountStatus || t.AccountStatus == DCAAccountStatus || t.AccountStatus == HLDAccountStatus || t.AccountStatus == WDRAccountStatus
+	islfpPayableDunningStatus := t.DunningStatus == PEN1DunningStatus || t.DunningStatus == PEN2DunningStatus || t.DunningStatus == PEN3DunningStatus
+
+	if islfpPayableAcountStatus && islfpPayableDunningStatus {
+		return OpenPayableStatus
+	} else {
+		return ClosedPayableStatus
+	}
 }
