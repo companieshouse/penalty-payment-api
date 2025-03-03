@@ -53,7 +53,7 @@ func buildTransactionListItemFromE5Transaction(e5Transaction *e5.Transaction, al
 	transactionListItem.ID = e5Transaction.TransactionReference
 	transactionListItem.IsPaid = e5Transaction.IsPaid
 	transactionListItem.Kind = penaltyDetailsMap.Details[companyCode].ResourceKind
-	transactionListItem.IsDCA = e5Transaction.AccountStatus == DcaAccountStatus
+	transactionListItem.IsDCA = e5Transaction.DunningStatus == DcaDunningStatus
 	transactionListItem.DueDate = e5Transaction.DueDate
 	transactionListItem.MadeUpDate = e5Transaction.MadeUpDate
 	transactionListItem.TransactionDate = e5Transaction.TransactionDate

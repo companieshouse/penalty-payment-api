@@ -18,6 +18,7 @@ var allowedTransactionMap = &models.AllowedTransactionMap{
 		"1": {
 			"EJ": true,
 			"EU": true,
+			"S1": true,
 		},
 	},
 }
@@ -36,6 +37,30 @@ var e5TransactionsResponseEu = e5.GetTransactionsResponse{
 	Page: page,
 	Transactions: []e5.Transaction{
 		euTransaction,
+	},
+}
+
+var validSanctionsTransaction = e5.Transaction{
+	CompanyCode:          utils.Sanctions,
+	LedgerCode:           "E1",
+	CustomerCode:         "12345678",
+	TransactionReference: "P1234567",
+	TransactionDate:      "2025-02-25",
+	MadeUpDate:           "2025-02-12",
+	Amount:               250,
+	OutstandingAmount:    250,
+	IsPaid:               false,
+	TransactionType:      "1",
+	TransactionSubType:   "S1",
+	TypeDescription:      "CS01",
+	DueDate:              "2025-03-26",
+	AccountStatus:        ChsAccountStatus,
+	DunningStatus:        Pen1DunningStatus,
+}
+var e5TransactionsResponseValidSanctions = e5.GetTransactionsResponse{
+	Page: page,
+	Transactions: []e5.Transaction{
+		validSanctionsTransaction,
 	},
 }
 
@@ -85,6 +110,75 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			&e5TransactionsResponseOther, companyCode, &config.PenaltyDetailsMap{}, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
+	})
+
+	Convey("transaction list successfully generated from E5 response - valid sanctions", t, func() {
+		etag := "ABCDE"
+		etagGenerator = func() (string, error) {
+			return etag, nil
+		}
+
+		transactionList, err := GenerateTransactionListFromE5Response(
+			&e5TransactionsResponseValidSanctions, utils.Sanctions, &config.PenaltyDetailsMap{}, allowedTransactionMap)
+		So(err, ShouldBeNil)
+		So(transactionList, ShouldNotBeNil)
+		transactionListItems := transactionList.Items
+		So(len(transactionListItems), ShouldEqual, 1)
+		transactionListItem := transactionListItems[0]
+		expected := models.TransactionListItem{
+			ID:              "P1234567",
+			Etag:            transactionListItem.Etag,
+			Kind:            "",
+			IsPaid:          false,
+			IsDCA:           false,
+			DueDate:         "2025-03-26",
+			MadeUpDate:      "2025-02-12",
+			TransactionDate: "2025-02-25",
+			OriginalAmount:  250,
+			Outstanding:     250,
+			Type:            "penalty",
+			Reason:          "Failure to file a confirmation statement",
+			PayableStatus:   "OPEN",
+		}
+		So(transactionListItem, ShouldResemble, expected)
+	})
+
+	Convey("transaction list successfully generated from E5 response - valid sanctions with dunning status is dca", t, func() {
+		etag := "ABCDE"
+		etagGenerator = func() (string, error) {
+			return etag, nil
+		}
+
+		validSanctionsTransaction.DunningStatus = DcaDunningStatus
+		e5TransactionsResponseValidSanctions = e5.GetTransactionsResponse{
+			Page: page,
+			Transactions: []e5.Transaction{
+				validSanctionsTransaction,
+			},
+		}
+		transactionList, err := GenerateTransactionListFromE5Response(
+			&e5TransactionsResponseValidSanctions, utils.Sanctions, &config.PenaltyDetailsMap{}, allowedTransactionMap)
+		So(err, ShouldBeNil)
+		So(transactionList, ShouldNotBeNil)
+		transactionListItems := transactionList.Items
+		So(len(transactionListItems), ShouldEqual, 1)
+		transactionListItem := transactionListItems[0]
+		expected := models.TransactionListItem{
+			ID:              "P1234567",
+			Etag:            transactionListItem.Etag,
+			Kind:            "",
+			IsPaid:          false,
+			IsDCA:           true,
+			DueDate:         "2025-03-26",
+			MadeUpDate:      "2025-02-12",
+			TransactionDate: "2025-02-25",
+			OriginalAmount:  250,
+			Outstanding:     250,
+			Type:            "penalty",
+			Reason:          "Failure to file a confirmation statement",
+			PayableStatus:   "CLOSED",
+		}
+		So(transactionListItem, ShouldResemble, expected)
 	})
 }
 
