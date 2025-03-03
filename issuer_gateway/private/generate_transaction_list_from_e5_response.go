@@ -53,7 +53,7 @@ func buildTransactionListItemFromE5Transaction(e5Transaction *e5.Transaction, al
 	transactionListItem.ID = e5Transaction.TransactionReference
 	transactionListItem.IsPaid = e5Transaction.IsPaid
 	transactionListItem.Kind = penaltyDetailsMap.Details[companyCode].ResourceKind
-	transactionListItem.IsDCA = e5Transaction.DunningStatus == DcaDunningStatus
+	transactionListItem.IsDCA = e5Transaction.DunningStatus == DCADunningStatus
 	transactionListItem.DueDate = e5Transaction.DueDate
 	transactionListItem.MadeUpDate = e5Transaction.MadeUpDate
 	transactionListItem.TransactionDate = e5Transaction.TransactionDate
@@ -90,27 +90,27 @@ const (
 	OpenPayableStatus   = "OPEN"
 	ClosedPayableStatus = "CLOSED"
 
-	ChsAccountStatus = "CHS"
-	DcaAccountStatus = "DCA"
-	HldAccountStatus = "HLD"
-	WdrAccountStatus = "WDR"
+	CHSAccountStatus = "CHS"
+	DCAAccountStatus = "DCA"
+	HLDAccountStatus = "HLD"
+	WDRAccountStatus = "WDR"
 
-	DcaDunningStatus  = "DCA"
-	Pen1DunningStatus = "PEN1"
-	Pen2DunningStatus = "PEN2"
-	Pen3DunningStatus = "PEN3"
+	DCADunningStatus  = "DCA"
+	PEN1DunningStatus = "PEN1"
+	PEN2DunningStatus = "PEN2"
+	PEN3DunningStatus = "PEN3"
 )
 
 func getPayableStatus(transaction *e5.Transaction) string {
-	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || transaction.DunningStatus == DcaDunningStatus {
+	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || transaction.DunningStatus == DCADunningStatus {
 		return ClosedPayableStatus
 	}
 
 	if transaction.CompanyCode == utils.LateFilingPenalty {
 		return OpenPayableStatus
 	} else if transaction.CompanyCode == utils.Sanctions &&
-		(transaction.DunningStatus == Pen1DunningStatus || transaction.DunningStatus == Pen2DunningStatus) &&
-		(transaction.AccountStatus == DcaAccountStatus || transaction.AccountStatus == ChsAccountStatus || transaction.AccountStatus == HldAccountStatus) {
+		(transaction.DunningStatus == PEN1DunningStatus || transaction.DunningStatus == PEN2DunningStatus) &&
+		(transaction.AccountStatus == CHSAccountStatus || transaction.AccountStatus == DCAAccountStatus || transaction.AccountStatus == HLDAccountStatus) {
 		return OpenPayableStatus
 	}
 	return ClosedPayableStatus
