@@ -20,6 +20,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	penaltyDetails := penaltyDetailsMap.Details[utils.LateFilingPenalty]
 
 	Convey("Get payment details no transactions - invalid data", t, func() {
 
@@ -50,8 +51,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable,
-			penaltyDetailsMap, utils.LateFilingPenalty)
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 		So(paymentDetails, ShouldBeNil)
 		So(responseType, ShouldEqual, InvalidData)
@@ -124,8 +124,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				service := &PaymentDetailsService{}
 
-				paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable,
-					penaltyDetailsMap, tc.companyCode)
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 				expectedCost := models.Cost{
 					Description:             tc.description,
@@ -221,8 +220,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				service := &PaymentDetailsService{}
 
-				paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable,
-					penaltyDetailsMap, tc.companyCode)
+		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 				expectedCost := models.Cost{
 					Description:             tc.description,
