@@ -124,7 +124,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
+				penaltyDetails := penaltyDetailsMap.Details[tc.companyCode]
+				paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 				expectedCost := models.Cost{
 					Description:             tc.description,
@@ -220,7 +221,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
+				penaltyDetails := penaltyDetailsMap.Details[tc.companyCode]
+				paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 				expectedCost := models.Cost{
 					Description:             tc.description,
