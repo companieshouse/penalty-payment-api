@@ -189,13 +189,13 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 					},
 				}
 
-		penaltyDetailsMap, err := config.LoadPenaltyDetails("../assets/penalty_details.yml")
-		if err != nil {
-			log.Fatal(err)
-		}
-		penaltyDetails := penaltyDetailsMap.Details[utils.LateFilingPenalty]
+				penaltyDetailsMap, err := config.LoadPenaltyDetails("../assets/penalty_details.yml")
+				if err != nil {
+					log.Fatal(err)
+				}
+				penaltyDetails := penaltyDetailsMap.Details[tc.companyCode]
 
-		response := PayableResourceToPaymentDetails(payable, penaltyDetails)
+				response := PayableResourceToPaymentDetails(payable, penaltyDetails)
 
 				_, filename, _, _ := runtime.Caller(0)
 				fmt.Printf("Current test filename: %s\n", filename)
@@ -226,41 +226,5 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				So(response.Items[0].ProductType, ShouldEqual, tc.productType)
 			})
 		}
-
-		penaltyDetailsMap, err := config.LoadPenaltyDetails("../assets/penalty_details.yml")
-		if err != nil {
-			log.Fatal(err)
-		}
-		penaltyDetails := penaltyDetailsMap.Details[utils.Sanctions]
-
-		response := PayableResourceToPaymentDetails(payable, penaltyDetails)
-
-		_, filename, _, _ := runtime.Caller(0)
-		fmt.Printf("Current test filename: %s\n", filename)
-
-		dir, err := os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Dir: " + dir)
-
-		So(response, ShouldNotBeNil)
-		So(response.Description, ShouldEqual, "Sanctions Penalty Payment")
-		So(response.Kind, ShouldEqual, "payment-details#payment-details")
-		So(response.PaidAt, ShouldEqual, payable.Payment.PaidAt)
-		So(response.PaymentReference, ShouldEqual, payable.Payment.Reference)
-		So(response.Links.Self, ShouldEqual, payable.Links.Payment)
-		So(response.Links.Resource, ShouldEqual, payable.Links.Self)
-		So(response.Status, ShouldEqual, payable.Payment.Status)
-		So(response.CompanyNumber, ShouldEqual, payable.CompanyNumber)
-		So(len(response.Items), ShouldEqual, 1)
-		So(response.Items[0].Amount, ShouldEqual, fmt.Sprintf("%g", payable.Transactions[0].Amount))
-		So(response.Items[0].AvailablePaymentMethods, ShouldResemble, []string{"credit-card"})
-		So(response.Items[0].ClassOfPayment, ShouldResemble, []string{"data-maintenance"})
-		So(response.Items[0].Description, ShouldEqual, "Sanctions Penalty Payment")
-		So(response.Items[0].DescriptionIdentifier, ShouldEqual, "penalty-sanctions")
-		So(response.Items[0].Kind, ShouldEqual, "cost#cost")
-		So(response.Items[0].ResourceKind, ShouldEqual, "penalty#sanctions")
-		So(response.Items[0].ProductType, ShouldEqual, "penalty-sanctions")
 	})
 }
