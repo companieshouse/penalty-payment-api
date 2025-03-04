@@ -189,7 +189,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "late_filing_penalty_123"}
+			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "financial_penalty_123"}
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
 				http.MethodGet,
@@ -235,7 +235,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "late_filing_penalty_123"}
+			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "financial_penalty_123"}
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
 				http.MethodGet,
@@ -287,7 +287,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "late_filing_penalty_123"}
+			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "financial_penalty_123"}
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
 				http.MethodGet,
@@ -340,7 +340,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			p := &companieshouseapi.PaymentResource{
 				Status:    "paid",
 				Amount:    "150",
-				Reference: "late_filing_penalty_123",
+				Reference: "financial_penalty_123",
 				CreatedBy: companieshouseapi.CreatedBy{
 					Email: "test@example.com",
 				},
