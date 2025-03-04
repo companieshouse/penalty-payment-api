@@ -104,14 +104,23 @@ const (
 func getPayableStatus(transaction *e5.Transaction) string {
 	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || transaction.DunningStatus == DCADunningStatus {
 		return ClosedPayableStatus
+	} else if isLFPPayableStatus(transaction) || isSanctionsPayableStatus(transaction) {
+		return OpenPayableStatus
 	}
 
-	if transaction.CompanyCode == utils.LateFilingPenalty {
-		return OpenPayableStatus
-	} else if transaction.CompanyCode == utils.Sanctions &&
-		(transaction.DunningStatus == PEN1DunningStatus || transaction.DunningStatus == PEN2DunningStatus) &&
-		(transaction.AccountStatus == CHSAccountStatus || transaction.AccountStatus == DCAAccountStatus || transaction.AccountStatus == HLDAccountStatus) {
-		return OpenPayableStatus
-	}
 	return ClosedPayableStatus
+}
+
+func isLFPPayableStatus(t *e5.Transaction) bool {
+	islfpPayableAcountStatus := t.AccountStatus == CHSAccountStatus || t.AccountStatus == DCAAccountStatus || t.AccountStatus == HLDAccountStatus || t.AccountStatus == WDRAccountStatus
+	islfpPayableDunningStatus := t.DunningStatus == PEN1DunningStatus || t.DunningStatus == PEN2DunningStatus || t.DunningStatus == PEN3DunningStatus
+
+	return t.CompanyCode == utils.LateFilingPenalty && islfpPayableAcountStatus && islfpPayableDunningStatus
+}
+
+func isSanctionsPayableStatus(t *e5.Transaction) bool {
+	isSanctionsPayableAcountStatus := t.AccountStatus == CHSAccountStatus || t.AccountStatus == DCAAccountStatus || t.AccountStatus == HLDAccountStatus
+	isSanctionsPayableDunningStatus := t.DunningStatus == PEN1DunningStatus || t.DunningStatus == PEN2DunningStatus
+
+	return t.CompanyCode == utils.Sanctions && isSanctionsPayableAcountStatus && isSanctionsPayableDunningStatus
 }
