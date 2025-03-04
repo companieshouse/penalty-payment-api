@@ -11,8 +11,8 @@ import (
 var getAccountPenalties = AccountPenalties
 var getMatchingPenalty = private.MatchPenalty
 
-func PayablePenalty(companyNumber string, companyCode string, txs []models.TransactionItem,
-	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) ([]models.TransactionItem, error) {
+func PayablePenalty(companyNumber string, companyCode string, transaction models.TransactionItem,
+	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionItem, error) {
 
 	response, _, err := getAccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
@@ -27,10 +27,10 @@ func PayablePenalty(companyNumber string, companyCode string, txs []models.Trans
 			"company_number": companyNumber,
 			"penalty_count":  unpaidPenaltyCount,
 		})
-		return []models.TransactionItem{}, private.ErrMultiplePenalties
+		return nil, private.ErrMultiplePenalties
 	}
 
-	return getMatchingPenalty(response.Items, txs, companyNumber)
+	return getMatchingPenalty(response.Items, transaction, companyNumber)
 }
 
 func getUnpaidPenaltyCount(transactionListItems []models.TransactionListItem) int {

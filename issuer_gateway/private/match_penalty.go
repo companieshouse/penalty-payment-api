@@ -20,42 +20,36 @@ var (
 )
 
 func MatchPenalty(referenceTransactions []models.TransactionListItem,
-	transactionsToMatch []models.TransactionItem,
-	companyNumber string) ([]models.TransactionItem, error) {
+	transactionToMatch models.TransactionItem,
+	companyNumber string) (*models.TransactionItem, error) {
 
 	referenceTransactionsMap := mapTransactions(referenceTransactions)
-	var matchedPenalties []models.TransactionItem
-
-	for _, t := range transactionsToMatch {
-		data := map[string]interface{}{
-			"transaction_ref": t.TransactionID,
-			"company_number":  companyNumber,
-		}
-
-		transaction, ok := referenceTransactionsMap[t.TransactionID]
-		if !ok {
-			log.Info("disallowing paying for a transaction that does not exist in E5", data)
-			return nil, ErrTransactionDoesNotExist
-		}
-
-		valid, err := validate(transaction, data, t)
-		if valid {
-			matchedPenalty := models.TransactionItem{
-				TransactionID: t.TransactionID,
-				Amount:        t.Amount,
-				Type:          transaction.Type,
-				MadeUpDate:    transaction.MadeUpDate,
-				IsDCA:         transaction.IsDCA,
-				IsPaid:        transaction.IsPaid,
-				Reason:        transaction.Reason,
-			}
-			matchedPenalties = append(matchedPenalties, matchedPenalty)
-		} else {
-			return nil, err[0]
-		}
+	transactionInfo := map[string]interface{}{
+		"transaction_ref": transactionToMatch.TransactionID,
+		"company_number":  companyNumber,
 	}
 
-	return matchedPenalties, nil
+	matched, ok := referenceTransactionsMap[transactionToMatch.TransactionID]
+	if !ok {
+		log.Info("disallowing paying for a transaction that does not exist in E5", transactionInfo)
+		return nil, ErrTransactionDoesNotExist
+	}
+
+	valid, err := validate(matched, transactionInfo, transactionToMatch)
+	if valid {
+		matchedPenalty := models.TransactionItem{
+			TransactionID: matched.ID,
+			Amount:        matched.Outstanding,
+			Type:          matched.Type,
+			MadeUpDate:    matched.MadeUpDate,
+			IsDCA:         matched.IsDCA,
+			IsPaid:        matched.IsPaid,
+			Reason:        matched.Reason,
+		}
+		return &matchedPenalty, nil
+	} else {
+		return nil, err[0]
+	}
 }
 
 func validate(

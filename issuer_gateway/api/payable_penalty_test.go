@@ -58,9 +58,7 @@ func TestUnitPayablePenalty(t *testing.T) {
 			},
 		},
 	}
-	txs := []models.TransactionItem{
-		{TransactionID: "121"},
-	}
+	transaction := models.TransactionItem{TransactionID: "121"}
 
 	Convey("error is returned when fetching account penalties fails", t, func() {
 		accountPenaltiesErr := errors.New("failed to fetch account penalties")
@@ -70,7 +68,7 @@ func TestUnitPayablePenalty(t *testing.T) {
 		}
 		getAccountPenalties = mockedAccountPenalties
 
-		payablePenalty, err := PayablePenalty("10000024", "LP", txs, penaltyDetailsMap, allowedTransactionMap)
+		payablePenalty, err := PayablePenalty("10000024", "LP", transaction, penaltyDetailsMap, allowedTransactionMap)
 
 		So(payablePenalty, ShouldBeNil)
 		So(err, ShouldEqual, accountPenaltiesErr)
@@ -83,7 +81,7 @@ func TestUnitPayablePenalty(t *testing.T) {
 		}
 		getAccountPenalties = mockedAccountPenalties
 
-		_, err := PayablePenalty("10000024", "LP", txs, penaltyDetailsMap, allowedTransactionMap)
+		_, err := PayablePenalty("10000024", "LP", transaction, penaltyDetailsMap, allowedTransactionMap)
 
 		So(err, ShouldBeError, private.ErrMultiplePenalties)
 	})
@@ -93,22 +91,21 @@ func TestUnitPayablePenalty(t *testing.T) {
 			allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, types.ResponseType, error) {
 			return accountPenaltiesResponse(1), types.Success, nil
 		}
-		wantPayablePenalty := []models.TransactionItem{
-			{TransactionID: "121",
-				Amount:     150,
-				Type:       "penalty",
-				MadeUpDate: "2017-06-30",
-				IsDCA:      false,
-				IsPaid:     false,
-			},
+		wantPayablePenalty := &models.TransactionItem{
+			TransactionID: "121",
+			Amount:        150,
+			Type:          "penalty",
+			MadeUpDate:    "2017-06-30",
+			IsDCA:         false,
+			IsPaid:        false,
 		}
-		mockedMatchPenalty := func(referenceTransactions []models.TransactionListItem, transactionsToMatch []models.TransactionItem, companyNumber string) ([]models.TransactionItem, error) {
+		mockedMatchPenalty := func(referenceTransactions []models.TransactionListItem, transactionToMatch models.TransactionItem, companyNumber string) (*models.TransactionItem, error) {
 			return wantPayablePenalty, nil
 		}
 		getAccountPenalties = mockedAccountPenalties
 		getMatchingPenalty = mockedMatchPenalty
 
-		gotPayablePenalty, err := PayablePenalty("10000024", "LP", txs, penaltyDetailsMap, allowedTransactionMap)
+		gotPayablePenalty, err := PayablePenalty("10000024", "LP", transaction, penaltyDetailsMap, allowedTransactionMap)
 
 		So(gotPayablePenalty, ShouldResemble, wantPayablePenalty)
 		So(err, ShouldBeNil)
