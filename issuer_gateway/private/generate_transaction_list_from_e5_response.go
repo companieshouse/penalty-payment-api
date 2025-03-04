@@ -104,7 +104,9 @@ const (
 func getPayableStatus(transaction *e5.Transaction) string {
 	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || transaction.DunningStatus == DCADunningStatus {
 		return ClosedPayableStatus
-	} else if isLFPPayableStatus(transaction) || isSanctionsPayableStatus(transaction) {
+	} else if (transaction.CompanyCode == utils.LateFilingPenalty) && isLFPPayableStatus(transaction) {
+		return OpenPayableStatus
+	} else if (transaction.CompanyCode == utils.Sanctions) && isSanctionsPayableStatus(transaction) {
 		return OpenPayableStatus
 	}
 
@@ -112,15 +114,15 @@ func getPayableStatus(transaction *e5.Transaction) string {
 }
 
 func isLFPPayableStatus(t *e5.Transaction) bool {
-	islfpPayableAcountStatus := t.AccountStatus == CHSAccountStatus || t.AccountStatus == DCAAccountStatus || t.AccountStatus == HLDAccountStatus || t.AccountStatus == WDRAccountStatus
-	islfpPayableDunningStatus := t.DunningStatus == PEN1DunningStatus || t.DunningStatus == PEN2DunningStatus || t.DunningStatus == PEN3DunningStatus
+	isLFPPayableAccountStatus := t.AccountStatus == CHSAccountStatus || t.AccountStatus == DCAAccountStatus || t.AccountStatus == HLDAccountStatus || t.AccountStatus == WDRAccountStatus
+	isLFPPayableDunningStatus := t.DunningStatus == PEN1DunningStatus || t.DunningStatus == PEN2DunningStatus || t.DunningStatus == PEN3DunningStatus
 
-	return t.CompanyCode == utils.LateFilingPenalty && islfpPayableAcountStatus && islfpPayableDunningStatus
+	return isLFPPayableDunningStatus && isLFPPayableAccountStatus
 }
 
 func isSanctionsPayableStatus(t *e5.Transaction) bool {
-	isSanctionsPayableAcountStatus := t.AccountStatus == CHSAccountStatus || t.AccountStatus == DCAAccountStatus || t.AccountStatus == HLDAccountStatus
+	isSanctionsPayableAccountStatus := t.AccountStatus == CHSAccountStatus || t.AccountStatus == DCAAccountStatus || t.AccountStatus == HLDAccountStatus
 	isSanctionsPayableDunningStatus := t.DunningStatus == PEN1DunningStatus || t.DunningStatus == PEN2DunningStatus
 
-	return t.CompanyCode == utils.Sanctions && isSanctionsPayableAcountStatus && isSanctionsPayableDunningStatus
+	return t.CompanyCode == utils.Sanctions && isSanctionsPayableDunningStatus && isSanctionsPayableAccountStatus
 }
