@@ -1,16 +1,16 @@
-package service
+package services
 
 import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/dao"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/transformers"
 )
 
@@ -29,6 +29,22 @@ var (
 type PayableResourceService struct {
 	DAO    dao.Service
 	Config *config.Config
+}
+
+var payableResourceService *PayableResourceService
+var once sync.Once
+
+// Get payableResourceService returns the singleton service
+func GetPayableResourceInstance() *PayableResourceService {
+	once.Do(func() {
+		cfg, _ := config.Get()
+		svc := dao.GetMongoInstance()
+		payableResourceService = &PayableResourceService{
+			Config: cfg,
+			DAO:    svc,
+		}
+	})
+	return payableResourceService
 }
 
 // GetPayableResource retrieves the payable resource with the given company number and reference from the database
@@ -78,9 +94,4 @@ func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, p
 	model.Data.Payment.Amount = payment.Amount
 
 	return s.DAO.UpdatePaymentDetails(model)
-}
-
-// RecordE5CommandError will mark the resource as having failed to update E5.
-func (s *PayableResourceService) RecordE5CommandError(resource models.PayableResource, action e5.Action) error {
-	return s.DAO.SaveE5Error(resource.CompanyNumber, resource.Reference, action)
 }

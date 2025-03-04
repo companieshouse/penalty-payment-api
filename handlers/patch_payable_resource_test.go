@@ -22,7 +22,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/mocks"
-	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/companieshouse/penalty-payment-api/utils"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -79,7 +78,7 @@ func dispatchPayResourceHandler(
 
 	ctx = context.WithValue(ctx, httpsession.ContextKeySession, &session.Session{})
 
-	h := PayResourceHandler(svc, e5.NewClient("foo", "e5api"), penaltyDetailsMap, allowedTransactionsMap)
+	h := PayResourceHandler(payableResourceService, e5.NewClient("foo", "e5api"), penaltyDetailsMap, allowedTransactionsMap)
 	req := httptest.NewRequest(http.MethodPost, "/", body).WithContext(ctx)
 	res := httptest.NewRecorder()
 

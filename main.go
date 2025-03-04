@@ -31,7 +31,7 @@ func main() {
 
 	// Create router
 	mainRouter := mux.NewRouter()
-	svc := dao.NewDAOService(cfg)
+	svc := dao.GetMongoInstance()
 
 	penaltyDetailsMap, err := config.LoadPenaltyDetails("assets/penalty_details.yml")
 	if err != nil {
@@ -45,7 +45,7 @@ func main() {
 		return
 	}
 
-	handlers.Register(mainRouter, cfg, svc, penaltyDetailsMap, allowedTransactionsMap)
+	handlers.Register(mainRouter, cfg, penaltyDetailsMap, allowedTransactionsMap)
 
 	log.Info("Starting " + namespace)
 

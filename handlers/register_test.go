@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"go.mongodb.org/mongo-driver/mongo"
+
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
@@ -19,8 +21,16 @@ func TestUnitRegisterRoutes(t *testing.T) {
 		router := mux.NewRouter()
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
-		mockService := mocks.NewMockService(mockCtrl)
-		Register(router, &config.Config{}, mockService, penaltyDetailsMap, allowedTransactionsMap)
+		//mockService := mocks.NewMockService(mockCtrl)
+		mockDao := mocks.NewMockMongoDatabaseInterface(mockCtrl)
+		mockCollection := &mongo.Collection{}
+		mockDao.EXPECT().Collection("test_collection").Return(mockCollection).Times(1)
+		mockedInstance := mockDao
+
+		getDao := mockedInstance.Collection("test_collection")
+
+		//mockDaoService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(nil, errors.New("not found"))
+		Register(router, &config.Config{}, penaltyDetailsMap, allowedTransactionsMap)
 
 		So(router.GetRoute("healthcheck"), ShouldNotBeNil)
 		So(router.GetRoute("healthcheck-finance-system"), ShouldNotBeNil)
