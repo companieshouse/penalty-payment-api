@@ -140,7 +140,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				So(paymentDetails, ShouldNotBeNil)
 				So(paymentDetails.Description, ShouldEqual, tc.description)
-				So(paymentDetails.Kind, ShouldEqual, tc.kind)
+				So(paymentDetails.Kind, ShouldEqual, tc.resourceKind)
 				So(paymentDetails.PaymentReference, ShouldEqual, "")
 				So(paymentDetails.Links.Self, ShouldEqual, "/company/12345678/penalties/late-filing/abcdef/payment")
 				So(paymentDetails.Links.Resource, ShouldEqual, "/company/12345678/penalties/late-filing/abcdef")
@@ -237,7 +237,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				So(paymentDetails, ShouldNotBeNil)
 				So(paymentDetails.Description, ShouldEqual, tc.description)
-				So(paymentDetails.Kind, ShouldEqual, tc.kind)
+				So(paymentDetails.Kind, ShouldEqual, tc.resourceKind)
 				So(paymentDetails.PaidAt, ShouldEqual, &t)
 				So(paymentDetails.PaymentReference, ShouldEqual, "payment_id")
 				So(paymentDetails.Links.Self, ShouldEqual, "/company/12345678/penalties/late-filing/abcdef/payment")

@@ -208,7 +208,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 
 				So(response, ShouldNotBeNil)
 				So(response.Description, ShouldEqual, tc.description)
-				So(response.Kind, ShouldEqual, tc.kind)
+				So(response.Kind, ShouldEqual, tc.resourceKind)
 				So(response.PaidAt, ShouldEqual, payable.Payment.PaidAt)
 				So(response.PaymentReference, ShouldEqual, payable.Payment.Reference)
 				So(response.Links.Self, ShouldEqual, payable.Links.Payment)
