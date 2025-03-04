@@ -128,142 +128,103 @@ func TestUnitPayableResourceDBToPayableResource(t *testing.T) {
 
 func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 	Convey("field mappings are correct from payable resource to payment details", t, func() {
-		t := time.Now().Truncate(time.Millisecond)
-		payable := &models.PayableResource{
-			CompanyNumber: "12345678",
-			Reference:     "1234",
-			Etag:          "qwertyetag1234",
-			CreatedAt:     &t,
-			CreatedBy: models.CreatedBy{
-				ID:       "uz3r_1d",
-				Email:    "test@user.com",
-				Forename: "some",
-				Surname:  "body",
+		testCases := []struct {
+			description           string
+			kind                  string
+			classOfPayment        string
+			descriptionIdentifier string
+			resourceKind          string
+			productType           string
+			companyCode           string
+		}{
+			{
+				description:           "Late Filing Penalty",
+				kind:                  "payment-details#payment-details",
+				classOfPayment:        "penalty",
+				descriptionIdentifier: "late-filing-penalty",
+				resourceKind:          "late-filing-penalty#late-filing-penalty",
+				productType:           "late-filing-penalty",
+				companyCode:           utils.LateFilingPenalty,
 			},
-			Links: models.PayableResourceLinks{
-				Self:    "/foo",
-				Payment: "/foo/pay",
-			},
-			Payment: models.Payment{
-				Amount:    "100",
-				Status:    "pending",
-				Reference: "payref",
-				PaidAt:    &t,
-			},
-			Transactions: []models.TransactionItem{
-				{
-					Amount:     100,
-					Type:       "penalty",
-					MadeUpDate: "2019-01-01",
-				},
+			{
+				description:           "Sanctions Penalty Payment",
+				kind:                  "payment-details#payment-details",
+				classOfPayment:        "penalty-sanctions",
+				descriptionIdentifier: "penalty-sanctions",
+				resourceKind:          "penalty#sanctions",
+				productType:           "penalty-sanctions",
+				companyCode:           utils.Sanctions,
 			},
 		}
+		for _, tc := range testCases {
+			Convey(tc.description, func() {
+				t := time.Now().Truncate(time.Millisecond)
+				payable := &models.PayableResource{
+					CompanyNumber: "12345678",
+					Reference:     "1234",
+					Etag:          "qwertyetag1234",
+					CreatedAt:     &t,
+					CreatedBy: models.CreatedBy{
+						ID:       "uz3r_1d",
+						Email:    "test@user.com",
+						Forename: "some",
+						Surname:  "body",
+					},
+					Links: models.PayableResourceLinks{
+						Self:    "/foo",
+						Payment: "/foo/pay",
+					},
+					Payment: models.Payment{
+						Amount:    "100",
+						Status:    "pending",
+						Reference: "payref",
+						PaidAt:    &t,
+					},
+					Transactions: []models.TransactionItem{
+						{
+							Amount:     100,
+							Type:       "penalty",
+							MadeUpDate: "2019-01-01",
+						},
+					},
+				}
 
-		penaltyDetailsMap, err := config.LoadPenaltyDetails("../assets/penalty_details.yml")
-		if err != nil {
-			log.Fatal(err)
+				penaltyDetailsMap, err := config.LoadPenaltyDetails("../assets/penalty_details.yml")
+				if err != nil {
+					log.Fatal(err)
+				}
+				penaltyDetails := penaltyDetailsMap.Details[tc.companyCode]
+
+				response := PayableResourceToPaymentDetails(payable, penaltyDetails)
+
+				_, filename, _, _ := runtime.Caller(0)
+				fmt.Printf("Current test filename: %s\n", filename)
+
+				dir, err := os.Getwd()
+				if err != nil {
+					log.Fatal(err)
+				}
+				fmt.Println("Dir: " + dir)
+
+				So(response, ShouldNotBeNil)
+				So(response.Description, ShouldEqual, tc.description)
+				So(response.Kind, ShouldEqual, tc.resourceKind)
+				So(response.PaidAt, ShouldEqual, payable.Payment.PaidAt)
+				So(response.PaymentReference, ShouldEqual, payable.Payment.Reference)
+				So(response.Links.Self, ShouldEqual, payable.Links.Payment)
+				So(response.Links.Resource, ShouldEqual, payable.Links.Self)
+				So(response.Status, ShouldEqual, payable.Payment.Status)
+				So(response.CompanyNumber, ShouldEqual, payable.CompanyNumber)
+				So(len(response.Items), ShouldEqual, 1)
+				So(response.Items[0].Amount, ShouldEqual, fmt.Sprintf("%g", payable.Transactions[0].Amount))
+				So(response.Items[0].AvailablePaymentMethods, ShouldResemble, []string{"credit-card"})
+				So(response.Items[0].ClassOfPayment, ShouldResemble, []string{tc.classOfPayment})
+				So(response.Items[0].Description, ShouldEqual, tc.description)
+				So(response.Items[0].DescriptionIdentifier, ShouldEqual, tc.descriptionIdentifier)
+				So(response.Items[0].Kind, ShouldEqual, "cost#cost")
+				So(response.Items[0].ResourceKind, ShouldEqual, tc.resourceKind)
+				So(response.Items[0].ProductType, ShouldEqual, tc.productType)
+			})
 		}
-		penaltyDetails := penaltyDetailsMap.Details[utils.LateFilingPenalty]
-
-		response := PayableResourceToPaymentDetails(payable, penaltyDetails)
-
-		_, filename, _, _ := runtime.Caller(0)
-		fmt.Printf("Current test filename: %s\n", filename)
-
-		dir, err := os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Dir: " + dir)
-
-		So(response, ShouldNotBeNil)
-		So(response.Description, ShouldEqual, "Late Filing Penalty")
-		So(response.Kind, ShouldEqual, "late-filing-penalty#late-filing-penalty")
-		So(response.PaidAt, ShouldEqual, payable.Payment.PaidAt)
-		So(response.PaymentReference, ShouldEqual, payable.Payment.Reference)
-		So(response.Links.Self, ShouldEqual, payable.Links.Payment)
-		So(response.Links.Resource, ShouldEqual, payable.Links.Self)
-		So(response.Status, ShouldEqual, payable.Payment.Status)
-		So(response.CompanyNumber, ShouldEqual, payable.CompanyNumber)
-		So(len(response.Items), ShouldEqual, 1)
-		So(response.Items[0].Amount, ShouldEqual, fmt.Sprintf("%g", payable.Transactions[0].Amount))
-		So(response.Items[0].AvailablePaymentMethods, ShouldResemble, []string{"credit-card"})
-		So(response.Items[0].ClassOfPayment, ShouldResemble, []string{"penalty"})
-		So(response.Items[0].Description, ShouldEqual, "Late Filing Penalty")
-		So(response.Items[0].DescriptionIdentifier, ShouldEqual, "late-filing-penalty")
-		So(response.Items[0].Kind, ShouldEqual, "cost#cost")
-		So(response.Items[0].ResourceKind, ShouldEqual, "late-filing-penalty#late-filing-penalty")
-		So(response.Items[0].ProductType, ShouldEqual, "late-filing-penalty")
-	})
-}
-
-func TestUnitPayableResourceToPaymentDetailsConfirmationStatement(t *testing.T) {
-	Convey("field mappings are correct from payable resource to payment details", t, func() {
-		t := time.Now().Truncate(time.Millisecond)
-		payable := &models.PayableResource{
-			CompanyNumber: "12345678",
-			Reference:     "1234",
-			Etag:          "qwertyetag1234",
-			CreatedAt:     &t,
-			CreatedBy: models.CreatedBy{
-				ID:       "uz3r_1d",
-				Email:    "test@user.com",
-				Forename: "some",
-				Surname:  "body",
-			},
-			Links: models.PayableResourceLinks{
-				Self:    "/foo",
-				Payment: "/foo/pay",
-			},
-			Payment: models.Payment{
-				Amount:    "100",
-				Status:    "pending",
-				Reference: "payref",
-				PaidAt:    &t,
-			},
-			Transactions: []models.TransactionItem{
-				{
-					Amount:     100,
-					Type:       "penalty",
-					MadeUpDate: "2019-01-01",
-				},
-			},
-		}
-
-		penaltyDetailsMap, err := config.LoadPenaltyDetails("../assets/penalty_details.yml")
-		if err != nil {
-			log.Fatal(err)
-		}
-		penaltyDetails := penaltyDetailsMap.Details[utils.Sanctions]
-
-		response := PayableResourceToPaymentDetails(payable, penaltyDetails)
-
-		_, filename, _, _ := runtime.Caller(0)
-		fmt.Printf("Current test filename: %s\n", filename)
-
-		dir, err := os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Dir: " + dir)
-
-		So(response, ShouldNotBeNil)
-		So(response.Description, ShouldEqual, "Sanctions Penalty Payment")
-		So(response.Kind, ShouldEqual, "penalty#sanctions")
-		So(response.PaidAt, ShouldEqual, payable.Payment.PaidAt)
-		So(response.PaymentReference, ShouldEqual, payable.Payment.Reference)
-		So(response.Links.Self, ShouldEqual, payable.Links.Payment)
-		So(response.Links.Resource, ShouldEqual, payable.Links.Self)
-		So(response.Status, ShouldEqual, payable.Payment.Status)
-		So(response.CompanyNumber, ShouldEqual, payable.CompanyNumber)
-		So(len(response.Items), ShouldEqual, 1)
-		So(response.Items[0].Amount, ShouldEqual, fmt.Sprintf("%g", payable.Transactions[0].Amount))
-		So(response.Items[0].AvailablePaymentMethods, ShouldResemble, []string{"credit-card"})
-		So(response.Items[0].ClassOfPayment, ShouldResemble, []string{"data-maintenance"})
-		So(response.Items[0].Description, ShouldEqual, "Sanctions Penalty Payment")
-		So(response.Items[0].DescriptionIdentifier, ShouldEqual, "penalty-sanctions")
-		So(response.Items[0].Kind, ShouldEqual, "cost#cost")
-		So(response.Items[0].ResourceKind, ShouldEqual, "penalty#sanctions")
-		So(response.Items[0].ProductType, ShouldEqual, "penalty-sanctions")
 	})
 }
