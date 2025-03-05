@@ -12,7 +12,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var penaltyDetailsMap = &config.PenaltyDetailsMap{
+var sanctionsPenaltyDetailsMap = &config.PenaltyDetailsMap{
 	Name: "penalty details",
 	Details: map[string]config.PenaltyDetails{
 		utils.Sanctions: {
@@ -26,7 +26,20 @@ var penaltyDetailsMap = &config.PenaltyDetailsMap{
 		},
 	},
 }
-
+var lfpPenaltyDetailsMap = &config.PenaltyDetailsMap{
+	Name: "penalty details",
+	Details: map[string]config.PenaltyDetails{
+		utils.LateFilingPenalty: {
+			Description:        "Late Filing Penalty",
+			DescriptionId:      "late-filing-penalty",
+			ClassOfPayment:     "penalty",
+			ResourceKind:       "late-filing-penalty#late-filing-penalty",
+			ProductType:        "late-filing-penalty",
+			EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
+			EmailMsgType:       "penalty_payment_received_email",
+		},
+	},
+}
 var allowedTransactionMap = &models.AllowedTransactionMap{
 	Types: map[string]map[string]bool{
 		"1": {
@@ -36,24 +49,12 @@ var allowedTransactionMap = &models.AllowedTransactionMap{
 		},
 	},
 }
-var euTransaction = e5.Transaction{
-	CompanyCode:        utils.LateFilingPenalty,
-	TransactionType:    "1",
-	TransactionSubType: "EU",
-}
 var page = e5.Page{
 	Size:          1,
 	TotalElements: 1,
 	TotalPages:    1,
 	Number:        1,
 }
-var e5TransactionsResponseEu = e5.GetTransactionsResponse{
-	Page: page,
-	Transactions: []e5.Transaction{
-		euTransaction,
-	},
-}
-
 var validSanctionsTransaction = e5.Transaction{
 	CompanyCode:          utils.Sanctions,
 	LedgerCode:           "E1",
@@ -71,10 +72,32 @@ var validSanctionsTransaction = e5.Transaction{
 	AccountStatus:        CHSAccountStatus,
 	DunningStatus:        PEN1DunningStatus,
 }
+var validLFPTransaction = e5.Transaction{
+	CompanyCode:          utils.LateFilingPenalty,
+	LedgerCode:           "EW",
+	CustomerCode:         "12345678",
+	TransactionReference: "A1234567",
+	TransactionDate:      "2025-02-25",
+	MadeUpDate:           "2025-02-12",
+	Amount:               250,
+	OutstandingAmount:    250,
+	IsPaid:               false,
+	TransactionType:      "1",
+	TransactionSubType:   "EU",
+	DueDate:              "2025-03-26",
+	AccountStatus:        CHSAccountStatus,
+	DunningStatus:        PEN1DunningStatus,
+}
 var e5TransactionsResponseValidSanctions = e5.GetTransactionsResponse{
 	Page: page,
 	Transactions: []e5.Transaction{
 		validSanctionsTransaction,
+	},
+}
+var e5TransactionsResponseValidLFPTransaction = e5.GetTransactionsResponse{
+	Page: page,
+	Transactions: []e5.Transaction{
+		validLFPTransaction,
 	},
 }
 
@@ -86,7 +109,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 
 		transactionList, err := GenerateTransactionListFromE5Response(
-			&e5TransactionsResponseEu, utils.LateFilingPenalty, &config.PenaltyDetailsMap{}, allowedTransactionMap)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenalty, lfpPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldNotBeNil)
 		So(transactionList, ShouldBeNil)
 	})
@@ -97,10 +120,30 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 
+		e5TransactionsResponseValidLFPTransaction.Transactions[0].TransactionSubType = "EU"
 		transactionList, err := GenerateTransactionListFromE5Response(
-			&e5TransactionsResponseEu, utils.LateFilingPenalty, &config.PenaltyDetailsMap{}, allowedTransactionMap)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenalty, lfpPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
+		transactionListItems := transactionList.Items
+		So(len(transactionListItems), ShouldEqual, 1)
+		transactionListItem := transactionListItems[0]
+		expected := models.TransactionListItem{
+			ID:              "A1234567",
+			Etag:            transactionListItem.Etag,
+			Kind:            "late-filing-penalty#late-filing-penalty",
+			IsPaid:          false,
+			IsDCA:           false,
+			DueDate:         "2025-03-26",
+			MadeUpDate:      "2025-02-12",
+			TransactionDate: "2025-02-25",
+			OriginalAmount:  250,
+			Outstanding:     250,
+			Type:            "penalty",
+			Reason:          "Late filing of accounts",
+			PayableStatus:   "OPEN",
+		}
+		So(transactionListItem, ShouldResemble, expected)
 	})
 
 	Convey("transaction list successfully generated from E5 response - transaction type Other", t, func() {
@@ -108,22 +151,64 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
-		otherTransaction := e5.Transaction{
-			CompanyCode:        utils.LateFilingPenalty,
-			TransactionType:    "1",
-			TransactionSubType: "Other",
-		}
-		e5TransactionsResponseOther := e5.GetTransactionsResponse{
-			Page: page,
-			Transactions: []e5.Transaction{
-				otherTransaction,
-			},
-		}
 
+		e5TransactionsResponseValidLFPTransaction.Transactions[0].TransactionSubType = "Other"
 		transactionList, err := GenerateTransactionListFromE5Response(
-			&e5TransactionsResponseOther, utils.LateFilingPenalty, &config.PenaltyDetailsMap{}, allowedTransactionMap)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenalty, lfpPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
+		transactionListItems := transactionList.Items
+		So(len(transactionListItems), ShouldEqual, 1)
+		transactionListItem := transactionListItems[0]
+		expected := models.TransactionListItem{
+			ID:              "A1234567",
+			Etag:            transactionListItem.Etag,
+			Kind:            "late-filing-penalty#late-filing-penalty",
+			IsPaid:          false,
+			IsDCA:           false,
+			DueDate:         "2025-03-26",
+			MadeUpDate:      "2025-02-12",
+			TransactionDate: "2025-02-25",
+			OriginalAmount:  250,
+			Outstanding:     250,
+			Type:            "other",
+			Reason:          "Late filing of accounts",
+			PayableStatus:   "OPEN",
+		}
+		So(transactionListItem, ShouldResemble, expected)
+	})
+
+	Convey("transaction list successfully generated from E5 response - valid lfp with dunning status is dca", t, func() {
+		etag := "ABCDE"
+		etagGenerator = func() (string, error) {
+			return etag, nil
+		}
+
+		e5TransactionsResponseValidLFPTransaction.Transactions[0].DunningStatus = "DCA"
+		e5TransactionsResponseValidLFPTransaction.Transactions[0].TransactionSubType = "EU"
+		transactionList, err := GenerateTransactionListFromE5Response(
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenalty, lfpPenaltyDetailsMap, allowedTransactionMap)
+		So(err, ShouldBeNil)
+		So(transactionList, ShouldNotBeNil)
+		transactionListItems := transactionList.Items
+		So(len(transactionListItems), ShouldEqual, 1)
+		transactionListItem := transactionListItems[0]
+		expected := models.TransactionListItem{
+			ID:              "A1234567",
+			Etag:            transactionListItem.Etag,
+			Kind:            "late-filing-penalty#late-filing-penalty",
+			IsPaid:          false,
+			IsDCA:           true,
+			DueDate:         "2025-03-26",
+			MadeUpDate:      "2025-02-12",
+			TransactionDate: "2025-02-25",
+			OriginalAmount:  250,
+			Outstanding:     250,
+			Type:            "penalty",
+			Reason:          "Late filing of accounts",
+			PayableStatus:   "CLOSED",
+		}
+		So(transactionListItem, ShouldResemble, expected)
 	})
 
 	Convey("transaction list successfully generated from E5 response - valid sanctions", t, func() {
@@ -133,7 +218,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 
 		transactionList, err := GenerateTransactionListFromE5Response(
-			&e5TransactionsResponseValidSanctions, utils.Sanctions, penaltyDetailsMap, allowedTransactionMap)
+			&e5TransactionsResponseValidSanctions, utils.Sanctions, sanctionsPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -163,15 +248,9 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 
-		validSanctionsTransaction.DunningStatus = DCADunningStatus
-		e5TransactionsResponseValidSanctions = e5.GetTransactionsResponse{
-			Page: page,
-			Transactions: []e5.Transaction{
-				validSanctionsTransaction,
-			},
-		}
+		e5TransactionsResponseValidSanctions.Transactions[0].DunningStatus = DCADunningStatus
 		transactionList, err := GenerateTransactionListFromE5Response(
-			&e5TransactionsResponseValidSanctions, utils.Sanctions, penaltyDetailsMap, allowedTransactionMap)
+			&e5TransactionsResponseValidSanctions, utils.Sanctions, sanctionsPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -288,13 +367,134 @@ func TestUnit_getPayableStatus(t *testing.T) {
 				want: OpenPayableStatus,
 			},
 			{
-				name: "Late filing penalty with outstanding amount, not paid, account status is dca, dunning status is not dca",
+				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is PEN1",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     CHSAccountStatus,
+					DunningStatus:     PEN1DunningStatus,
+				}},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is PEN2",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     CHSAccountStatus,
+					DunningStatus:     PEN2DunningStatus,
+				}},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is PEN3",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     CHSAccountStatus,
+					DunningStatus:     PEN3DunningStatus,
+				}},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is DCA, dunning status is PEN1",
 				args: args{transaction: &e5.Transaction{
 					CompanyCode:       utils.LateFilingPenalty,
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     DCAAccountStatus,
 					DunningStatus:     PEN1DunningStatus,
+				}},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is DCA, dunning status is PEN2",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     DCAAccountStatus,
+					DunningStatus:     PEN2DunningStatus,
+				}},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is DCA, dunning status is PEN3",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     DCAAccountStatus,
+					DunningStatus:     PEN3DunningStatus,
+				}},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is HLD, dunning status is PEN1",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     HLDAccountStatus,
+					DunningStatus:     PEN1DunningStatus,
+				}},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is HLD, dunning status is PEN2",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     HLDAccountStatus,
+					DunningStatus:     PEN2DunningStatus,
+				}},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is HLD, dunning status is PEN3",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     HLDAccountStatus,
+					DunningStatus:     PEN3DunningStatus,
+				}},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is WDR, dunning status is PEN1",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     WDRAccountStatus,
+					DunningStatus:     PEN1DunningStatus,
+				}},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is WDR, dunning status is PEN2",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     WDRAccountStatus,
+					DunningStatus:     PEN2DunningStatus,
+				}},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is WDR, dunning status is PEN3",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     WDRAccountStatus,
+					DunningStatus:     PEN3DunningStatus,
 				}},
 				want: OpenPayableStatus,
 			},
@@ -361,7 +561,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 				want: ClosedPayableStatus,
 			},
 			{
-				name: "Late filing penalty with outstanding amount, not paid, account status and dunning status is dca",
+				name: "Late filing penalty with outstanding amount, not paid, account status is DCA, dunning status is DCA",
 				args: args{transaction: &e5.Transaction{
 					CompanyCode:       utils.LateFilingPenalty,
 					OutstandingAmount: 150,
@@ -372,12 +572,34 @@ func TestUnit_getPayableStatus(t *testing.T) {
 				want: ClosedPayableStatus,
 			},
 			{
-				name: "Late filing penalty with outstanding amount, not paid, account not dca and dunning status is dca",
+				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is DCA",
 				args: args{transaction: &e5.Transaction{
 					CompanyCode:       utils.LateFilingPenalty,
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     CHSAccountStatus,
+					DunningStatus:     DCADunningStatus,
+				}},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is HLD, dunning status is DCA",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     HLDAccountStatus,
+					DunningStatus:     DCADunningStatus,
+				}},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is WDR, dunning status is DCA",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     WDRAccountStatus,
 					DunningStatus:     DCADunningStatus,
 				}},
 				want: ClosedPayableStatus,
