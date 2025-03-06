@@ -1,4 +1,4 @@
-package service
+package services
 
 import (
 	"errors"
@@ -10,19 +10,14 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/dao"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/transformers"
 )
 
 var (
-	// ErrPaymentNotFulfilled represents the scenario that the payment resource itself is not paid
-	ErrPaymentNotFulfilled = errors.New("the resource you are trying to pay for has not been paid")
 	// ErrAlreadyPaid represents when the penalty payable resource is already paid
 	ErrAlreadyPaid = errors.New("the Penalty has already been paid")
 	// ErrNotFound represents when the payable resource does not exist in the db
 	ErrPenaltyNotFound = errors.New("the Penalty does not exist")
-	// ErrPayment represents an error when the payable resource amount does not match the amount in the payment resource
-	ErrPayment = errors.New("there was a problem validating the payment")
 )
 
 // PayableResourceService contains the DAO for db access
@@ -78,9 +73,4 @@ func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, p
 	model.Data.Payment.Amount = payment.Amount
 
 	return s.DAO.UpdatePaymentDetails(model)
-}
-
-// RecordE5CommandError will mark the resource as having failed to update E5.
-func (s *PayableResourceService) RecordE5CommandError(resource models.PayableResource, action e5.Action) error {
-	return s.DAO.SaveE5Error(resource.CompanyNumber, resource.Reference, action)
 }

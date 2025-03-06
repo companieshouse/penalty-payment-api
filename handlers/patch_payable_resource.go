@@ -6,14 +6,17 @@ import (
 	"net/http"
 	"sync"
 
+	"gopkg.in/go-playground/validator.v9"
+
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/e5"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/companieshouse/penalty-payment-api/utils"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 // handleEmailKafkaMessage allows us to mock the call to sendEmailKafkaMessage for unit tests
@@ -23,7 +26,7 @@ var wg sync.WaitGroup
 
 // PayResourceHandler will update the resource to mark it as paid and also tell the finance system that the
 // transaction(s) associated with it are paid.
-func PayResourceHandler(svc *service.PayableResourceService, e5Client *e5.Client,
+func PayResourceHandler(payableResourceService *services.PayableResourceService, e5Client *e5.Client,
 	penaltyPaymentDetails *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 1. get the payable resource our of the context. authorisation is already handled in the interceptor
@@ -81,8 +84,8 @@ func PayResourceHandler(svc *service.PayableResourceService, e5Client *e5.Client
 		wg.Add(3)
 
 		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails, allowedTransactionsMap)
-		go updateDatabase(resource, payment, svc, r, w)
-		go updateE5(e5Client, resource, payment, svc, r, w)
+		go updateDatabase(resource, payment, payableResourceService, r, w)
+		go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
 
 		wg.Wait()
 
@@ -108,10 +111,11 @@ func sendConfirmationEmail(resource *models.PayableResource, payment *validators
 	})
 }
 
-func updateDatabase(resource *models.PayableResource, payment *validators.PaymentInformation, svc *service.PayableResourceService, r *http.Request, w http.ResponseWriter) {
+func updateDatabase(resource *models.PayableResource, payment *validators.PaymentInformation,
+	payableResourceService *services.PayableResourceService, r *http.Request, w http.ResponseWriter) {
 	// Update the payable resource in the db
 	defer wg.Done()
-	err := svc.UpdateAsPaid(*resource, *payment)
+	err := payableResourceService.UpdateAsPaid(*resource, *payment)
 	if err != nil {
 		log.ErrorR(r, err, log.Data{"penalty_reference": resource.Reference, "payment_id": payment.Reference})
 		w.WriteHeader(http.StatusInternalServerError)
@@ -124,10 +128,11 @@ func updateDatabase(resource *models.PayableResource, payment *validators.Paymen
 	})
 }
 
-func updateE5(e5Client *e5.Client, resource *models.PayableResource, payment *validators.PaymentInformation, svc *service.PayableResourceService, r *http.Request, w http.ResponseWriter) {
+func updateIssuer(payableResourceService *services.PayableResourceService, e5Client *e5.Client, resource *models.PayableResource,
+	payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter) {
 	// Mark the resource as paid in e5
 	defer wg.Done()
-	err := service.MarkTransactionsAsPaid(svc, e5Client, *resource, *payment)
+	err := api.UpdateIssuerAccountWithPenaltyPaid(payableResourceService, e5Client, *resource, *payment)
 	if err != nil {
 		log.ErrorR(r, err, log.Data{
 			"penalty_reference": resource.Reference,
