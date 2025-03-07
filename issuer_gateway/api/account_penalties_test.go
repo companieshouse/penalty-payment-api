@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/e5"
-	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -43,7 +43,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 	Convey("error when no transactions provided", t, func() {
 		_, responseType, err := AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldNotBeNil)
-		So(responseType, ShouldEqual, types.Error)
+		So(responseType, ShouldEqual, services.Error)
 	})
 
 	Convey("penalties returned when valid transactions", t, func() {
@@ -57,7 +57,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 		listResponse, responseType, err := AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
-		So(responseType, ShouldEqual, types.Success)
+		So(responseType, ShouldEqual, services.Success)
 	})
 
 	Convey("error when transactions cannot be found", t, func() {
@@ -71,7 +71,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 		listResponse, responseType, err := AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldEqual, errGettingTransactions)
 		So(listResponse, ShouldBeNil)
-		So(responseType, ShouldEqual, types.Error)
+		So(responseType, ShouldEqual, services.Error)
 	})
 
 	Convey("error when generating transaction list fails", t, func() {
@@ -92,7 +92,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 		listResponse, responseType, err := AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldResemble, errGeneratingTransactionList)
 		So(listResponse, ShouldBeNil)
-		So(responseType, ShouldEqual, types.Error)
+		So(responseType, ShouldEqual, services.Error)
 	})
 
 	Convey("error when getConfig fails", t, func() {
@@ -106,6 +106,6 @@ func TestUnitAccountPenalties(t *testing.T) {
 		listResponse, responseType, err := AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldBeNil)
-		So(responseType, ShouldEqual, types.Error)
+		So(responseType, ShouldEqual, services.Error)
 	})
 }

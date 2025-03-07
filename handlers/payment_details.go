@@ -6,8 +6,8 @@ import (
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
@@ -44,7 +44,7 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 		logData := log.Data{"company_number": payableResource.CompanyNumber, "reference": payableResource.Reference}
 		if err != nil {
 			switch responseType {
-			case service.InvalidData:
+			case services.InvalidData:
 				log.DebugR(req, fmt.Sprintf("invalid data getting payment details from payable resource so returning not found [%s]", err.Error()), logData)
 				m := models.NewMessageResponse("payable resource does not exist or has insufficient data")
 				utils.WriteJSONWithStatus(w, req, m, http.StatusNotFound)

@@ -9,16 +9,16 @@ import (
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
-	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 var getCompanyCode = func(penaltyReferenceType string) (string, error) {
 	return utils.GetCompanyCode(penaltyReferenceType)
 }
-var accountPenalties = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, types.ResponseType, error) {
+var accountPenalties = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, services.ResponseType, error) {
 	return api.AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 }
 
@@ -46,11 +46,11 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTran
 		if err != nil {
 			log.ErrorR(req, fmt.Errorf("error calling e5 to get transactions: %v", err))
 			switch responseType {
-			case types.InvalidData:
+			case services.InvalidData:
 				m := models.NewMessageResponse("failed to read finance transactions")
 				utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 				return
-			case types.Error:
+			case services.Error:
 			default:
 				m := models.NewMessageResponse("there was a problem communicating with the finance backend")
 				utils.WriteJSONWithStatus(w, req, m, http.StatusInternalServerError)

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/utils"
 
@@ -54,7 +55,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 		So(paymentDetails, ShouldBeNil)
-		So(responseType, ShouldEqual, InvalidData)
+		So(responseType, ShouldEqual, services.InvalidData)
 		So(err, ShouldNotBeNil)
 
 	})
@@ -147,7 +148,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				So(paymentDetails.Status, ShouldEqual, "pending")
 				So(paymentDetails.CompanyNumber, ShouldEqual, "12345678")
 				So(paymentDetails.Items[0], ShouldResemble, expectedCost)
-				So(responseType, ShouldEqual, Success)
+				So(responseType, ShouldEqual, services.Success)
 				So(err, ShouldBeNil)
 			})
 		}
@@ -245,7 +246,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				So(paymentDetails.Status, ShouldEqual, "paid")
 				So(paymentDetails.CompanyNumber, ShouldEqual, "12345678")
 				So(paymentDetails.Items[0], ShouldResemble, expectedCost)
-				So(responseType, ShouldEqual, Success)
+				So(responseType, ShouldEqual, services.Success)
 				So(err, ShouldBeNil)
 			})
 		}

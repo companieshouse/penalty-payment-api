@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/utils"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -20,17 +20,17 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 	allowedTransactionsMap := &models.AllowedTransactionMap{}
 
 	Convey("Given a request to get penalties", t, func() {
-		mockedAccountPenalties := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, types.ResponseType, error) {
+		mockedAccountPenalties := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, services.ResponseType, error) {
 			if companyNumber == "INVALID_COMPANY" {
-				return nil, types.Error, errors.New("error getting penalties")
+				return nil, services.Error, errors.New("error getting penalties")
 			}
 			if companyNumber == "INVALID_DATA" {
-				return nil, types.InvalidData, errors.New("error getting penalties")
+				return nil, services.InvalidData, errors.New("error getting penalties")
 			}
 			if companyNumber == "INTERNAL_SERVER_ERROR" {
-				return nil, types.NotFound, errors.New("error getting penalties")
+				return nil, services.NotFound, errors.New("error getting penalties")
 			}
-			return nil, types.Success, nil
+			return nil, services.Success, nil
 		}
 
 		mockedGetCompanyCode := func(penaltyReferenceType string) (string, error) {

@@ -6,13 +6,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/companieshouse/chs.go/log"
-	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/companieshouse/chs.go/log"
+	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/e5"
 )
 
 var client *mongo.Client
@@ -34,7 +35,7 @@ func getMongoClient(mongoDBURL string) *mongo.Client {
 		os.Exit(1)
 	}
 
-	// check we can connect to the mongodb instance. failure here should result in a crash.
+	// check we can connect to the mongodb mongoInstance. failure here should result in a crash.
 	pingContext, cancel := context.WithDeadline(ctx, time.Now().Add(5*time.Second))
 	defer cancel()
 	err = client.Ping(pingContext, nil)
