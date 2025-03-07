@@ -1,10 +1,12 @@
 module github.com/companieshouse/penalty-payment-api
 
-go 1.23
+go 1.23.0
+
+toolchain go1.23.2
 
 require (
 	github.com/companieshouse/api-sdk-go v0.1.62
-	github.com/companieshouse/chs.go v1.2.12
+	github.com/companieshouse/chs.go v1.2.8
 	github.com/companieshouse/filing-notification-sender v2.0.0-rc3+incompatible
 	github.com/companieshouse/go-sdk-manager v0.1.16
 	github.com/companieshouse/go-session-handler v0.1.5
@@ -51,7 +53,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/nxadm/tail v1.4.11 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
