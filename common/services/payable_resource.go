@@ -16,7 +16,7 @@ import (
 var (
 	// ErrAlreadyPaid represents when the penalty payable resource is already paid
 	ErrAlreadyPaid = errors.New("the Penalty has already been paid")
-	// ErrNotFound represents when the payable resource does not exist in the db
+	// ErrPenaltyNotFound represents when the payable resource does not exist in the db
 	ErrPenaltyNotFound = errors.New("the Penalty does not exist")
 )
 
