@@ -46,10 +46,18 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			"company_number":    resource.CompanyNumber,
 		})
 
-		request, err, done := funcName(w, r, resource)
-		if done {
+		// 2. validate the request and check the reference number against the payment api to validate that it has
+		// actually been paid
+		var request models.PatchResourceRequest
+		err := json.NewDecoder(r.Body).Decode(&request)
+		if err != nil {
+			log.ErrorR(r, err, log.Data{"penalty_reference": resource.Reference})
+			m := models.NewMessageResponse("there was a problem reading the request body")
+			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
+		v := validator.New()
+		err = v.Struct(request)
 
 		if err != nil {
 			log.ErrorR(r, err, log.Data{"penalty_reference": resource.Reference, "payment_id": request.Reference})
@@ -84,22 +92,6 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNoContent) // This will not be set if status has already been set
 	})
-}
-
-func funcName(w http.ResponseWriter, r *http.Request, resource *models.PayableResource) (models.PatchResourceRequest, error, bool) {
-	// 2. validate the request and check the reference number against the payment api to validate that it has
-	// actually been paid
-	var request models.PatchResourceRequest
-	err := json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
-		log.ErrorR(r, err, log.Data{"penalty_reference": resource.Reference})
-		m := models.NewMessageResponse("there was a problem reading the request body")
-		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return models.PatchResourceRequest{}, nil, true
-	}
-	v := validator.New()
-	err = v.Struct(request)
-	return request, err, false
 }
 func sendConfirmationEmail(resource *models.PayableResource, payment *validators.PaymentInformation,
 	r *http.Request, w http.ResponseWriter, penaltyPaymentDetails *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) {
