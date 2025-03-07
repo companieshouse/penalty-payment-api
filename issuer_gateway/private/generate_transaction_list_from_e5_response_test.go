@@ -604,6 +604,39 @@ func TestUnit_getPayableStatus(t *testing.T) {
 				}},
 				want: ClosedPayableStatus,
 			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is IPEN1",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     CHSAccountStatus,
+					DunningStatus:     "IPEN1",
+				}},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is HLD, dunning status is IPEN2",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     HLDAccountStatus,
+					DunningStatus:     "IPEN2",
+				}},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is CAN",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     CHSAccountStatus,
+					DunningStatus:     "CAN",
+				}},
+				want: ClosedPayableStatus,
+			},
 		}
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
