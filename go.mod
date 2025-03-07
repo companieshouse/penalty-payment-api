@@ -1,12 +1,10 @@
 module github.com/companieshouse/penalty-payment-api
 
-go 1.23.0
-
-toolchain go1.23.2
+go 1.23
 
 require (
 	github.com/companieshouse/api-sdk-go v0.1.62
-	github.com/companieshouse/chs.go v1.2.8
+	github.com/companieshouse/chs.go v1.2.12
 	github.com/companieshouse/filing-notification-sender v2.0.0-rc3+incompatible
 	github.com/companieshouse/go-sdk-manager v0.1.16
 	github.com/companieshouse/go-session-handler v0.1.5
@@ -34,7 +32,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
+	github.com/golang/snappy v1.0.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
