@@ -12,19 +12,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
-// TransactionType Enum Type
-type TransactionType int
-
-// String representation of transaction types
-var transactionTypes = [...]string{
-	"penalty",
-	"other",
-}
-
-func (transactionType TransactionType) String() string {
-	return transactionTypes[transactionType-1]
-}
-
 var getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
 	return utils.GetCompanyCodeFromTransaction(transactions)
 }
