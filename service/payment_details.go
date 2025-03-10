@@ -23,7 +23,8 @@ func (service *PaymentDetailsService) GetPaymentDetailsFromPayableResource(req *
 
 	if len(paymentDetails.Items) == 0 {
 		err := fmt.Errorf("no items in payment details transformed from payable resource [%s]", payable.Reference)
-		log.ErrorR(req, err, log.Data{"company_number": payable.CompanyNumber, "reference": payable.Reference, "payable_transactions": payable.Transactions})
+		log.ErrorR(req, err, log.Data{"company_number": payable.CompanyNumber, "payable_reference": payable.Reference,
+			"payable_transactions": payable.Transactions})
 		return nil, services.InvalidData, err
 	}
 	return paymentDetails, services.Success, nil

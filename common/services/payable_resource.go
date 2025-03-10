@@ -35,7 +35,7 @@ func (s *PayableResourceService) GetPayableResource(req *http.Request, companyNu
 		return nil, Error, err
 	}
 	if payable == nil {
-		log.TraceR(req, "payable resource not found", log.Data{"company_number": companyNumber, "reference": reference})
+		log.TraceR(req, "payable resource not found", log.Data{"company_number": companyNumber, "payable_reference": reference})
 		return nil, NotFound, nil
 	}
 
@@ -60,7 +60,7 @@ func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, p
 	if model.IsPaid() {
 		err = errors.New("this penalty has already been paid")
 		log.Error(err, log.Data{
-			"penalty_reference": model.Reference,
+			"payable_reference": model.Reference,
 			"company_number":    model.CompanyNumber,
 			"payment_id":        model.Data.Payment.Reference,
 		})

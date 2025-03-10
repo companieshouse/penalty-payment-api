@@ -68,7 +68,7 @@ type MongoService struct {
 func (m *MongoService) SaveE5Error(companyNumber, reference string, action e5.Action) error {
 	dao, err := m.GetPayableResource(companyNumber, reference)
 	if err != nil {
-		log.Error(err, log.Data{"company_number": companyNumber, "penalty_reference": reference})
+		log.Error(err, log.Data{"company_number": companyNumber, "payable_reference": reference})
 		return err
 	}
 
@@ -87,7 +87,7 @@ func (m *MongoService) SaveE5Error(companyNumber, reference string, action e5.Ac
 
 	_, err = collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.Error(err, log.Data{"_id": dao.ID, "company_number": dao.CompanyNumber, "reference": dao.Reference})
+		log.Error(err, log.Data{"_id": dao.ID, "company_number": dao.CompanyNumber, "payable_reference": dao.Reference})
 		return err
 	}
 
@@ -118,18 +118,18 @@ func (m *MongoService) GetPayableResource(companyNumber, reference string) (*mod
 
 	err := dbResource.Err()
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			log.Debug("no payable resource found", log.Data{"company_number": companyNumber, "reference": reference})
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			log.Debug("no payable resource found", log.Data{"company_number": companyNumber, "payable_reference": reference})
 			return nil, nil
 		}
-		log.Error(err, log.Data{"company_number": companyNumber, "reference": reference})
+		log.Error(err, log.Data{"company_number": companyNumber, "payable_reference": reference})
 		return nil, err
 	}
 
 	err = dbResource.Decode(&resource)
 
 	if err != nil {
-		log.Error(err, log.Data{"company_number": companyNumber, "reference": reference})
+		log.Error(err, log.Data{"company_number": companyNumber, "payable_reference": reference})
 		return nil, err
 	}
 
@@ -157,7 +157,7 @@ func (m *MongoService) UpdatePaymentDetails(dao *models.PayableResourceDao) erro
 
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.Error(err, log.Data{"_id": dao.ID, "company_number": dao.CompanyNumber, "reference": dao.Reference})
+		log.Error(err, log.Data{"_id": dao.ID, "company_number": dao.CompanyNumber, "payable_reference": dao.Reference})
 		return err
 	}
 
