@@ -9,15 +9,15 @@ import (
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/companieshouse/penalty-payment-api/utils"
 	"github.com/gorilla/mux"
 )
 
 // PayableAuthenticationInterceptor contains the payable_resource service used in the interceptor
 type PayableAuthenticationInterceptor struct {
-	Service service.PayableResourceService
+	Service services.PayableResourceService
 }
 
 // PayableAuthenticationIntercept checks that the user is authenticated for the payable_resource
@@ -152,7 +152,7 @@ func writeHeader(w http.ResponseWriter,
 	if err != nil {
 		log.ErrorR(r, fmt.Errorf("PayableAuthenticationInterceptor error when retrieving payable_resource: [%v]", err), log.Data{"service_response_type": responseType.String()})
 		switch responseType {
-		case service.Forbidden:
+		case services.Forbidden:
 			w.WriteHeader(http.StatusForbidden)
 			return nil, true
 		default:
@@ -161,13 +161,13 @@ func writeHeader(w http.ResponseWriter,
 		}
 	}
 
-	if responseType == service.NotFound {
+	if responseType == services.NotFound {
 		log.InfoR(r, "PayableAuthenticationInterceptor not found", log.Data{"payable_id": payableID, "company_number": companyNumber})
 		w.WriteHeader(http.StatusNotFound)
 		return nil, true
 	}
 
-	if responseType != service.Success {
+	if responseType != services.Success {
 		log.ErrorR(r, fmt.Errorf("PayableAuthenticationInterceptor error when retrieving payable_resource. Status: [%s]", responseType.String()))
 		w.WriteHeader(http.StatusInternalServerError)
 		return nil, true

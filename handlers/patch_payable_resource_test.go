@@ -18,13 +18,12 @@ import (
 	"github.com/companieshouse/go-session-handler/session"
 	"github.com/companieshouse/penalty-payment-api-core/constants"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/mocks"
-	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/companieshouse/penalty-payment-api/utils"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -56,16 +55,13 @@ var allowedTransactionsMap = &models.AllowedTransactionMap{
 }
 
 // reduces the boilerplate code needed to create, dispatch and unmarshal response body
-func dispatchPayResourceHandler(
-	ctx context.Context,
-	t *testing.T,
-	reqBody *models.PatchResourceRequest,
+func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *models.PatchResourceRequest,
 	daoSvc dao.Service) (*httptest.ResponseRecorder, *models.ResponseResource) {
 
-	svc := &service.PayableResourceService{}
+	payableResourceService := &services.PayableResourceService{}
 
 	if daoSvc != nil {
-		svc.DAO = daoSvc
+		payableResourceService.DAO = daoSvc
 	}
 
 	var body io.Reader
@@ -79,7 +75,7 @@ func dispatchPayResourceHandler(
 
 	ctx = context.WithValue(ctx, httpsession.ContextKeySession, &session.Session{})
 
-	h := PayResourceHandler(svc, e5.NewClient("foo", "e5api"), penaltyDetailsMap, allowedTransactionsMap)
+	h := PayResourceHandler(payableResourceService, e5.NewClient("foo", "e5api"), penaltyDetailsMap, allowedTransactionsMap)
 	req := httptest.NewRequest(http.MethodPost, "/", body).WithContext(ctx)
 	res := httptest.NewRecorder()
 
@@ -231,6 +227,12 @@ func TestUnitPayResourceHandler(t *testing.T) {
 		})
 
 		Convey("Penalty has already been paid", func() {
+			mockedGetCompanyCode := func(penaltyReference string) (string, error) {
+				return utils.LateFilingPenalty, nil
+			}
+
+			getCompanyCode = mockedGetCompanyCode
+
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 

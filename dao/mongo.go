@@ -6,13 +6,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/companieshouse/chs.go/log"
-	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/companieshouse/chs.go/log"
+	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/e5"
 )
 
 var client *mongo.Client
@@ -34,7 +35,7 @@ func getMongoClient(mongoDBURL string) *mongo.Client {
 		os.Exit(1)
 	}
 
-	// check we can connect to the mongodb instance. failure here should result in a crash.
+	// check we can connect to the mongodb mongoInstance. failure here should result in a crash.
 	pingContext, cancel := context.WithDeadline(ctx, time.Now().Add(5*time.Second))
 	defer cancel()
 	err = client.Ping(pingContext, nil)
@@ -67,7 +68,7 @@ type MongoService struct {
 func (m *MongoService) SaveE5Error(companyNumber, reference string, action e5.Action) error {
 	dao, err := m.GetPayableResource(companyNumber, reference)
 	if err != nil {
-		log.Error(err, log.Data{"company_number": companyNumber, "penalty_reference": reference})
+		log.Error(err, log.Data{"company_number": companyNumber, "payable_reference": reference})
 		return err
 	}
 
@@ -86,7 +87,7 @@ func (m *MongoService) SaveE5Error(companyNumber, reference string, action e5.Ac
 
 	_, err = collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.Error(err, log.Data{"_id": dao.ID, "company_number": dao.CompanyNumber, "reference": dao.Reference})
+		log.Error(err, log.Data{"_id": dao.ID, "company_number": dao.CompanyNumber, "payable_reference": dao.Reference})
 		return err
 	}
 
@@ -117,18 +118,18 @@ func (m *MongoService) GetPayableResource(companyNumber, reference string) (*mod
 
 	err := dbResource.Err()
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			log.Debug("no payable resource found", log.Data{"company_number": companyNumber, "reference": reference})
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			log.Debug("no payable resource found", log.Data{"company_number": companyNumber, "payable_reference": reference})
 			return nil, nil
 		}
-		log.Error(err, log.Data{"company_number": companyNumber, "reference": reference})
+		log.Error(err, log.Data{"company_number": companyNumber, "payable_reference": reference})
 		return nil, err
 	}
 
 	err = dbResource.Decode(&resource)
 
 	if err != nil {
-		log.Error(err, log.Data{"company_number": companyNumber, "reference": reference})
+		log.Error(err, log.Data{"company_number": companyNumber, "payable_reference": reference})
 		return nil, err
 	}
 
@@ -156,7 +157,7 @@ func (m *MongoService) UpdatePaymentDetails(dao *models.PayableResourceDao) erro
 
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.Error(err, log.Data{"_id": dao.ID, "company_number": dao.CompanyNumber, "reference": dao.Reference})
+		log.Error(err, log.Data{"_id": dao.ID, "company_number": dao.CompanyNumber, "payable_reference": dao.Reference})
 		return err
 	}
 

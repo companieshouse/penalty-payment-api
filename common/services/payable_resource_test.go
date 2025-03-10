@@ -1,4 +1,4 @@
-package service
+package services
 
 import (
 	"errors"
@@ -59,7 +59,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 		mockPayableService := createMockPayableResourceService(mock, cfg)
 
 		txs := map[string]models.TransactionDao{
-			"abcd": models.TransactionDao{Amount: 5},
+			"abcd": {Amount: 5},
 		}
 		t := time.Now().Truncate(time.Millisecond)
 		mock.EXPECT().GetPayableResource("12345678", gomock.Any()).Return(
@@ -119,8 +119,8 @@ func TestUnitGetPayableResource(t *testing.T) {
 		mockPayableService := createMockPayableResourceService(mock, cfg)
 
 		txs := map[string]models.TransactionDao{
-			"abcd": models.TransactionDao{Amount: 5},
-			"wxyz": models.TransactionDao{Amount: 10},
+			"abcd": {Amount: 5},
+			"wxyz": {Amount: 10},
 		}
 		t := time.Now().Truncate(time.Millisecond)
 		mock.EXPECT().GetPayableResource("12345678", gomock.Any()).Return(

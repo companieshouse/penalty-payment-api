@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/companieshouse/penalty-payment-api-core/constants"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/mocks"
-	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	"github.com/jarcoal/httpmock"
@@ -29,8 +29,8 @@ func GetTestHandler() http.HandlerFunc {
 	return http.HandlerFunc(fn)
 }
 
-func createMockPayableResourceService(mockDAO *mocks.MockService, cfg *config.Config) service.PayableResourceService {
-	return service.PayableResourceService{
+func createMockPayableResourceService(mockDAO *mocks.MockService, cfg *config.Config) services.PayableResourceService {
+	return services.PayableResourceService{
 		DAO:    mockDAO,
 		Config: cfg,
 	}
@@ -46,7 +46,7 @@ func createPayableAuthenticationInterceptorWithMockDAOAndService(controller *gom
 }
 
 // Function to create a PayableAuthenticationInterceptor with the supplied payment service
-func createPayableAuthenticationInterceptorWithMockService(PayableResourceService *service.PayableResourceService) PayableAuthenticationInterceptor {
+func createPayableAuthenticationInterceptorWithMockService(PayableResourceService *services.PayableResourceService) PayableAuthenticationInterceptor {
 	return PayableAuthenticationInterceptor{
 		Service: *PayableResourceService,
 	}
@@ -195,7 +195,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 
 		txs := map[string]models.TransactionDao{
-			"abcd": models.TransactionDao{Amount: 5},
+			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
@@ -249,7 +249,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 
 		txs := map[string]models.TransactionDao{
-			"abcd": models.TransactionDao{Amount: 5},
+			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
@@ -303,7 +303,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 
 		txs := map[string]models.TransactionDao{
-			"abcd": models.TransactionDao{Amount: 5},
+			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
@@ -351,7 +351,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 
 		txs := map[string]models.TransactionDao{
-			"abcd": models.TransactionDao{Amount: 5},
+			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
@@ -399,7 +399,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 
 		txs := map[string]models.TransactionDao{
-			"abcd": models.TransactionDao{Amount: 5},
+			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
 		mockDAO.EXPECT().GetPayableResource("OC444555", "1234").Return(
