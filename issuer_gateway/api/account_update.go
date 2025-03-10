@@ -23,7 +23,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	client *e5.Client, resource models.PayableResource, payment validators.PaymentInformation) error {
 	amountPaid, err := strconv.ParseFloat(payment.Amount, 32)
 	if err != nil {
-		log.Error(err, log.Data{"payment_id": payment.Reference, "amount": payment.Amount})
+		log.Error(err, log.Data{"payment_reference": payment.Reference, "amount": payment.Amount})
 		return err
 	}
 
@@ -62,7 +62,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 
 	if err != nil {
 		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.CreateAction); svcErr != nil {
-			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "penalty_reference": resource.Reference})
+			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "payable_reference": resource.Reference})
 			return err
 		}
 		private.LogE5Error("failed to create payment in E5", err, resource, payment)
@@ -79,7 +79,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 
 	if err != nil {
 		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.AuthoriseAction); svcErr != nil {
-			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "penalty_reference": resource.Reference})
+			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "payable_reference": resource.Reference})
 			return err
 		}
 		private.LogE5Error("failed to authorise payment in E5", err, resource, payment)
@@ -93,7 +93,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 
 	if err != nil {
 		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.ConfirmAction); svcErr != nil {
-			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "penalty_reference": resource.Reference})
+			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "payable_reference": resource.Reference})
 			return err
 		}
 		private.LogE5Error("failed to confirm payment in E5", err, resource, payment)
@@ -101,7 +101,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	}
 
 	log.Info("marked penalty transaction(s) as paid in E5", log.Data{
-		"penalty_reference": resource.Reference,
+		"payable_reference": resource.Reference,
 		"payment_id":        payment.PaymentID,
 		"e5_puon":           payment.PaymentID,
 	})

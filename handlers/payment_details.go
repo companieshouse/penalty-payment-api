@@ -41,7 +41,7 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 		// Get the payment details from the payable resource
 		paymentDetails, responseType, err := paymentDetailsService.GetPaymentDetailsFromPayableResource(req,
 			payableResource, penaltyDetails)
-		logData := log.Data{"company_number": payableResource.CompanyNumber, "reference": payableResource.Reference}
+		logData := log.Data{"company_number": payableResource.CompanyNumber, "payable_reference": payableResource.Reference}
 		if err != nil {
 			switch responseType {
 			case services.InvalidData:

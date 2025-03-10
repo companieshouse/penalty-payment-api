@@ -50,7 +50,7 @@ func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, p
 	if err != nil {
 		err = fmt.Errorf("error getting payable resource from db: [%v]", err)
 		log.Error(err, log.Data{
-			"penalty_reference": resource.Reference,
+			"payable_reference": resource.Reference,
 			"company_number":    resource.CompanyNumber,
 		})
 		return ErrPenaltyNotFound

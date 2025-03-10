@@ -42,7 +42,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		resource := i.(*models.PayableResource)
 
 		log.Info("processing penalty payment", log.Data{
-			"penalty_reference": resource.Reference,
+			"payable_reference": resource.Reference,
 			"company_number":    resource.CompanyNumber,
 		})
 
@@ -51,7 +51,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		var request models.PatchResourceRequest
 		err := json.NewDecoder(r.Body).Decode(&request)
 		if err != nil {
-			log.ErrorR(r, err, log.Data{"penalty_reference": resource.Reference})
+			log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference})
 			m := models.NewMessageResponse("there was a problem reading the request body")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
@@ -60,7 +60,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		err = v.Struct(request)
 
 		if err != nil {
-			log.ErrorR(r, err, log.Data{"penalty_reference": resource.Reference, "payment_id": request.Reference})
+			log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payment_reference": request.Reference})
 			m := models.NewMessageResponse("the request contained insufficient data and/or failed validation")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
@@ -68,7 +68,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		payment, err := service.GetPaymentInformation(request.Reference, r)
 		if err != nil {
-			log.ErrorR(r, err, log.Data{"penalty_reference": resource.Reference, "payment_id": request.Reference})
+			log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payment_reference": request.Reference})
 			m := models.NewMessageResponse("the payable resource does not exist")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
@@ -99,13 +99,13 @@ func sendConfirmationEmail(resource *models.PayableResource, payment *validators
 	defer wg.Done()
 	err := handleEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap)
 	if err != nil {
-		log.ErrorR(r, err, log.Data{"penalty_reference": resource.Reference, "payment_id": payment.Reference})
+		log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payment_reference": payment.Reference})
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	log.Info("confirmation email sent to customer", log.Data{
-		"penalty_reference": resource.Reference,
+		"payable_reference": resource.Reference,
 		"company_number":    resource.CompanyNumber,
 		"email_address":     resource.CreatedBy.Email,
 	})
@@ -117,13 +117,13 @@ func updateAsPaidInDatabase(resource *models.PayableResource, payment *validator
 	defer wg.Done()
 	err := payableResourceService.UpdateAsPaid(*resource, *payment)
 	if err != nil {
-		log.ErrorR(r, err, log.Data{"penalty_reference": resource.Reference, "payment_id": payment.Reference})
+		log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payment_reference": payment.Reference})
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	log.Info("payment resource is now marked as paid in db", log.Data{
-		"penalty_reference": resource.Reference,
+		"payable_reference": resource.Reference,
 		"company_number":    resource.CompanyNumber,
 	})
 }
@@ -135,7 +135,7 @@ func updateIssuer(payableResourceService *services.PayableResourceService, e5Cli
 	err := api.UpdateIssuerAccountWithPenaltyPaid(payableResourceService, e5Client, *resource, *payment)
 	if err != nil {
 		log.ErrorR(r, err, log.Data{
-			"penalty_reference": resource.Reference,
+			"payable_reference": resource.Reference,
 			"company_number":    resource.CompanyNumber,
 		})
 		w.WriteHeader(http.StatusInternalServerError)
