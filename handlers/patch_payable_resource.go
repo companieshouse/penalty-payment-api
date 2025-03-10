@@ -60,7 +60,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		err = v.Struct(request)
 
 		if err != nil {
-			log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payment_reference": request.Reference})
+			log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payable_id": request.Reference})
 			m := models.NewMessageResponse("the request contained insufficient data and/or failed validation")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
@@ -68,7 +68,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		payment, err := service.GetPaymentInformation(request.Reference, r)
 		if err != nil {
-			log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payment_reference": request.Reference})
+			log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payable_id": request.Reference})
 			m := models.NewMessageResponse("the payable resource does not exist")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
