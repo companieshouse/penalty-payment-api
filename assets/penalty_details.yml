@@ -12,7 +12,7 @@ details:
   C1:
     Description: "Sanctions Penalty Payment"
     DescriptionId: "penalty-sanctions"
-    ClassOfPayment: "penalty-sanctions"
+    ClassOfPayment: "data-maintenance"
     ResourceKind: "penalty#sanctions"
     ProductType: "penalty-sanctions"
     EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"

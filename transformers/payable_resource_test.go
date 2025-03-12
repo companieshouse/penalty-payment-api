@@ -149,7 +149,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 			{
 				description:           "Sanctions Penalty Payment",
 				kind:                  "payment-details#payment-details",
-				classOfPayment:        "penalty-sanctions",
+				classOfPayment:        "data-maintenance",
 				descriptionIdentifier: "penalty-sanctions",
 				resourceKind:          "penalty#sanctions",
 				productType:           "penalty-sanctions",
