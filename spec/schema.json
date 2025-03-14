@@ -77,22 +77,7 @@
           "200": {
             "description": "A list of payable transactions",
             "schema": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/ListResponse"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/definitions/Transaction"
-                      }
-                    }
-                  }
-                }
-              ]
+              "$ref": "#/definitions/FinancialPenalties"
             }
           },
           "400": {
@@ -136,22 +121,7 @@
           "200": {
             "description": "A list of payable transactions",
             "schema": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/ListResponse"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/definitions/Transaction"
-                      }
-                    }
-                  }
-                }
-              ]
+              "$ref": "#/definitions/FinancialPenalties"
             }
           },
           "400": {
@@ -184,20 +154,20 @@
             "name": "body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/CreatePayableResource"
+              "$ref": "#/definitions/FinancialPenaltySession"
             }
           }
         ],
-        "description": "Create a new payable penalty resource with one or more transactions to pay for",
+        "description": "Create a new payable resource with one or more penalty transactions to pay for",
         "operationId": "create-payable",
         "produces": [
           "application/json"
         ],
         "responses": {
           "201": {
-            "description": "The transactions have been marked as paid",
+            "description": "The created payable resource id (payable_ref) and links",
             "schema": {
-              "$ref": "#/definitions/CreatedPayableResource"
+              "$ref": "#/definitions/PayableFinancialPenaltySession"
             }
           },
           "400": {
@@ -235,9 +205,9 @@
         ],
         "responses": {
           "200": {
-            "description": "A representation of the full Penalty payable resource",
+            "description": "A representation of the full financial penalties payable resource",
             "schema": {
-              "$ref": "#/definitions/PayableResource"
+              "$ref": "#/definitions/PayableFinancialPenalties"
             }
           },
           "500": {
@@ -293,7 +263,7 @@
             "in": "body",
             "name": "body",
             "schema": {
-              "$ref": "#/definitions/ResourceDetails"
+              "$ref": "#/definitions/PatchResourceRequest"
             }
           }
         ],
@@ -342,7 +312,7 @@
         }
       }
     },
-    "ResourceDetails": {
+    "PatchResourceRequest": {
       "type": "object",
       "properties": {
         "reference": {
@@ -350,24 +320,41 @@
         }
       }
     },
-    "PayableResource": {
+    "PayableFinancialPenalties": {
       "type": "object",
       "properties": {
-        "id": {
+        "company_number": {
+          "type": "string"
+        },
+        "reference": {
           "type": "string"
         },
         "etag": {
           "type": "string"
         },
+        "created_by": {
+          "$ref": "#/definitions/CreatedBy"
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
         },
-        "created_by": {
-          "$ref": "#/definitions/CreatedBy"
-        },
-        "company_number": {
-          "type": "string"
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string",
+              "format": "uri"
+            },
+            "payment": {
+              "type": "string",
+              "format": "uri"
+            },
+            "resume_journey_uri": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
         },
         "transactions": {
           "type": "array",
@@ -382,7 +369,8 @@
                 "format": "float"
               },
               "type": {
-                "type": "string"
+                "type": "string",
+                "example": "penalty"
               },
               "made_up_date": {
                 "type": "string",
@@ -416,27 +404,30 @@
         }
       }
     },
-    "CreatePayableResource": {
+    "FinancialPenaltySession": {
       "type": "object",
       "properties": {
         "transactions": {
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "transaction_id": {
-                "type": "string"
-              },
-              "amount": {
-                "type": "number",
-                "format": "float"
-              }
-            }
+            "$ref": "#/definitions/Transaction"
           }
         }
       }
     },
-    "CreatedPayableResource": {
+    "Transaction": {
+      "type": "object",
+      "properties": {
+        "transaction_id": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
+    "PayableFinancialPenaltySession": {
       "type": "object",
       "properties": {
         "id": {
@@ -453,7 +444,7 @@
         }
       }
     },
-    "ListResponse": {
+    "FinancialPenalties": {
       "type": "object",
       "properties": {
         "etag": {
@@ -467,10 +458,16 @@
         },
         "total_results": {
           "type": "integer"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FinancialPenalty"
+          }
         }
       }
     },
-    "Transaction": {
+    "FinancialPenalty": {
       "type": "object",
       "properties": {
         "id": {
