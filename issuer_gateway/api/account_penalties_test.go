@@ -2,12 +2,12 @@ package api
 
 import (
 	"errors"
+	e6 "github.com/companieshouse/penalty-payment-api/common/e5"
 	"testing"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -22,19 +22,19 @@ var allowedTransactionMap = &models.AllowedTransactionMap{
 		},
 	},
 }
-var transaction = e5.Transaction{
+var transaction = e6.Transaction{
 	CompanyCode:     "LP",
 	TransactionType: "EU",
 }
-var page = e5.Page{
+var page = e6.Page{
 	Size:          1,
 	TotalElements: 1,
 	TotalPages:    1,
 	Number:        1,
 }
-var e5TransactionsResponse = e5.GetTransactionsResponse{
+var e5TransactionsResponse = e6.GetTransactionsResponse{
 	Page: page,
-	Transactions: []e5.Transaction{
+	Transactions: []e6.Transaction{
 		1: transaction,
 	},
 }
@@ -48,7 +48,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 	Convey("penalties returned when valid transactions", t, func() {
 		mockedGetTransactions := func(companyNumber string, companyCode string,
-			client *e5.Client) (*e5.GetTransactionsResponse, error) {
+			client *e6.Client) (*e6.GetTransactionsResponse, error) {
 			return &e5TransactionsResponse, nil
 		}
 
@@ -62,8 +62,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 	Convey("error when transactions cannot be found", t, func() {
 		errGettingTransactions := errors.New("error getting transactions")
-		mockedGetTransactions := func(companyNumber string, companyCode string, client *e5.Client) (*e5.GetTransactionsResponse, error) {
-			return &e5.GetTransactionsResponse{}, errGettingTransactions
+		mockedGetTransactions := func(companyNumber string, companyCode string, client *e6.Client) (*e6.GetTransactionsResponse, error) {
+			return &e6.GetTransactionsResponse{}, errGettingTransactions
 		}
 
 		getTransactions = mockedGetTransactions
@@ -78,10 +78,10 @@ func TestUnitAccountPenalties(t *testing.T) {
 		errGeneratingTransactionList := errors.New("error generating transaction list from the e5 response: [error generating etag]")
 		payableTransactionList := models.TransactionListResponse{}
 		mockedGetTransactions := func(companyNumber string, companyCode string,
-			client *e5.Client) (*e5.GetTransactionsResponse, error) {
+			client *e6.Client) (*e6.GetTransactionsResponse, error) {
 			return &e5TransactionsResponse, nil
 		}
-		mockedGenerateTransactionList := func(e5Response *e5.GetTransactionsResponse, companyCode string,
+		mockedGenerateTransactionList := func(e5Response *e6.GetTransactionsResponse, companyCode string,
 			penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, error) {
 			return &payableTransactionList, errors.New("error generating etag")
 		}

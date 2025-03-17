@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -10,8 +11,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/utils"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
