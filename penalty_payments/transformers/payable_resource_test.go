@@ -2,6 +2,7 @@ package transformers
 
 import (
 	"fmt"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"log"
 	"os"
 	"runtime"
@@ -10,8 +11,6 @@ import (
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/utils"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
