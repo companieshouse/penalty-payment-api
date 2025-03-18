@@ -55,7 +55,7 @@ func Register(mainRouter *mux.Router, cfg *config.Config, daoService dao.Service
 	mainRouter.HandleFunc("/penalty-payment-api/healthcheck/finance-system", HandleHealthCheckFinanceSystem).Methods(http.MethodGet).Name("healthcheck-finance-system")
 
 	appRouter := mainRouter.PathPrefix("/company/{company_number}").Subrouter()
-	appRouter.HandleFunc("/penalties/late-filing", HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties-original")
+	appRouter.HandleFunc("/penalties/late-filing", HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties-legacy")
 	appRouter.HandleFunc("/financial-penalties/{penalty_reference_type}", HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties")
 	appRouter.Handle("/financial-penalties/payable", CreatePayableResourceHandler(daoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodPost).Name("create-payable")
 	appRouter.Use(

@@ -25,7 +25,7 @@ func TestUnitRegisterRoutes(t *testing.T) {
 		healthCheckPath, _ := router.GetRoute("healthcheck").GetPathTemplate()
 		healthFinanceCheckPath, _ := router.GetRoute("healthcheck-finance-system").GetPathTemplate()
 		getPenaltiesPath, _ := router.GetRoute("get-penalties").GetPathTemplate()
-		getPenaltiesOriginalPath, _ := router.GetRoute("get-penalties-original").GetPathTemplate()
+		getPenaltiesOriginalPath, _ := router.GetRoute("get-penalties-legacy").GetPathTemplate()
 		createPayablePath, _ := router.GetRoute("create-payable").GetPathTemplate()
 		getPayablePath, _ := router.GetRoute("get-payable").GetPathTemplate()
 		getPaymentDetailsPath, _ := router.GetRoute("get-payment-details").GetPathTemplate()
