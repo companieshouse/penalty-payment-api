@@ -61,7 +61,7 @@
           "Penalties"
         ],
         "description": "List the penalties for a company. This passes through the transactions from E5 and does not cache. (Deprecated since 03 Feb 2025 - currently used by LFP Appeals)",
-        "operationId": "get-penalties-original",
+        "operationId": "get-penalties-legacy",
         "produces": [
           "application/json"
         ],
