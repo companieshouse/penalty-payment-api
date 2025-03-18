@@ -25,8 +25,8 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 			CompanyNumber: "12345678",
 			Reference:     "abcdef",
 			Links: models.PayableResourceLinks{
-				Self:    "/company/12345678/penalties/late-filing/abcdef",
-				Payment: "/company/12345678/penalties/late-filing/abcdef/payment",
+				Self:    "/company/12345678/financial-penalties/abcdef",
+				Payment: "/company/12345678/financial-penalties/abcdef/payment",
 			},
 			Etag:      "qwertyetag1234",
 			CreatedAt: &createdAt,
