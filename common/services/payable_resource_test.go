@@ -64,8 +64,8 @@ func TestUnitGetPayableResource(t *testing.T) {
 		t := time.Now().Truncate(time.Millisecond)
 		mock.EXPECT().GetPayableResource("12345678", gomock.Any()).Return(
 			&models.PayableResourceDao{
-				CompanyNumber: "12345678",
-				Reference:     "1234",
+				CustomerCode: "12345678",
+				Reference:    "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &t,
@@ -125,8 +125,8 @@ func TestUnitGetPayableResource(t *testing.T) {
 		t := time.Now().Truncate(time.Millisecond)
 		mock.EXPECT().GetPayableResource("12345678", gomock.Any()).Return(
 			&models.PayableResourceDao{
-				CompanyNumber: "12345678",
-				Reference:     "1234",
+				CustomerCode: "12345678",
+				Reference:    "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &t,

@@ -70,8 +70,8 @@ func TestUnitPayableResourceDBToPayableResource(t *testing.T) {
 	Convey("field mappings are correct", t, func() {
 		t := time.Now().Truncate(time.Millisecond)
 		dao := &models.PayableResourceDao{
-			CompanyNumber: "12345678",
-			Reference:     "1234",
+			CustomerCode: "12345678",
+			Reference:    "1234",
 			Data: models.PayableResourceDataDao{
 				Etag:      "qwertyetag1234",
 				CreatedAt: &t,
@@ -104,7 +104,7 @@ func TestUnitPayableResourceDBToPayableResource(t *testing.T) {
 
 		response := PayableResourceDBToRequest(dao)
 
-		So(response.CompanyNumber, ShouldEqual, dao.CompanyNumber)
+		So(response.CompanyNumber, ShouldEqual, dao.CustomerCode)
 		So(response.Reference, ShouldEqual, dao.Reference)
 		So(response.Etag, ShouldEqual, dao.Data.Etag)
 		So(response.CreatedAt, ShouldEqual, dao.Data.CreatedAt)
