@@ -200,8 +200,8 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		createdAt := time.Now().Truncate(time.Millisecond)
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
-				CompanyNumber: "12345678",
-				Reference:     "1234",
+				CustomerCode: "12345678",
+				Reference:    "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &createdAt,
@@ -254,8 +254,8 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		createdAt := time.Now().Truncate(time.Millisecond)
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
-				CompanyNumber: "12345678",
-				Reference:     "1234",
+				CustomerCode: "12345678",
+				Reference:    "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &createdAt,
@@ -308,8 +308,8 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		createdAt := time.Now().Truncate(time.Millisecond)
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
-				CompanyNumber: "12345678",
-				Reference:     "1234",
+				CustomerCode: "12345678",
+				Reference:    "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &createdAt,
@@ -356,8 +356,8 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		createdAt := time.Now().Truncate(time.Millisecond)
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
-				CompanyNumber: "12345678",
-				Reference:     "1234",
+				CustomerCode: "12345678",
+				Reference:    "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &createdAt,
@@ -404,8 +404,8 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		createdAt := time.Now().Truncate(time.Millisecond)
 		mockDAO.EXPECT().GetPayableResource("OC444555", "1234").Return(
 			&models.PayableResourceDao{
-				CompanyNumber: "OC444555",
-				Reference:     "1234",
+				CustomerCode: "OC444555",
+				Reference:    "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &createdAt,
