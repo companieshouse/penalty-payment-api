@@ -26,16 +26,16 @@ type PayableResourceService struct {
 	Config *config.Config
 }
 
-// GetPayableResource retrieves the payable resource with the given company number and reference from the database
-func (s *PayableResourceService) GetPayableResource(req *http.Request, companyNumber string, reference string) (*models.PayableResource, ResponseType, error) {
-	payable, err := s.DAO.GetPayableResource(companyNumber, reference)
+// GetPayableResource retrieves the payable resource with the given customer code and payable ref from the database
+func (s *PayableResourceService) GetPayableResource(req *http.Request, customerCode string, payableRef string) (*models.PayableResource, ResponseType, error) {
+	payable, err := s.DAO.GetPayableResource(customerCode, payableRef)
 	if err != nil {
 		err = fmt.Errorf("error getting payable resource from db: [%v]", err)
 		log.ErrorR(req, err)
 		return nil, Error, err
 	}
 	if payable == nil {
-		log.TraceR(req, "payable resource not found", log.Data{"company_number": companyNumber, "payable_reference": reference})
+		log.TraceR(req, "payable resource not found", log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 		return nil, NotFound, nil
 	}
 
@@ -46,12 +46,12 @@ func (s *PayableResourceService) GetPayableResource(req *http.Request, companyNu
 // UpdateAsPaid will update the resource as paid and persist the changes in the database
 func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, payment validators.PaymentInformation) error {
 	log.Info("update as paid start")
-	model, err := s.DAO.GetPayableResource(resource.CompanyNumber, resource.Reference)
+	model, err := s.DAO.GetPayableResource(resource.CustomerCode, resource.Reference)
 	if err != nil {
 		err = fmt.Errorf("error getting payable resource from db: [%v]", err)
 		log.Error(err, log.Data{
 			"payable_reference": resource.Reference,
-			"company_number":    resource.CompanyNumber,
+			"customer_code":     resource.CustomerCode,
 		})
 		return ErrPenaltyNotFound
 	}

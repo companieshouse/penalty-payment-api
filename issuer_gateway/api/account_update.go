@@ -54,11 +54,11 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	// E5. Finance have confirmed that it is better to keep these locked as a cleanup process will happen naturally in
 	// the working day.
 	err = client.CreatePayment(&e5.CreatePaymentInput{
-		CompanyCode:   companyCode,
-		CompanyNumber: resource.CompanyNumber,
-		PaymentID:     paymentID,
-		TotalValue:    amountPaid,
-		Transactions:  transactions,
+		CompanyCode:  companyCode,
+		CustomerCode: resource.CustomerCode,
+		PaymentID:    paymentID,
+		TotalValue:   amountPaid,
+		Transactions: transactions,
 	})
 
 	if err != nil {
@@ -113,5 +113,5 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 // RecordIssuerCommandError will mark the resource as having failed to update E5.
 func RecordIssuerCommandError(payableResourceService *services.PayableResourceService,
 	resource models.PayableResource, action e5.Action) error {
-	return payableResourceService.DAO.SaveE5Error(resource.CompanyNumber, resource.Reference, action)
+	return payableResourceService.DAO.SaveE5Error(resource.CustomerCode, resource.Reference, action)
 }

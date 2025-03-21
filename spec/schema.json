@@ -323,7 +323,7 @@
     "PayableFinancialPenalties": {
       "type": "object",
       "properties": {
-        "company_number": {
+        "customer_code": {
           "type": "string"
         },
         "reference": {

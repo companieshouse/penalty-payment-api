@@ -22,8 +22,8 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 	Convey("Valid PayableResource", t, func() {
 		createdAt := time.Now().Truncate(time.Millisecond)
 		payable := models.PayableResource{
-			CompanyNumber: "12345678",
-			Reference:     "abcdef",
+			CustomerCode: "12345678",
+			Reference:    "abcdef",
 			Links: models.PayableResourceLinks{
 				Self:    "/company/12345678/penalties/abcdef",
 				Payment: "/company/12345678/penalties/abcdef/payment",
@@ -58,7 +58,7 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 
 		resultPayable := &models.PayableResource{}
 		json.NewDecoder(w.Body).Decode(&resultPayable)
-		So(resultPayable.CompanyNumber, ShouldEqual, payable.CompanyNumber)
+		So(resultPayable.CustomerCode, ShouldEqual, payable.CustomerCode)
 		So(resultPayable.Reference, ShouldEqual, payable.Reference)
 		So(resultPayable.Etag, ShouldEqual, payable.Etag)
 		So(resultPayable.CreatedAt.Nanosecond(), ShouldEqual, payable.CreatedAt.Nanosecond())

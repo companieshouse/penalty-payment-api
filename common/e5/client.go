@@ -56,9 +56,9 @@ func (c *Client) GetTransactions(input *GetTransactionsInput) (*GetTransactionsR
 		return nil, err
 	}
 
-	logContext := log.Data{"company_number": input.CompanyNumber}
+	logContext := log.Data{"customer_code": input.CustomerCode}
 
-	path := fmt.Sprintf("/arTransactions/%s", input.CompanyNumber)
+	path := fmt.Sprintf("/arTransactions/%s", input.CustomerCode)
 	qp := map[string]string{
 		"companyCode": input.CompanyCode,
 		"fromDate":    "1990-01-01",
@@ -103,7 +103,7 @@ func (c *Client) GetTransactions(input *GetTransactionsInput) (*GetTransactionsR
 }
 
 // CreatePayment will create a new payment session in Client. This will lock the account in Client so no other modifications can
-// happen until the it is released by a confirm call or manually released in the Client portal.
+// happen until it is released by a confirm call or manually released in the Client portal.
 func (c *Client) CreatePayment(input *CreatePaymentInput) error {
 	err := c.validateInput(input)
 	if err != nil {
@@ -111,10 +111,10 @@ func (c *Client) CreatePayment(input *CreatePaymentInput) error {
 	}
 
 	logContext := log.Data{
-		"company_number": input.CompanyNumber,
-		"payment_id":     input.PaymentID,
-		"value":          input.TotalValue,
-		"transactions":   input.Transactions,
+		"customer_code": input.CustomerCode,
+		"payment_id":    input.PaymentID,
+		"value":         input.TotalValue,
+		"transactions":  input.Transactions,
 	}
 
 	body, err := json.Marshal(input)
@@ -136,11 +136,11 @@ func (c *Client) CreatePayment(input *CreatePaymentInput) error {
 	defer resp.Body.Close()
 
 	log.Info("response received after creating a new payment in E5", log.Data{
-		"company_number": input.CompanyNumber,
-		"payment_id":     input.PaymentID,
-		"payment_value":  input.TotalValue,
-		"transactions":   input.Transactions,
-		"status":         resp.StatusCode,
+		"customer_code": input.CustomerCode,
+		"payment_id":    input.PaymentID,
+		"payment_value": input.TotalValue,
+		"transactions":  input.Transactions,
+		"status":        resp.StatusCode,
 	})
 
 	return c.checkResponseForError(resp)

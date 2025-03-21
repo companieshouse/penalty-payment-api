@@ -92,14 +92,14 @@ func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.P
 	}
 
 	payable := models.PayableResource{
-		CompanyNumber: payableDao.CustomerCode,
-		Reference:     payableDao.PayableRef,
-		Transactions:  transactions,
-		Etag:          payableDao.Data.Etag,
-		CreatedAt:     payableDao.Data.CreatedAt,
-		CreatedBy:     models.CreatedBy(payableDao.Data.CreatedBy),
-		Links:         models.PayableResourceLinks(payableDao.Data.Links),
-		Payment:       models.Payment(payableDao.Data.Payment),
+		CustomerCode: payableDao.CustomerCode,
+		Reference:    payableDao.PayableRef,
+		Transactions: transactions,
+		Etag:         payableDao.Data.Etag,
+		CreatedAt:    payableDao.Data.CreatedAt,
+		CreatedBy:    models.CreatedBy(payableDao.Data.CreatedBy),
+		Links:        models.PayableResourceLinks(payableDao.Data.Links),
+		Payment:      models.Payment(payableDao.Data.Payment),
 	}
 	return &payable
 }
@@ -133,7 +133,7 @@ func PayableResourceToPaymentDetails(payable *models.PayableResource,
 		PaidAt:           payable.Payment.PaidAt,
 		PaymentReference: payable.Payment.Reference,
 		Status:           payable.Payment.Status,
-		CompanyNumber:    payable.CompanyNumber,
+		CompanyNumber:    payable.CustomerCode,
 		Items:            costs,
 	}
 	return &payment
