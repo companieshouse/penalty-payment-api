@@ -188,7 +188,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 					},
 				}
 
-				penaltyDetailsMap, err := config.LoadPenaltyDetails("../assets/penalty_details.yml")
+				penaltyDetailsMap, err := config.LoadPenaltyDetails("../../assets/penalty_details.yml")
 				if err != nil {
 					log.Fatal(err)
 				}

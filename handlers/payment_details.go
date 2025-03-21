@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	utils2 "github.com/companieshouse/penalty-payment-api/common/utils"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"net/http"
 
 	"github.com/companieshouse/chs.go/log"
@@ -12,7 +12,7 @@ import (
 )
 
 var getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
-	return utils2.GetCompanyCodeFromTransaction(transactions)
+	return utils.GetCompanyCodeFromTransaction(transactions)
 }
 
 // HandleGetPaymentDetails retrieves costs for a supplied company number and reference.
@@ -24,7 +24,7 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 		if !ok {
 			log.ErrorR(req, fmt.Errorf("invalid PayableResource in request context"))
 			m := models.NewMessageResponse("the payable resource is not present in the request context")
-			utils2.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
+			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 			return
 		}
 
@@ -32,7 +32,7 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 		if err != nil {
 			log.ErrorR(req, err)
 			m := models.NewMessageResponse(err.Error())
-			utils2.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
+			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 			return
 		}
 
@@ -47,16 +47,16 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 			case services.InvalidData:
 				log.DebugR(req, fmt.Sprintf("invalid data getting payment details from payable resource so returning not found [%s]", err.Error()), logData)
 				m := models.NewMessageResponse("payable resource does not exist or has insufficient data")
-				utils2.WriteJSONWithStatus(w, req, m, http.StatusNotFound)
+				utils.WriteJSONWithStatus(w, req, m, http.StatusNotFound)
 				return
 			default:
 				log.ErrorR(req, fmt.Errorf("error when getting payment details from PayableResource: [%v]", err), logData)
 				m := models.NewMessageResponse("payable resource does not exist or has insufficient data")
-				utils2.WriteJSONWithStatus(w, req, m, http.StatusInternalServerError)
+				utils.WriteJSONWithStatus(w, req, m, http.StatusInternalServerError)
 				return
 			}
 		}
-		utils2.WriteJSON(w, req, paymentDetails)
+		utils.WriteJSON(w, req, paymentDetails)
 
 		log.InfoR(req, "Successful GET request for payment details", logData)
 	}

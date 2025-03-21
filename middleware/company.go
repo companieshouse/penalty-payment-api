@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"context"
-	utils2 "github.com/companieshouse/penalty-payment-api/common/utils"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"net/http"
 
 	"github.com/companieshouse/chs.go/log"
@@ -15,12 +15,12 @@ import (
 func CompanyMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		companyNumber, err := utils2.GetCompanyNumberFromVars(vars)
+		companyNumber, err := utils.GetCompanyNumberFromVars(vars)
 
 		if err != nil {
 			log.ErrorR(r, err)
 			m := models.NewMessageResponse("company number not supplied")
-			utils2.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
+			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
 
