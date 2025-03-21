@@ -1,10 +1,10 @@
 package e5
 
-// GetTransactionsInput is the struct used to query transactions by company number
+// GetTransactionsInput is the struct used to query transactions by customer code
 type GetTransactionsInput struct {
-	CompanyCode   string `validate:"required"`
-	CompanyNumber string `validate:"required"`
-	PageNumber    int
+	CompanyCode  string `validate:"required"`
+	CustomerCode string `validate:"required"`
+	PageNumber   int
 }
 
 // GetTransactionsResponse returns the output of a get request for company transactions
@@ -42,11 +42,11 @@ type Page struct {
 
 // CreatePaymentInput is the struct needed to send a create payment request to the Client API
 type CreatePaymentInput struct {
-	CompanyCode   string                      `json:"companyCode" validate:"required"`
-	CompanyNumber string                      `json:"customerCode" validate:"required"`
-	PaymentID     string                      `json:"paymentId" validate:"required"`
-	TotalValue    float64                     `json:"paymentValue" validate:"required"`
-	Transactions  []*CreatePaymentTransaction `json:"transactions" validate:"required"`
+	CompanyCode  string                      `json:"companyCode" validate:"required"`
+	CustomerCode string                      `json:"customerCode" validate:"required"`
+	PaymentID    string                      `json:"paymentId" validate:"required"`
+	TotalValue   float64                     `json:"paymentValue" validate:"required"`
+	Transactions []*CreatePaymentTransaction `json:"transactions" validate:"required"`
 }
 
 // CreatePaymentTransaction is the struct to define the transactions you want to pay for

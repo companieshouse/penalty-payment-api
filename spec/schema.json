@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "title": "Penalty Payment API",
     "description": "An API for retrieving Penalties from the E5 finance system and recording / viewing Penalty Payments"
   },
@@ -323,7 +323,7 @@
     "PayableFinancialPenalties": {
       "type": "object",
       "properties": {
-        "company_number": {
+        "customer_code": {
           "type": "string"
         },
         "reference": {

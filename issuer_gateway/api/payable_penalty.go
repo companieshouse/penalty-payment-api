@@ -11,26 +11,26 @@ import (
 var getAccountPenalties = AccountPenalties
 var getMatchingPenalty = private.MatchPenalty
 
-func PayablePenalty(companyNumber string, companyCode string, transaction models.TransactionItem,
+func PayablePenalty(customerCode string, companyCode string, transaction models.TransactionItem,
 	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionItem, error) {
 
-	response, _, err := getAccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
+	response, _, err := getAccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		log.Error(err)
 		return nil, err
 	}
 
-	// for the first release, the company must only have one outstanding penalty
+	// for the first release, the customer must only have one outstanding penalty
 	unpaidPenaltyCount := getUnpaidPenaltyCount(response.Items)
 	if unpaidPenaltyCount > 1 {
-		log.Info("company has more than one outstanding penalty", log.Data{
-			"company_number": companyNumber,
-			"penalty_count":  unpaidPenaltyCount,
+		log.Info("customer has more than one outstanding penalty", log.Data{
+			"customer_code": customerCode,
+			"penalty_count": unpaidPenaltyCount,
 		})
 		return nil, private.ErrMultiplePenalties
 	}
 
-	return getMatchingPenalty(response.Items, transaction, companyNumber)
+	return getMatchingPenalty(response.Items, transaction, customerCode)
 }
 
 func getUnpaidPenaltyCount(transactionListItems []models.TransactionListItem) int {

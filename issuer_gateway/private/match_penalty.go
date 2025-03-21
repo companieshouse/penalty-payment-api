@@ -21,12 +21,12 @@ var (
 
 func MatchPenalty(referenceTransactions []models.TransactionListItem,
 	transactionToMatch models.TransactionItem,
-	companyNumber string) (*models.TransactionItem, error) {
+	customerCode string) (*models.TransactionItem, error) {
 
 	referenceTransactionsMap := mapTransactions(referenceTransactions)
 	transactionInfo := map[string]interface{}{
 		"transaction_ref": transactionToMatch.TransactionID,
-		"company_number":  companyNumber,
+		"customer_code":   customerCode,
 	}
 
 	matched, ok := referenceTransactionsMap[transactionToMatch.TransactionID]

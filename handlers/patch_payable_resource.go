@@ -43,7 +43,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		log.Info("processing penalty payment", log.Data{
 			"payable_reference": resource.Reference,
-			"company_number":    resource.CompanyNumber,
+			"customer_code":     resource.CustomerCode,
 		})
 
 		// 2. validate the request and check the reference number against the payment api to validate that it has
@@ -106,7 +106,7 @@ func sendConfirmationEmail(resource *models.PayableResource, payment *validators
 
 	log.Info("confirmation email sent to customer", log.Data{
 		"payable_reference": resource.Reference,
-		"company_number":    resource.CompanyNumber,
+		"customer_code":     resource.CustomerCode,
 		"email_address":     resource.CreatedBy.Email,
 	})
 }
@@ -124,7 +124,7 @@ func updateAsPaidInDatabase(resource *models.PayableResource, payment *validator
 
 	log.Info("payment resource is now marked as paid in db", log.Data{
 		"payable_reference": resource.Reference,
-		"company_number":    resource.CompanyNumber,
+		"customer_code":     resource.CustomerCode,
 	})
 }
 
@@ -136,7 +136,7 @@ func updateIssuer(payableResourceService *services.PayableResourceService, e5Cli
 	if err != nil {
 		log.ErrorR(r, err, log.Data{
 			"payable_reference": resource.Reference,
-			"company_number":    resource.CompanyNumber,
+			"customer_code":     resource.CustomerCode,
 		})
 		w.WriteHeader(http.StatusInternalServerError)
 		return

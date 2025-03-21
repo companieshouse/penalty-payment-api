@@ -98,7 +98,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 
 		So(status, ShouldEqual, Success)
 		So(err, ShouldBeNil)
-		So(payableResource.CompanyNumber, ShouldEqual, "12345678")
+		So(payableResource.CustomerCode, ShouldEqual, "12345678")
 		So(payableResource.Reference, ShouldEqual, "1234")
 		So(payableResource.Etag, ShouldEqual, "qwertyetag1234")
 		So(payableResource.CreatedAt, ShouldEqual, &t)
@@ -161,7 +161,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 
 		So(status, ShouldEqual, Success)
 		So(err, ShouldBeNil)
-		So(payableResource.CompanyNumber, ShouldEqual, "12345678")
+		So(payableResource.CustomerCode, ShouldEqual, "12345678")
 		So(payableResource.Reference, ShouldEqual, "1234")
 		So(payableResource.Etag, ShouldEqual, "qwertyetag1234")
 		So(payableResource.CreatedAt, ShouldEqual, &t)
