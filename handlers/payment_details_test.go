@@ -15,7 +15,7 @@ import (
 )
 
 func serveGetPaymentDetailsHandler(payableResource *models.PayableResource) *httptest.ResponseRecorder {
-	path := "/company/12345/financial-penalties/payable/321/penalties"
+	path := "/company/12345/penalties/late-filing/payable/321/penalties"
 	req := httptest.NewRequest(http.MethodGet, path, nil)
 	res := httptest.NewRecorder()
 
@@ -52,8 +52,8 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 			CompanyNumber: "12345678",
 			Reference:     "abcdef",
 			Links: models.PayableResourceLinks{
-				Self:    "/company/12345678/financial-penalties/abcdef",
-				Payment: "/company/12345678/financial-penalties/abcdef/payment",
+				Self:    "/company/12345678/penalties/abcdef",
+				Payment: "/company/12345678/penalties/abcdef/payment",
 			},
 			Etag:      "qwertyetag1234",
 			CreatedAt: &t,
@@ -98,8 +98,8 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 					CompanyNumber: "12345678",
 					Reference:     "abcdef",
 					Links: models.PayableResourceLinks{
-						Self:    "/company/12345678/financial-penalties/abcdef",
-						Payment: "/company/12345678/financial-penalties/abcdef/payment",
+						Self:    "/company/12345678/penalties/abcdef",
+						Payment: "/company/12345678/penalties/abcdef/payment",
 					},
 					Etag:      "qwertyetag1234",
 					CreatedAt: &t,

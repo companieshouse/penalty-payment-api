@@ -39,7 +39,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 		// ensure a reference is generated for the next assertion
 		So(dao.PayableRef, ShouldHaveLength, 10)
 
-		expected := fmt.Sprintf("/company/%s/financial-penalties/payable/%s", req.CompanyNumber, dao.PayableRef)
+		expected := fmt.Sprintf("/company/%s/penalties/late-filing/payable/%s", req.CompanyNumber, dao.PayableRef)
 		So(dao.Data.Links.Self, ShouldContainSubstring, expected)
 		So(dao.Data.Links.ResumeJourney, ShouldEqual, "/late-filing-penalty/company/00006400/penalty/123/view-penalties")
 	})
