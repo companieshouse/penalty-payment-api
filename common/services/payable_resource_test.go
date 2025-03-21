@@ -65,7 +65,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 		mock.EXPECT().GetPayableResource("12345678", gomock.Any()).Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
-				Reference:    "1234",
+				PayableRef:   "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &t,
@@ -126,7 +126,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 		mock.EXPECT().GetPayableResource("12345678", gomock.Any()).Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
-				Reference:    "1234",
+				PayableRef:   "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &t,

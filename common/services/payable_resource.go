@@ -60,9 +60,9 @@ func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, p
 	if model.IsPaid() {
 		err = errors.New("this penalty has already been paid")
 		log.Error(err, log.Data{
-			"payable_reference": model.Reference,
-			"customer_code":     model.CustomerCode,
-			"payment_id":        model.Data.Payment.Reference,
+			"payable_ref":   model.PayableRef,
+			"customer_code": model.CustomerCode,
+			"payment_id":    model.Data.Payment.Reference,
 		})
 		return ErrAlreadyPaid
 	}

@@ -42,7 +42,7 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 	createdAt := time.Now().Truncate(time.Millisecond)
 	dao := &models.PayableResourceDao{
 		CustomerCode: req.CompanyNumber,
-		Reference:    reference,
+		PayableRef:   reference,
 		Data: models.PayableResourceDataDao{
 			Etag:         etag,
 			Transactions: transactionsDAO,
@@ -70,7 +70,7 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 // a http response entity
 func PayableResourceDaoToCreatedResponse(model *models.PayableResourceDao) *models.CreatedPayableResource {
 	return &models.CreatedPayableResource{
-		ID: model.Reference,
+		ID: model.PayableRef,
 		Links: models.CreatedPayableResourceLinks{
 			Self: model.Data.Links.Self,
 		},
@@ -93,7 +93,7 @@ func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.P
 
 	payable := models.PayableResource{
 		CompanyNumber: payableDao.CustomerCode,
-		Reference:     payableDao.Reference,
+		Reference:     payableDao.PayableRef,
 		Transactions:  transactions,
 		Etag:          payableDao.Data.Etag,
 		CreatedAt:     payableDao.Data.CreatedAt,
