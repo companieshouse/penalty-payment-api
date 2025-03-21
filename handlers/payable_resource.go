@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"net/http"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // HandleGetPayableResource retrieves the payable resource from request context

@@ -2,6 +2,7 @@ package transformers
 
 import (
 	"fmt"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"log"
 	"os"
 	"runtime"
@@ -10,8 +11,6 @@ import (
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/utils"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -189,7 +188,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 					},
 				}
 
-				penaltyDetailsMap, err := config.LoadPenaltyDetails("../assets/penalty_details.yml")
+				penaltyDetailsMap, err := config.LoadPenaltyDetails("../../assets/penalty_details.yml")
 				if err != nil {
 					log.Fatal(err)
 				}
