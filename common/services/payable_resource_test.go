@@ -76,8 +76,8 @@ func TestUnitGetPayableResource(t *testing.T) {
 						Surname:  "body",
 					},
 					Links: models.PayableResourceLinksDao{
-						Self:    "/company/12345678/financial-penalties/payable/1234",
-						Payment: "/company/12345678/financial-penalties/payable/1234/payment",
+						Self:    "/company/12345678/penalties/late-filing/payable/1234",
+						Payment: "/company/12345678/penalties/late-filing/payable/1234/payment",
 					},
 					Transactions: txs,
 					Payment: models.PaymentDao{
@@ -106,8 +106,8 @@ func TestUnitGetPayableResource(t *testing.T) {
 		So(payableResource.CreatedBy.Email, ShouldEqual, "test@user.com")
 		So(payableResource.CreatedBy.Forename, ShouldEqual, "some")
 		So(payableResource.CreatedBy.Surname, ShouldEqual, "body")
-		So(payableResource.Links.Self, ShouldEqual, "/company/12345678/financial-penalties/payable/1234")
-		So(payableResource.Links.Payment, ShouldEqual, "/company/12345678/financial-penalties/payable/1234/payment")
+		So(payableResource.Links.Self, ShouldEqual, "/company/12345678/penalties/late-filing/payable/1234")
+		So(payableResource.Links.Payment, ShouldEqual, "/company/12345678/penalties/late-filing/payable/1234/payment")
 		So(payableResource.Payment.Amount, ShouldEqual, "5")
 		So(payableResource.Payment.Status, ShouldEqual, "pending")
 		So(len(payableResource.Transactions), ShouldEqual, 1)
@@ -137,8 +137,8 @@ func TestUnitGetPayableResource(t *testing.T) {
 						Surname:  "body",
 					},
 					Links: models.PayableResourceLinksDao{
-						Self:    "/company/12345678/financial-penalties/payable/1234",
-						Payment: "/company/12345678/financial-penalties/payable/1234/payment",
+						Self:    "/company/12345678/penalties/late-filing/payable/1234",
+						Payment: "/company/12345678/penalties/late-filing/payable/1234/payment",
 					},
 					Transactions: txs,
 					Payment: models.PaymentDao{
@@ -169,8 +169,8 @@ func TestUnitGetPayableResource(t *testing.T) {
 		So(payableResource.CreatedBy.Email, ShouldEqual, "test@user.com")
 		So(payableResource.CreatedBy.Forename, ShouldEqual, "some")
 		So(payableResource.CreatedBy.Surname, ShouldEqual, "body")
-		So(payableResource.Links.Self, ShouldEqual, "/company/12345678/financial-penalties/payable/1234")
-		So(payableResource.Links.Payment, ShouldEqual, "/company/12345678/financial-penalties/payable/1234/payment")
+		So(payableResource.Links.Self, ShouldEqual, "/company/12345678/penalties/late-filing/payable/1234")
+		So(payableResource.Links.Payment, ShouldEqual, "/company/12345678/penalties/late-filing/payable/1234/payment")
 		So(payableResource.Payment.Amount, ShouldEqual, "15")
 		So(payableResource.Payment.Status, ShouldEqual, "paid")
 		So(payableResource.Payment.Reference, ShouldEqual, "payref")

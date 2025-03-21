@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "1.2.0",
+    "version": "1.1.0",
     "title": "Penalty Payment API",
     "description": "An API for retrieving Penalties from the E5 finance system and recording / viewing Penalty Payments"
   },
@@ -61,7 +61,7 @@
           "Penalties"
         ],
         "description": "List the penalties for a company. This passes through the transactions from E5 and does not cache. (Deprecated since 03 Feb 2025 - currently used by LFP Appeals)",
-        "operationId": "get-penalties-legacy",
+        "operationId": "get-penalties-original",
         "produces": [
           "application/json"
         ],
@@ -92,7 +92,7 @@
         }
       }
     },
-    "/company/{company_number}/financial-penalties/{penalty_reference_type}": {
+    "/company/{company_number}/penalties/late-filing/{penalty_reference_type}": {
       "get": {
         "tags": [
           "Penalties"
@@ -136,7 +136,7 @@
         }
       }
     },
-    "/company/{company_number}/financial-penalties/payable": {
+    "/company/{company_number}/penalties/late-filing/payable": {
       "parameters": [
         {
           "name": "company_number",
@@ -179,7 +179,7 @@
         }
       }
     },
-    "/company/{company_number}/financial-penalties/payable/{payable_ref}": {
+    "/company/{company_number}/penalties/late-filing/payable/{payable_ref}": {
       "parameters": [
         {
           "in": "path",
@@ -216,7 +216,7 @@
         }
       }
     },
-    "/company/{company_number}/financial-penalties/payable/{payable_ref}/payment": {
+    "/company/{company_number}/penalties/late-filing/payable/{payable_ref}/payment": {
       "parameters": [
         {
           "in": "path",
