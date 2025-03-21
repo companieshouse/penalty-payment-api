@@ -87,7 +87,7 @@ func (m *MongoService) SaveE5Error(companyNumber, reference string, action e5.Ac
 
 	_, err = collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.Error(err, log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_reference": dao.Reference})
+		log.Error(err, log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
 		return err
 	}
 
@@ -110,26 +110,26 @@ func (m *MongoService) CreatePayableResource(dao *models.PayableResourceDao) err
 }
 
 // GetPayableResource gets the payable request from the database
-func (m *MongoService) GetPayableResource(customerCode, reference string) (*models.PayableResourceDao, error) {
+func (m *MongoService) GetPayableResource(customerCode, payableRef string) (*models.PayableResourceDao, error) {
 	var resource models.PayableResourceDao
 
 	collection := m.db.Collection(m.CollectionName)
-	dbResource := collection.FindOne(context.Background(), bson.M{"reference": reference, "customer_code": customerCode})
+	dbResource := collection.FindOne(context.Background(), bson.M{"payable_ref": payableRef, "customer_code": customerCode})
 
 	err := dbResource.Err()
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			log.Debug("no payable resource found", log.Data{"customer_code": customerCode, "payable_reference": reference})
+			log.Debug("no payable resource found", log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 			return nil, nil
 		}
-		log.Error(err, log.Data{"customer_code": customerCode, "payable_reference": reference})
+		log.Error(err, log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 		return nil, err
 	}
 
 	err = dbResource.Decode(&resource)
 
 	if err != nil {
-		log.Error(err, log.Data{"customer_code": customerCode, "payable_reference": reference})
+		log.Error(err, log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 		return nil, err
 	}
 
@@ -157,7 +157,7 @@ func (m *MongoService) UpdatePaymentDetails(dao *models.PayableResourceDao) erro
 
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.Error(err, log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_reference": dao.Reference})
+		log.Error(err, log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
 		return err
 	}
 

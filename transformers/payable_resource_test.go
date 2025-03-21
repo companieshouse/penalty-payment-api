@@ -24,7 +24,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 		}
 		dao := PayableResourceRequestToDB(req)
 
-		So(dao.Reference, ShouldHaveLength, 10)
+		So(dao.PayableRef, ShouldHaveLength, 10)
 	})
 
 	Convey("self link is constructed correctly", t, func() {
@@ -37,9 +37,9 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 		dao := PayableResourceRequestToDB(req)
 
 		// ensure a reference is generated for the next assertion
-		So(dao.Reference, ShouldHaveLength, 10)
+		So(dao.PayableRef, ShouldHaveLength, 10)
 
-		expected := fmt.Sprintf("/company/%s/financial-penalties/payable/%s", req.CompanyNumber, dao.Reference)
+		expected := fmt.Sprintf("/company/%s/financial-penalties/payable/%s", req.CompanyNumber, dao.PayableRef)
 		So(dao.Data.Links.Self, ShouldContainSubstring, expected)
 		So(dao.Data.Links.ResumeJourney, ShouldEqual, "/late-filing-penalty/company/00006400/penalty/123/view-penalties")
 	})
@@ -48,7 +48,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 func TestUnitPayableResourceDaoToCreatedResponse(t *testing.T) {
 	Convey("link to self is correct", t, func() {
 		dao := &models.PayableResourceDao{
-			Reference: "1234",
+			PayableRef: "1234",
 			Data: models.PayableResourceDataDao{
 				Links: models.PayableResourceLinksDao{
 					Self:          "/foo",
@@ -71,7 +71,7 @@ func TestUnitPayableResourceDBToPayableResource(t *testing.T) {
 		t := time.Now().Truncate(time.Millisecond)
 		dao := &models.PayableResourceDao{
 			CustomerCode: "12345678",
-			Reference:    "1234",
+			PayableRef:   "1234",
 			Data: models.PayableResourceDataDao{
 				Etag:      "qwertyetag1234",
 				CreatedAt: &t,
@@ -105,7 +105,7 @@ func TestUnitPayableResourceDBToPayableResource(t *testing.T) {
 		response := PayableResourceDBToRequest(dao)
 
 		So(response.CompanyNumber, ShouldEqual, dao.CustomerCode)
-		So(response.Reference, ShouldEqual, dao.Reference)
+		So(response.Reference, ShouldEqual, dao.PayableRef)
 		So(response.Etag, ShouldEqual, dao.Data.Etag)
 		So(response.CreatedAt, ShouldEqual, dao.Data.CreatedAt)
 		So(response.CreatedBy.ID, ShouldEqual, dao.Data.CreatedBy.ID)

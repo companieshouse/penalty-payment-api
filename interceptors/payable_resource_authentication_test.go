@@ -201,7 +201,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
-				Reference:    "1234",
+				PayableRef:   "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &createdAt,
@@ -255,7 +255,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
-				Reference:    "1234",
+				PayableRef:   "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &createdAt,
@@ -309,7 +309,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
-				Reference:    "1234",
+				PayableRef:   "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &createdAt,
@@ -357,7 +357,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
-				Reference:    "1234",
+				PayableRef:   "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &createdAt,
@@ -405,7 +405,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		mockDAO.EXPECT().GetPayableResource("OC444555", "1234").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "OC444555",
-				Reference:    "1234",
+				PayableRef:   "1234",
 				Data: models.PayableResourceDataDao{
 					Etag:      "qwertyetag1234",
 					CreatedAt: &createdAt,
