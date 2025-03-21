@@ -2,13 +2,13 @@ package transformers
 
 import (
 	"fmt"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"time"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/constants"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // PayableResourceRequestToDB will take the input request from the REST call and transform it to a dao ready for

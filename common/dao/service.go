@@ -2,8 +2,8 @@ package dao
 
 import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/e5"
 )
 
 // Service interface declares how to interact with the persistence layer regardless of underlying technology

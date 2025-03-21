@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"net/http"
 	"testing"
 
@@ -10,8 +11,6 @@ import (
 	"github.com/companieshouse/chs.go/kafka/producer"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/utils"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/handlers"
 	"github.com/gorilla/mux"
 )

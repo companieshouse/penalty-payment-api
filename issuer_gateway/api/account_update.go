@@ -1,15 +1,15 @@
 package api
 
 import (
+	e6 "github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"strconv"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/common/services"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
-	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 var getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
@@ -20,17 +20,17 @@ var getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) 
 // resource - is the payable resource from the db representing the penalty(ies)
 // payment - is the information about the payment session
 func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.PayableResourceService,
-	client *e5.Client, resource models.PayableResource, payment validators.PaymentInformation) error {
+	client *e6.Client, resource models.PayableResource, payment validators.PaymentInformation) error {
 	amountPaid, err := strconv.ParseFloat(payment.Amount, 32)
 	if err != nil {
 		log.Error(err, log.Data{"payment_reference": payment.Reference, "amount": payment.Amount})
 		return err
 	}
 
-	var transactions []*e5.CreatePaymentTransaction
+	var transactions []*e6.CreatePaymentTransaction
 
 	for _, t := range resource.Transactions {
-		transactions = append(transactions, &e5.CreatePaymentTransaction{
+		transactions = append(transactions, &e6.CreatePaymentTransaction{
 			Reference: t.TransactionID,
 			Value:     t.Amount,
 		})
@@ -52,7 +52,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	// the payments and finally 3) confirm the payment. if anyone of these fails, the company account will be locked in
 	// E5. Finance have confirmed that it is better to keep these locked as a cleanup process will happen naturally in
 	// the working day.
-	err = client.CreatePayment(&e5.CreatePaymentInput{
+	err = client.CreatePayment(&e6.CreatePaymentInput{
 		CompanyCode:   companyCode,
 		CompanyNumber: resource.CompanyNumber,
 		PaymentID:     paymentID,
@@ -61,7 +61,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	})
 
 	if err != nil {
-		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.CreateAction); svcErr != nil {
+		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e6.CreateAction); svcErr != nil {
 			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "payable_reference": resource.Reference})
 			return err
 		}
@@ -69,7 +69,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 		return err
 	}
 
-	err = client.AuthorisePayment(&e5.AuthorisePaymentInput{
+	err = client.AuthorisePayment(&e6.AuthorisePaymentInput{
 		CompanyCode:   companyCode,
 		PaymentID:     paymentID,
 		CardReference: payment.ExternalPaymentID,
@@ -78,7 +78,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	})
 
 	if err != nil {
-		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.AuthoriseAction); svcErr != nil {
+		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e6.AuthoriseAction); svcErr != nil {
 			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "payable_reference": resource.Reference})
 			return err
 		}
@@ -86,13 +86,13 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 		return err
 	}
 
-	err = client.ConfirmPayment(&e5.PaymentActionInput{
+	err = client.ConfirmPayment(&e6.PaymentActionInput{
 		CompanyCode: companyCode,
 		PaymentID:   paymentID,
 	})
 
 	if err != nil {
-		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.ConfirmAction); svcErr != nil {
+		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e6.ConfirmAction); svcErr != nil {
 			log.Error(svcErr, log.Data{"payment_id": payment.PaymentID, "payable_reference": resource.Reference})
 			return err
 		}
@@ -111,6 +111,6 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 
 // RecordIssuerCommandError will mark the resource as having failed to update E5.
 func RecordIssuerCommandError(payableResourceService *services.PayableResourceService,
-	resource models.PayableResource, action e5.Action) error {
+	resource models.PayableResource, action e6.Action) error {
 	return payableResourceService.DAO.SaveE5Error(resource.CompanyNumber, resource.Reference, action)
 }

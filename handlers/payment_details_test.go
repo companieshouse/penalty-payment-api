@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,8 +10,6 @@ import (
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/utils"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 

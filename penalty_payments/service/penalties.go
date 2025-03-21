@@ -2,13 +2,13 @@ package service
 
 import (
 	"fmt"
+	e6 "github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/e5"
-	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // TransactionType Enum Type
@@ -30,8 +30,8 @@ func (transactionType TransactionType) String() string {
 	return transactionTypes[transactionType-1]
 }
 
-var getTransactions = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
-	return client.GetTransactions(&e5.GetTransactionsInput{CompanyNumber: companyNumber, CompanyCode: companyCode})
+var getTransactions = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e6.Client) (*e6.GetTransactionsResponse, error) {
+	return client.GetTransactions(&e6.GetTransactionsInput{CompanyNumber: companyNumber, CompanyCode: companyCode})
 }
 
 // GetPenalties is a function that:
@@ -43,7 +43,7 @@ func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *c
 	if err != nil {
 		return nil, services.Error, nil
 	}
-	client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
+	client := e6.NewClient(cfg.E5Username, cfg.E5APIURL)
 	e5Response, err := getTransactions(companyNumber, companyCode, penaltyDetailsMap, client)
 
 	if err != nil {
@@ -65,7 +65,7 @@ func GetPenalties(companyNumber string, companyCode string, penaltyDetailsMap *c
 	return generatedTransactionListFromE5Response, services.Success, nil
 }
 
-func generateTransactionListFromE5Response(e5Response *e5.GetTransactionsResponse, companyCode string,
+func generateTransactionListFromE5Response(e5Response *e6.GetTransactionsResponse, companyCode string,
 	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, error) {
 	// Next, map results to a format that can be used by PPS web
 	payableTransactionList := models.TransactionListResponse{}

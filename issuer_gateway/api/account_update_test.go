@@ -3,6 +3,8 @@ package api
 import (
 	j "encoding/json"
 	"errors"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"io"
 	"net/http"
 	"testing"
@@ -10,9 +12,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/common/services"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/mocks"
-	"github.com/companieshouse/penalty-payment-api/utils"
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
 

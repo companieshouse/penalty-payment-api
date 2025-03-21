@@ -1,11 +1,10 @@
 package config
 
 import (
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"os"
 	"sync"
 	"testing"
-
-	"github.com/companieshouse/penalty-payment-api/utils"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

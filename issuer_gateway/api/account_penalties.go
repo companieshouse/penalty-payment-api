@@ -2,17 +2,17 @@ package api
 
 import (
 	"fmt"
+	e6 "github.com/companieshouse/penalty-payment-api/common/e5"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 )
 
-var getTransactions = func(companyNumber string, companyCode string, client *e5.Client) (*e5.GetTransactionsResponse, error) {
-	return client.GetTransactions(&e5.GetTransactionsInput{CompanyNumber: companyNumber, CompanyCode: companyCode})
+var getTransactions = func(companyNumber string, companyCode string, client *e6.Client) (*e6.GetTransactionsResponse, error) {
+	return client.GetTransactions(&e6.GetTransactionsInput{CompanyNumber: companyNumber, CompanyCode: companyCode})
 }
 var getConfig = config.Get
 var generateTransactionList = private.GenerateTransactionListFromE5Response
@@ -26,7 +26,7 @@ func AccountPenalties(companyNumber string, companyCode string, penaltyDetailsMa
 	if err != nil {
 		return nil, services.Error, nil
 	}
-	client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
+	client := e6.NewClient(cfg.E5Username, cfg.E5APIURL)
 	e5Response, err := getTransactions(companyNumber, companyCode, client)
 
 	if err != nil {
