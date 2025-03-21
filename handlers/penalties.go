@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	utils2 "github.com/companieshouse/penalty-payment-api/common/utils"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -16,7 +16,7 @@ import (
 )
 
 var getCompanyCode = func(penaltyReferenceType string) (string, error) {
-	return utils2.GetCompanyCode(penaltyReferenceType)
+	return utils.GetCompanyCode(penaltyReferenceType)
 }
 var accountPenalties = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, services.ResponseType, error) {
 	return api.AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
@@ -37,7 +37,7 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTran
 		if err != nil {
 			log.ErrorR(req, err)
 			m := models.NewMessageResponse("invalid penalty reference type supplied")
-			utils2.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
+			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 			return
 		}
 
@@ -48,12 +48,12 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTran
 			switch responseType {
 			case services.InvalidData:
 				m := models.NewMessageResponse("failed to read finance transactions")
-				utils2.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
+				utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 				return
 			case services.Error:
 			default:
 				m := models.NewMessageResponse("there was a problem communicating with the finance backend")
-				utils2.WriteJSONWithStatus(w, req, m, http.StatusInternalServerError)
+				utils.WriteJSONWithStatus(w, req, m, http.StatusInternalServerError)
 				return
 			}
 		}
