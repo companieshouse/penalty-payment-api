@@ -31,8 +31,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 		t := time.Now().Truncate(time.Millisecond)
 
 		payable := models.PayableResource{
-			CompanyNumber: "12345678",
-			Reference:     "abcdef",
+			CustomerCode: "12345678",
+			Reference:    "abcdef",
 			Links: models.PayableResourceLinks{
 				Self:    "/company/12345678/penalties/abcdef",
 				Payment: "/company/12345678/penalties/abcdef/payment",
@@ -98,8 +98,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				t := time.Now().Truncate(time.Millisecond)
 
 				payable := models.PayableResource{
-					CompanyNumber: "12345678",
-					Reference:     "abcdef",
+					CustomerCode: "12345678",
+					Reference:    "abcdef",
 					Links: models.PayableResourceLinks{
 						Self:    "/company/12345678/penalties/abcdef",
 						Payment: "/company/12345678/penalties/abcdef/payment",
@@ -193,8 +193,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				t := time.Now().Truncate(time.Millisecond)
 
 				payable := models.PayableResource{
-					CompanyNumber: "12345678",
-					Reference:     "abcdef",
+					CustomerCode: "12345678",
+					Reference:    "abcdef",
 					Links: models.PayableResourceLinks{
 						Self:    "/company/12345678/penalties/abcdef",
 						Payment: "/company/12345678/penalties/abcdef/payment",

@@ -103,7 +103,7 @@ func TestUnitPayableResourceDBToPayableResource(t *testing.T) {
 
 		response := PayableResourceDBToRequest(dao)
 
-		So(response.CompanyNumber, ShouldEqual, dao.CustomerCode)
+		So(response.CustomerCode, ShouldEqual, dao.CustomerCode)
 		So(response.Reference, ShouldEqual, dao.PayableRef)
 		So(response.Etag, ShouldEqual, dao.Data.Etag)
 		So(response.CreatedAt, ShouldEqual, dao.Data.CreatedAt)
@@ -159,10 +159,10 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 			Convey(tc.description, func() {
 				t := time.Now().Truncate(time.Millisecond)
 				payable := &models.PayableResource{
-					CompanyNumber: "12345678",
-					Reference:     "1234",
-					Etag:          "qwertyetag1234",
-					CreatedAt:     &t,
+					CustomerCode: "12345678",
+					Reference:    "1234",
+					Etag:         "qwertyetag1234",
+					CreatedAt:    &t,
 					CreatedBy: models.CreatedBy{
 						ID:       "uz3r_1d",
 						Email:    "test@user.com",
@@ -213,7 +213,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				So(response.Links.Self, ShouldEqual, payable.Links.Payment)
 				So(response.Links.Resource, ShouldEqual, payable.Links.Self)
 				So(response.Status, ShouldEqual, payable.Payment.Status)
-				So(response.CompanyNumber, ShouldEqual, payable.CompanyNumber)
+				So(response.CustomerCode, ShouldEqual, payable.CustomerCode)
 				So(len(response.Items), ShouldEqual, 1)
 				So(response.Items[0].Amount, ShouldEqual, fmt.Sprintf("%g", payable.Transactions[0].Amount))
 				So(response.Items[0].AvailablePaymentMethods, ShouldResemble, []string{"credit-card"})
