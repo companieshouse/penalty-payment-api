@@ -36,7 +36,7 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 	paymentLinkFormat := "%s/payment"
 	paymentLink := fmt.Sprintf(paymentLinkFormat, self)
 
-	resumeJourneyLinkFormat := "/late-filing-penalty/company/%s/penalty/%s/view-penalties"
+	resumeJourneyLinkFormat := "/pay-penalty/company/%s/penalty/%s/view-penalties"
 	resumeJourneyLink := fmt.Sprintf(resumeJourneyLinkFormat, req.CompanyNumber, req.Transactions[0].TransactionID) // Assumes there is only one transaction
 
 	createdAt := time.Now().Truncate(time.Millisecond)
