@@ -41,7 +41,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 
 		expected := fmt.Sprintf("/company/%s/penalties/late-filing/payable/%s", req.CompanyNumber, dao.PayableRef)
 		So(dao.Data.Links.Self, ShouldContainSubstring, expected)
-		So(dao.Data.Links.ResumeJourney, ShouldEqual, "/late-filing-penalty/company/00006400/penalty/123/view-penalties")
+		So(dao.Data.Links.ResumeJourney, ShouldEqual, "/pay-penalty/company/00006400/penalty/123/view-penalties")
 	})
 }
 
