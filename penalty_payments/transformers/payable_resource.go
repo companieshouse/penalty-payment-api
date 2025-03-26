@@ -16,7 +16,7 @@ import (
 func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResourceDao {
 	transactionsDAO := map[string]models.TransactionDao{}
 	for _, tx := range req.Transactions {
-		transactionsDAO[tx.TransactionID] = models.TransactionDao{
+		transactionsDAO[tx.PenaltyRef] = models.TransactionDao{
 			Amount:     tx.Amount,
 			MadeUpDate: tx.MadeUpDate,
 			Type:       tx.Type,
@@ -37,7 +37,7 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 	paymentLink := fmt.Sprintf(paymentLinkFormat, self)
 
 	resumeJourneyLinkFormat := "/pay-penalty/company/%s/penalty/%s/view-penalties"
-	resumeJourneyLink := fmt.Sprintf(resumeJourneyLinkFormat, req.CustomerCode, req.Transactions[0].TransactionID) // Assumes there is only one transaction
+	resumeJourneyLink := fmt.Sprintf(resumeJourneyLinkFormat, req.CustomerCode, req.Transactions[0].PenaltyRef) // Assumes there is only one transaction
 
 	createdAt := time.Now().Truncate(time.Millisecond)
 	dao := &models.PayableResourceDao{
@@ -70,7 +70,7 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 // a http response entity
 func PayableResourceDaoToCreatedResponse(model *models.PayableResourceDao) *models.CreatedPayableResource {
 	return &models.CreatedPayableResource{
-		ID: model.PayableRef,
+		PayableRef: model.PayableRef,
 		Links: models.CreatedPayableResourceLinks{
 			Self: model.Data.Links.Self,
 		},
@@ -82,18 +82,18 @@ func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.P
 	var transactions []models.TransactionItem
 	for key, val := range payableDao.Data.Transactions {
 		tx := models.TransactionItem{
-			TransactionID: key,
-			Amount:        val.Amount,
-			MadeUpDate:    val.MadeUpDate,
-			Type:          val.Type,
-			Reason:        val.Reason,
+			PenaltyRef: key,
+			Amount:     val.Amount,
+			MadeUpDate: val.MadeUpDate,
+			Type:       val.Type,
+			Reason:     val.Reason,
 		}
 		transactions = append(transactions, tx)
 	}
 
 	payable := models.PayableResource{
 		CustomerCode: payableDao.CustomerCode,
-		Reference:    payableDao.PayableRef,
+		PayableRef:   payableDao.PayableRef,
 		Transactions: transactions,
 		Etag:         payableDao.Data.Etag,
 		CreatedAt:    payableDao.Data.CreatedAt,

@@ -20,7 +20,7 @@ var penaltyDetailsMap = &config.PenaltyDetailsMap{}
 var allowedTransactionsMap = &models.AllowedTransactionMap{}
 var customerCode = "NI123456"
 var transactionItem = models.TransactionItem{
-	TransactionID: "A1234567",
+	PenaltyRef: "A1234567",
 }
 var payableResource = models.PayableResource{
 	CustomerCode: customerCode,
@@ -196,7 +196,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetPayablePenalty := func(customerCode string, companyCode string, t models.TransactionItem,
 				penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionItem, error) {
 
-				return &models.TransactionItem{TransactionID: "A1234567", Reason: "Late filing of accounts"}, nil
+				return &models.TransactionItem{PenaltyRef: "A1234567", Reason: "Late filing of accounts"}, nil
 			}
 
 			getConfig = mockedConfigGet
@@ -221,9 +221,9 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 				penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionItem, error) {
 
 				return &models.TransactionItem{
-					TransactionID: "A123567",
-					MadeUpDate:    "2006-01-02",
-					Reason:        "Late filing of accounts"}, nil
+					PenaltyRef: "A123567",
+					MadeUpDate: "2006-01-02",
+					Reason:     "Late filing of accounts"}, nil
 			}
 
 			getConfig = mockedConfigGet

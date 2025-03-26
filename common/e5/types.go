@@ -51,8 +51,8 @@ type CreatePaymentInput struct {
 
 // CreatePaymentTransaction is the struct to define the transactions you want to pay for
 type CreatePaymentTransaction struct {
-	Reference string  `json:"transactionReference" validate:"required"`
-	Value     float64 `json:"allocationValue" validate:"required"`
+	TransactionReference string  `json:"transactionReference" validate:"required"`
+	Value                float64 `json:"allocationValue" validate:"required"`
 }
 
 // AuthorisePaymentInput is the struct to authorise payment

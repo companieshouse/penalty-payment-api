@@ -56,9 +56,9 @@ func TransactionsArePayable(companyNumber string, companyCode string, txs []mode
 	}
 
 	for _, t := range txs {
-		val, ok := itemMap[t.TransactionID]
+		val, ok := itemMap[t.PenaltyRef]
 		data := map[string]interface{}{
-			"transaction_ref": t.TransactionID,
+			"transaction_ref": t.PenaltyRef,
 			"company_number":  companyNumber,
 		}
 		if !ok {
@@ -72,12 +72,12 @@ func TransactionsArePayable(companyNumber string, companyCode string, txs []mode
 		}
 
 		validTx := models.TransactionItem{
-			TransactionID: t.TransactionID,
-			Amount:        t.Amount,
-			Type:          val.Type,
-			MadeUpDate:    val.MadeUpDate,
-			IsDCA:         val.IsDCA,
-			IsPaid:        val.IsPaid,
+			PenaltyRef: t.PenaltyRef,
+			Amount:     t.Amount,
+			Type:       val.Type,
+			MadeUpDate: val.MadeUpDate,
+			IsDCA:      val.IsDCA,
+			IsPaid:     val.IsPaid,
 		}
 		validTxs = append(validTxs, validTx)
 	}

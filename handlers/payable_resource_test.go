@@ -23,7 +23,7 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 		createdAt := time.Now().Truncate(time.Millisecond)
 		payable := models.PayableResource{
 			CustomerCode: "12345678",
-			Reference:    "abcdef",
+			PayableRef:   "abcdef",
 			Links: models.PayableResourceLinks{
 				Self:    "/company/12345678/penalties/abcdef",
 				Payment: "/company/12345678/penalties/abcdef/payment",
@@ -36,9 +36,9 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 			},
 			Transactions: []models.TransactionItem{
 				{
-					Amount:        5,
-					Type:          "penalty",
-					TransactionID: "A1234567",
+					Amount:     5,
+					Type:       "penalty",
+					PenaltyRef: "A1234567",
 				},
 			},
 			Payment: models.Payment{
@@ -59,7 +59,7 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 		resultPayable := &models.PayableResource{}
 		json.NewDecoder(w.Body).Decode(&resultPayable)
 		So(resultPayable.CustomerCode, ShouldEqual, payable.CustomerCode)
-		So(resultPayable.Reference, ShouldEqual, payable.Reference)
+		So(resultPayable.PayableRef, ShouldEqual, payable.PayableRef)
 		So(resultPayable.Etag, ShouldEqual, payable.Etag)
 		So(resultPayable.CreatedAt.Nanosecond(), ShouldEqual, payable.CreatedAt.Nanosecond())
 		So(resultPayable.Links.Self, ShouldEqual, payable.Links.Self)
@@ -71,7 +71,7 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 		So(len(resultPayable.Transactions), ShouldEqual, 1)
 		So(resultPayable.Transactions[0].Amount, ShouldEqual, payable.Transactions[0].Amount)
 		So(resultPayable.Transactions[0].Type, ShouldEqual, payable.Transactions[0].Type)
-		So(resultPayable.Transactions[0].TransactionID, ShouldEqual, payable.Transactions[0].TransactionID)
+		So(resultPayable.Transactions[0].PenaltyRef, ShouldEqual, payable.Transactions[0].PenaltyRef)
 
 	})
 }

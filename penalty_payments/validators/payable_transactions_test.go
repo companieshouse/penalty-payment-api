@@ -121,7 +121,7 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			{TransactionID: "123"},
+			{PenaltyRef: "123"},
 		}
 
 		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap, allowedTransactionMap)
@@ -138,7 +138,7 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			{TransactionID: "00378420"},
+			{PenaltyRef: "00378420"},
 		}
 
 		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap, allowedTransactionMap)
@@ -155,7 +155,7 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			{TransactionID: "00378420"},
+			{PenaltyRef: "00378420"},
 		}
 
 		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap, allowedTransactionMap)
@@ -172,7 +172,7 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			{TransactionID: "00378420", Amount: 150},
+			{PenaltyRef: "00378420", Amount: 150},
 		}
 
 		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap, allowedTransactionMap)
@@ -193,7 +193,7 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			{TransactionID: "00378420", Amount: 100},
+			{PenaltyRef: "00378420", Amount: 100},
 		}
 
 		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap, allowedTransactionMap)
@@ -209,7 +209,7 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, multiplePenalties))
 
 		txs := []models.TransactionItem{
-			{TransactionID: "00378420", Amount: 100},
+			{PenaltyRef: "00378420", Amount: 100},
 		}
 
 		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap, allowedTransactionMap)
@@ -226,7 +226,7 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			{TransactionID: "00378420", Amount: 150},
+			{PenaltyRef: "00378420", Amount: 150},
 		}
 
 		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap, allowedTransactionMap)
@@ -243,7 +243,7 @@ func TestUnitPayableTransactions(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5Response))
 
 		txs := []models.TransactionItem{
-			{TransactionID: "00378420", Amount: 50},
+			{PenaltyRef: "00378420", Amount: 50},
 		}
 
 		validTxs, err := TransactionsArePayable("10000024", "LP", txs, penaltyDetailsMap, allowedTransactionMap)

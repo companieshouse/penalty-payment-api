@@ -9,12 +9,12 @@ import (
 )
 
 func TestUnitGenerateReferenceNumber(t *testing.T) {
-	Convey("Reference Number is correct length", t, func() {
+	Convey("TransactionReference Number is correct length", t, func() {
 		ref := GenerateReferenceNumber()
 		So(len(ref), ShouldEqual, 10)
 	})
 
-	Convey("Reference Number does not collide", t, func() {
+	Convey("TransactionReference Number does not collide", t, func() {
 		// generate 10,000 reference numbers and check for any duplicates
 		times := 10000 // 10 thousand
 		generated := make([]string, times)
@@ -149,9 +149,9 @@ func TestUnitGetCompanyCodeFromTransaction(t *testing.T) {
 				name: "Late Filing",
 				input: []models.TransactionItem{
 					{
-						Amount:        5,
-						Type:          "penalty",
-						TransactionID: "A1000007",
+						Amount:     5,
+						Type:       "penalty",
+						PenaltyRef: "A1000007",
 					},
 				},
 				expectedCode:  LateFilingPenalty,
@@ -161,27 +161,27 @@ func TestUnitGetCompanyCodeFromTransaction(t *testing.T) {
 				name: "Sanctions",
 				input: []models.TransactionItem{
 					{
-						Amount:        5,
-						Type:          "penalty",
-						TransactionID: "P1000007",
+						Amount:     5,
+						Type:       "penalty",
+						PenaltyRef: "P1000007",
 					},
 				},
 				expectedCode: "C1",
 			},
 			{
-				name: "Error unknown transaction ID",
+				name: "Error unknown penalty reference",
 				input: []models.TransactionItem{
 					{
-						Amount:        5,
-						Type:          "penalty",
-						TransactionID: "Q1000007",
+						Amount:     5,
+						Type:       "penalty",
+						PenaltyRef: "Q1000007",
 					},
 				},
 				expectedCode:  "",
 				expectedError: true,
 			},
 			{
-				name: "Error no transaction ID",
+				name: "Error no penalty reference",
 				input: []models.TransactionItem{
 					{},
 				},

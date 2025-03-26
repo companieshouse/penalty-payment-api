@@ -430,7 +430,7 @@
     "PayableFinancialPenaltySession": {
       "type": "object",
       "properties": {
-        "id": {
+        "payable_ref": {
           "type": "string"
         },
         "links": {
