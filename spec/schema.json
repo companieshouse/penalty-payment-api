@@ -92,7 +92,7 @@
         }
       }
     },
-    "/company/{company_number}/financial-penalties/{penalty_reference_type}": {
+    "/company/{company_number}/penalties/{penalty_reference_type}": {
       "get": {
         "tags": [
           "Penalties"
@@ -136,7 +136,7 @@
         }
       }
     },
-    "/company/{company_number}/financial-penalties/payable": {
+    "/company/{company_number}/penalties/payable": {
       "parameters": [
         {
           "name": "company_number",
@@ -179,7 +179,7 @@
         }
       }
     },
-    "/company/{company_number}/financial-penalties/payable/{payable_ref}": {
+    "/company/{company_number}/penalties/payable/{payable_ref}": {
       "parameters": [
         {
           "in": "path",
@@ -216,7 +216,7 @@
         }
       }
     },
-    "/company/{company_number}/financial-penalties/payable/{payable_ref}/payment": {
+    "/company/{company_number}/penalties/payable/{payable_ref}/payment": {
       "parameters": [
         {
           "in": "path",

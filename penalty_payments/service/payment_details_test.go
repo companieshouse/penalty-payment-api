@@ -25,7 +25,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 	Convey("Get payment details no transactions - invalid data", t, func() {
 
-		path := "/company/12345678/financial-penalties/abcdef/payment"
+		path := "/company/12345678/penalties/abcdef/payment"
 		req := httptest.NewRequest(http.MethodGet, path, nil)
 
 		t := time.Now().Truncate(time.Millisecond)
@@ -34,8 +34,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 			CompanyNumber: "12345678",
 			Reference:     "abcdef",
 			Links: models.PayableResourceLinks{
-				Self:    "/company/12345678/financial-penalties/abcdef",
-				Payment: "/company/12345678/financial-penalties/abcdef/payment",
+				Self:    "/company/12345678/penalties/abcdef",
+				Payment: "/company/12345678/penalties/abcdef/payment",
 			},
 			Etag:      "qwertyetag1234",
 			CreatedAt: &t,
@@ -92,7 +92,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 		}
 		for _, tc := range testCases {
 			Convey(tc.description, func() {
-				path := "/company/12345678/financial-penalties/abcdef/payment"
+				path := "/company/12345678/penalties/abcdef/payment"
 				req := httptest.NewRequest(http.MethodGet, path, nil)
 
 				t := time.Now().Truncate(time.Millisecond)
@@ -101,8 +101,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 					CompanyNumber: "12345678",
 					Reference:     "abcdef",
 					Links: models.PayableResourceLinks{
-						Self:    "/company/12345678/financial-penalties/abcdef",
-						Payment: "/company/12345678/financial-penalties/abcdef/payment",
+						Self:    "/company/12345678/penalties/abcdef",
+						Payment: "/company/12345678/penalties/abcdef/payment",
 					},
 					Etag:      "qwertyetag1234",
 					CreatedAt: &t,
@@ -143,8 +143,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				So(paymentDetails.Description, ShouldEqual, tc.description)
 				So(paymentDetails.Kind, ShouldEqual, tc.resourceKind)
 				So(paymentDetails.PaymentReference, ShouldEqual, "")
-				So(paymentDetails.Links.Self, ShouldEqual, "/company/12345678/financial-penalties/abcdef/payment")
-				So(paymentDetails.Links.Resource, ShouldEqual, "/company/12345678/financial-penalties/abcdef")
+				So(paymentDetails.Links.Self, ShouldEqual, "/company/12345678/penalties/abcdef/payment")
+				So(paymentDetails.Links.Resource, ShouldEqual, "/company/12345678/penalties/abcdef")
 				So(paymentDetails.Status, ShouldEqual, "pending")
 				So(paymentDetails.CompanyNumber, ShouldEqual, "12345678")
 				So(paymentDetails.Items[0], ShouldResemble, expectedCost)
@@ -187,7 +187,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 		}
 		for _, tc := range testCases {
 			Convey(tc.description, func() {
-				path := "/company/12345678/financial-penalties/abcdef/payment"
+				path := "/company/12345678/penalties/abcdef/payment"
 				req := httptest.NewRequest(http.MethodGet, path, nil)
 
 				t := time.Now().Truncate(time.Millisecond)
@@ -196,8 +196,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 					CompanyNumber: "12345678",
 					Reference:     "abcdef",
 					Links: models.PayableResourceLinks{
-						Self:    "/company/12345678/financial-penalties/abcdef",
-						Payment: "/company/12345678/financial-penalties/abcdef/payment",
+						Self:    "/company/12345678/penalties/abcdef",
+						Payment: "/company/12345678/penalties/abcdef/payment",
 					},
 					Etag:      "qwertyetag1234",
 					CreatedAt: &t,
@@ -241,8 +241,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				So(paymentDetails.Kind, ShouldEqual, tc.resourceKind)
 				So(paymentDetails.PaidAt, ShouldEqual, &t)
 				So(paymentDetails.PaymentReference, ShouldEqual, "payment_id")
-				So(paymentDetails.Links.Self, ShouldEqual, "/company/12345678/financial-penalties/abcdef/payment")
-				So(paymentDetails.Links.Resource, ShouldEqual, "/company/12345678/financial-penalties/abcdef")
+				So(paymentDetails.Links.Self, ShouldEqual, "/company/12345678/penalties/abcdef/payment")
+				So(paymentDetails.Links.Resource, ShouldEqual, "/company/12345678/penalties/abcdef")
 				So(paymentDetails.Status, ShouldEqual, "paid")
 				So(paymentDetails.CompanyNumber, ShouldEqual, "12345678")
 				So(paymentDetails.Items[0], ShouldResemble, expectedCost)

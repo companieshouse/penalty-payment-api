@@ -33,12 +33,12 @@ func TestUnitRegisterRoutes(t *testing.T) {
 
 		So(healthCheckPath, ShouldEqual, "/penalty-payment-api/healthcheck")
 		So(healthFinanceCheckPath, ShouldEqual, "/penalty-payment-api/healthcheck/finance-system")
-		So(getPenaltiesPath, ShouldEqual, "/company/{company_number}/financial-penalties/{penalty_reference_type}")
+		So(getPenaltiesPath, ShouldEqual, "/company/{company_number}/penalties/{penalty_reference_type}")
 		So(getPenaltiesOriginalPath, ShouldEqual, "/company/{company_number}/penalties/late-filing")
-		So(createPayablePath, ShouldEqual, "/company/{company_number}/financial-penalties/payable")
-		So(getPayablePath, ShouldEqual, "/company/{company_number}/financial-penalties/payable/{payable_id}")
-		So(getPaymentDetailsPath, ShouldEqual, "/company/{company_number}/financial-penalties/payable/{payable_id}/payment")
-		So(markAsPaidPath, ShouldEqual, "/company/{company_number}/financial-penalties/payable/{payable_id}/payment")
+		So(createPayablePath, ShouldEqual, "/company/{company_number}/penalties/payable")
+		So(getPayablePath, ShouldEqual, "/company/{company_number}/penalties/payable/{payable_id}")
+		So(getPaymentDetailsPath, ShouldEqual, "/company/{company_number}/penalties/payable/{payable_id}/payment")
+		So(markAsPaidPath, ShouldEqual, "/company/{company_number}/penalties/payable/{payable_id}/payment")
 	})
 }
 
