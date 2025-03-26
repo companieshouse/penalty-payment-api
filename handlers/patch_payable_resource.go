@@ -3,24 +3,23 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/companieshouse/penalty-payment-api/common/e5"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
-	service2 "github.com/companieshouse/penalty-payment-api/penalty_payments/service"
+	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"sync"
-
-	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/common/services"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/service"
 )
 
 // handleEmailKafkaMessage allows us to mock the call to sendEmailKafkaMessage for unit tests
-var handleEmailKafkaMessage = service2.SendEmailKafkaMessage
+var handleEmailKafkaMessage = service.SendEmailKafkaMessage
 
 var wg sync.WaitGroup
 
@@ -66,7 +65,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			return
 		}
 
-		payment, err := service2.GetPaymentInformation(request.Reference, r)
+		payment, err := service.GetPaymentInformation(request.Reference, r)
 		if err != nil {
 			log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payable_id": request.Reference})
 			m := models.NewMessageResponse("the payable resource does not exist")
