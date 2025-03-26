@@ -29,7 +29,7 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 	if err != nil {
 		log.Error(fmt.Errorf("error generating etag: [%s]", err))
 	}
-	format := "/company/%s/penalties/late-filing/payable/%s"
+	format := "/company/%s/financial-penalties/payable/%s"
 
 	self := fmt.Sprintf(format, req.CompanyNumber, reference)
 

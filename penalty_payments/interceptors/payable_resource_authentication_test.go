@@ -58,7 +58,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 	cfg, _ := config.Get()
 
 	Convey("No payment ID in request", t, func() {
-		path := fmt.Sprintf("/company/12345678/penalties/late-filing/payable/")
+		path := fmt.Sprintf("/company/12345678/financial-penalties/payable/")
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req.Header.Set("Eric-Identity", "authorised_identity")
@@ -75,7 +75,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 	})
 
 	Convey("Invalid user details in context", t, func() {
-		path := fmt.Sprintf("/company/12345678/penalties/late-filing/payable/%s", "1234")
+		path := fmt.Sprintf("/company/12345678/financial-penalties/payable/%s", "1234")
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"company_number": "12345678", "payable_id": "1234"})
@@ -98,7 +98,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 	})
 
 	Convey("No authorised identity", t, func() {
-		path := fmt.Sprintf("/company/12345678/penalties/late-filing/payable/%s", "1234")
+		path := fmt.Sprintf("/company/12345678/financial-penalties/payable/%s", "1234")
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"company_number": "12345678", "payable_id": "1234"})
@@ -119,7 +119,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 	})
 
 	Convey("Payment not found in DB", t, func() {
-		path := fmt.Sprintf("/company/12345678/penalties/late-filing/payable/%s", "1234")
+		path := fmt.Sprintf("/company/12345678/financial-penalties/payable/%s", "1234")
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"company_number": "12345678", "payable_id": "1234"})
@@ -148,7 +148,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 	})
 
 	Convey("Error reading from DB", t, func() {
-		path := fmt.Sprintf("/company/12345678/penalties/late-filing/payable/%s", "1234")
+		path := fmt.Sprintf("/company/12345678/financial-penalties/payable/%s", "1234")
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"company_number": "12345678", "payable_id": "1234"})
@@ -177,7 +177,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 	})
 
 	Convey("Happy path where user is creator", t, func() {
-		path := fmt.Sprintf("/company/12345678/penalties/late-filing/payable/%s", "1234")
+		path := fmt.Sprintf("/company/12345678/financial-penalties/payable/%s", "1234")
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"company_number": "12345678", "payable_id": "1234"})
@@ -209,7 +209,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 						ID: "identity",
 					},
 					Links: models.PayableResourceLinksDao{
-						Self: "/company/12345678/penalties/late-filing/payable/1234",
+						Self: "/company/12345678/financial-penalties/payable/1234",
 					},
 					Transactions: txs,
 					Payment: models.PaymentDao{
@@ -231,7 +231,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 	})
 
 	Convey("Happy path where user is admin and request is GET", t, func() {
-		path := fmt.Sprintf("/company/12345678/penalties/late-filing/payable/%s", "1234")
+		path := fmt.Sprintf("/company/12345678/financial-penalties/payable/%s", "1234")
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"company_number": "12345678", "payable_id": "1234"})
@@ -263,7 +263,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 						ID: "identity",
 					},
 					Links: models.PayableResourceLinksDao{
-						Self: "/company/12345678/penalties/late-filing/payable/1234",
+						Self: "/company/12345678/financial-penalties/payable/1234",
 					},
 					Transactions: txs,
 					Payment: models.PaymentDao{
@@ -285,7 +285,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 	})
 
 	Convey("Unauthorised where user is admin and request is POST", t, func() {
-		path := fmt.Sprintf("/company/12345678/penalties/late-filing/payable/%s", "1234")
+		path := fmt.Sprintf("/company/12345678/financial-penalties/payable/%s", "1234")
 		req, err := http.NewRequest("POST", path, nil)
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"company_number": "12345678", "payable_id": "1234"})
@@ -317,7 +317,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 						ID: "identity",
 					},
 					Links: models.PayableResourceLinksDao{
-						Self: "/company/12345678/penalties/late-filing/payable/1234",
+						Self: "/company/12345678/financial-penalties/payable/1234",
 					},
 					Transactions: txs,
 					Payment: models.PaymentDao{
@@ -339,7 +339,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 	})
 
 	Convey("Happy path where user has elevated privileges key accessing a non-creator resource", t, func() {
-		path := fmt.Sprintf("/company/12345678/penalties/late-filing/payable/%s", "1234")
+		path := fmt.Sprintf("/company/12345678/financial-penalties/payable/%s", "1234")
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"company_number": "12345678", "payable_id": "1234"})
@@ -365,7 +365,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 						ID: "identity",
 					},
 					Links: models.PayableResourceLinksDao{
-						Self: "/company/12345678/penalties/late-filing/payable/1234",
+						Self: "/company/12345678/financial-penalties/payable/1234",
 					},
 					Transactions: txs,
 					Payment: models.PaymentDao{
@@ -387,7 +387,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 	})
 
 	Convey("Happy path where Company Number is made uppercase", t, func() {
-		path := fmt.Sprintf("/company/12345678/penalties/late-filing/payable/%s", "1234")
+		path := fmt.Sprintf("/company/12345678/financial-penalties/payable/%s", "1234")
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"company_number": "oc444555", "payable_id": "1234"})
@@ -413,7 +413,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 						ID: "identity",
 					},
 					Links: models.PayableResourceLinksDao{
-						Self: "/company/OC444555/penalties/late-filing/payable/1234",
+						Self: "/company/OC444555/financial-penalties/payable/1234",
 					},
 					Transactions: txs,
 					Payment: models.PaymentDao{
