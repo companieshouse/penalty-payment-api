@@ -6,9 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/companieshouse/gofigure"
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"gopkg.in/yaml.v2"
 )
 
 var cfg *Config

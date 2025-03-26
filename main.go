@@ -10,9 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/companieshouse/penalty-payment-api/common/dao"
+
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/handlers"
 	"github.com/gorilla/mux"
 )

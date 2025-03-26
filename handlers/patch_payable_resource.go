@@ -11,12 +11,12 @@ import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/common/services"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
-	"github.com/companieshouse/penalty-payment-api/service"
-	"github.com/companieshouse/penalty-payment-api/utils"
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/service"
 )
 
 // handleEmailKafkaMessage allows us to mock the call to sendEmailKafkaMessage for unit tests

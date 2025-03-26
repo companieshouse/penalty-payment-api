@@ -8,8 +8,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/companieshouse/chs.go/log"
 	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/companieshouse/chs.go/log"
 )
 
 var (

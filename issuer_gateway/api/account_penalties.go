@@ -3,11 +3,12 @@ package api
 import (
 	"fmt"
 
+	"github.com/companieshouse/penalty-payment-api/common/e5"
+
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 )
 

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"testing"
 
-	"gopkg.in/go-playground/validator.v9"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 
-	"github.com/companieshouse/penalty-payment-api/utils"
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/jarcoal/httpmock"
 

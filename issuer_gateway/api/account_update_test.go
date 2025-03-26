@@ -7,12 +7,13 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/common/services"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/mocks"
-	"github.com/companieshouse/penalty-payment-api/utils"
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
 

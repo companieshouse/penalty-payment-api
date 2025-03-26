@@ -3,11 +3,12 @@ package validators
 import (
 	"errors"
 	"fmt"
+
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/service"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/service"
 )
 
 var (

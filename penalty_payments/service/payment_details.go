@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/transformers"
+
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/transformers"
 )
 
 // PaymentDetailsService contains the PayableResourceService for updating the resource with payment details after a successful/failed payment

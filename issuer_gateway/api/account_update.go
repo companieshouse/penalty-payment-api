@@ -3,13 +3,14 @@ package api
 import (
 	"strconv"
 
+	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/common/services"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
-	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 var getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {

@@ -10,6 +10,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/companieshouse/penalty-payment-api/common/dao"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
 	"github.com/pkg/errors"
@@ -17,10 +20,7 @@ import (
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/mocks"
-	"github.com/companieshouse/penalty-payment-api/utils"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 

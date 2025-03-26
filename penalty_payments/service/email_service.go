@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+
 	"github.com/companieshouse/chs.go/avro"
 	"github.com/companieshouse/chs.go/avro/schema"
 	"github.com/companieshouse/chs.go/kafka/producer"
@@ -14,7 +16,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
-	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // ProducerTopic is the topic to which the email-send kafka message is sent

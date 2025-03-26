@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+
 	"github.com/companieshouse/chs.go/avro"
 	"github.com/companieshouse/chs.go/avro/schema"
 	"github.com/companieshouse/chs.go/kafka/producer"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/utils"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 

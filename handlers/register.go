@@ -3,17 +3,18 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/companieshouse/penalty-payment-api/common/dao"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/interceptors"
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/service"
+
 	"github.com/companieshouse/penalty-payment-api/common/services"
-	"github.com/companieshouse/penalty-payment-api/service"
 	"github.com/gorilla/mux"
 
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/dao"
-	"github.com/companieshouse/penalty-payment-api/e5"
-	"github.com/companieshouse/penalty-payment-api/interceptors"
 	"github.com/companieshouse/penalty-payment-api/middleware"
 )
 

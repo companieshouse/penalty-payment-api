@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+
 	"github.com/gorilla/mux"
 
 	"github.com/companieshouse/chs.go/log"
@@ -12,7 +14,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
-	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 var getCompanyCode = func(penaltyReferenceType string) (string, error) {
