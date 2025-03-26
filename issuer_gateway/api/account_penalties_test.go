@@ -2,8 +2,9 @@ package api
 
 import (
 	"errors"
-	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"testing"
+
+	"github.com/companieshouse/penalty-payment-api/common/e5"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"

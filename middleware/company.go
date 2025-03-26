@@ -2,8 +2,9 @@ package middleware
 
 import (
 	"context"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"net/http"
+
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"

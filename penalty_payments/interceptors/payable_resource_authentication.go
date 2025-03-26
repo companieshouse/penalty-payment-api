@@ -3,9 +3,10 @@ package interceptors
 import (
 	"context"
 	"fmt"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"net/http"
 	"strings"
+
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"

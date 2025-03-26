@@ -3,6 +3,7 @@ package validators
 import (
 	"errors"
 	"fmt"
+
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/service"
 

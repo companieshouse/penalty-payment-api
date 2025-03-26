@@ -3,9 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"sync"
+
+	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"

@@ -3,11 +3,12 @@ package api
 import (
 	j "encoding/json"
 	"errors"
-	"github.com/companieshouse/penalty-payment-api/common/e5"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"io"
 	"net/http"
 	"testing"
+
+	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"

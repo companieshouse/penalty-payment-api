@@ -3,8 +3,9 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/companieshouse/chs.go/log"
 	"net/http"
+
+	"github.com/companieshouse/chs.go/log"
 )
 
 // WriteJSON writes the interface as a json string with status of 200.

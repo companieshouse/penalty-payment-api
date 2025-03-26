@@ -2,8 +2,9 @@ package service
 
 import (
 	"fmt"
-	"github.com/companieshouse/penalty-payment-api/penalty_payments/transformers"
 	"net/http"
+
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/transformers"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"

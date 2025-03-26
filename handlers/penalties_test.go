@@ -3,10 +3,11 @@ package handlers
 import (
 	"context"
 	"errors"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"

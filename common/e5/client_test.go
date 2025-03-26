@@ -1,9 +1,10 @@
 package e5
 
 import (
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"net/http"
 	"testing"
+
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"gopkg.in/go-playground/validator.v9"
 

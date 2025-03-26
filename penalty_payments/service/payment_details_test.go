@@ -1,12 +1,13 @@
 package service
 
 import (
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"

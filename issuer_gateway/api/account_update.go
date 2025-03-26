@@ -1,9 +1,10 @@
 package api
 
 import (
+	"strconv"
+
 	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
-	"strconv"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"

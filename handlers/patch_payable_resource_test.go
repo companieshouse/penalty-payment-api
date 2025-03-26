@@ -5,13 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/companieshouse/penalty-payment-api/common/dao"
-	"github.com/companieshouse/penalty-payment-api/common/e5"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/companieshouse/penalty-payment-api/common/dao"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"

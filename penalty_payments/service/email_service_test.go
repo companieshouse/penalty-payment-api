@@ -2,9 +2,10 @@ package service
 
 import (
 	"errors"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"net/http"
 	"testing"
+
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"github.com/companieshouse/chs.go/avro"
 	"github.com/companieshouse/chs.go/avro/schema"

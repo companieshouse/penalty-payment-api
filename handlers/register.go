@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/interceptors"
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/service"
-	"net/http"
 
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/gorilla/mux"
