@@ -15,7 +15,7 @@ import (
 )
 
 func serveGetPaymentDetailsHandler(payableResource *models.PayableResource) *httptest.ResponseRecorder {
-	path := "/company/12345/penalties/late-filing/payable/321/penalties"
+	path := "/company/12345/penalties/payable/321"
 	req := httptest.NewRequest(http.MethodGet, path, nil)
 	res := httptest.NewRecorder()
 

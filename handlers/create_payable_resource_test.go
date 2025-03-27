@@ -27,7 +27,7 @@ import (
 var companyNumber = "10000024"
 
 func serveCreatePayableResourceHandler(body []byte, service dao.Service, withAuthUserDetails bool) *httptest.ResponseRecorder {
-	template := "/company/%s/penalties/late-filing/payable"
+	template := "/company/%s/penalties/payable"
 	path := fmt.Sprintf(template, companyNumber)
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	res := httptest.NewRecorder()
