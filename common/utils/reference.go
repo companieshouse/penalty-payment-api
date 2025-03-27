@@ -44,14 +44,14 @@ func GenerateEtag() (string, error) {
 	return sha1Hash, nil
 }
 
-// GetCompanyNumberFromVars returns the company number from the supplied request vars.
-func GetCompanyNumberFromVars(vars map[string]string) (string, error) {
-	companyNumber := vars["company_number"]
-	if len(companyNumber) == 0 {
-		return "", fmt.Errorf("company number not supplied")
+// GetCustomerCodeFromVars returns the customer code from the supplied request vars.
+func GetCustomerCodeFromVars(vars map[string]string) (string, error) {
+	customerCode := vars["customer_code"]
+	if len(customerCode) == 0 {
+		return "", fmt.Errorf("customer code not supplied")
 	}
 
-	return strings.ToUpper(companyNumber), nil
+	return strings.ToUpper(customerCode), nil
 }
 
 // GetCompanyCode gets the company code from the penalty reference type

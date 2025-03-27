@@ -31,7 +31,7 @@ func (transactionType TransactionType) String() string {
 }
 
 var getTransactions = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, client *e5.Client) (*e5.GetTransactionsResponse, error) {
-	return client.GetTransactions(&e5.GetTransactionsInput{CompanyNumber: companyNumber, CompanyCode: companyCode})
+	return client.GetTransactions(&e5.GetTransactionsInput{CustomerCode: companyNumber, CompanyCode: companyCode})
 }
 
 // GetPenalties is a function that:

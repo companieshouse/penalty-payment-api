@@ -42,7 +42,7 @@ func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.Pen
 			return
 		}
 
-		companyNumber := r.Context().Value(config.CompanyNumber).(string)
+		customerCode := r.Context().Value(config.CustomerCode).(string)
 
 		companyCode, err := getCompanyCodeFromTransaction(request.Transactions)
 		if err != nil {
@@ -52,13 +52,13 @@ func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.Pen
 			return
 		}
 
-		request.CompanyNumber = strings.ToUpper(companyNumber)
+		request.CustomerCode = strings.ToUpper(customerCode)
 		request.CreatedBy = userDetails.(authentication.AuthUserDetails)
 
 		// Ensure that the transactions in the request are valid payable penalties that exist in E5
 		var payablePenalties []models.TransactionItem
 		for _, transaction := range request.Transactions {
-			payablePenalty, err := api.PayablePenalty(request.CompanyNumber, companyCode,
+			payablePenalty, err := api.PayablePenalty(request.CustomerCode, companyCode,
 				transaction, penaltyDetailsMap, allowedTransactionMap)
 			if err != nil {
 				log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))

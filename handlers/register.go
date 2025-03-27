@@ -41,7 +41,7 @@ func Register(mainRouter *mux.Router, cfg *config.Config, daoService dao.Service
 	// only oauth2 users can create payable resources
 	oauth2OnlyInterceptor := &authentication.OAuth2OnlyAuthenticationInterceptor{
 		StrictPaths: map[string][]string{
-			"/company/{company_number}/penalties/payable": {http.MethodPost},
+			"/company/{customer_code}/penalties/payable": {http.MethodPost},
 		},
 	}
 
@@ -55,7 +55,7 @@ func Register(mainRouter *mux.Router, cfg *config.Config, daoService dao.Service
 	mainRouter.HandleFunc("/penalty-payment-api/healthcheck", healthCheck).Methods(http.MethodGet).Name("healthcheck")
 	mainRouter.HandleFunc("/penalty-payment-api/healthcheck/finance-system", HandleHealthCheckFinanceSystem).Methods(http.MethodGet).Name("healthcheck-finance-system")
 
-	appRouter := mainRouter.PathPrefix("/company/{company_number}").Subrouter()
+	appRouter := mainRouter.PathPrefix("/company/{customer_code}").Subrouter()
 	appRouter.HandleFunc("/penalties/late-filing", HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties-legacy")
 	appRouter.HandleFunc("/penalties/{penalty_reference_type}", HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties")
 	appRouter.Handle("/penalties/payable", CreatePayableResourceHandler(daoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodPost).Name("create-payable")

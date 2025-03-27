@@ -85,7 +85,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
-	companyName, err := getCompanyName(payableResource.CompanyNumber, req)
+	companyName, err := getCompanyName(payableResource.CustomerCode, req)
 	if err != nil {
 		err = fmt.Errorf("error getting company name: [%v]", err)
 		return nil, err
@@ -102,7 +102,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	}
 
 	transaction := payableResource.Transactions[0]
-	payablePenalty, err := getPayablePenalty(payableResource.CompanyNumber, companyCode, transaction,
+	payablePenalty, err := getPayablePenalty(payableResource.CustomerCode, companyCode, transaction,
 		penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)

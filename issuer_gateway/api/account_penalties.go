@@ -12,23 +12,23 @@ import (
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 )
 
-var getTransactions = func(companyNumber string, companyCode string, client *e5.Client) (*e5.GetTransactionsResponse, error) {
-	return client.GetTransactions(&e5.GetTransactionsInput{CompanyNumber: companyNumber, CompanyCode: companyCode})
+var getTransactions = func(customerCode string, companyCode string, client *e5.Client) (*e5.GetTransactionsResponse, error) {
+	return client.GetTransactions(&e5.GetTransactionsInput{CustomerCode: customerCode, CompanyCode: companyCode})
 }
 var getConfig = config.Get
 var generateTransactionList = private.GenerateTransactionListFromE5Response
 
 // AccountPenalties is a function that:
-// 1. makes a request to e5 to get a list of transactions for the specified company
+// 1. makes a request to e5 to get a list of transactions for the specified customer
 // 2. takes the results of this request and maps them to a format that the penalty-payment-web can consume
-func AccountPenalties(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
+func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, services.ResponseType, error) {
 	cfg, err := getConfig()
 	if err != nil {
 		return nil, services.Error, nil
 	}
 	client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
-	e5Response, err := getTransactions(companyNumber, companyCode, client)
+	e5Response, err := getTransactions(customerCode, companyCode, client)
 
 	if err != nil {
 		log.Error(fmt.Errorf("error getting transaction list: [%v]", err))
@@ -45,6 +45,6 @@ func AccountPenalties(companyNumber string, companyCode string, penaltyDetailsMa
 		return nil, services.Error, err
 	}
 
-	log.Info("Completed AccountPenalties request and mapped to CH penalty transactions", log.Data{"company_number": companyNumber})
+	log.Info("Completed AccountPenalties request and mapped to CH penalty transactions", log.Data{"customer_code": customerCode, "company_code": companyCode})
 	return generatedTransactionListFromE5Response, services.Success, nil
 }

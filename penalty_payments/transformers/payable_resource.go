@@ -31,17 +31,17 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 	}
 	format := "/company/%s/penalties/payable/%s"
 
-	self := fmt.Sprintf(format, req.CompanyNumber, reference)
+	self := fmt.Sprintf(format, req.CustomerCode, reference)
 
 	paymentLinkFormat := "%s/payment"
 	paymentLink := fmt.Sprintf(paymentLinkFormat, self)
 
 	resumeJourneyLinkFormat := "/pay-penalty/company/%s/penalty/%s/view-penalties"
-	resumeJourneyLink := fmt.Sprintf(resumeJourneyLinkFormat, req.CompanyNumber, req.Transactions[0].TransactionID) // Assumes there is only one transaction
+	resumeJourneyLink := fmt.Sprintf(resumeJourneyLinkFormat, req.CustomerCode, req.Transactions[0].TransactionID) // Assumes there is only one transaction
 
 	createdAt := time.Now().Truncate(time.Millisecond)
 	dao := &models.PayableResourceDao{
-		CustomerCode: req.CompanyNumber,
+		CustomerCode: req.CustomerCode,
 		PayableRef:   reference,
 		Data: models.PayableResourceDataDao{
 			Etag:         etag,
@@ -92,14 +92,14 @@ func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.P
 	}
 
 	payable := models.PayableResource{
-		CompanyNumber: payableDao.CustomerCode,
-		Reference:     payableDao.PayableRef,
-		Transactions:  transactions,
-		Etag:          payableDao.Data.Etag,
-		CreatedAt:     payableDao.Data.CreatedAt,
-		CreatedBy:     models.CreatedBy(payableDao.Data.CreatedBy),
-		Links:         models.PayableResourceLinks(payableDao.Data.Links),
-		Payment:       models.Payment(payableDao.Data.Payment),
+		CustomerCode: payableDao.CustomerCode,
+		Reference:    payableDao.PayableRef,
+		Transactions: transactions,
+		Etag:         payableDao.Data.Etag,
+		CreatedAt:    payableDao.Data.CreatedAt,
+		CreatedBy:    models.CreatedBy(payableDao.Data.CreatedBy),
+		Links:        models.PayableResourceLinks(payableDao.Data.Links),
+		Payment:      models.Payment(payableDao.Data.Payment),
 	}
 	return &payable
 }
@@ -133,7 +133,7 @@ func PayableResourceToPaymentDetails(payable *models.PayableResource,
 		PaidAt:           payable.Payment.PaidAt,
 		PaymentReference: payable.Payment.Reference,
 		Status:           payable.Payment.Status,
-		CompanyNumber:    payable.CompanyNumber,
+		CustomerCode:     payable.CustomerCode,
 		Items:            costs,
 	}
 	return &payment

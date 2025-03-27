@@ -19,16 +19,16 @@ import (
 var getCompanyCode = func(penaltyReferenceType string) (string, error) {
 	return utils.GetCompanyCode(penaltyReferenceType)
 }
-var accountPenalties = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, services.ResponseType, error) {
-	return api.AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
+var accountPenalties = func(customerCode string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, services.ResponseType, error) {
+	return api.AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 }
 
-// HandleGetPenalties retrieves the penalty details for the supplied company number from e5
+// HandleGetPenalties retrieves the penalty details for the supplied customer code from e5
 func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.InfoR(req, "start GET penalties request from e5")
 
-		companyNumber := req.Context().Value(config.CompanyNumber).(string)
+		customerCode := req.Context().Value(config.CustomerCode).(string)
 
 		// Determine the CompanyCode from the penaltyReferenceType which should be on the path
 		vars := mux.Vars(req)
@@ -43,7 +43,7 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTran
 		}
 
 		// Call service layer to handle request to E5
-		transactionListResponse, responseType, err := accountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
+		transactionListResponse, responseType, err := accountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 		if err != nil {
 			log.ErrorR(req, fmt.Errorf("error calling e5 to get transactions: %v", err))
 			switch responseType {
@@ -67,6 +67,6 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTran
 			log.ErrorR(req, fmt.Errorf("error writing response: %v", err))
 			return
 		}
-		log.InfoR(req, "Successfully GET penalties from e5", log.Data{"company_number": companyNumber})
+		log.InfoR(req, "Successfully GET penalties from e5", log.Data{"customer_code": customerCode})
 	}
 }

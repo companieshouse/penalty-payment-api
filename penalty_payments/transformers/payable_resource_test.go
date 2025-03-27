@@ -28,7 +28,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 
 	Convey("self link is constructed correctly", t, func() {
 		req := &models.PayableRequest{
-			CompanyNumber: "00006400",
+			CustomerCode: "00006400",
 			Transactions: []models.TransactionItem{
 				{TransactionID: "123"},
 			},
@@ -38,7 +38,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 		// ensure a reference is generated for the next assertion
 		So(dao.PayableRef, ShouldHaveLength, 10)
 
-		expected := fmt.Sprintf("/company/%s/penalties/payable/%s", req.CompanyNumber, dao.PayableRef)
+		expected := fmt.Sprintf("/company/%s/penalties/payable/%s", req.CustomerCode, dao.PayableRef)
 		So(dao.Data.Links.Self, ShouldContainSubstring, expected)
 		So(dao.Data.Links.ResumeJourney, ShouldEqual, "/pay-penalty/company/00006400/penalty/123/view-penalties")
 	})
@@ -103,7 +103,7 @@ func TestUnitPayableResourceDBToPayableResource(t *testing.T) {
 
 		response := PayableResourceDBToRequest(dao)
 
-		So(response.CompanyNumber, ShouldEqual, dao.CustomerCode)
+		So(response.CustomerCode, ShouldEqual, dao.CustomerCode)
 		So(response.Reference, ShouldEqual, dao.PayableRef)
 		So(response.Etag, ShouldEqual, dao.Data.Etag)
 		So(response.CreatedAt, ShouldEqual, dao.Data.CreatedAt)
@@ -159,10 +159,10 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 			Convey(tc.description, func() {
 				t := time.Now().Truncate(time.Millisecond)
 				payable := &models.PayableResource{
-					CompanyNumber: "12345678",
-					Reference:     "1234",
-					Etag:          "qwertyetag1234",
-					CreatedAt:     &t,
+					CustomerCode: "12345678",
+					Reference:    "1234",
+					Etag:         "qwertyetag1234",
+					CreatedAt:    &t,
 					CreatedBy: models.CreatedBy{
 						ID:       "uz3r_1d",
 						Email:    "test@user.com",
@@ -213,7 +213,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				So(response.Links.Self, ShouldEqual, payable.Links.Payment)
 				So(response.Links.Resource, ShouldEqual, payable.Links.Self)
 				So(response.Status, ShouldEqual, payable.Payment.Status)
-				So(response.CompanyNumber, ShouldEqual, payable.CompanyNumber)
+				So(response.CustomerCode, ShouldEqual, payable.CustomerCode)
 				So(len(response.Items), ShouldEqual, 1)
 				So(response.Items[0].Amount, ShouldEqual, fmt.Sprintf("%g", payable.Transactions[0].Amount))
 				So(response.Items[0].AvailablePaymentMethods, ShouldResemble, []string{"credit-card"})

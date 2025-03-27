@@ -31,8 +31,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 		t := time.Now().Truncate(time.Millisecond)
 
 		payable := models.PayableResource{
-			CompanyNumber: "12345678",
-			Reference:     "abcdef",
+			CustomerCode: "12345678",
+			Reference:    "abcdef",
 			Links: models.PayableResourceLinks{
 				Self:    "/company/12345678/penalties/abcdef",
 				Payment: "/company/12345678/penalties/abcdef/payment",
@@ -98,8 +98,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				t := time.Now().Truncate(time.Millisecond)
 
 				payable := models.PayableResource{
-					CompanyNumber: "12345678",
-					Reference:     "abcdef",
+					CustomerCode: "12345678",
+					Reference:    "abcdef",
 					Links: models.PayableResourceLinks{
 						Self:    "/company/12345678/penalties/abcdef",
 						Payment: "/company/12345678/penalties/abcdef/payment",
@@ -146,7 +146,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				So(paymentDetails.Links.Self, ShouldEqual, "/company/12345678/penalties/abcdef/payment")
 				So(paymentDetails.Links.Resource, ShouldEqual, "/company/12345678/penalties/abcdef")
 				So(paymentDetails.Status, ShouldEqual, "pending")
-				So(paymentDetails.CompanyNumber, ShouldEqual, "12345678")
+				So(paymentDetails.CustomerCode, ShouldEqual, "12345678")
 				So(paymentDetails.Items[0], ShouldResemble, expectedCost)
 				So(responseType, ShouldEqual, services.Success)
 				So(err, ShouldBeNil)
@@ -193,8 +193,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				t := time.Now().Truncate(time.Millisecond)
 
 				payable := models.PayableResource{
-					CompanyNumber: "12345678",
-					Reference:     "abcdef",
+					CustomerCode: "12345678",
+					Reference:    "abcdef",
 					Links: models.PayableResourceLinks{
 						Self:    "/company/12345678/penalties/abcdef",
 						Payment: "/company/12345678/penalties/abcdef/payment",
@@ -244,7 +244,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				So(paymentDetails.Links.Self, ShouldEqual, "/company/12345678/penalties/abcdef/payment")
 				So(paymentDetails.Links.Resource, ShouldEqual, "/company/12345678/penalties/abcdef")
 				So(paymentDetails.Status, ShouldEqual, "paid")
-				So(paymentDetails.CompanyNumber, ShouldEqual, "12345678")
+				So(paymentDetails.CustomerCode, ShouldEqual, "12345678")
 				So(paymentDetails.Items[0], ShouldResemble, expectedCost)
 				So(responseType, ShouldEqual, services.Success)
 				So(err, ShouldBeNil)

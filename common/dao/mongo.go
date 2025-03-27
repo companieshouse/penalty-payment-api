@@ -65,10 +65,10 @@ type MongoService struct {
 }
 
 // SaveE5Error will update the resource by flagging an error in e5 for a particular action
-func (m *MongoService) SaveE5Error(companyNumber, reference string, action e5.Action) error {
-	dao, err := m.GetPayableResource(companyNumber, reference)
+func (m *MongoService) SaveE5Error(customerCode, reference string, action e5.Action) error {
+	dao, err := m.GetPayableResource(customerCode, reference)
 	if err != nil {
-		log.Error(err, log.Data{"company_number": companyNumber, "payable_reference": reference})
+		log.Error(err, log.Data{"customer_code": customerCode, "payable_reference": reference})
 		return err
 	}
 

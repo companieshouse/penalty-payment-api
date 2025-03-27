@@ -18,12 +18,13 @@ import (
 var req = &http.Request{}
 var penaltyDetailsMap = &config.PenaltyDetailsMap{}
 var allowedTransactionsMap = &models.AllowedTransactionMap{}
+var customerCode = "NI123456"
 var transactionItem = models.TransactionItem{
 	TransactionID: "A1234567",
 }
 var payableResource = models.PayableResource{
-	CompanyNumber: companyNumber,
-	Transactions:  []models.TransactionItem{transactionItem},
+	CustomerCode: customerCode,
+	Transactions: []models.TransactionItem{transactionItem},
 }
 
 func TestUnitSendEmailKafkaMessage(t *testing.T) {
@@ -192,7 +193,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetPayablePenalty := func(companyNumber string, companyCode string, t models.TransactionItem,
+			mockedGetPayablePenalty := func(customerCode string, companyCode string, t models.TransactionItem,
 				penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionItem, error) {
 
 				return &models.TransactionItem{TransactionID: "A1234567", Reason: "Late filing of accounts"}, nil
@@ -216,7 +217,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetPayablePenalty := func(companyNumber string, companyCode string, t models.TransactionItem,
+			mockedGetPayablePenalty := func(customerCode string, companyCode string, t models.TransactionItem,
 				penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionItem, error) {
 
 				return &models.TransactionItem{

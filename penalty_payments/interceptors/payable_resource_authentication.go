@@ -24,7 +24,7 @@ type PayableAuthenticationInterceptor struct {
 // PayableAuthenticationIntercept checks that the user is authenticated for the payable_resource
 func (payableAuthInterceptor *PayableAuthenticationInterceptor) PayableAuthenticationIntercept(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		companyNumber, payableID, identityType, err := preCheckRequest(w, r)
+		customerCode, payableID, identityType, err := preCheckRequest(w, r)
 		if err {
 			return
 		}
@@ -50,7 +50,7 @@ func (payableAuthInterceptor *PayableAuthenticationInterceptor) PayableAuthentic
 		}
 
 		payableResource, ret := writeHeader(w, r, payableAuthInterceptor,
-			companyNumber, payableID)
+			customerCode, payableID)
 		if ret {
 			return
 		}
@@ -67,7 +67,7 @@ func (payableAuthInterceptor *PayableAuthenticationInterceptor) PayableAuthentic
 
 		// Set up debug map for logging at each exit point
 		debugMap := log.Data{
-			"company_number":                             companyNumber,
+			"customer_code":                              customerCode,
 			"payable_resource_id":                        payableID,
 			"auth_user_is_payable_resource_creator":      authUserIsPayableResourceCreator,
 			"auth_user_has_payable_resource_lookup_role": authUserHasPenaltyLookupRole,
@@ -84,11 +84,11 @@ func (payableAuthInterceptor *PayableAuthenticationInterceptor) PayableAuthentic
 }
 
 func preCheckRequest(w http.ResponseWriter, r *http.Request) (string, string, string, bool) {
-	// Check for a company_number and payable_id in request
+	// Check for a customer_code and payable_id in request
 	vars := mux.Vars(r)
-	companyNumber := strings.ToUpper(vars["company_number"])
-	if companyNumber == "" {
-		log.InfoR(r, "PayableAuthenticationInterceptor error: no company_number")
+	customerCode := strings.ToUpper(vars["customer_code"])
+	if customerCode == "" {
+		log.InfoR(r, "PayableAuthenticationInterceptor error: no customer_code")
 		w.WriteHeader(http.StatusBadRequest)
 		return "", "", "", true
 	}
@@ -106,7 +106,7 @@ func preCheckRequest(w http.ResponseWriter, r *http.Request) (string, string, st
 		w.WriteHeader(http.StatusUnauthorized)
 		return "", "", "", true
 	}
-	return companyNumber, payableID, identityType, false
+	return customerCode, payableID, identityType, false
 }
 
 func checkAllowedThrough(w http.ResponseWriter,
@@ -146,10 +146,10 @@ func checkAllowedThrough(w http.ResponseWriter,
 func writeHeader(w http.ResponseWriter,
 	r *http.Request,
 	payableAuthInterceptor *PayableAuthenticationInterceptor,
-	companyNumber string,
+	customerCode string,
 	payableID string) (*models.PayableResource, bool) {
 	// Get the payable resource from the ID in request
-	payableResource, responseType, err := payableAuthInterceptor.Service.GetPayableResource(r, companyNumber, payableID)
+	payableResource, responseType, err := payableAuthInterceptor.Service.GetPayableResource(r, customerCode, payableID)
 	if err != nil {
 		log.ErrorR(r, fmt.Errorf("PayableAuthenticationInterceptor error when retrieving payable_resource: [%v]", err), log.Data{"service_response_type": responseType.String()})
 		switch responseType {
@@ -163,7 +163,7 @@ func writeHeader(w http.ResponseWriter,
 	}
 
 	if responseType == services.NotFound {
-		log.InfoR(r, "PayableAuthenticationInterceptor not found", log.Data{"payable_id": payableID, "company_number": companyNumber})
+		log.InfoR(r, "PayableAuthenticationInterceptor not found", log.Data{"payable_id": payableID, "customer_code": customerCode})
 		w.WriteHeader(http.StatusNotFound)
 		return nil, true
 	}

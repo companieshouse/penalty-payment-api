@@ -376,8 +376,8 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
-				Reference:     "123",
-				CompanyNumber: "10000024",
+				Reference:    "123",
+				CustomerCode: "10000024",
 				Transactions: []models.TransactionItem{
 					{TransactionID: "A1234567", Amount: 150},
 				},

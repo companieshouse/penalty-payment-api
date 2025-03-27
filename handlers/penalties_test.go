@@ -41,7 +41,7 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 		accountPenalties = mockedAccountPenalties
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, config.CompanyNumber, "NI123546")
+		ctx = context.WithValue(ctx, config.CustomerCode, "NI123546")
 
 		req := httptest.NewRequest("GET", "/penalties", nil)
 		rr := httptest.NewRecorder()
