@@ -31,17 +31,17 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 	}
 	format := "/company/%s/penalties/payable/%s"
 
-	self := fmt.Sprintf(format, req.CompanyNumber, reference)
+	self := fmt.Sprintf(format, req.CustomerCode, reference)
 
 	paymentLinkFormat := "%s/payment"
 	paymentLink := fmt.Sprintf(paymentLinkFormat, self)
 
 	resumeJourneyLinkFormat := "/pay-penalty/company/%s/penalty/%s/view-penalties"
-	resumeJourneyLink := fmt.Sprintf(resumeJourneyLinkFormat, req.CompanyNumber, req.Transactions[0].TransactionID) // Assumes there is only one transaction
+	resumeJourneyLink := fmt.Sprintf(resumeJourneyLinkFormat, req.CustomerCode, req.Transactions[0].TransactionID) // Assumes there is only one transaction
 
 	createdAt := time.Now().Truncate(time.Millisecond)
 	dao := &models.PayableResourceDao{
-		CustomerCode: req.CompanyNumber,
+		CustomerCode: req.CustomerCode,
 		PayableRef:   reference,
 		Data: models.PayableResourceDataDao{
 			Etag:         etag,

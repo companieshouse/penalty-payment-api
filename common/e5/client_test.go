@@ -30,10 +30,10 @@ func TestUnitClient_CreatePayment(t *testing.T) {
 
 	Convey("creating a payment", t, func() {
 		input := &CreatePaymentInput{
-			CompanyCode:   utils.LateFilingPenalty,
-			CompanyNumber: "1000024",
-			PaymentID:     "1234",
-			TotalValue:    100,
+			CompanyCode:  utils.LateFilingPenalty,
+			CustomerCode: "1000024",
+			PaymentID:    "1234",
+			TotalValue:   100,
 			Transactions: []*CreatePaymentTransaction{
 				{
 					Reference: "1234",
@@ -151,7 +151,7 @@ func TestUnitClient_GetTransactions(t *testing.T) {
 			responder := httpmock.NewStringResponder(http.StatusOK, e5EmptyResponse)
 			httpmock.RegisterResponder(http.MethodGet, url, responder)
 
-			r, err := e5.GetTransactions(&GetTransactionsInput{CompanyNumber: "10000024", CompanyCode: "LP"})
+			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"})
 
 			So(err, ShouldBeNil)
 			So(r.Transactions, ShouldBeEmpty)
@@ -165,7 +165,7 @@ func TestUnitClient_GetTransactions(t *testing.T) {
 			responder := httpmock.NewStringResponder(http.StatusOK, e5TransactionResponse)
 			httpmock.RegisterResponder(http.MethodGet, url, responder)
 
-			r, err := e5.GetTransactions(&GetTransactionsInput{CompanyNumber: "10000024", CompanyCode: "LP"})
+			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"})
 
 			So(err, ShouldBeNil)
 			So(r.Transactions, ShouldHaveLength, 1)
@@ -178,7 +178,7 @@ func TestUnitClient_GetTransactions(t *testing.T) {
 			responder := httpmock.NewStringResponder(http.StatusBadRequest, e5ValidationError)
 			httpmock.RegisterResponder(http.MethodGet, url, responder)
 
-			r, err := e5.GetTransactions(&GetTransactionsInput{CompanyNumber: "10000024", CompanyCode: "LP"})
+			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"})
 
 			So(r, ShouldBeNil)
 			So(err, ShouldBeError, ErrE5BadRequest)

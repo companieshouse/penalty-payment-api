@@ -44,44 +44,44 @@ func TestUnitGenerateEtag(t *testing.T) {
 	})
 }
 
-func TestUnitGetCompanyNumber(t *testing.T) {
-	Convey("Get Company Number", t, func() {
+func TestUnitGetCustomerCode(t *testing.T) {
+	Convey("Get customer code", t, func() {
 		testCases := []struct {
-			name                  string
-			input                 map[string]string
-			expectedCompanyNumber string
-			expectedError         bool
+			name                 string
+			input                map[string]string
+			expectedCustomerCode string
+			expectedError        bool
 		}{
 			{
-				name:                  "Successful company number",
-				input:                 map[string]string{"company_number": "NI123546"},
-				expectedCompanyNumber: "NI123546",
-				expectedError:         false,
+				name:                 "Successful customer code",
+				input:                map[string]string{"customer_code": "NI123546"},
+				expectedCustomerCode: "NI123546",
+				expectedError:        false,
 			},
 			{
-				name:                  "Successful lower case company number",
-				input:                 map[string]string{"company_number": "nI123546"},
-				expectedCompanyNumber: "NI123546",
-				expectedError:         false,
+				name:                 "Successful lower case customer code",
+				input:                map[string]string{"customer_code": "nI123546"},
+				expectedCustomerCode: "NI123546",
+				expectedError:        false,
 			},
 			{
-				name:                  "Empty company number",
-				input:                 map[string]string{},
-				expectedCompanyNumber: "",
-				expectedError:         true,
+				name:                 "Empty customer code",
+				input:                map[string]string{},
+				expectedCustomerCode: "",
+				expectedError:        true,
 			},
 		}
 
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
-				companyNumber, err := GetCompanyNumberFromVars(tc.input)
-				Convey(tc.expectedCompanyNumber, func() {
+				companyNumber, err := GetCustomerCodeFromVars(tc.input)
+				Convey(tc.expectedCustomerCode, func() {
 					if tc.expectedError {
 						So(err, ShouldNotBeNil)
 					} else {
 						So(err, ShouldBeNil)
 					}
-					So(companyNumber, ShouldEqual, tc.expectedCompanyNumber)
+					So(companyNumber, ShouldEqual, tc.expectedCustomerCode)
 				})
 			})
 		}

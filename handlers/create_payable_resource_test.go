@@ -46,7 +46,7 @@ func testContext(withAuthUserDetails bool) context.Context {
 		ctx = context.WithValue(ctx, authentication.ContextKeyUserDetails, nil)
 	}
 
-	ctx = context.WithValue(ctx, config.CompanyNumber, companyNumber)
+	ctx = context.WithValue(ctx, config.CustomerCode, companyNumber)
 	return ctx
 }
 
@@ -236,8 +236,8 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
 
 		body, _ := json.Marshal(&models.PayableRequest{
-			CompanyNumber: "10000024",
-			CreatedBy:     authentication.AuthUserDetails{},
+			CustomerCode: "10000024",
+			CreatedBy:    authentication.AuthUserDetails{},
 		})
 		res := serveCreatePayableResourceHandler(body, mocks.NewMockService(mockCtrl), true)
 
@@ -256,8 +256,8 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		mockService := mocks.NewMockService(mockCtrl)
 
 		body, _ := json.Marshal(&models.PayableRequest{
-			CompanyNumber: "10000024",
-			CreatedBy:     authentication.AuthUserDetails{},
+			CustomerCode: "10000024",
+			CreatedBy:    authentication.AuthUserDetails{},
 			Transactions: []models.TransactionItem{
 				{TransactionID: "A1234567", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
 				{TransactionID: "A0378421", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
@@ -284,8 +284,8 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		mockService.EXPECT().CreatePayableResource(gomock.Any()).Return(errors.New("any error"))
 
 		body, _ := json.Marshal(&models.PayableRequest{
-			CompanyNumber: "10000024",
-			CreatedBy:     authentication.AuthUserDetails{},
+			CustomerCode: "10000024",
+			CreatedBy:    authentication.AuthUserDetails{},
 			Transactions: []models.TransactionItem{
 				{TransactionID: "A1234567", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
 			},
@@ -338,8 +338,8 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 				mockService.EXPECT().CreatePayableResource(gomock.Any()).Return(nil)
 
 				body, _ := json.Marshal(&models.PayableRequest{
-					CompanyNumber: "10000024",
-					CreatedBy:     authentication.AuthUserDetails{},
+					CustomerCode: "10000024",
+					CreatedBy:    authentication.AuthUserDetails{},
 					Transactions: []models.TransactionItem{
 						{TransactionID: tc.penaltyReference, Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
 					},

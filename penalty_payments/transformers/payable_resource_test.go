@@ -28,7 +28,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 
 	Convey("self link is constructed correctly", t, func() {
 		req := &models.PayableRequest{
-			CompanyNumber: "00006400",
+			CustomerCode: "00006400",
 			Transactions: []models.TransactionItem{
 				{TransactionID: "123"},
 			},
@@ -38,7 +38,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 		// ensure a reference is generated for the next assertion
 		So(dao.PayableRef, ShouldHaveLength, 10)
 
-		expected := fmt.Sprintf("/company/%s/penalties/payable/%s", req.CompanyNumber, dao.PayableRef)
+		expected := fmt.Sprintf("/company/%s/penalties/payable/%s", req.CustomerCode, dao.PayableRef)
 		So(dao.Data.Links.Self, ShouldContainSubstring, expected)
 		So(dao.Data.Links.ResumeJourney, ShouldEqual, "/pay-penalty/company/00006400/penalty/123/view-penalties")
 	})
