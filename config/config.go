@@ -23,6 +23,7 @@ type Config struct {
 	MongoDBURL                 string       `env:"MONGODB_URL"                    flag:"mongodb-url"                     flagDesc:"MongoDB server URL"`
 	Database                   string       `env:"PPS_MONGODB_DATABASE"           flag:"mongodb-database"                flagDesc:"MongoDB database for data"`
 	MongoCollection            string       `env:"PPS_MONGODB_COLLECTION"         flag:"mongodb-collection"              flagDesc:"The name of the mongodb collection"`
+	MongoE5CacheCollection     string       `env:"PPS_MONGODB_E5CACHE_COLLECTION" flag:"mongodb-e5-cache"                 flagDesc:"The name of the mongodb E5 cache"`
 	BrokerAddr                 []string     `env:"KAFKA_BROKER_ADDR"              flag:"broker-addr"                     flagDesc:"Kafka broker address"`
 	SchemaRegistryURL          string       `env:"SCHEMA_REGISTRY_URL"            flag:"schema-registry-url"             flagDesc:"Schema registry url"`
 	CHSURL                     string       `env:"CHS_URL"                        flag:"chs-url"                         flagDesc:"CHS URL"`
