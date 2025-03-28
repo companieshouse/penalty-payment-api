@@ -78,10 +78,10 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			c := &e5.Client{}
 			p := validators.PaymentInformation{Amount: "150", PaymentID: "123"}
 			r := models.PayableResource{
-				Reference:    "123",
+				PayableRef:   "123",
 				CustomerCode: "10000024",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "123", Amount: 150},
+					{PenaltyRef: "123", Amount: 150},
 				},
 			}
 
@@ -107,10 +107,10 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			}
 
 			r := models.PayableResource{
-				Reference:    "123",
+				PayableRef:   "123",
 				CustomerCode: "10000024",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "123", Amount: 150},
+					{PenaltyRef: "123", Amount: 150},
 				},
 			}
 
@@ -137,10 +137,10 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			}
 
 			r := models.PayableResource{
-				Reference:    "123",
+				PayableRef:   "123",
 				CustomerCode: "10000024",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "123", Amount: 150},
+					{PenaltyRef: "123", Amount: 150},
 				},
 			}
 
@@ -164,10 +164,10 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			}
 
 			r := models.PayableResource{
-				Reference:    "123",
+				PayableRef:   "123",
 				CustomerCode: "10000024",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "123", Amount: 150},
+					{PenaltyRef: "123", Amount: 150},
 				},
 			}
 
@@ -214,10 +214,10 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			}
 
 			r := models.PayableResource{
-				Reference:    "123",
+				PayableRef:   "123",
 				CustomerCode: "10000024",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "123", Amount: 150},
+					{PenaltyRef: "123", Amount: 150},
 				},
 			}
 

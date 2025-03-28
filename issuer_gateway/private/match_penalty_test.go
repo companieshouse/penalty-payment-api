@@ -11,23 +11,23 @@ func TestUnitMatchPenalty(t *testing.T) {
 
 	companyNumber := "123"
 	transactionsToMatch := models.TransactionItem{
-		TransactionID: "121",
-		Type:          "penalty",
-		Amount:        150,
-		Reason:        "Failure to file a confirmation statement",
+		PenaltyRef: "121",
+		Type:       "penalty",
+		Amount:     150,
+		Reason:     "Failure to file a confirmation statement",
 	}
 	matchedPenalty := models.TransactionItem{
-		TransactionID: "121",
-		Amount:        150,
-		Type:          "penalty",
-		MadeUpDate:    "2017-06-30",
-		Reason:        "Failure to file a confirmation statement",
-		IsDCA:         false,
-		IsPaid:        false,
+		PenaltyRef: "121",
+		Amount:     150,
+		Type:       "penalty",
+		MadeUpDate: "2017-06-30",
+		Reason:     "Failure to file a confirmation statement",
+		IsDCA:      false,
+		IsPaid:     false,
 	}
 
 	testCases := []struct {
-		TransactionID  string
+		PenaltyRef     string
 		Type           string
 		MadeUpDate     string
 		Reason         string
@@ -38,19 +38,19 @@ func TestUnitMatchPenalty(t *testing.T) {
 		WantMatched    *models.TransactionItem
 		WantError      error
 	}{
-		{TransactionID: "120", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+		{PenaltyRef: "120", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
 			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionDoesNotExist},
-		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
 			OriginalAmount: 200, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionIsPartPaid},
-		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
 			OriginalAmount: 150, IsDCA: false, IsPaid: true, WantMatched: nil, WantError: ErrTransactionIsPaid},
-		{TransactionID: "121", Outstanding: 100, Type: "other", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+		{PenaltyRef: "121", Outstanding: 100, Type: "other", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
 			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionNotPayable},
-		{TransactionID: "121", Outstanding: 100, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+		{PenaltyRef: "121", Outstanding: 100, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
 			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionAmountMismatch},
-		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
 			OriginalAmount: 150, IsDCA: true, IsPaid: false, WantMatched: nil, WantError: ErrTransactionDCA},
-		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
 			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: &matchedPenalty, WantError: nil},
 	}
 
@@ -58,7 +58,7 @@ func TestUnitMatchPenalty(t *testing.T) {
 		for _, testCase := range testCases {
 			refTransactions := []models.TransactionListItem{
 				{
-					ID:             testCase.TransactionID,
+					ID:             testCase.PenaltyRef,
 					Type:           testCase.Type,
 					OriginalAmount: testCase.OriginalAmount,
 					Outstanding:    testCase.Outstanding,

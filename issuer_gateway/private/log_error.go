@@ -10,9 +10,9 @@ import (
 
 func LogE5Error(message string, originalError error, resource models.PayableResource, payment validators.PaymentInformation) {
 	log.Error(errors.New(message), log.Data{
-		"payable_reference": resource.Reference,
-		"payment_id":        payment.PaymentID,
-		"amount":            payment.Amount,
-		"error":             originalError,
+		"payable_ref": resource.PayableRef,
+		"payment_id":  payment.PaymentID,
+		"amount":      payment.Amount,
+		"error":       originalError,
 	})
 }

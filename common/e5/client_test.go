@@ -36,8 +36,8 @@ func TestUnitClient_CreatePayment(t *testing.T) {
 			TotalValue:   100,
 			Transactions: []*CreatePaymentTransaction{
 				{
-					Reference: "1234",
-					Value:     100,
+					TransactionReference: "1234",
+					Value:                100,
 				},
 			},
 		}

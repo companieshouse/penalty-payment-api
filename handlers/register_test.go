@@ -36,9 +36,9 @@ func TestUnitRegisterRoutes(t *testing.T) {
 		So(getPenaltiesPath, ShouldEqual, "/company/{customer_code}/penalties/{penalty_reference_type}")
 		So(getPenaltiesOriginalPath, ShouldEqual, "/company/{customer_code}/penalties/late-filing")
 		So(createPayablePath, ShouldEqual, "/company/{customer_code}/penalties/payable")
-		So(getPayablePath, ShouldEqual, "/company/{customer_code}/penalties/payable/{payable_id}")
-		So(getPaymentDetailsPath, ShouldEqual, "/company/{customer_code}/penalties/payable/{payable_id}/payment")
-		So(markAsPaidPath, ShouldEqual, "/company/{customer_code}/penalties/payable/{payable_id}/payment")
+		So(getPayablePath, ShouldEqual, "/company/{customer_code}/penalties/payable/{payable_ref}")
+		So(getPaymentDetailsPath, ShouldEqual, "/company/{customer_code}/penalties/payable/{payable_ref}/payment")
+		So(markAsPaidPath, ShouldEqual, "/company/{customer_code}/penalties/payable/{payable_ref}/payment")
 	})
 }
 

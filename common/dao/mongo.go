@@ -65,10 +65,10 @@ type MongoService struct {
 }
 
 // SaveE5Error will update the resource by flagging an error in e5 for a particular action
-func (m *MongoService) SaveE5Error(customerCode, reference string, action e5.Action) error {
-	dao, err := m.GetPayableResource(customerCode, reference)
+func (m *MongoService) SaveE5Error(customerCode, payableRef string, action e5.Action) error {
+	dao, err := m.GetPayableResource(customerCode, payableRef)
 	if err != nil {
-		log.Error(err, log.Data{"customer_code": customerCode, "payable_reference": reference})
+		log.Error(err, log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 		return err
 	}
 
@@ -76,8 +76,8 @@ func (m *MongoService) SaveE5Error(customerCode, reference string, action e5.Act
 	update := bson.D{
 		{
 			Key: "$set", Value: bson.D{
-				{Key: "e5_command_error", Value: string(action)},
-			},
+			{Key: "e5_command_error", Value: string(action)},
+		},
 		},
 	}
 
@@ -143,11 +143,11 @@ func (m *MongoService) UpdatePaymentDetails(dao *models.PayableResourceDao) erro
 	update := bson.D{
 		{
 			Key: "$set", Value: bson.D{
-				{Key: "data.payment.status", Value: dao.Data.Payment.Status},
-				{Key: "data.payment.reference", Value: dao.Data.Payment.Reference},
-				{Key: "data.payment.paid_at", Value: dao.Data.Payment.PaidAt},
-				{Key: "data.payment.amount", Value: dao.Data.Payment.Amount},
-			},
+			{Key: "data.payment.status", Value: dao.Data.Payment.Status},
+			{Key: "data.payment.reference", Value: dao.Data.Payment.Reference},
+			{Key: "data.payment.paid_at", Value: dao.Data.Payment.PaidAt},
+			{Key: "data.payment.amount", Value: dao.Data.Payment.Amount},
+		},
 		},
 	}
 

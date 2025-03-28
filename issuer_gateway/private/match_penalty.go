@@ -25,11 +25,11 @@ func MatchPenalty(referenceTransactions []models.TransactionListItem,
 
 	referenceTransactionsMap := mapTransactions(referenceTransactions)
 	transactionInfo := map[string]interface{}{
-		"transaction_ref": transactionToMatch.TransactionID,
-		"customer_code":   customerCode,
+		"penalty_ref":   transactionToMatch.PenaltyRef,
+		"customer_code": customerCode,
 	}
 
-	matched, ok := referenceTransactionsMap[transactionToMatch.TransactionID]
+	matched, ok := referenceTransactionsMap[transactionToMatch.PenaltyRef]
 	if !ok {
 		log.Info("disallowing paying for a transaction that does not exist in E5", transactionInfo)
 		return nil, ErrTransactionDoesNotExist
@@ -38,13 +38,13 @@ func MatchPenalty(referenceTransactions []models.TransactionListItem,
 	valid, err := validate(matched, transactionInfo, transactionToMatch)
 	if valid {
 		matchedPenalty := models.TransactionItem{
-			TransactionID: matched.ID,
-			Amount:        matched.Outstanding,
-			Type:          matched.Type,
-			MadeUpDate:    matched.MadeUpDate,
-			IsDCA:         matched.IsDCA,
-			IsPaid:        matched.IsPaid,
-			Reason:        matched.Reason,
+			PenaltyRef: matched.ID,
+			Amount:     matched.Outstanding,
+			Type:       matched.Type,
+			MadeUpDate: matched.MadeUpDate,
+			IsDCA:      matched.IsDCA,
+			IsPaid:     matched.IsPaid,
+			Reason:     matched.Reason,
 		}
 		return &matchedPenalty, nil
 	} else {

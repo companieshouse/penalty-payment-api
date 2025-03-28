@@ -32,7 +32,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		payable := models.PayableResource{
 			CustomerCode: "12345678",
-			Reference:    "abcdef",
+			PayableRef:   "abcdef",
 			Links: models.PayableResourceLinks{
 				Self:    "/company/12345678/penalties/abcdef",
 				Payment: "/company/12345678/penalties/abcdef/payment",
@@ -99,7 +99,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				payable := models.PayableResource{
 					CustomerCode: "12345678",
-					Reference:    "abcdef",
+					PayableRef:   "abcdef",
 					Links: models.PayableResourceLinks{
 						Self:    "/company/12345678/penalties/abcdef",
 						Payment: "/company/12345678/penalties/abcdef/payment",
@@ -112,9 +112,9 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 					},
 					Transactions: []models.TransactionItem{
 						{
-							Amount:        5,
-							Type:          "penalty",
-							TransactionID: "A1234567",
+							Amount:     5,
+							Type:       "penalty",
+							PenaltyRef: "A1234567",
 						},
 					},
 					Payment: models.Payment{
@@ -194,7 +194,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				payable := models.PayableResource{
 					CustomerCode: "12345678",
-					Reference:    "abcdef",
+					PayableRef:   "abcdef",
 					Links: models.PayableResourceLinks{
 						Self:    "/company/12345678/penalties/abcdef",
 						Payment: "/company/12345678/penalties/abcdef/payment",
@@ -207,9 +207,9 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 					},
 					Transactions: []models.TransactionItem{
 						{
-							Amount:        5,
-							Type:          "penalty",
-							TransactionID: "0987654321",
+							Amount:     5,
+							Type:       "penalty",
+							PenaltyRef: "0987654321",
 						},
 					},
 					Payment: models.Payment{

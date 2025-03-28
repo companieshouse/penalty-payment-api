@@ -24,11 +24,11 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var companyNumber = "10000024"
+var customerCode = "10000024"
 
 func serveCreatePayableResourceHandler(body []byte, service dao.Service, withAuthUserDetails bool) *httptest.ResponseRecorder {
 	template := "/company/%s/penalties/payable"
-	path := fmt.Sprintf(template, companyNumber)
+	path := fmt.Sprintf(template, customerCode)
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	res := httptest.NewRecorder()
 
@@ -46,7 +46,7 @@ func testContext(withAuthUserDetails bool) context.Context {
 		ctx = context.WithValue(ctx, authentication.ContextKeyUserDetails, nil)
 	}
 
-	ctx = context.WithValue(ctx, config.CustomerCode, companyNumber)
+	ctx = context.WithValue(ctx, config.CustomerCode, customerCode)
 	return ctx
 }
 
@@ -197,9 +197,9 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
 
 		body, _ := json.Marshal(&models.PayableRequest{})
-		companyNumber = ""
+		customerCode = ""
 		res := serveCreatePayableResourceHandler(body, mocks.NewMockService(mockCtrl), true)
-		companyNumber = "10000024"
+		customerCode = "10000024"
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
@@ -218,9 +218,9 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
 
 		body, _ := json.Marshal(&models.PayableRequest{})
-		companyNumber = ""
+		customerCode = ""
 		res := serveCreatePayableResourceHandler(body, mocks.NewMockService(mockCtrl), true)
-		companyNumber = "10000024"
+		customerCode = "10000024"
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
@@ -259,8 +259,8 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 			CustomerCode: "10000024",
 			CreatedBy:    authentication.AuthUserDetails{},
 			Transactions: []models.TransactionItem{
-				{TransactionID: "A1234567", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
-				{TransactionID: "A0378421", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
+				{PenaltyRef: "A1234567", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
+				{PenaltyRef: "A0378421", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
 			},
 		})
 
@@ -287,7 +287,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 			CustomerCode: "10000024",
 			CreatedBy:    authentication.AuthUserDetails{},
 			Transactions: []models.TransactionItem{
-				{TransactionID: "A1234567", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
+				{PenaltyRef: "A1234567", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
 			},
 		})
 
@@ -298,24 +298,24 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 
 	Convey("successfully creating a payable request", t, func() {
 		testCases := []struct {
-			name             string
-			companyCode      string
-			penaltyReference string
-			urlE5            string
-			e5Response       string
+			name        string
+			companyCode string
+			penaltyRef  string
+			urlE5       string
+			e5Response  string
 		}{
 			{
-				name:             "Late Filing",
-				companyCode:      utils.LateFilingPenalty,
-				penaltyReference: "A1234567",
+				name:        "Late Filing",
+				companyCode: utils.LateFilingPenalty,
+				penaltyRef:  "A1234567",
 				urlE5: "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" +
 					utils.LateFilingPenalty + "&fromDate=1990-01-01",
 				e5Response: e5ResponseLateFiling,
 			},
 			{
-				name:             "Sanctions",
-				companyCode:      utils.Sanctions,
-				penaltyReference: "P1234567",
+				name:        "Sanctions",
+				companyCode: utils.Sanctions,
+				penaltyRef:  "P1234567",
 				urlE5: "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" +
 					utils.Sanctions + "&fromDate=1990-01-01",
 				e5Response: e5ResponseSanctions,
@@ -341,7 +341,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 					CustomerCode: "10000024",
 					CreatedBy:    authentication.AuthUserDetails{},
 					Transactions: []models.TransactionItem{
-						{TransactionID: tc.penaltyReference, Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
+						{PenaltyRef: tc.penaltyRef, Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
 					},
 				})
 

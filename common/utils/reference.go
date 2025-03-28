@@ -79,7 +79,7 @@ func GetCompanyCodeFromTransaction(transactions []models.TransactionItem) (strin
 		return "", errors.New("no transactions found")
 	}
 
-	penaltyReference := transactions[0].TransactionID
+	penaltyReference := transactions[0].PenaltyRef
 
 	if len(penaltyReference) == 0 {
 		return "", errors.New("no penalty reference found")

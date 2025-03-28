@@ -18,7 +18,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 	Convey("reference number is generated", t, func() {
 		req := &models.PayableRequest{
 			Transactions: []models.TransactionItem{
-				{TransactionID: "123"},
+				{PenaltyRef: "123"},
 			},
 		}
 		dao := PayableResourceRequestToDB(req)
@@ -30,7 +30,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 		req := &models.PayableRequest{
 			CustomerCode: "00006400",
 			Transactions: []models.TransactionItem{
-				{TransactionID: "123"},
+				{PenaltyRef: "123"},
 			},
 		}
 		dao := PayableResourceRequestToDB(req)
@@ -62,6 +62,7 @@ func TestUnitPayableResourceDaoToCreatedResponse(t *testing.T) {
 		response := PayableResourceDaoToCreatedResponse(dao)
 
 		So(response.Links.Self, ShouldEqual, dao.Data.Links.Self)
+		So(response.PayableRef, ShouldEqual, dao.PayableRef)
 	})
 }
 
@@ -104,7 +105,7 @@ func TestUnitPayableResourceDBToPayableResource(t *testing.T) {
 		response := PayableResourceDBToRequest(dao)
 
 		So(response.CustomerCode, ShouldEqual, dao.CustomerCode)
-		So(response.Reference, ShouldEqual, dao.PayableRef)
+		So(response.PayableRef, ShouldEqual, dao.PayableRef)
 		So(response.Etag, ShouldEqual, dao.Data.Etag)
 		So(response.CreatedAt, ShouldEqual, dao.Data.CreatedAt)
 		So(response.CreatedBy.ID, ShouldEqual, dao.Data.CreatedBy.ID)
@@ -160,7 +161,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				t := time.Now().Truncate(time.Millisecond)
 				payable := &models.PayableResource{
 					CustomerCode: "12345678",
-					Reference:    "1234",
+					PayableRef:   "1234",
 					Etag:         "qwertyetag1234",
 					CreatedAt:    &t,
 					CreatedBy: models.CreatedBy{

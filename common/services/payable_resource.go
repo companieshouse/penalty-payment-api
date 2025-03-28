@@ -39,19 +39,19 @@ func (s *PayableResourceService) GetPayableResource(req *http.Request, customerC
 		return nil, NotFound, nil
 	}
 
-	payableRest := transformers.PayableResourceDBToRequest(payable)
-	return payableRest, Success, nil
+	payableResource := transformers.PayableResourceDBToRequest(payable)
+	return payableResource, Success, nil
 }
 
 // UpdateAsPaid will update the resource as paid and persist the changes in the database
 func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, payment validators.PaymentInformation) error {
 	log.Info("update as paid start")
-	model, err := s.DAO.GetPayableResource(resource.CustomerCode, resource.Reference)
+	model, err := s.DAO.GetPayableResource(resource.CustomerCode, resource.PayableRef)
 	if err != nil {
 		err = fmt.Errorf("error getting payable resource from db: [%v]", err)
 		log.Error(err, log.Data{
-			"payable_reference": resource.Reference,
-			"customer_code":     resource.CustomerCode,
+			"payable_ref":   resource.PayableRef,
+			"customer_code": resource.CustomerCode,
 		})
 		return ErrPenaltyNotFound
 	}

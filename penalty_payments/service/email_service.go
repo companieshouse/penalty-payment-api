@@ -98,7 +98,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 
 	// Ensure payableResource contains at least one transaction
 	if payableResource.Transactions == nil || len(payableResource.Transactions) == 0 {
-		err = fmt.Errorf("empty transactions list in payable resource: %v", payableResource.Reference)
+		err = fmt.Errorf("empty transactions list in payable resource: %v", payableResource.PayableRef)
 	}
 
 	transaction := payableResource.Transactions[0]
@@ -118,7 +118,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 
 	dataFieldMessage := models.DataField{
 		PayableResource:   payableResource,
-		TransactionID:     payableResource.Transactions[0].TransactionID,
+		PenaltyRef:        payableResource.Transactions[0].PenaltyRef,
 		MadeUpDate:        madeUpDate.Format("2 January 2006"),
 		TransactionDate:   time.Now().Format("2 January 2006"),
 		Amount:            fmt.Sprintf("%g", payablePenalty.Amount),
@@ -135,7 +135,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
-	messageID := "<" + payableResource.Reference + "." + strconv.Itoa(util.Random(0, 100000)) + "@companieshouse.gov.uk>"
+	messageID := "<" + payableResource.PayableRef + "." + strconv.Itoa(util.Random(0, 100000)) + "@companieshouse.gov.uk>"
 
 	emailSendMessage := models.EmailSend{
 		AppID:        penaltyDetailsMap.Details[companyCode].EmailReceivedAppId,
