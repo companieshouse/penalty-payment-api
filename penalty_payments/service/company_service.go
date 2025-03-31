@@ -8,17 +8,17 @@ import (
 )
 
 // GetCompanyName will attempt to get the company name from the CompanyProfileAPI.
-func GetCompanyName(customerCode string, req *http.Request) (string, error) {
+func GetCompanyName(companyNumber string, req *http.Request) (string, error) {
 
 	api, err := manager.GetSDK(req)
 	if err != nil {
-		log.ErrorR(req, err, log.Data{"customer_code": customerCode})
+		log.ErrorR(req, err, log.Data{"company_number": companyNumber})
 		return "", err
 	}
 
-	companyProfile, err := api.Profile.Get(customerCode).Do()
+	companyProfile, err := api.Profile.Get(companyNumber).Do()
 	if err != nil {
-		log.ErrorR(req, err, log.Data{"customer_code": customerCode})
+		log.ErrorR(req, err, log.Data{"company_number": companyNumber})
 		return "", err
 	}
 

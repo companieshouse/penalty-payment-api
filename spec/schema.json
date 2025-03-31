@@ -315,7 +315,7 @@
     "PatchResourceRequest": {
       "type": "object",
       "properties": {
-        "reference": {
+        "payment_reference": {
           "type": "string"
         }
       }
@@ -326,7 +326,7 @@
         "customer_code": {
           "type": "string"
         },
-        "reference": {
+        "payable_ref": {
           "type": "string"
         },
         "etag": {
@@ -361,7 +361,7 @@
           "items": {
             "type": "object",
             "properties": {
-              "transaction_id": {
+              "penalty_ref": {
                 "type": "string"
               },
               "amount": {
@@ -418,7 +418,7 @@
     "Transaction": {
       "type": "object",
       "properties": {
-        "transaction_id": {
+        "penalty_ref": {
           "type": "string"
         },
         "amount": {

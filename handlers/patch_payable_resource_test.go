@@ -119,7 +119,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			So(body.Message, ShouldEqual, "no payable request present in request context")
 		})
 
-		Convey("payable reference is required in request body", func() {
+		Convey("payment reference is required in request body", func() {
 			ctx := context.WithValue(context.Background(), config.PayableResource, &models.PayableResource{})
 			res, body := dispatchPayResourceHandler(ctx, t, &models.PatchResourceRequest{}, nil)
 

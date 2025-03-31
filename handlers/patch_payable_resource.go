@@ -46,7 +46,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			"customer_code": resource.CustomerCode,
 		})
 
-		// 2. validate the request and check the reference number against the payment api to validate that it has
+		// 2. validate the request and check the payment reference against the payment api to validate that it has
 		// actually been paid
 		var request models.PatchResourceRequest
 		err := json.NewDecoder(r.Body).Decode(&request)
@@ -60,7 +60,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		err = v.Struct(request)
 
 		if err != nil {
-			log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef, "payable_id": request.Reference})
+			log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef})
 			m := models.NewMessageResponse("the request contained insufficient data and/or failed validation")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
@@ -68,7 +68,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		payment, err := service.GetPaymentInformation(request.Reference, r)
 		if err != nil {
-			log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef, "payable_id": request.Reference})
+			log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef})
 			m := models.NewMessageResponse("the payable resource does not exist")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return

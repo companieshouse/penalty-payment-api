@@ -9,12 +9,12 @@ import (
 )
 
 func TestUnitGenerateReferenceNumber(t *testing.T) {
-	Convey("TransactionReference Number is correct length", t, func() {
+	Convey("Reference Number is correct length", t, func() {
 		ref := GenerateReferenceNumber()
 		So(len(ref), ShouldEqual, 10)
 	})
 
-	Convey("TransactionReference Number does not collide", t, func() {
+	Convey("Reference Number does not collide", t, func() {
 		// generate 10,000 reference numbers and check for any duplicates
 		times := 10000 // 10 thousand
 		generated := make([]string, times)
@@ -138,7 +138,7 @@ func TestUnitGetCompanyCode(t *testing.T) {
 }
 
 func TestUnitGetCompanyCodeFromTransaction(t *testing.T) {
-	Convey("Get Company Code from transaction ID", t, func() {
+	Convey("Get Company Code from penalty ref", t, func() {
 		testCases := []struct {
 			name          string
 			input         []models.TransactionItem
