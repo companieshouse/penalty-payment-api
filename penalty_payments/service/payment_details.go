@@ -23,8 +23,8 @@ func (service *PaymentDetailsService) GetPaymentDetailsFromPayableResource(req *
 	paymentDetails := transformers.PayableResourceToPaymentDetails(payable, penaltyDetails)
 
 	if len(paymentDetails.Items) == 0 {
-		err := fmt.Errorf("no items in payment details transformed from payable resource [%s]", payable.Reference)
-		log.ErrorR(req, err, log.Data{"customer_code": payable.CustomerCode, "payable_reference": payable.Reference,
+		err := fmt.Errorf("no items in payment details transformed from payable resource [%s]", payable.PayableRef)
+		log.ErrorR(req, err, log.Data{"customer_code": payable.CustomerCode, "payable_ref": payable.PayableRef,
 			"payable_transactions": payable.Transactions})
 		return nil, services.InvalidData, err
 	}

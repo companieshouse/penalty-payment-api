@@ -42,16 +42,16 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		resource := i.(*models.PayableResource)
 
 		log.Info("processing penalty payment", log.Data{
-			"payable_reference": resource.Reference,
-			"customer_code":     resource.CustomerCode,
+			"payable_ref":   resource.PayableRef,
+			"customer_code": resource.CustomerCode,
 		})
 
-		// 2. validate the request and check the reference number against the payment api to validate that it has
+		// 2. validate the request and check the payment reference against the payment api to validate that it has
 		// actually been paid
 		var request models.PatchResourceRequest
 		err := json.NewDecoder(r.Body).Decode(&request)
 		if err != nil {
-			log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference})
+			log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef})
 			m := models.NewMessageResponse("there was a problem reading the request body")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
@@ -60,7 +60,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		err = v.Struct(request)
 
 		if err != nil {
-			log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payable_id": request.Reference})
+			log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef})
 			m := models.NewMessageResponse("the request contained insufficient data and/or failed validation")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
@@ -68,7 +68,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		payment, err := service.GetPaymentInformation(request.Reference, r)
 		if err != nil {
-			log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payable_id": request.Reference})
+			log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef})
 			m := models.NewMessageResponse("the payable resource does not exist")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
@@ -99,15 +99,15 @@ func sendConfirmationEmail(resource *models.PayableResource, payment *validators
 	defer wg.Done()
 	err := handleEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap)
 	if err != nil {
-		log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payment_reference": payment.Reference})
+		log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef, "payment_reference": payment.Reference})
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	log.Info("confirmation email sent to customer", log.Data{
-		"payable_reference": resource.Reference,
-		"customer_code":     resource.CustomerCode,
-		"email_address":     resource.CreatedBy.Email,
+		"payable_ref":   resource.PayableRef,
+		"customer_code": resource.CustomerCode,
+		"email_address": resource.CreatedBy.Email,
 	})
 }
 
@@ -117,14 +117,14 @@ func updateAsPaidInDatabase(resource *models.PayableResource, payment *validator
 	defer wg.Done()
 	err := payableResourceService.UpdateAsPaid(*resource, *payment)
 	if err != nil {
-		log.ErrorR(r, err, log.Data{"payable_reference": resource.Reference, "payment_reference": payment.Reference})
+		log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef, "payment_reference": payment.Reference})
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	log.Info("payment resource is now marked as paid in db", log.Data{
-		"payable_reference": resource.Reference,
-		"customer_code":     resource.CustomerCode,
+		"payable_ref":   resource.PayableRef,
+		"customer_code": resource.CustomerCode,
 	})
 }
 
@@ -135,8 +135,8 @@ func updateIssuer(payableResourceService *services.PayableResourceService, e5Cli
 	err := api.UpdateIssuerAccountWithPenaltyPaid(payableResourceService, e5Client, *resource, *payment)
 	if err != nil {
 		log.ErrorR(r, err, log.Data{
-			"payable_reference": resource.Reference,
-			"customer_code":     resource.CustomerCode,
+			"payable_ref":   resource.PayableRef,
+			"customer_code": resource.CustomerCode,
 		})
 		w.WriteHeader(http.StatusInternalServerError)
 		return

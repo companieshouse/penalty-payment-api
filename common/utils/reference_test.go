@@ -138,7 +138,7 @@ func TestUnitGetCompanyCode(t *testing.T) {
 }
 
 func TestUnitGetCompanyCodeFromTransaction(t *testing.T) {
-	Convey("Get Company Code from transaction ID", t, func() {
+	Convey("Get Company Code from penalty ref", t, func() {
 		testCases := []struct {
 			name          string
 			input         []models.TransactionItem
@@ -149,9 +149,9 @@ func TestUnitGetCompanyCodeFromTransaction(t *testing.T) {
 				name: "Late Filing",
 				input: []models.TransactionItem{
 					{
-						Amount:        5,
-						Type:          "penalty",
-						TransactionID: "A1000007",
+						Amount:     5,
+						Type:       "penalty",
+						PenaltyRef: "A1000007",
 					},
 				},
 				expectedCode:  LateFilingPenalty,
@@ -161,27 +161,27 @@ func TestUnitGetCompanyCodeFromTransaction(t *testing.T) {
 				name: "Sanctions",
 				input: []models.TransactionItem{
 					{
-						Amount:        5,
-						Type:          "penalty",
-						TransactionID: "P1000007",
+						Amount:     5,
+						Type:       "penalty",
+						PenaltyRef: "P1000007",
 					},
 				},
 				expectedCode: "C1",
 			},
 			{
-				name: "Error unknown transaction ID",
+				name: "Error unknown penalty reference",
 				input: []models.TransactionItem{
 					{
-						Amount:        5,
-						Type:          "penalty",
-						TransactionID: "Q1000007",
+						Amount:     5,
+						Type:       "penalty",
+						PenaltyRef: "Q1000007",
 					},
 				},
 				expectedCode:  "",
 				expectedError: true,
 			},
 			{
-				name: "Error no transaction ID",
+				name: "Error no penalty reference",
 				input: []models.TransactionItem{
 					{},
 				},

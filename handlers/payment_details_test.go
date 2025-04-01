@@ -50,7 +50,7 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 
 		payable := models.PayableResource{
 			CustomerCode: "12345678",
-			Reference:    "abcdef",
+			PayableRef:   "abcdef",
 			Links: models.PayableResourceLinks{
 				Self:    "/company/12345678/penalties/abcdef",
 				Payment: "/company/12345678/penalties/abcdef/payment",
@@ -73,19 +73,19 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 
 	Convey("Payment PenaltyDetails success", t, func() {
 		testCases := []struct {
-			name             string
-			companyCode      string
-			penaltyReference string
+			name        string
+			companyCode string
+			penaltyRef  string
 		}{
 			{
-				name:             "Late Filing",
-				companyCode:      utils.LateFilingPenalty,
-				penaltyReference: "A1234567",
+				name:        "Late Filing",
+				companyCode: utils.LateFilingPenalty,
+				penaltyRef:  "A1234567",
 			},
 			{
-				name:             "Sanctions",
-				companyCode:      utils.Sanctions,
-				penaltyReference: "P1234567",
+				name:        "Sanctions",
+				companyCode: utils.Sanctions,
+				penaltyRef:  "P1234567",
 			},
 		}
 
@@ -96,7 +96,7 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 
 				payable := models.PayableResource{
 					CustomerCode: "12345678",
-					Reference:    "abcdef",
+					PayableRef:   "abcdef",
 					Links: models.PayableResourceLinks{
 						Self:    "/company/12345678/penalties/abcdef",
 						Payment: "/company/12345678/penalties/abcdef/payment",
@@ -109,9 +109,9 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 					},
 					Transactions: []models.TransactionItem{
 						{
-							Amount:        5,
-							Type:          "penalty",
-							TransactionID: tc.penaltyReference,
+							Amount:     5,
+							Type:       "penalty",
+							PenaltyRef: tc.penaltyRef,
 						},
 					},
 					Payment: models.Payment{

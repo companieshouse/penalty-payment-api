@@ -119,7 +119,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			So(body.Message, ShouldEqual, "no payable request present in request context")
 		})
 
-		Convey("reference is required in request body", func() {
+		Convey("payment reference is required in request body", func() {
 			ctx := context.WithValue(context.Background(), config.PayableResource, &models.PayableResource{})
 			res, body := dispatchPayResourceHandler(ctx, t, &models.PatchResourceRequest{}, nil)
 
@@ -136,7 +136,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 				httpmock.NewStringResponder(404, ""),
 			)
 
-			model := &models.PayableResource{Reference: "123"}
+			model := &models.PayableResource{PayableRef: "123"}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
 
@@ -165,7 +165,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			)
 
 			// the payable resource in the request context
-			model := &models.PayableResource{Reference: "123"}
+			model := &models.PayableResource{PayableRef: "123"}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
@@ -209,9 +209,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
-				Reference: "123",
+				PayableRef: "123",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "A1234567"},
+					{PenaltyRef: "A1234567"},
 				},
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
@@ -267,9 +267,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
-				Reference: "123",
+				PayableRef: "123",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "A1234567"},
+					{PenaltyRef: "A1234567"},
 				},
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
@@ -317,9 +317,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
-				Reference: "123",
+				PayableRef: "123",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "A1234567"},
+					{PenaltyRef: "A1234567"},
 				},
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
@@ -376,10 +376,10 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
-				Reference:    "123",
+				PayableRef:   "123",
 				CustomerCode: "10000024",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "A1234567", Amount: 150},
+					{PenaltyRef: "A1234567", Amount: 150},
 				},
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
