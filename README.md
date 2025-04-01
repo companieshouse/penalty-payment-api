@@ -41,9 +41,9 @@ In order to run this API locally you will need to install the following:
 | **GET**   | `/company/{customer_code}/penalties/late-filing`                  | List the late filing penalties for a company                          |
 | **GET**   | `/company/{customer_code}/penalties/{penalty_reference_type}`     | List the financial penalties                                          |
 | **POST**  | `/company/{customer_code}/penalties/payable`                      | Create a payable penalty resource                                     |
-| **GET**   | `/company/{customer_code}/penalties/payable/{payable_id}`         | Get a payable resource                                                |
-| **GET**   | `/company/{customer_code}/penalties/payable/{payable_id}/payment` | List the cost items related to the penalty resource                   |
-| **PATCH** | `/company/{customer_code}/penalties/payable/{payable_id}/payment` | Mark the resource as paid                                             |
+| **GET**   | `/company/{customer_code}/penalties/payable/{payable_ref}`         | Get a payable resource                                                |
+| **GET**   | `/company/{customer_code}/penalties/payable/{payable_ref}/payment` | List the cost items related to the penalty resource                   |
+| **PATCH** | `/company/{customer_code}/penalties/payable/{payable_ref}/payment` | Mark the resource as paid                                             |
 
 ## External Finance Systems
 The only external finance system currently supported is E5.

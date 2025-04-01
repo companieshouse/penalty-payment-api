@@ -84,7 +84,7 @@ func (payableAuthInterceptor *PayableAuthenticationInterceptor) PayableAuthentic
 }
 
 func preCheckRequest(w http.ResponseWriter, r *http.Request) (string, string, string, bool) {
-	// Check for a customer_code and payable_id in request
+	// Check for a customer_code and payable_ref in request
 	vars := mux.Vars(r)
 	customerCode := strings.ToUpper(vars["customer_code"])
 	if customerCode == "" {
