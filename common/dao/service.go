@@ -26,6 +26,29 @@ func NewDAOService(cfg *config.Config) Service {
 	database := getMongoDatabase(cfg.MongoDBURL, cfg.Database)
 	return &MongoService{
 		db:             database,
-		CollectionName: cfg.MongoCollection,
+		CollectionName: cfg.PayableResourcesCollection,
+	}
+}
+
+// AccountPenaltiesCacheService interface declares how to interact with the persistence layer
+// regardless of underlying technology
+type AccountPenaltiesCacheService interface {
+	// CreateAccountPenalties will persist a newly created resource
+	CreateAccountPenalties(dao *models.AccountPenaltiesDao) error
+	// GetAccountPenalties will find the account penalties for a given customerCode and companyCode
+	GetAccountPenalties(customerCode string, companyCode string) (*models.AccountPenaltiesDao, error)
+	// UpdateAccountPenaltyAsPaid will update a transactions as paid for a given customerCode, companyCode and penaltyReference
+	UpdateAccountPenaltyAsPaid(customerCode string, companyCode string, penaltyReference string) error
+	// DeleteAccountPenalties will delete the entry for a given customerCode and companyCode
+	DeleteAccountPenalties(customerCode string, companyCode string) error
+}
+
+// NewAccountPenaltiesDaoService will create a new instance of the AccountPenaltiesCacheService interface.
+// All details about its implementation and the  database driver will be hidden from outside of this package
+func NewAccountPenaltiesDaoService(cfg *config.Config) AccountPenaltiesCacheService {
+	database := getMongoDatabase(cfg.MongoDBURL, cfg.Database)
+	return &MongoAccountService{
+		db:             database,
+		CollectionName: cfg.AccountPenaltiesCollection,
 	}
 }

@@ -64,6 +64,149 @@ type MongoService struct {
 	CollectionName string
 }
 
+// MongoService is an implementation of the Service interface using MongoDB as the backend driver.
+type MongoAccountService struct {
+	db             MongoDatabaseInterface
+	CollectionName string
+}
+
+// CreateAccountPenalties creates a new document in the account_penalties database collection
+func (m MongoAccountService) CreateAccountPenalties(dao *models.AccountPenaltiesDao) error {
+	log.Info("creating new document in account_penalties collection", log.Data{
+		"customer_code": dao.CustomerCode,
+		"company_code":  dao.CompanyCode,
+	})
+
+	collection := m.db.Collection(m.CollectionName)
+
+	createdAt := time.Now().Truncate(time.Millisecond)
+	dao.CreatedAt = &createdAt
+
+	_, err := collection.InsertOne(context.Background(), dao)
+	if err != nil {
+		log.Error(err, log.Data{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+		})
+		return err
+	}
+
+	return nil
+}
+
+// GetAccountPenalties gets the account penalties from the account_penalties database collection
+func (m MongoAccountService) GetAccountPenalties(customerCode string, companyCode string) (*models.AccountPenaltiesDao, error) {
+	log.Info("retrieving document in account_penalties collection", log.Data{
+		"customer_code": customerCode,
+		"company_code":  companyCode,
+	})
+
+	var resource models.AccountPenaltiesDao
+
+	collection := m.db.Collection(m.CollectionName)
+	dbResource := collection.FindOne(context.Background(), bson.M{
+		"customer_code": customerCode,
+		"company_code":  companyCode,
+	})
+
+	err := dbResource.Err()
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			log.Debug("no document found in account_penalties collection", log.Data{
+				"customer_code": customerCode,
+				"company_code":  companyCode,
+			})
+			return nil, nil
+		}
+		log.Error(err, log.Data{
+			"customer_code": customerCode,
+			"company_code":  companyCode,
+		})
+		return nil, err
+	}
+
+	err = dbResource.Decode(&resource)
+
+	if err != nil {
+		log.Error(err, log.Data{
+			"customer_code": customerCode,
+			"company_code":  companyCode,
+		})
+		return nil, err
+	}
+
+	return &resource, nil
+}
+
+// UpdateAccountPenaltyAsPaid will update the penalty status of an item in account_penalties database collection
+func (m MongoAccountService) UpdateAccountPenaltyAsPaid(customerCode string, companyCode string, penaltyReference string) error {
+	log.Info("updating penalty as paid in account_penalties collection", log.Data{
+		"customer_code":              customerCode,
+		"company_code":               companyCode,
+		"data.transaction_reference": penaltyReference,
+	})
+
+	filter := bson.M{
+		"customer_code":              customerCode,
+		"company_code":               companyCode,
+		"data.transaction_reference": penaltyReference,
+	}
+
+	updatedAt := time.Now().Truncate(time.Millisecond)
+
+	update := bson.D{
+		{
+			"$set", bson.M{"data.$.is_paid": true, "updated_at": updatedAt},
+		},
+	}
+
+	collection := m.db.Collection(m.CollectionName)
+
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		log.Error(err, log.Data{
+			"customer_code":     customerCode,
+			"company_code":      companyCode,
+			"penalty_reference": penaltyReference,
+		})
+		return err
+	}
+
+	log.Info("successfully updated penalty as paid in account_penalties collection", log.Data{
+		"customer_code":     customerCode,
+		"company_code":      companyCode,
+		"penalty_reference": penaltyReference,
+	})
+
+	return nil
+}
+
+// DeleteAccountPenalties deletes an entry from the account_penalties database collection
+func (m MongoAccountService) DeleteAccountPenalties(customerCode string, companyCode string) error {
+	log.Info("deleting document in account_penalties collection", log.Data{
+		"customer_code": customerCode,
+		"company_code":  companyCode,
+	})
+
+	filter := bson.M{"customer_code": customerCode, "company_code": companyCode}
+
+	collection := m.db.Collection(m.CollectionName)
+
+	_, err := collection.DeleteOne(context.Background(), filter)
+
+	if err != nil {
+		log.Error(err, log.Data{"customer_code": customerCode, "company_code": companyCode})
+		return err
+	}
+
+	log.Info("successfully deleted document in account_penalties collection", log.Data{
+		"customer_code": customerCode,
+		"company_code":  companyCode,
+	})
+
+	return nil
+}
+
 // SaveE5Error will update the resource by flagging an error in e5 for a particular action
 func (m *MongoService) SaveE5Error(customerCode, payableRef string, action e5.Action) error {
 	dao, err := m.GetPayableResource(customerCode, payableRef)
