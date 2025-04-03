@@ -6,8 +6,8 @@ import (
 	"github.com/companieshouse/penalty-payment-api/config"
 )
 
-// Service interface declares how to interact with the persistence layer regardless of underlying technology
-type Service interface {
+// PayableResourceDaoService interface declares how to interact with the persistence layer regardless of underlying technology
+type PayableResourceDaoService interface {
 	// CreatePayableResource will persist a newly created resource
 	CreatePayableResource(dao *models.PayableResourceDao) error
 	// GetPayableResource will find a single payable resource with the given customerCode and payableRef
@@ -20,12 +20,35 @@ type Service interface {
 	Shutdown()
 }
 
-// NewDAOService will create a new instance of the Service interface. All details about its implementation and the
+// NewPayableResourcesDaoService will create a new instance of the PayableResourceDaoService interface. All details about its implementation and the
 // database driver will be hidden from outside of this package
-func NewDAOService(cfg *config.Config) Service {
+func NewPayableResourcesDaoService(cfg *config.Config) PayableResourceDaoService {
 	database := getMongoDatabase(cfg.MongoDBURL, cfg.Database)
-	return &MongoService{
+	return &MongoPayableResourceService{
 		db:             database,
-		CollectionName: cfg.MongoCollection,
+		CollectionName: cfg.PayableResourcesCollection,
+	}
+}
+
+// AccountPenaltiesDaoService interface declares how to interact with the persistence layer
+// regardless of underlying technology
+type AccountPenaltiesDaoService interface {
+	// CreateAccountPenalties will persist a newly created resource
+	CreateAccountPenalties(dao *models.AccountPenaltiesDao) error
+	// GetAccountPenalties will find the account penalties for a given customerCode and companyCode
+	GetAccountPenalties(customerCode string, companyCode string) (*models.AccountPenaltiesDao, error)
+	// UpdateAccountPenaltyAsPaid will update a transactions as paid for a given customerCode, companyCode and penaltyRef
+	UpdateAccountPenaltyAsPaid(customerCode string, companyCode string, penaltyRef string) error
+	// DeleteAccountPenalties will delete the entry for a given customerCode and companyCode
+	DeleteAccountPenalties(customerCode string, companyCode string) error
+}
+
+// NewAccountPenaltiesDaoService will create a new instance of the AccountPenaltiesDaoService interface.
+// All details about its implementation and the  database driver will be hidden from outside of this package
+func NewAccountPenaltiesDaoService(cfg *config.Config) AccountPenaltiesDaoService {
+	database := getMongoDatabase(cfg.MongoDBURL, cfg.Database)
+	return &MongoAccountPenaltiesService{
+		db:             database,
+		CollectionName: cfg.AccountPenaltiesCollection,
 	}
 }

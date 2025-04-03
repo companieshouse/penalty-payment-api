@@ -20,7 +20,7 @@ import (
 )
 
 // CreatePayableResourceHandler takes a http requests and creates a new payable resource
-func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.PenaltyDetailsMap,
+func CreatePayableResourceHandler(svc dao.PayableResourceDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var request models.PayableRequest
