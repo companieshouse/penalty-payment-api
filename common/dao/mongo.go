@@ -58,20 +58,22 @@ func getMongoDatabase(mongoDBURL, databaseName string) MongoDatabaseInterface {
 	return getMongoClient(mongoDBURL).Database(databaseName)
 }
 
-// MongoService is an implementation of the Service interface using MongoDB as the backend driver.
-type MongoService struct {
+// MongoPayableResourceService is an implementation of the PayableResourceDaoService interface using
+// MongoDB as the backend driver.
+type MongoPayableResourceService struct {
 	db             MongoDatabaseInterface
 	CollectionName string
 }
 
-// MongoService is an implementation of the Service interface using MongoDB as the backend driver.
-type MongoAccountService struct {
+// MongoAccountPenaltiesService is an implementation of the AccountPenaltiesDaoService interface using
+// MongoDB as the backend driver.
+type MongoAccountPenaltiesService struct {
 	db             MongoDatabaseInterface
 	CollectionName string
 }
 
 // CreateAccountPenalties creates a new document in the account_penalties database collection
-func (m MongoAccountService) CreateAccountPenalties(dao *models.AccountPenaltiesDao) error {
+func (m *MongoAccountPenaltiesService) CreateAccountPenalties(dao *models.AccountPenaltiesDao) error {
 	log.Info("creating new document in account_penalties collection", log.Data{
 		"customer_code": dao.CustomerCode,
 		"company_code":  dao.CompanyCode,
@@ -95,7 +97,7 @@ func (m MongoAccountService) CreateAccountPenalties(dao *models.AccountPenalties
 }
 
 // GetAccountPenalties gets the account penalties from the account_penalties database collection
-func (m MongoAccountService) GetAccountPenalties(customerCode string, companyCode string) (*models.AccountPenaltiesDao, error) {
+func (m *MongoAccountPenaltiesService) GetAccountPenalties(customerCode string, companyCode string) (*models.AccountPenaltiesDao, error) {
 	log.Info("retrieving document in account_penalties collection", log.Data{
 		"customer_code": customerCode,
 		"company_code":  companyCode,
@@ -139,24 +141,24 @@ func (m MongoAccountService) GetAccountPenalties(customerCode string, companyCod
 }
 
 // UpdateAccountPenaltyAsPaid will update the penalty status of an item in account_penalties database collection
-func (m MongoAccountService) UpdateAccountPenaltyAsPaid(customerCode string, companyCode string, penaltyReference string) error {
+func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode string, companyCode string, penaltyRef string) error {
 	log.Info("updating penalty as paid in account_penalties collection", log.Data{
-		"customer_code":              customerCode,
-		"company_code":               companyCode,
-		"data.transaction_reference": penaltyReference,
+		"customer_code": customerCode,
+		"company_code":  companyCode,
+		"penalty_ref":   penaltyRef,
 	})
 
 	filter := bson.M{
 		"customer_code":              customerCode,
 		"company_code":               companyCode,
-		"data.transaction_reference": penaltyReference,
+		"data.transaction_reference": penaltyRef,
 	}
 
-	updatedAt := time.Now().Truncate(time.Millisecond)
+	closedAt := time.Now().Truncate(time.Millisecond)
 
 	update := bson.D{
 		{
-			"$set", bson.M{"data.$.is_paid": true, "updated_at": updatedAt},
+			"$set", bson.M{"data.$.is_paid": true, "closed_at": closedAt},
 		},
 	}
 
@@ -165,24 +167,25 @@ func (m MongoAccountService) UpdateAccountPenaltyAsPaid(customerCode string, com
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		log.Error(err, log.Data{
-			"customer_code":     customerCode,
-			"company_code":      companyCode,
-			"penalty_reference": penaltyReference,
+			"customer_code": customerCode,
+			"company_code":  companyCode,
+			"penalty_ref":   penaltyRef,
 		})
 		return err
 	}
 
 	log.Info("successfully updated penalty as paid in account_penalties collection", log.Data{
-		"customer_code":     customerCode,
-		"company_code":      companyCode,
-		"penalty_reference": penaltyReference,
+		"customer_code": customerCode,
+		"company_code":  companyCode,
+		"closed_at":     closedAt,
+		"penalty_ref":   penaltyRef,
 	})
 
 	return nil
 }
 
 // DeleteAccountPenalties deletes an entry from the account_penalties database collection
-func (m MongoAccountService) DeleteAccountPenalties(customerCode string, companyCode string) error {
+func (m *MongoAccountPenaltiesService) DeleteAccountPenalties(customerCode string, companyCode string) error {
 	log.Info("deleting document in account_penalties collection", log.Data{
 		"customer_code": customerCode,
 		"company_code":  companyCode,
@@ -208,7 +211,7 @@ func (m MongoAccountService) DeleteAccountPenalties(customerCode string, company
 }
 
 // SaveE5Error will update the resource by flagging an error in e5 for a particular action
-func (m *MongoService) SaveE5Error(customerCode, payableRef string, action e5.Action) error {
+func (m *MongoPayableResourceService) SaveE5Error(customerCode, payableRef string, action e5.Action) error {
 	dao, err := m.GetPayableResource(customerCode, payableRef)
 	if err != nil {
 		log.Error(err, log.Data{"customer_code": customerCode, "payable_ref": payableRef})
@@ -238,7 +241,7 @@ func (m *MongoService) SaveE5Error(customerCode, payableRef string, action e5.Ac
 }
 
 // CreatePayableResource will store the payable request into the database
-func (m *MongoService) CreatePayableResource(dao *models.PayableResourceDao) error {
+func (m *MongoPayableResourceService) CreatePayableResource(dao *models.PayableResourceDao) error {
 
 	dao.ID = primitive.NewObjectID()
 
@@ -253,7 +256,7 @@ func (m *MongoService) CreatePayableResource(dao *models.PayableResourceDao) err
 }
 
 // GetPayableResource gets the payable request from the database
-func (m *MongoService) GetPayableResource(customerCode, payableRef string) (*models.PayableResourceDao, error) {
+func (m *MongoPayableResourceService) GetPayableResource(customerCode, payableRef string) (*models.PayableResourceDao, error) {
 	var resource models.PayableResourceDao
 
 	collection := m.db.Collection(m.CollectionName)
@@ -280,7 +283,7 @@ func (m *MongoService) GetPayableResource(customerCode, payableRef string) (*mod
 }
 
 // UpdatePaymentDetails will save the document back to Mongo
-func (m *MongoService) UpdatePaymentDetails(dao *models.PayableResourceDao) error {
+func (m *MongoPayableResourceService) UpdatePaymentDetails(dao *models.PayableResourceDao) error {
 	filter := bson.M{"_id": dao.ID}
 
 	update := bson.D{
@@ -310,7 +313,7 @@ func (m *MongoService) UpdatePaymentDetails(dao *models.PayableResourceDao) erro
 }
 
 // Shutdown is a hook that can be used to clean up db resources
-func (m *MongoService) Shutdown() {
+func (m *MongoPayableResourceService) Shutdown() {
 	if client != nil {
 		err := client.Disconnect(context.Background())
 		if err != nil {

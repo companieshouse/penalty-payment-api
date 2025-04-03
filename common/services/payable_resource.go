@@ -22,7 +22,7 @@ var (
 
 // PayableResourceService contains the DAO for db access
 type PayableResourceService struct {
-	DAO    dao.Service
+	DAO    dao.PayableResourceDaoService
 	Config *config.Config
 }
 

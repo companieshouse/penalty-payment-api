@@ -57,7 +57,7 @@ var allowedTransactionsMap = &models.AllowedTransactionMap{
 
 // reduces the boilerplate code needed to create, dispatch and unmarshal response body
 func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *models.PatchResourceRequest,
-	daoSvc dao.Service) (*httptest.ResponseRecorder, *models.ResponseResource) {
+	daoSvc dao.PayableResourceDaoService) (*httptest.ResponseRecorder, *models.ResponseResource) {
 
 	payableResourceService := &services.PayableResourceService{}
 

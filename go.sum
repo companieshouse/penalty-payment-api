@@ -27,8 +27,8 @@ github.com/companieshouse/gofigure v0.1.0/go.mod h1:W7NZ4kQdDXqvqK1f7EKTc+pnnqpF
 github.com/companieshouse/gofigure v0.1.4 h1:BN7Dqn0xvNHwC+KHOUHigwP7ajkfHORos3hKRtEACUU=
 github.com/companieshouse/gofigure v0.1.4/go.mod h1:lBAsI13q21rMce+pO7x4xUYAXzO0MchuDsZUbCs0Yng=
 github.com/companieshouse/htmlform v0.1.0/go.mod h1:fWScPVYjGyeBhYwppGaGRDtCQ5hMd3t3Q+0I6HaUZT4=
-github.com/companieshouse/penalty-payment-api-core v1.10.0 h1:so8hopNh9A8Iif767/xKxlHaK+sqoI7+4M0z5xOTNqQ=
-github.com/companieshouse/penalty-payment-api-core v1.10.0/go.mod h1:9cqGa5ZlpwYqFh5NlqIJJK39G4p2wBdoWJkuVW8Ssxc=
+github.com/companieshouse/penalty-payment-api-core v1.10.1 h1:h8k1U9fuZ88dsavpJFsfpqzyeWlqLA7NTKJ08NsTW+k=
+github.com/companieshouse/penalty-payment-api-core v1.10.1/go.mod h1:9cqGa5ZlpwYqFh5NlqIJJK39G4p2wBdoWJkuVW8Ssxc=
 github.com/companieshouse/private-api-sdk-go v0.1.11/go.mod h1:EaRgxVpcHv6IZ1LKp2xqE4rdEsQwgYqVz3g/BIHQVD4=
 github.com/companieshouse/private-api-sdk-go v0.1.13 h1:o9PD1aSVu3+tbf/WUZT/wX1e0DNx+9xcJugbqo7rbxE=
 github.com/companieshouse/private-api-sdk-go v0.1.13/go.mod h1:g1zvBCn8Tyc45x+5BmlHsq+BYwuekd5FLRaFOqTUu+A=

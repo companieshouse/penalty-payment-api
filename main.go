@@ -32,7 +32,7 @@ func main() {
 
 	// Create router
 	mainRouter := mux.NewRouter()
-	daoService := dao.NewDAOService(cfg)
+	daoService := dao.NewPayableResourcesDaoService(cfg)
 
 	penaltyDetailsMap, err := config.LoadPenaltyDetails("assets/penalty_details.yml")
 	if err != nil {
