@@ -16,7 +16,6 @@ var (
 	ErrTransactionIsPaid         = errors.New("this transaction is already paid")
 	ErrTransactionIsPartPaid     = errors.New("the transaction is already part paid")
 	ErrTransactionAmountMismatch = errors.New("you can only pay off the full amount of the transaction")
-	ErrMultiplePenalties         = errors.New("the company has more than one outstanding penalty")
 )
 
 func MatchPenalty(referenceTransactions []models.TransactionListItem,

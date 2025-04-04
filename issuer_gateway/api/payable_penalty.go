@@ -20,14 +20,13 @@ func PayablePenalty(customerCode string, companyCode string, transaction models.
 		return nil, err
 	}
 
-	// for the first release, the customer must only have one outstanding penalty
 	unpaidPenaltyCount := getUnpaidPenaltyCount(response.Items)
 	if unpaidPenaltyCount > 1 {
 		log.Info("customer has more than one outstanding penalty", log.Data{
 			"customer_code": customerCode,
+			"company_code":  companyCode,
 			"penalty_count": unpaidPenaltyCount,
 		})
-		return nil, private.ErrMultiplePenalties
 	}
 
 	return getMatchingPenalty(response.Items, transaction, customerCode)

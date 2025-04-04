@@ -2,17 +2,18 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func accountPenaltiesResponse(unpaidPenaltyCount int) *models.TransactionListResponse {
-	id := "12"
+
 	unpaidPenalty := models.TransactionListItem{
 		Etag:            "etag",
 		Kind:            "penalty",
@@ -24,11 +25,14 @@ func accountPenaltiesResponse(unpaidPenaltyCount int) *models.TransactionListRes
 		OriginalAmount:  150,
 		Outstanding:     150,
 		Type:            "penalty",
+		Reason:          "Late filing of accounts",
+		PayableStatus:   "OPEN",
 	}
 
 	paidPenalty := unpaidPenalty
 	paidPenalty.ID = "00482775"
 	paidPenalty.IsPaid = true
+	paidPenalty.PayableStatus = "CLOSED"
 
 	unpaidOther := unpaidPenalty
 	unpaidOther.ID = "00482776"
@@ -38,9 +42,9 @@ func accountPenaltiesResponse(unpaidPenaltyCount int) *models.TransactionListRes
 		Items: []models.TransactionListItem{paidPenalty, unpaidOther},
 	}
 
-	for i := 0; i < unpaidPenaltyCount; i++ {
+	for i := 1; i <= unpaidPenaltyCount; i++ {
 		item := unpaidPenalty
-		item.ID = id + string(rune(i))
+		item.ID = fmt.Sprintf("A%07d", i)
 		response.Items = append(response.Items, item)
 	}
 
@@ -58,7 +62,6 @@ func TestUnitPayablePenalty(t *testing.T) {
 			},
 		},
 	}
-	transaction := models.TransactionItem{PenaltyRef: "121"}
 
 	Convey("error is returned when fetching account penalties fails", t, func() {
 		accountPenaltiesErr := errors.New("failed to fetch account penalties")
@@ -68,22 +71,33 @@ func TestUnitPayablePenalty(t *testing.T) {
 		}
 		getAccountPenalties = mockedAccountPenalties
 
-		payablePenalty, err := PayablePenalty("10000024", "LP", transaction, penaltyDetailsMap, allowedTransactionMap)
+		transaction := models.TransactionItem{PenaltyRef: "121"}
+		payablePenalty, err := PayablePenalty("10000024", utils.LateFilingPenalty, transaction, penaltyDetailsMap, allowedTransactionMap)
 
 		So(payablePenalty, ShouldBeNil)
 		So(err, ShouldEqual, accountPenaltiesErr)
 	})
 
-	Convey("error is returned for multiple unpaid penalties", t, func() {
+	Convey("payable penalty is successfully returned for multiple unpaid penalties", t, func() {
 		mockedAccountPenalties := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
 			allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, services.ResponseType, error) {
 			return accountPenaltiesResponse(2), services.Success, nil
 		}
 		getAccountPenalties = mockedAccountPenalties
 
-		_, err := PayablePenalty("10000024", "LP", transaction, penaltyDetailsMap, allowedTransactionMap)
+		unpaidPenalty := models.TransactionItem{
+			PenaltyRef: "A0000002",
+			Amount:     150,
+			Type:       "penalty",
+			MadeUpDate: "2017-06-30",
+			IsDCA:      false,
+			IsPaid:     false,
+			Reason:     "Late filing of accounts",
+		}
+		gotPayablePenalty, err := PayablePenalty("10000024", utils.LateFilingPenalty, unpaidPenalty, penaltyDetailsMap, allowedTransactionMap)
 
-		So(err, ShouldBeError, private.ErrMultiplePenalties)
+		So(gotPayablePenalty, ShouldResemble, &unpaidPenalty)
+		So(err, ShouldBeNil)
 	})
 
 	Convey("payable penalty is successfully returned", t, func() {
@@ -99,13 +113,15 @@ func TestUnitPayablePenalty(t *testing.T) {
 			IsDCA:      false,
 			IsPaid:     false,
 		}
+
+		transaction := models.TransactionItem{PenaltyRef: "121"}
 		mockedMatchPenalty := func(referenceTransactions []models.TransactionListItem, transactionToMatch models.TransactionItem, companyNumber string) (*models.TransactionItem, error) {
 			return wantPayablePenalty, nil
 		}
 		getAccountPenalties = mockedAccountPenalties
 		getMatchingPenalty = mockedMatchPenalty
 
-		gotPayablePenalty, err := PayablePenalty("10000024", "LP", transaction, penaltyDetailsMap, allowedTransactionMap)
+		gotPayablePenalty, err := PayablePenalty("10000024", utils.LateFilingPenalty, transaction, penaltyDetailsMap, allowedTransactionMap)
 
 		So(gotPayablePenalty, ShouldResemble, wantPayablePenalty)
 		So(err, ShouldBeNil)
