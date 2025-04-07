@@ -2,6 +2,7 @@ package private
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/companieshouse/penalty-payment-api/common/e5"
@@ -70,7 +71,7 @@ var validSanctionsTransaction = e5.Transaction{
 	TypeDescription:      "CS01",
 	DueDate:              "2025-03-26",
 	AccountStatus:        CHSAccountStatus,
-	DunningStatus:        PEN1DunningStatus,
+	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 }
 var validLFPTransaction = e5.Transaction{
 	CompanyCode:          utils.LateFilingPenalty,
@@ -86,7 +87,7 @@ var validLFPTransaction = e5.Transaction{
 	TransactionSubType:   "EU",
 	DueDate:              "2025-03-26",
 	AccountStatus:        CHSAccountStatus,
-	DunningStatus:        PEN1DunningStatus,
+	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 }
 var e5TransactionsResponseValidSanctions = e5.GetTransactionsResponse{
 	Page: page,
@@ -184,7 +185,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 
-		e5TransactionsResponseValidLFPTransaction.Transactions[0].DunningStatus = "DCA"
+		e5TransactionsResponseValidLFPTransaction.Transactions[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
 		e5TransactionsResponseValidLFPTransaction.Transactions[0].TransactionSubType = "EU"
 		transactionList, err := GenerateTransactionListFromE5Response(
 			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenalty, lfpPenaltyDetailsMap, allowedTransactionMap)
@@ -248,7 +249,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 
-		e5TransactionsResponseValidSanctions.Transactions[0].DunningStatus = DCADunningStatus
+		e5TransactionsResponseValidSanctions.Transactions[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
 		transactionList, err := GenerateTransactionListFromE5Response(
 			&e5TransactionsResponseValidSanctions, utils.Sanctions, sanctionsPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
@@ -324,6 +325,10 @@ func TestUnit_getReason(t *testing.T) {
 	})
 }
 
+func addTrailingSpacesToDunningStatus(dunningStatus string) string {
+	return fmt.Sprintf("%s%s", dunningStatus, "        ")
+}
+
 func TestUnit_getPayableStatus(t *testing.T) {
 	Convey("Get open payable status for late filing penalty", t, func() {
 		type args struct {
@@ -351,7 +356,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					TypeDescription:      "Penalty Ltd Wel & Eng <=1m    LTDWA",
 					DueDate:              "2025-03-26",
 					AccountStatus:        CHSAccountStatus,
-					DunningStatus:        PEN1DunningStatus,
+					DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -362,7 +367,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -373,7 +378,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -384,7 +389,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN2DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN2DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -395,7 +400,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN3DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN3DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -406,7 +411,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     DCAAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -417,7 +422,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     DCAAccountStatus,
-					DunningStatus:     PEN2DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN2DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -428,7 +433,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     DCAAccountStatus,
-					DunningStatus:     PEN3DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN3DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -439,7 +444,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     HLDAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -450,7 +455,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     HLDAccountStatus,
-					DunningStatus:     PEN2DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN2DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -461,7 +466,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     HLDAccountStatus,
-					DunningStatus:     PEN3DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN3DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -472,7 +477,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     WDRAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -483,7 +488,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     WDRAccountStatus,
-					DunningStatus:     PEN2DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN2DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -494,7 +499,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     WDRAccountStatus,
-					DunningStatus:     PEN3DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN3DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -534,7 +539,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					TypeDescription:      "Penalty Ltd Wel & Eng <=1m    LTDWA",
 					DueDate:              "2025-03-26",
 					AccountStatus:        CHSAccountStatus,
-					DunningStatus:        PEN1DunningStatus,
+					DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -545,7 +550,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 0,
 					IsPaid:            true,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -556,12 +561,23 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: -150,
 					IsPaid:            true,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is DCA, dunning status is DCA",
+				args: args{transaction: &e5.Transaction{
+					CompanyCode:       utils.LateFilingPenalty,
+					OutstandingAmount: 150,
+					IsPaid:            false,
+					AccountStatus:     DCAAccountStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(DCADunningStatus),
+				}},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Late filing penalty with outstanding amount, not paid, account status is DCA, dunning status is DCA (no trailing spaces)",
 				args: args{transaction: &e5.Transaction{
 					CompanyCode:       utils.LateFilingPenalty,
 					OutstandingAmount: 150,
@@ -578,7 +594,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     DCADunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(DCADunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -589,7 +605,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     HLDAccountStatus,
-					DunningStatus:     DCADunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(DCADunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -600,7 +616,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 150,
 					IsPaid:            false,
 					AccountStatus:     WDRAccountStatus,
-					DunningStatus:     DCADunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(DCADunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -673,7 +689,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					TypeDescription:      "CS01",
 					DueDate:              "2025-03-26",
 					AccountStatus:        CHSAccountStatus,
-					DunningStatus:        PEN1DunningStatus,
+					DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -684,7 +700,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -695,7 +711,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     HLDAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -706,7 +722,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     DCAAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -717,7 +733,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     DCAAccountStatus,
-					DunningStatus:     PEN2DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN2DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -728,7 +744,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -739,7 +755,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN2DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN2DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -750,7 +766,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     HLDAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -761,7 +777,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     HLDAccountStatus,
-					DunningStatus:     PEN2DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN2DunningStatus),
 				}},
 				want: OpenPayableStatus,
 			},
@@ -801,7 +817,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					TypeDescription:      "CS01",
 					DueDate:              "2025-03-26",
 					AccountStatus:        CHSAccountStatus,
-					DunningStatus:        PEN1DunningStatus,
+					DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -812,7 +828,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 0,
 					IsPaid:            true,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -823,7 +839,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: -250,
 					IsPaid:            true,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -834,7 +850,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     DCAAccountStatus,
-					DunningStatus:     DCADunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(DCADunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -845,7 +861,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     DCADunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(DCADunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -856,7 +872,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     DCAAccountStatus,
-					DunningStatus:     PEN3DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN3DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -867,7 +883,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     CHSAccountStatus,
-					DunningStatus:     PEN3DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN3DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -878,7 +894,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     HLDAccountStatus,
-					DunningStatus:     PEN3DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN3DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -889,7 +905,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     WDRAccountStatus,
-					DunningStatus:     PEN1DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -900,7 +916,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     WDRAccountStatus,
-					DunningStatus:     PEN2DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN2DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
@@ -911,7 +927,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					OutstandingAmount: 250,
 					IsPaid:            false,
 					AccountStatus:     WDRAccountStatus,
-					DunningStatus:     PEN3DunningStatus,
+					DunningStatus:     addTrailingSpacesToDunningStatus(PEN3DunningStatus),
 				}},
 				want: ClosedPayableStatus,
 			},
