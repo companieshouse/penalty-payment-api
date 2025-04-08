@@ -81,14 +81,27 @@ func getTransactionType(e5Transaction *e5.Transaction, allowedTransactionsMap *m
 
 func getReason(transaction *e5.Transaction) string {
 	if transaction.CompanyCode == utils.LateFilingPenalty {
-		return "Late filing of accounts"
-	} else if transaction.CompanyCode == utils.Sanctions && (transaction.TransactionSubType == "S1" && transaction.TypeDescription == "CS01") {
-		return "Failure to file a confirmation statement"
+		return LateFilingPenaltyReason
+	} else if transaction.CompanyCode == utils.Sanctions && checkSanctionsTypeDescription(transaction, CS01TypeDescription) {
+		return ConfirmationStatementReason
 	}
-	return "Penalty"
+	return PenaltyReason
+}
+
+func checkSanctionsTypeDescription(transaction *e5.Transaction, typeDescription string) bool {
+	return (transaction.TransactionType == SanctionsTransactionType && transaction.TransactionSubType == SanctionsTransactionSubType) &&
+		strings.TrimSpace(transaction.TypeDescription) == typeDescription
 }
 
 const (
+	SanctionsTransactionType    = "1"
+	SanctionsTransactionSubType = "S1"
+	CS01TypeDescription         = "CS01"
+
+	LateFilingPenaltyReason     = "Late filing of accounts"
+	ConfirmationStatementReason = "Failure to file a confirmation statement"
+	PenaltyReason               = "Penalty"
+
 	OpenPayableStatus   = "OPEN"
 	ClosedPayableStatus = "CLOSED"
 
