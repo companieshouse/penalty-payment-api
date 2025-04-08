@@ -66,9 +66,9 @@ var validSanctionsTransaction = e5.Transaction{
 	Amount:               250,
 	OutstandingAmount:    250,
 	IsPaid:               false,
-	TransactionType:      "1",
-	TransactionSubType:   "S1",
-	TypeDescription:      "CS01",
+	TransactionType:      SanctionsTransactionType,
+	TransactionSubType:   SanctionsTransactionSubType,
+	TypeDescription:      "CS01                                    ",
 	DueDate:              "2025-03-26",
 	AccountStatus:        CHSAccountStatus,
 	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
@@ -141,8 +141,8 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			OriginalAmount:  250,
 			Outstanding:     250,
 			Type:            "penalty",
-			Reason:          "Late filing of accounts",
-			PayableStatus:   "OPEN",
+			Reason:          LateFilingPenaltyReason,
+			PayableStatus:   OpenPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
 	})
@@ -173,8 +173,8 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			OriginalAmount:  250,
 			Outstanding:     250,
 			Type:            "other",
-			Reason:          "Late filing of accounts",
-			PayableStatus:   "OPEN",
+			Reason:          LateFilingPenaltyReason,
+			PayableStatus:   OpenPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
 	})
@@ -206,8 +206,8 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			OriginalAmount:  250,
 			Outstanding:     250,
 			Type:            "penalty",
-			Reason:          "Late filing of accounts",
-			PayableStatus:   "CLOSED",
+			Reason:          LateFilingPenaltyReason,
+			PayableStatus:   ClosedPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
 	})
@@ -237,8 +237,8 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			OriginalAmount:  250,
 			Outstanding:     250,
 			Type:            "penalty",
-			Reason:          "Failure to file a confirmation statement",
-			PayableStatus:   "OPEN",
+			Reason:          ConfirmationStatementReason,
+			PayableStatus:   OpenPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
 	})
@@ -269,8 +269,8 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			OriginalAmount:  250,
 			Outstanding:     250,
 			Type:            "penalty",
-			Reason:          "Failure to file a confirmation statement",
-			PayableStatus:   "CLOSED",
+			Reason:          ConfirmationStatementReason,
+			PayableStatus:   ClosedPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
 	})
@@ -291,28 +291,29 @@ func TestUnit_getReason(t *testing.T) {
 				args: args{transaction: &e5.Transaction{
 					CompanyCode:        utils.LateFilingPenalty,
 					TransactionType:    "1",
-					TransactionSubType: "Other",
+					TransactionSubType: "C1",
 				}},
-				want: "Late filing of accounts",
+				want: LateFilingPenaltyReason,
 			},
 			{
 				name: "Failure to file a confirmation statement",
 				args: args{transaction: &e5.Transaction{
 					CompanyCode:        utils.Sanctions,
-					TransactionType:    "1",
-					TransactionSubType: "S1",
-					TypeDescription:    "CS01",
+					TransactionType:    SanctionsTransactionType,
+					TransactionSubType: SanctionsTransactionSubType,
+					TypeDescription:    "CS01                                    ",
 				}},
-				want: "Failure to file a confirmation statement",
+				want: ConfirmationStatementReason,
 			},
 			{
 				name: "Penalty",
 				args: args{transaction: &e5.Transaction{
 					CompanyCode:        utils.Sanctions,
-					TransactionType:    "1",
-					TransactionSubType: "S1",
+					TransactionType:    SanctionsTransactionType,
+					TransactionSubType: SanctionsTransactionSubType,
+					TypeDescription:    "P&S Penalty                             ",
 				}},
-				want: "Penalty",
+				want: PenaltyReason,
 			},
 		}
 		for _, tc := range testCases {
@@ -684,9 +685,9 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					Amount:               250,
 					OutstandingAmount:    250,
 					IsPaid:               false,
-					TransactionType:      "1",
-					TransactionSubType:   "S1",
-					TypeDescription:      "CS01",
+					TransactionType:      SanctionsTransactionType,
+					TransactionSubType:   SanctionsTransactionSubType,
+					TypeDescription:      "CS01                                    ",
 					DueDate:              "2025-03-26",
 					AccountStatus:        CHSAccountStatus,
 					DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
@@ -812,9 +813,9 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					Amount:               250,
 					OutstandingAmount:    0,
 					IsPaid:               true,
-					TransactionType:      "1",
-					TransactionSubType:   "S1",
-					TypeDescription:      "CS01",
+					TransactionType:      SanctionsTransactionType,
+					TransactionSubType:   SanctionsTransactionSubType,
+					TypeDescription:      "CS01                                    ",
 					DueDate:              "2025-03-26",
 					AccountStatus:        CHSAccountStatus,
 					DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
