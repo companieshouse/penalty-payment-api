@@ -17,7 +17,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func createMockPayableResourceService(mockDAO *mocks.MockService, cfg *config.Config) PayableResourceService {
+func createMockPayableResourceService(mockDAO *mocks.MockPayableResourceDaoService, cfg *config.Config) PayableResourceService {
 	return PayableResourceService{
 		DAO:    mockDAO,
 		Config: cfg,
@@ -29,7 +29,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 	cfg, _ := config.Get()
 
 	Convey("Error getting payable resource from DB", t, func() {
-		mock := mocks.NewMockService(mockCtrl)
+		mock := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableService := createMockPayableResourceService(mock, cfg)
 		mock.EXPECT().GetPayableResource("12345678", gomock.Any()).Return(&models.PayableResourceDao{}, fmt.Errorf("error"))
 
@@ -42,7 +42,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 	})
 
 	Convey("Payable resource not found", t, func() {
-		mock := mocks.NewMockService(mockCtrl)
+		mock := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableService := createMockPayableResourceService(mock, cfg)
 		mock.EXPECT().GetPayableResource("12345678", "invalid").Return(nil, nil)
 
@@ -55,7 +55,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 	})
 
 	Convey("Get Payable resource - success - Single transaction", t, func() {
-		mock := mocks.NewMockService(mockCtrl)
+		mock := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableService := createMockPayableResourceService(mock, cfg)
 
 		txs := map[string]models.TransactionDao{
@@ -115,7 +115,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 	})
 
 	Convey("Get Payable resource - success - Multiple transactions", t, func() {
-		mock := mocks.NewMockService(mockCtrl)
+		mock := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableService := createMockPayableResourceService(mock, cfg)
 
 		txs := map[string]models.TransactionDao{
@@ -186,7 +186,7 @@ func TestUnitPayableResourceService_UpdateAsPaid(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			mockDaoService := mocks.NewMockService(mockCtrl)
+			mockDaoService := mocks.NewMockPayableResourceDaoService(mockCtrl)
 			mockDaoService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(nil, errors.New("not found"))
 			svc := PayableResourceService{DAO: mockDaoService}
 
@@ -206,7 +206,7 @@ func TestUnitPayableResourceService_UpdateAsPaid(t *testing.T) {
 					},
 				},
 			}
-			mockDaoService := mocks.NewMockService(mockCtrl)
+			mockDaoService := mocks.NewMockPayableResourceDaoService(mockCtrl)
 			mockDaoService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
 			svc := PayableResourceService{DAO: mockDaoService}
 
@@ -224,7 +224,7 @@ func TestUnitPayableResourceService_UpdateAsPaid(t *testing.T) {
 					Payment: models.PaymentDao{},
 				},
 			}
-			mockDaoService := mocks.NewMockService(mockCtrl)
+			mockDaoService := mocks.NewMockPayableResourceDaoService(mockCtrl)
 			mockDaoService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
 			mockDaoService.EXPECT().UpdatePaymentDetails(gomock.Any()).Times(1)
 			svc := PayableResourceService{DAO: mockDaoService}

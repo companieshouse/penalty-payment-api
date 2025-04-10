@@ -56,7 +56,7 @@ func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap
 	generatedTransactionListFromAccountPenalties, err :=
 		generateTransactionList(accountPenalties, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
-		err = fmt.Errorf("error generating transaction list from the account penalties: [%v]", err)
+		err = fmt.Errorf("error generating transaction list from account penalties: [%v]", err)
 		log.Error(err)
 		return nil, services.Error, err
 	}

@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/mocks"
+	"github.com/golang/mock/gomock"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
@@ -41,13 +43,22 @@ var e5TransactionsResponse = e5.GetTransactionsResponse{
 }
 
 func TestUnitAccountPenalties(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	Convey("error when no transactions provided", t, func() {
-		_, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		mockAccountPenaltiesDaoService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+		mockAccountPenaltiesDaoService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
+		_, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockAccountPenaltiesDaoService)
 		So(err, ShouldNotBeNil)
 		So(responseType, ShouldEqual, services.Error)
 	})
 
 	Convey("penalties returned when valid transactions", t, func() {
+		mockAccountPenaltiesDaoService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+		mockAccountPenaltiesDaoService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
+		mockAccountPenaltiesDaoService.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil)
+
 		mockedGetTransactions := func(customerCode string, companyCode string,
 			client *e5.Client) (*e5.GetTransactionsResponse, error) {
 			return &e5TransactionsResponse, nil
@@ -55,13 +66,16 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 		getTransactions = mockedGetTransactions
 
-		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockAccountPenaltiesDaoService)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
 		So(responseType, ShouldEqual, services.Success)
 	})
 
 	Convey("error when transactions cannot be found", t, func() {
+		mockAccountPenaltiesDaoService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+		mockAccountPenaltiesDaoService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
+
 		errGettingTransactions := errors.New("error getting transactions")
 		mockedGetTransactions := func(customerCode string, companyCode string, client *e5.Client) (*e5.GetTransactionsResponse, error) {
 			return &e5.GetTransactionsResponse{}, errGettingTransactions
@@ -69,20 +83,24 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 		getTransactions = mockedGetTransactions
 
-		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockAccountPenaltiesDaoService)
 		So(err, ShouldEqual, errGettingTransactions)
 		So(listResponse, ShouldBeNil)
 		So(responseType, ShouldEqual, services.Error)
 	})
 
 	Convey("error when generating transaction list fails", t, func() {
-		errGeneratingTransactionList := errors.New("error generating transaction list from the e5 response: [error generating etag]")
+		mockAccountPenaltiesDaoService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+		mockAccountPenaltiesDaoService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
+		mockAccountPenaltiesDaoService.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil)
+
+		errGeneratingTransactionList := errors.New("error generating transaction list from account penalties: [error generating etag]")
 		payableTransactionList := models.TransactionListResponse{}
 		mockedGetTransactions := func(customerCode string, companyCode string,
 			client *e5.Client) (*e5.GetTransactionsResponse, error) {
 			return &e5TransactionsResponse, nil
 		}
-		mockedGenerateTransactionList := func(e5Response *e5.GetTransactionsResponse, companyCode string,
+		mockedGenerateTransactionList := func(accountPenalties *models.AccountPenaltiesDao, companyCode string,
 			penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, error) {
 			return &payableTransactionList, errors.New("error generating etag")
 		}
@@ -90,13 +108,16 @@ func TestUnitAccountPenalties(t *testing.T) {
 		getTransactions = mockedGetTransactions
 		generateTransactionList = mockedGenerateTransactionList
 
-		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockAccountPenaltiesDaoService)
 		So(err, ShouldResemble, errGeneratingTransactionList)
 		So(listResponse, ShouldBeNil)
 		So(responseType, ShouldEqual, services.Error)
 	})
 
 	Convey("error when getConfig fails", t, func() {
+		mockAccountPenaltiesDaoService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+		mockAccountPenaltiesDaoService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
+
 		errGettingConfig := errors.New("error getting config")
 		mockedGetConfig := func() (*config.Config, error) {
 			return nil, errGettingConfig
@@ -104,7 +125,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 		getConfig = mockedGetConfig
 
-		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockAccountPenaltiesDaoService)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldBeNil)
 		So(responseType, ShouldEqual, services.Error)
