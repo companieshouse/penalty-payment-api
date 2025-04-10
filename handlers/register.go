@@ -22,12 +22,13 @@ var payableResourceService *services.PayableResourceService
 var paymentDetailsService *service.PaymentDetailsService
 
 // Register defines the route mappings for the main router and it's subrouters
-func Register(mainRouter *mux.Router, cfg *config.Config, daoService dao.PayableResourceDaoService,
-	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) {
+func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.PayableResourceDaoService,
+	apDaoService dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap) {
 
 	payableResourceService = &services.PayableResourceService{
 		Config: cfg,
-		DAO:    daoService,
+		DAO:    prDaoService,
 	}
 
 	paymentDetailsService = &service.PaymentDetailsService{
@@ -56,9 +57,9 @@ func Register(mainRouter *mux.Router, cfg *config.Config, daoService dao.Payable
 	mainRouter.HandleFunc("/penalty-payment-api/healthcheck/finance-system", HandleHealthCheckFinanceSystem).Methods(http.MethodGet).Name("healthcheck-finance-system")
 
 	appRouter := mainRouter.PathPrefix("/company/{customer_code}").Subrouter()
-	appRouter.HandleFunc("/penalties/late-filing", HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties-legacy")
-	appRouter.HandleFunc("/penalties/{penalty_reference_type}", HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties")
-	appRouter.Handle("/penalties/payable", CreatePayableResourceHandler(daoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodPost).Name("create-payable")
+	appRouter.HandleFunc("/penalties/late-filing", HandleGetPenalties(apDaoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties-legacy")
+	appRouter.HandleFunc("/penalties/{penalty_reference_type}", HandleGetPenalties(apDaoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties")
+	appRouter.Handle("/penalties/payable", CreatePayableResourceHandler(prDaoService, apDaoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodPost).Name("create-payable")
 	appRouter.Use(
 		oauth2OnlyInterceptor.OAuth2OnlyAuthenticationIntercept,
 		userAuthInterceptor.UserAuthenticationIntercept,
@@ -76,7 +77,7 @@ func Register(mainRouter *mux.Router, cfg *config.Config, daoService dao.Payable
 	// other routes
 	payResourceRouter := appRouter.PathPrefix("/penalties/payable/{payable_ref}/payment").Methods(http.MethodPatch).Subrouter()
 	payResourceRouter.Use(payableAuthInterceptor.PayableAuthenticationIntercept, authentication.ElevatedPrivilegesInterceptor)
-	payResourceRouter.Handle("", PayResourceHandler(payableResourceService, e5Client, penaltyDetailsMap, allowedTransactionsMap)).Name("mark-as-paid")
+	payResourceRouter.Handle("", PayResourceHandler(payableResourceService, e5Client, penaltyDetailsMap, allowedTransactionsMap, apDaoService)).Name("mark-as-paid")
 
 	// Set middleware across all routers and sub routers
 	mainRouter.Use(log.Handler)

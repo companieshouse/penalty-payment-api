@@ -32,7 +32,8 @@ func main() {
 
 	// Create router
 	mainRouter := mux.NewRouter()
-	daoService := dao.NewPayableResourcesDaoService(cfg)
+	prDaoService := dao.NewPayableResourcesDaoService(cfg)
+	apDaoService := dao.NewAccountPenaltiesDaoService(cfg)
 
 	penaltyDetailsMap, err := config.LoadPenaltyDetails("assets/penalty_details.yml")
 	if err != nil {
@@ -46,7 +47,7 @@ func main() {
 		return
 	}
 
-	handlers.Register(mainRouter, cfg, daoService, penaltyDetailsMap, allowedTransactionsMap)
+	handlers.Register(mainRouter, cfg, prDaoService, apDaoService, penaltyDetailsMap, allowedTransactionsMap)
 
 	log.Info("Starting " + namespace)
 
@@ -65,7 +66,7 @@ func main() {
 		log.Info("server stopping...")
 		if err != nil && !errors.Is(http.ErrServerClosed, err) {
 			log.Error(err)
-			daoService.Shutdown()
+			prDaoService.Shutdown()
 			os.Exit(1)
 		}
 	}()
@@ -74,7 +75,7 @@ func main() {
 	<-stop
 
 	log.Info("shutting down server...")
-	daoService.Shutdown()
+	prDaoService.Shutdown()
 	timeout := time.Duration(5) * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

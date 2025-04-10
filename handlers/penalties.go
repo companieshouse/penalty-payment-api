@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"github.com/gorilla/mux"
@@ -19,12 +21,14 @@ import (
 var getCompanyCode = func(penaltyReferenceType string) (string, error) {
 	return utils.GetCompanyCode(penaltyReferenceType)
 }
-var accountPenalties = func(customerCode string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, services.ResponseType, error) {
-	return api.AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap)
+var accountPenalties = func(customerCode string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap,
+	apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
+	return api.AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 }
 
 // HandleGetPenalties retrieves the penalty details for the supplied customer code from e5
-func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
+func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.InfoR(req, "start GET penalties request from e5")
 
@@ -43,7 +47,12 @@ func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTran
 		}
 
 		// Call service layer to handle request to E5
-		transactionListResponse, responseType, err := accountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap)
+		transactionListResponse, responseType, err := accountPenalties(customerCode, companyCode,
+			penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+
+		log.Info("TransactionListResponse size: " + strconv.Itoa(len(transactionListResponse.Items)))
+		log.Info("TransactionListResponse etag: " + transactionListResponse.Etag)
+		log.Info("TransactionListResponse date: " + transactionListResponse.Items[0].TransactionDate)
 		if err != nil {
 			log.ErrorR(req, fmt.Errorf("error calling e5 to get transactions: %v", err))
 			switch responseType {

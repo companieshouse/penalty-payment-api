@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"github.com/companieshouse/chs.go/avro"
@@ -35,8 +36,8 @@ var getSchema = func(url string) (string, error) {
 }
 
 // SendEmailKafkaMessage sends a kafka message to the email-sender to send an email
-func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request,
-	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) error {
+func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
 	cfg, err := getConfig()
 	if err != nil {
 		err = fmt.Errorf("error getting config for kafka message production: [%v]", err)
@@ -58,7 +59,7 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 	}
 
 	message, err := prepareKafkaMessage(
-		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 	if err != nil {
 		err = fmt.Errorf("error preparing kafka message with schema: [%v]", err)
 		return err
@@ -77,8 +78,8 @@ var getCompanyName = GetCompanyName
 var getPayablePenalty = api.PayablePenalty
 
 // prepareKafkaMessage generates the kafka message that is to be sent
-func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request,
-	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*producer.Message, error) {
+func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*producer.Message, error) {
 	cfg, err := getConfig()
 	if err != nil {
 		err = fmt.Errorf("error getting config: [%v]", err)
@@ -103,7 +104,7 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 
 	transaction := payableResource.Transactions[0]
 	payablePenalty, err := getPayablePenalty(payableResource.CustomerCode, companyCode, transaction,
-		penaltyDetailsMap, allowedTransactionsMap)
+		penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 	if err != nil {
 		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)
 		return nil, err

@@ -10,12 +10,12 @@ import (
 )
 
 var (
-	ErrTransactionDoesNotExist   = errors.New("invalid transaction")
-	ErrTransactionNotPayable     = errors.New("you cannot pay for this type of transaction")
-	ErrTransactionDCA            = errors.New("the transaction is with a debt collecting agency")
-	ErrTransactionIsPaid         = errors.New("this transaction is already paid")
-	ErrTransactionIsPartPaid     = errors.New("the transaction is already part paid")
-	ErrTransactionAmountMismatch = errors.New("you can only pay off the full amount of the transaction")
+	ErrTransactionDoesNotExist   = errors.New("invalid penalty")
+	ErrTransactionNotPayable     = errors.New("you cannot pay for this type of penalty")
+	ErrTransactionDCA            = errors.New("the penalty is with a debt collecting agency")
+	ErrTransactionIsPaid         = errors.New("this penalty is already paid")
+	ErrTransactionIsPartPaid     = errors.New("the penalty is already part paid")
+	ErrTransactionAmountMismatch = errors.New("you can only pay off the full amount of the penalty")
 )
 
 func MatchPenalty(referenceTransactions []models.TransactionListItem,
@@ -30,7 +30,7 @@ func MatchPenalty(referenceTransactions []models.TransactionListItem,
 
 	matched, ok := referenceTransactionsMap[transactionToMatch.PenaltyRef]
 	if !ok {
-		log.Info("disallowing paying for a transaction that does not exist in E5", transactionInfo)
+		log.Info("disallowing paying for a penalty that does not exist in E5", transactionInfo)
 		return nil, ErrTransactionDoesNotExist
 	}
 
@@ -65,24 +65,24 @@ func validate(
 		errs = append(errs, ErrTransactionIsPartPaid)
 	}
 	if refTransaction.IsPaid {
-		log.Info("disallowing paying for a transaction that is already paid", data)
+		log.Info("disallowing paying for a penalty that is already paid", data)
 		valid = false
 		errs = append(errs, ErrTransactionIsPaid)
 	}
 	if refTransaction.Type != types.Penalty.String() {
-		log.Info("disallowing paying for a transaction that is not a penalty", data)
+		log.Info("disallowing paying for a penalty that is not a penalty", data)
 		valid = false
 		errs = append(errs, ErrTransactionNotPayable)
 	}
 	if refTransaction.Outstanding != transactionToMatch.Amount {
 		data["attempted_amount"] = fmt.Sprintf("%f", transactionToMatch.Amount)
 		data["outstanding_amount"] = fmt.Sprintf("%f", refTransaction.Outstanding)
-		log.Info("disallowing paying for transaction as attempting to pay off partial balance", data)
+		log.Info("disallowing paying for penalty as attempting to pay off partial balance", data)
 		valid = false
 		errs = append(errs, ErrTransactionAmountMismatch)
 	}
 	if refTransaction.IsDCA {
-		log.Info("the transaction that is trying to be paid is with a debt collecting agency", data)
+		log.Info("the penalty that is trying to be paid is with a debt collecting agency", data)
 		valid = false
 		errs = append(errs, ErrTransactionDCA)
 	}
