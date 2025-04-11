@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/companieshouse/penalty-payment-api/common/dao"
-	"github.com/companieshouse/penalty-payment-api/common/e5"
-
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/dao"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
@@ -27,10 +26,6 @@ var generateTransactionList = private.GenerateTransactionListFromAccountPenaltie
 func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap,
 	apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
 	accountPenalties, err := apDaoSvc.GetAccountPenalties(customerCode, companyCode)
-	if err != nil {
-		log.Error(fmt.Errorf("error retrieving account penalties: [%v]", err),
-			log.Data{"customer_code": customerCode, "company_code": companyCode})
-	}
 
 	if accountPenalties == nil {
 		cfg, err := getConfig()
@@ -38,17 +33,13 @@ func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap
 			return nil, services.Error, nil
 		}
 
-		e5Response, err := getTransactionListFromE5(customerCode, companyCode, cfg, err)
+		e5Response, err := getTransactionListFromE5(customerCode, companyCode, cfg)
 		if err != nil {
 			log.Error(fmt.Errorf("error getting transaction list: [%v]", err))
 			return nil, services.Error, err
 		}
 
-		accountPenalties, err = createAccountPenaltiesEntry(customerCode, companyCode, e5Response, accountPenalties, err, apDaoSvc)
-		if err != nil {
-			log.Error(fmt.Errorf("error creating account penalties: [%v]", err),
-				log.Data{"customer_code": customerCode, "company_code": companyCode})
-		}
+		accountPenalties = createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
 	}
 
 	// Generate the CH preferred format of the results i.e. classify the transactions into
@@ -66,14 +57,18 @@ func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap
 	return generatedTransactionListFromAccountPenalties, services.Success, nil
 }
 
-func createAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse, accountPenalties *models.AccountPenaltiesDao, err error, apDaoSvc dao.AccountPenaltiesDaoService) (*models.AccountPenaltiesDao, error) {
+func createAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse,
+	apDaoSvc dao.AccountPenaltiesDaoService) *models.AccountPenaltiesDao {
 	convertedResponse := convertE5Response(customerCode, companyCode, e5Response)
-	accountPenalties = &convertedResponse
-	err = apDaoSvc.CreateAccountPenalties(&convertedResponse)
-	return accountPenalties, err
+	err := apDaoSvc.CreateAccountPenalties(&convertedResponse)
+	if err != nil {
+		log.Error(fmt.Errorf("error creating account penalties: [%v]", err),
+			log.Data{"customer_code": customerCode, "company_code": companyCode})
+	}
+	return &convertedResponse
 }
 
-func getTransactionListFromE5(customerCode string, companyCode string, cfg *config.Config, err error) (*e5.GetTransactionsResponse, error) {
+func getTransactionListFromE5(customerCode string, companyCode string, cfg *config.Config) (*e5.GetTransactionsResponse, error) {
 	client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
 	e5Response, err := getTransactions(customerCode, companyCode, client)
 	return e5Response, err

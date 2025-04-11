@@ -58,7 +58,7 @@ func TestUnitPayablePenalty(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockAccountPenaltiesDaoService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+	mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 
 	penaltyDetailsMap := &config.PenaltyDetailsMap{}
 	allowedTransactionMap := &models.AllowedTransactionMap{
@@ -80,7 +80,7 @@ func TestUnitPayablePenalty(t *testing.T) {
 
 		transaction := models.TransactionItem{PenaltyRef: "121"}
 		payablePenalty, err := PayablePenalty("10000024", utils.LateFilingPenalty, transaction,
-			penaltyDetailsMap, allowedTransactionMap, mockAccountPenaltiesDaoService)
+			penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
 
 		So(payablePenalty, ShouldBeNil)
 		So(err, ShouldEqual, accountPenaltiesErr)
@@ -103,7 +103,7 @@ func TestUnitPayablePenalty(t *testing.T) {
 			Reason:     "Late filing of accounts",
 		}
 		gotPayablePenalty, err := PayablePenalty("10000024", utils.LateFilingPenalty, unpaidPenalty, penaltyDetailsMap,
-			allowedTransactionMap, mockAccountPenaltiesDaoService)
+			allowedTransactionMap, mockPenaltiesService)
 
 		So(gotPayablePenalty, ShouldResemble, &unpaidPenalty)
 		So(err, ShouldBeNil)
@@ -131,7 +131,7 @@ func TestUnitPayablePenalty(t *testing.T) {
 		getMatchingPenalty = mockedMatchPenalty
 
 		gotPayablePenalty, err := PayablePenalty("10000024", utils.LateFilingPenalty, transaction,
-			penaltyDetailsMap, allowedTransactionMap, mockAccountPenaltiesDaoService)
+			penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
 
 		So(gotPayablePenalty, ShouldResemble, wantPayablePenalty)
 		So(err, ShouldBeNil)

@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/companieshouse/penalty-payment-api/common/utils"
-
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/services"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -20,7 +20,8 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 	allowedTransactionsMap := &models.AllowedTransactionMap{}
 
 	Convey("Given a request to get penalties", t, func() {
-		mockedAccountPenalties := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, services.ResponseType, error) {
+		mockedAccountPenalties := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
+			allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
 			if companyNumber == "INVALID_COMPANY" {
 				return nil, services.Error, errors.New("error getting penalties")
 			}
@@ -46,7 +47,7 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 		req := httptest.NewRequest("GET", "/penalties", nil)
 		rr := httptest.NewRecorder()
 
-		handler := HandleGetPenalties(penaltyDetailsMap, allowedTransactionsMap)
+		handler := HandleGetPenalties(nil, penaltyDetailsMap, allowedTransactionsMap)
 		handler.ServeHTTP(rr, req.WithContext(ctx))
 
 		So(rr.Code, ShouldEqual, http.StatusOK)

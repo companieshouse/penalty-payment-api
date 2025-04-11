@@ -4,18 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
-
-	"github.com/companieshouse/penalty-payment-api/common/dao"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
-
-	"github.com/gorilla/mux"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/services"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
+	"github.com/gorilla/mux"
 )
 
 var getCompanyCode = func(penaltyReferenceType string) (string, error) {
@@ -50,9 +47,6 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 		transactionListResponse, responseType, err := accountPenalties(customerCode, companyCode,
 			penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 
-		log.Info("TransactionListResponse size: " + strconv.Itoa(len(transactionListResponse.Items)))
-		log.Info("TransactionListResponse etag: " + transactionListResponse.Etag)
-		log.Info("TransactionListResponse date: " + transactionListResponse.Items[0].TransactionDate)
 		if err != nil {
 			log.ErrorR(req, fmt.Errorf("error calling e5 to get transactions: %v", err))
 			switch responseType {
