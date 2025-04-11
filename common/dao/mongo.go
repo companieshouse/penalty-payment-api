@@ -85,6 +85,7 @@ func (m *MongoAccountPenaltiesService) CreateAccountPenalties(dao *models.Accoun
 		"company_code":  dao.CompanyCode,
 	}
 
+	// setOnInsert is used here with SetUpsert below to ensure that if a document exists then it is not updated
 	update := bson.M{
 		"$setOnInsert": bson.M{
 			"customer_code": dao.CustomerCode,
