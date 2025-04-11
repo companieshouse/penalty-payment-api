@@ -8,11 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/companieshouse/penalty-payment-api-core/constants"
-	"github.com/companieshouse/penalty-payment-api/common/services"
-
 	"github.com/companieshouse/chs.go/authentication"
+	"github.com/companieshouse/penalty-payment-api-core/constants"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
@@ -29,7 +28,7 @@ func GetTestHandler() http.HandlerFunc {
 	return http.HandlerFunc(fn)
 }
 
-func createMockPayableResourceService(mockDAO *mocks.MockService, cfg *config.Config) services.PayableResourceService {
+func createMockPayableResourceService(mockDAO *mocks.MockPayableResourceDaoService, cfg *config.Config) services.PayableResourceService {
 	return services.PayableResourceService{
 		DAO:    mockDAO,
 		Config: cfg,
@@ -38,7 +37,7 @@ func createMockPayableResourceService(mockDAO *mocks.MockService, cfg *config.Co
 
 // Function to create a PayableAuthenticationInterceptor with mock mongo DAO and a mock payment service
 func createPayableAuthenticationInterceptorWithMockDAOAndService(controller *gomock.Controller, cfg *config.Config) PayableAuthenticationInterceptor {
-	mockDAO := mocks.NewMockService(controller)
+	mockDAO := mocks.NewMockPayableResourceDaoService(controller)
 	mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
 	return PayableAuthenticationInterceptor{
 		Service: mockPayableResourceService,
@@ -132,7 +131,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
-		mockDAO := mocks.NewMockService(mockCtrl)
+		mockDAO := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 
@@ -161,7 +160,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
-		mockDAO := mocks.NewMockService(mockCtrl)
+		mockDAO := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 
@@ -190,7 +189,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
-		mockDAO := mocks.NewMockService(mockCtrl)
+		mockDAO := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 
@@ -244,7 +243,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
-		mockDAO := mocks.NewMockService(mockCtrl)
+		mockDAO := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 
@@ -298,7 +297,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
-		mockDAO := mocks.NewMockService(mockCtrl)
+		mockDAO := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 
@@ -346,7 +345,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		req.Header.Set("Eric-Identity", "api_key")
 		req.Header.Set("Eric-Identity-Type", "key")
 		req.Header.Set("ERIC-Authorised-Key-Roles", "*")
-		mockDAO := mocks.NewMockService(mockCtrl)
+		mockDAO := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 
@@ -394,7 +393,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		req.Header.Set("Eric-Identity", "api_key")
 		req.Header.Set("Eric-Identity-Type", "key")
 		req.Header.Set("ERIC-Authorised-Key-Roles", "*")
-		mockDAO := mocks.NewMockService(mockCtrl)
+		mockDAO := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
 

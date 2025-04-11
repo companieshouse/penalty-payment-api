@@ -10,21 +10,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/companieshouse/penalty-payment-api/common/dao"
-	"github.com/companieshouse/penalty-payment-api/common/e5"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
-
-	"github.com/golang/mock/gomock"
-	"github.com/jarcoal/httpmock"
-
 	"github.com/companieshouse/api-sdk-go/companieshouseapi"
 	"github.com/companieshouse/go-session-handler/httpsession"
 	"github.com/companieshouse/go-session-handler/session"
 	"github.com/companieshouse/penalty-payment-api-core/constants"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/dao"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/common/services"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/mocks"
+	"github.com/golang/mock/gomock"
+	"github.com/jarcoal/httpmock"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -57,7 +55,7 @@ var allowedTransactionsMap = &models.AllowedTransactionMap{
 
 // reduces the boilerplate code needed to create, dispatch and unmarshal response body
 func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *models.PatchResourceRequest,
-	daoSvc dao.PayableResourceDaoService) (*httptest.ResponseRecorder, *models.ResponseResource) {
+	daoSvc dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService) (*httptest.ResponseRecorder, *models.ResponseResource) {
 
 	payableResourceService := &services.PayableResourceService{}
 
@@ -76,7 +74,8 @@ func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *mode
 
 	ctx = context.WithValue(ctx, httpsession.ContextKeySession, &session.Session{})
 
-	h := PayResourceHandler(payableResourceService, e5.NewClient("foo", "e5api"), penaltyDetailsMap, allowedTransactionsMap)
+	h := PayResourceHandler(payableResourceService, e5.NewClient("foo", "e5api"),
+		penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 	req := httptest.NewRequest(http.MethodPost, "/", body).WithContext(ctx)
 	res := httptest.NewRecorder()
 
@@ -97,13 +96,13 @@ func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *mode
 
 // Mock function for erroring when preparing and sending kafka message
 func mockSendEmailKafkaMessageError(payableResource models.PayableResource, req *http.Request,
-	detailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) error {
+	detailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
 	return errors.New("error")
 }
 
 // Mock function for successful preparing and sending of kafka message
 func mockSendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request,
-	detailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) error {
+	detailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
 	return nil
 }
 
@@ -113,7 +112,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 		defer httpmock.DeactivateAndReset()
 
 		Convey("payable resource must be in context", func() {
-			res, body := dispatchPayResourceHandler(context.Background(), t, nil, nil)
+			res, body := dispatchPayResourceHandler(context.Background(), t, nil, nil, nil)
 
 			So(res.Code, ShouldEqual, http.StatusBadRequest)
 			So(body.Message, ShouldEqual, "no payable request present in request context")
@@ -121,7 +120,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 		Convey("payment reference is required in request body", func() {
 			ctx := context.WithValue(context.Background(), config.PayableResource, &models.PayableResource{})
-			res, body := dispatchPayResourceHandler(ctx, t, &models.PatchResourceRequest{}, nil)
+			res, body := dispatchPayResourceHandler(ctx, t, &models.PatchResourceRequest{}, nil, nil)
 
 			So(res.Code, ShouldEqual, http.StatusBadRequest)
 			So(body.Message, ShouldEqual, "the request contained insufficient data and/or failed validation")
@@ -140,7 +139,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
 
-			res, body := dispatchPayResourceHandler(ctx, t, reqBody, nil)
+			res, body := dispatchPayResourceHandler(ctx, t, reqBody, nil, nil)
 
 			So(res.Code, ShouldEqual, http.StatusBadRequest)
 			So(body.Message, ShouldEqual, "the payable resource does not exist")
@@ -169,7 +168,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
-			res, body := dispatchPayResourceHandler(ctx, t, reqBody, nil)
+			res, body := dispatchPayResourceHandler(ctx, t, reqBody, nil, nil)
 
 			So(res.Code, ShouldEqual, http.StatusBadRequest)
 			So(body.Message, ShouldEqual, "there was a problem validating this payment")
@@ -202,10 +201,11 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// stub the mongo lookup
 			dataModel := &models.PayableResourceDao{}
-			mockService := mocks.NewMockService(mockCtrl)
-			mockService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockService.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
-			mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
+			mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
+			mockPayableResourceService := mocks.NewMockPayableResourceDaoService(mockCtrl)
+			mockPayableResourceService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
+			mockPayableResourceService.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
+			mockPayableResourceService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -220,7 +220,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			handleEmailKafkaMessage = mockSendEmailKafkaMessageError
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
-			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockService)
+			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockPayableResourceService, mockPenaltiesService)
 
 			So(dataModel.IsPaid(), ShouldBeTrue)
 			So(res.Code, ShouldEqual, http.StatusInternalServerError)
@@ -261,9 +261,10 @@ func TestUnitPayResourceHandler(t *testing.T) {
 				},
 			}
 
-			mockService := mocks.NewMockService(mockCtrl)
-			mockService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
+			mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
+			mockPayableResourceService := mocks.NewMockPayableResourceDaoService(mockCtrl)
+			mockPayableResourceService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
+			mockPayableResourceService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -278,7 +279,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			handleEmailKafkaMessage = mockSendEmailKafkaMessage
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
-			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockService)
+			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockPayableResourceService, mockPenaltiesService)
 
 			So(dataModel.IsPaid(), ShouldBeTrue)
 			So(res.Code, ShouldEqual, http.StatusInternalServerError)
@@ -309,11 +310,12 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment", e5Responder)
 
 			// stub the mongo lookup
+			mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 			dataModel := &models.PayableResourceDao{}
-			mockService := mocks.NewMockService(mockCtrl)
-			mockService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockService.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
-			mockService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
+			mockPayableResourceService := mocks.NewMockPayableResourceDaoService(mockCtrl)
+			mockPayableResourceService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
+			mockPayableResourceService.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
+			mockPayableResourceService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -328,7 +330,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			handleEmailKafkaMessage = mockSendEmailKafkaMessage
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
-			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockService)
+			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockPayableResourceService, mockPenaltiesService)
 
 			So(dataModel.IsPaid(), ShouldBeTrue)
 			So(res.Code, ShouldEqual, http.StatusInternalServerError)
@@ -369,8 +371,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			httpmock.RegisterResponder(http.MethodPost, "e5api/arTransactions/payment/confirm", e5Responder)
 
 			// stub the mongo lookup
+			mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 			dataModel := &models.PayableResourceDao{}
-			mockService := mocks.NewMockService(mockCtrl)
+			mockService := mocks.NewMockPayableResourceDaoService(mockCtrl)
 			mockService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
 			mockService.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
 
@@ -388,7 +391,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			handleEmailKafkaMessage = mockSendEmailKafkaMessage
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
-			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockService)
+			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockService, mockPenaltiesService)
 
 			So(res.Code, ShouldEqual, http.StatusNoContent)
 			So(body, ShouldBeNil)

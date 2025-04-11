@@ -7,16 +7,14 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/companieshouse/penalty-payment-api/common/e5"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
-
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/common/services"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -43,8 +41,8 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 	Convey("amount must be okay to parse as float", t, func() {
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
-		mockService := mocks.NewMockService(mockCtrl)
-		svc := &services.PayableResourceService{DAO: mockService}
+		mockPayableResourceService := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		svc := &services.PayableResourceService{DAO: mockPayableResourceService}
 
 		c := &e5.Client{}
 		r := models.PayableResource{}
@@ -60,8 +58,8 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
-		mockService := mocks.NewMockService(mockCtrl)
-		svc := &services.PayableResourceService{DAO: mockService}
+		mockPayableResourceService := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		svc := &services.PayableResourceService{DAO: mockPayableResourceService}
 
 		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
 			return utils.LateFilingPenalty, nil
@@ -73,7 +71,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			e5Responder := httpmock.NewStringResponder(http.StatusBadRequest, e5ValidationError)
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment", e5Responder)
 
-			mockService.EXPECT().SaveE5Error("10000024", "123", e5.CreateAction).Return(errors.New(""))
+			mockPayableResourceService.EXPECT().SaveE5Error("10000024", "123", e5.CreateAction).Return(errors.New(""))
 
 			c := &e5.Client{}
 			p := validators.PaymentInformation{Amount: "150", PaymentID: "123"}
@@ -97,7 +95,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment", okResponder)
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment/authorise", e5Responder)
 
-			mockService.EXPECT().SaveE5Error("10000024", "123", e5.AuthoriseAction).Return(errors.New(""))
+			mockPayableResourceService.EXPECT().SaveE5Error("10000024", "123", e5.AuthoriseAction).Return(errors.New(""))
 
 			c := &e5.Client{}
 			p := validators.PaymentInformation{
@@ -127,7 +125,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment/authorise", okResponder)
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment/confirm", e5Responder)
 
-			mockService.EXPECT().SaveE5Error("10000024", "123", e5.ConfirmAction).Return(errors.New(""))
+			mockPayableResourceService.EXPECT().SaveE5Error("10000024", "123", e5.ConfirmAction).Return(errors.New(""))
 
 			c := &e5.Client{}
 			p := validators.PaymentInformation{
