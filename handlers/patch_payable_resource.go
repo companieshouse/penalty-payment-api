@@ -86,6 +86,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
 		go updateAsPaidInDatabase(resource, payment, payableResourceService, r, w)
+		go updateAccountPenaltyAsPaid(resource, apDaoSvc)
 		go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
 
 		wg.Wait()
@@ -94,6 +95,30 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		w.WriteHeader(http.StatusNoContent) // This will not be set if status has already been set
 	})
 }
+
+func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.AccountPenaltiesDaoService) {
+
+	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
+	if err != nil {
+		log.Error(fmt.Errorf("error updating penalty as paid because company code cannot be determined: [%v]", err),
+			log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
+		return
+	}
+	penalty := resource.Transactions[0]
+
+	err = svc.UpdateAccountPenaltyAsPaid(resource.CustomerCode, companyCode, penalty.PenaltyRef)
+	if err != nil {
+		log.Error(fmt.Errorf("error updating penalty as paid: [%v]", err),
+			log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
+				"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
+		return
+	}
+
+	log.Info("penalty is updated as paid",
+		log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
+			"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
+}
+
 func sendConfirmationEmail(resource *models.PayableResource, payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter,
 	penaltyPaymentDetails *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) {
 	// Send confirmation email

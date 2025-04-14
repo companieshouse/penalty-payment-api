@@ -206,6 +206,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockPayableResourceService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
 			mockPayableResourceService.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
 			mockPayableResourceService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
+			mockPenaltiesService.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -265,6 +266,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockPayableResourceService := mocks.NewMockPayableResourceDaoService(mockCtrl)
 			mockPayableResourceService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
 			mockPayableResourceService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
+			mockPenaltiesService.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -316,6 +318,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockPayableResourceService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
 			mockPayableResourceService.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
 			mockPayableResourceService.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
+			mockPenaltiesService.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -376,6 +379,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockService := mocks.NewMockPayableResourceDaoService(mockCtrl)
 			mockService.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
 			mockService.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
+			mockPenaltiesService.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
