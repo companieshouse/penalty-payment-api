@@ -27,19 +27,23 @@ func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap
 	apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
 	accountPenalties, err := apDaoSvc.GetAccountPenalties(customerCode, companyCode)
 
-	if accountPenalties == nil {
-		cfg, err := getConfig()
-		if err != nil {
-			return nil, services.Error, nil
-		}
+	cfg, err := getConfig()
+	if err != nil {
+		return nil, services.Error, nil
+	}
 
+	if accountPenalties == nil || isStale(accountPenalties, cfg) {
 		e5Response, err := getTransactionListFromE5(customerCode, companyCode, cfg)
 		if err != nil {
 			log.Error(fmt.Errorf("error getting transaction list: [%v]", err))
 			return nil, services.Error, err
 		}
 
-		accountPenalties = createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
+		if accountPenalties == nil {
+			accountPenalties = createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
+		} else {
+			accountPenalties = updateAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
+		}
 	}
 
 	// Generate the CH preferred format of the results i.e. classify the transactions into
@@ -57,15 +61,26 @@ func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap
 	return generatedTransactionListFromAccountPenalties, services.Success, nil
 }
 
-func createAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse,
-	apDaoSvc dao.AccountPenaltiesDaoService) *models.AccountPenaltiesDao {
-	convertedResponse := convertE5Response(customerCode, companyCode, e5Response)
-	err := apDaoSvc.CreateAccountPenalties(&convertedResponse)
+func createAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse, apDaoSvc dao.AccountPenaltiesDaoService) *models.AccountPenaltiesDao {
+	accountPenalties := convertE5Response(customerCode, companyCode, e5Response)
+	err := apDaoSvc.CreateAccountPenalties(&accountPenalties)
 	if err != nil {
 		log.Error(fmt.Errorf("error creating account penalties: [%v]", err),
 			log.Data{"customer_code": customerCode, "company_code": companyCode})
 	}
-	return &convertedResponse
+
+	return &accountPenalties
+}
+
+func updateAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse, apDaoSvc dao.AccountPenaltiesDaoService) *models.AccountPenaltiesDao {
+	accountPenalties := convertE5Response(customerCode, companyCode, e5Response)
+	err := apDaoSvc.UpdateAccountPenalties(&accountPenalties)
+	if err != nil {
+		log.Error(fmt.Errorf("error updating account penalties: [%v]", err),
+			log.Data{"customer_code": customerCode, "company_code": companyCode})
+	}
+
+	return &accountPenalties
 }
 
 func getTransactionListFromE5(customerCode string, companyCode string, cfg *config.Config) (*e5.GetTransactionsResponse, error) {
@@ -104,4 +119,10 @@ func convertE5Response(customerCode, companyCode string, response *e5.GetTransac
 		CreatedAt:        &createdAt,
 		AccountPenalties: data,
 	}
+}
+
+func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config) bool {
+	cachRecordExpirationTime := accountPenaltiesDao.CreatedAt.Add(time.Hour * cfg.AccountPenaltiesTTLHours)
+
+	return cachRecordExpirationTime.Equal(time.Now()) || cachRecordExpirationTime.Before(time.Now())
 }

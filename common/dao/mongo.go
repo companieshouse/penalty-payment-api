@@ -214,28 +214,50 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode s
 	return nil
 }
 
-// DeleteAccountPenalties deletes an entry from the account_penalties database collection
-func (m *MongoAccountPenaltiesService) DeleteAccountPenalties(customerCode string, companyCode string) error {
-	log.Info("deleting document in account_penalties collection", log.Data{
-		"customer_code": customerCode,
-		"company_code":  companyCode,
+// UpdateAccountPenalties updates the created_at, closed_at and data fields of an existing document
+func (m *MongoAccountPenaltiesService) UpdateAccountPenalties(dao *models.AccountPenaltiesDao) error {
+	log.Info("updating existing document in account_penalties collection", log.Data{
+		"customer_code": dao.CustomerCode,
+		"company_code":  dao.CompanyCode,
 	})
 
-	filter := bson.M{"customer_code": customerCode, "company_code": companyCode}
+	filter := bson.M{
+		"customer_code": dao.CustomerCode,
+		"company_code":  dao.CompanyCode,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"created_at": dao.CreatedAt,
+			"closed_at":  dao.ClosedAt,
+			"data":       dao.AccountPenalties,
+		},
+	}
 
 	collection := m.db.Collection(m.CollectionName)
 
-	_, err := collection.DeleteOne(context.Background(), filter)
-
+	result, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.Error(err, log.Data{"customer_code": customerCode, "company_code": companyCode})
+		log.Error(err, log.Data{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+		})
 		return err
 	}
 
-	log.Info("successfully deleted document in account_penalties collection", log.Data{
-		"customer_code": customerCode,
-		"company_code":  companyCode,
-	})
+	if result.ModifiedCount == 1 {
+		log.Info("updated a document in account_penalties collection", log.Data{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+		})
+	} else {
+		err = errors.New("failed to update document in account_penalties collection")
+		log.Error(err, log.Data{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+		})
+		return err
+	}
 
 	return nil
 }
