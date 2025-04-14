@@ -24,14 +24,14 @@ import (
 
 var customerCode = "10000024"
 
-func serveCreatePayableResourceHandler(body []byte, payableResourceService dao.PayableResourceDaoService, accPenService dao.AccountPenaltiesDaoService,
+func serveCreatePayableResourceHandler(body []byte, payableResourceService dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
 	withAuthUserDetails bool) *httptest.ResponseRecorder {
 	template := "/company/%s/penalties/payable"
 	path := fmt.Sprintf(template, customerCode)
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	res := httptest.NewRecorder()
 
-	handler := CreatePayableResourceHandler(payableResourceService, accPenService, penaltyDetailsMap, allowedTransactionsMap)
+	handler := CreatePayableResourceHandler(payableResourceService, apDaoSvc, penaltyDetailsMap, allowedTransactionsMap)
 	handler.ServeHTTP(res, req.WithContext(testContext(withAuthUserDetails)))
 
 	return res
@@ -257,12 +257,12 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		defer mockCtrl.Finish()
 
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseMultipleTx))
-		mockService := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPrDaoService := mocks.NewMockPayableResourceDaoService(mockCtrl)
 
-		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
+		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 		// as there are two transaction, the Times is 2 here, possible enhancement to remove this duplicate call
-		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenalty).Return(nil, nil).Times(2)
-		mockPenaltiesService.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil).Times(2)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenalty).Return(nil, nil).Times(2)
+		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil).Times(2)
 
 		body, _ := json.Marshal(&models.PayableRequest{
 			CustomerCode: "10000024",
@@ -273,7 +273,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 			},
 		})
 
-		res := serveCreatePayableResourceHandler(body, mockService, mockPenaltiesService, true)
+		res := serveCreatePayableResourceHandler(body, mockPrDaoService, mockApDaoSvc, true)
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
@@ -287,13 +287,13 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		defer mockCtrl.Finish()
 
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
-		mockService := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPrDaoService := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		// expect the CreatePayableResource to be called once and return an error
-		mockService.EXPECT().CreatePayableResource(gomock.Any()).Return(errors.New("any error"))
+		mockPrDaoService.EXPECT().CreatePayableResource(gomock.Any()).Return(errors.New("any error"))
 
-		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
-		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenalty).Return(nil, nil)
-		mockPenaltiesService.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil)
+		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenalty).Return(nil, nil)
+		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil)
 
 		body, _ := json.Marshal(&models.PayableRequest{
 			CustomerCode: "10000024",
@@ -303,7 +303,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 			},
 		})
 
-		res := serveCreatePayableResourceHandler(body, mockService, mockPenaltiesService, true)
+		res := serveCreatePayableResourceHandler(body, mockPrDaoService, mockApDaoSvc, true)
 
 		So(res.Code, ShouldEqual, http.StatusInternalServerError)
 	})
@@ -344,13 +344,13 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 				defer mockCtrl.Finish()
 
 				httpmock.RegisterResponder("GET", tc.urlE5, httpmock.NewStringResponder(200, tc.e5Response))
-				mockService := mocks.NewMockPayableResourceDaoService(mockCtrl)
+				mockPrDaoService := mocks.NewMockPayableResourceDaoService(mockCtrl)
 				// expect the CreatePayableResource to be called once and return without error
-				mockService.EXPECT().CreatePayableResource(gomock.Any()).Return(nil)
+				mockPrDaoService.EXPECT().CreatePayableResource(gomock.Any()).Return(nil)
 
-				mockPenaltiesDaoService := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
-				mockPenaltiesDaoService.EXPECT().GetAccountPenalties(customerCode, tc.companyCode).Return(nil, nil)
-				mockPenaltiesDaoService.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil)
+				mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
+				mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, tc.companyCode).Return(nil, nil)
+				mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil)
 
 				body, _ := json.Marshal(&models.PayableRequest{
 					CustomerCode: "10000024",
@@ -360,7 +360,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 					},
 				})
 
-				res := serveCreatePayableResourceHandler(body, mockService, mockPenaltiesDaoService, true)
+				res := serveCreatePayableResourceHandler(body, mockPrDaoService, mockApDaoSvc, true)
 
 				So(res.Code, ShouldEqual, http.StatusCreated)
 				So(res.Header().Get("Content-Type"), ShouldEqual, "application/json")
