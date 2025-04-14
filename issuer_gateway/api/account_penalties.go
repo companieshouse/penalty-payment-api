@@ -21,7 +21,7 @@ var generateTransactionList = private.GenerateTransactionListFromAccountPenaltie
 
 // AccountPenalties is a function that:
 // 1. makes a request to account_penalties collection to get a list of cached transactions for the specified customer
-// 2. if no cache entry is found it makes a request to e5 to get a list of transactions for the specified customer
+// 2. if no cache entry is found or if the cache entry is stale it makes a request to e5 to get a list of transactions for the specified customer
 // 2. takes the results of this request and maps them to a format that the penalty-payment-web can consume
 func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap,
 	apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
@@ -29,6 +29,7 @@ func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap
 
 	cfg, err := getConfig()
 	if err != nil {
+		log.Error(fmt.Errorf("error getting config: %v", err))
 		return nil, services.Error, nil
 	}
 
