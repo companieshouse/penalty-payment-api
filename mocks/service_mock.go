@@ -140,20 +140,6 @@ func (mr *MockAccountPenaltiesDaoServiceMockRecorder) CreateAccountPenalties(dao
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccountPenalties", reflect.TypeOf((*MockAccountPenaltiesDaoService)(nil).CreateAccountPenalties), dao)
 }
 
-// DeleteAccountPenalties mocks base method.
-func (m *MockAccountPenaltiesDaoService) DeleteAccountPenalties(customerCode, companyCode string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAccountPenalties", customerCode, companyCode)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteAccountPenalties indicates an expected call of DeleteAccountPenalties.
-func (mr *MockAccountPenaltiesDaoServiceMockRecorder) DeleteAccountPenalties(customerCode, companyCode interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountPenalties", reflect.TypeOf((*MockAccountPenaltiesDaoService)(nil).DeleteAccountPenalties), customerCode, companyCode)
-}
-
 // GetAccountPenalties mocks base method.
 func (m *MockAccountPenaltiesDaoService) GetAccountPenalties(customerCode, companyCode string) (*models.AccountPenaltiesDao, error) {
 	m.ctrl.T.Helper()
@@ -167,6 +153,20 @@ func (m *MockAccountPenaltiesDaoService) GetAccountPenalties(customerCode, compa
 func (mr *MockAccountPenaltiesDaoServiceMockRecorder) GetAccountPenalties(customerCode, companyCode interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountPenalties", reflect.TypeOf((*MockAccountPenaltiesDaoService)(nil).GetAccountPenalties), customerCode, companyCode)
+}
+
+// UpdateAccountPenalties mocks base method.
+func (m *MockAccountPenaltiesDaoService) UpdateAccountPenalties(dao *models.AccountPenaltiesDao) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAccountPenalties", dao)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateAccountPenalties indicates an expected call of UpdateAccountPenalties.
+func (mr *MockAccountPenaltiesDaoServiceMockRecorder) UpdateAccountPenalties(dao interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccountPenalties", reflect.TypeOf((*MockAccountPenaltiesDaoService)(nil).UpdateAccountPenalties), dao)
 }
 
 // UpdateAccountPenaltyAsPaid mocks base method.
