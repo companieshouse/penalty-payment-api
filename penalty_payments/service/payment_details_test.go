@@ -7,10 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/companieshouse/penalty-payment-api/common/utils"
-
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	. "github.com/smartystreets/goconvey/convey"
 )

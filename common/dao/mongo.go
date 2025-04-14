@@ -72,25 +72,55 @@ type MongoAccountPenaltiesService struct {
 	CollectionName string
 }
 
-// CreateAccountPenalties creates a new document in the account_penalties database collection
+// CreateAccountPenalties creates a new document in the account_penalties database collection if a
+// document does not already exist for the customer
 func (m *MongoAccountPenaltiesService) CreateAccountPenalties(dao *models.AccountPenaltiesDao) error {
 	log.Info("creating new document in account_penalties collection", log.Data{
 		"customer_code": dao.CustomerCode,
 		"company_code":  dao.CompanyCode,
 	})
 
+	filter := bson.M{
+		"customer_code": dao.CustomerCode,
+		"company_code":  dao.CompanyCode,
+	}
+
+	// setOnInsert is used here with SetUpsert below to ensure that if a document exists then it is not updated
+	update := bson.M{
+		"$setOnInsert": bson.M{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+			"created_at":    dao.CreatedAt,
+			"closed_at":     dao.ClosedAt,
+			"data":          dao.AccountPenalties,
+		},
+	}
+
+	opts := options.Update().SetUpsert(true)
+
 	collection := m.db.Collection(m.CollectionName)
 
-	createdAt := time.Now().Truncate(time.Millisecond)
-	dao.CreatedAt = &createdAt
-
-	_, err := collection.InsertOne(context.Background(), dao)
+	// this allows the creation of the new entry if the document does not already exist to be
+	// completed in an atomic operation
+	result, err := collection.UpdateOne(context.Background(), filter, update, opts)
 	if err != nil {
 		log.Error(err, log.Data{
 			"customer_code": dao.CustomerCode,
 			"company_code":  dao.CompanyCode,
 		})
 		return err
+	}
+
+	if result.MatchedCount == 0 && result.UpsertedCount == 1 {
+		log.Info("created new document in account_penalties collection", log.Data{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+		})
+	} else {
+		log.Info("no new document created in account_penalties collection as one already exists", log.Data{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+		})
 	}
 
 	return nil

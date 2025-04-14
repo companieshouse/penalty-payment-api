@@ -39,17 +39,17 @@ func TestUnitMatchPenalty(t *testing.T) {
 		WantError      error
 	}{
 		{PenaltyRef: "120", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionDoesNotExist},
+			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrPenaltyDoesNotExist},
 		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 200, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionIsPartPaid},
+			OriginalAmount: 200, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrPenaltyIsPartPaid},
 		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 150, IsDCA: false, IsPaid: true, WantMatched: nil, WantError: ErrTransactionIsPaid},
+			OriginalAmount: 150, IsDCA: false, IsPaid: true, WantMatched: nil, WantError: ErrPenaltyIsPaid},
 		{PenaltyRef: "121", Outstanding: 100, Type: "other", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionNotPayable},
+			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrPenaltyNotPayable},
 		{PenaltyRef: "121", Outstanding: 100, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionAmountMismatch},
+			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrPenaltyAmountMismatch},
 		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 150, IsDCA: true, IsPaid: false, WantMatched: nil, WantError: ErrTransactionDCA},
+			OriginalAmount: 150, IsDCA: true, IsPaid: false, WantMatched: nil, WantError: ErrPenaltyDCA},
 		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
 			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: &matchedPenalty, WantError: nil},
 	}

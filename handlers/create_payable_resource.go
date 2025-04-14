@@ -6,22 +6,21 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/companieshouse/penalty-payment-api/common/dao"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
-	"github.com/companieshouse/penalty-payment-api/penalty_payments/transformers"
-
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/dao"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/transformers"
 )
 
 // CreatePayableResourceHandler takes a http requests and creates a new payable resource
-func CreatePayableResourceHandler(svc dao.PayableResourceDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
+func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
+	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var request models.PayableRequest
 		err := json.NewDecoder(r.Body).Decode(&request)
@@ -59,7 +58,7 @@ func CreatePayableResourceHandler(svc dao.PayableResourceDaoService, penaltyDeta
 		var payablePenalties []models.TransactionItem
 		for _, transaction := range request.Transactions {
 			payablePenalty, err := api.PayablePenalty(request.CustomerCode, companyCode,
-				transaction, penaltyDetailsMap, allowedTransactionMap)
+				transaction, penaltyDetailsMap, allowedTransactionMap, apDaoSvc)
 			if err != nil {
 				log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))
 				m := models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time")
@@ -84,7 +83,7 @@ func CreatePayableResourceHandler(svc dao.PayableResourceDaoService, penaltyDeta
 
 		model := transformers.PayableResourceRequestToDB(&request)
 
-		err = svc.CreatePayableResource(model)
+		err = prDaoSvc.CreatePayableResource(model)
 		if err != nil {
 			log.ErrorR(r, fmt.Errorf("failed to create payable request in database"))
 			m := models.NewMessageResponse("there was a problem handling your request")
