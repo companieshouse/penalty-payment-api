@@ -257,7 +257,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		defer mockCtrl.Finish()
 
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseMultipleTx))
-		mockPrDaoService := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 		// as there are two transaction, the Times is 2 here, possible enhancement to remove this duplicate call
@@ -273,7 +273,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 			},
 		})
 
-		res := serveCreatePayableResourceHandler(body, mockPrDaoService, mockApDaoSvc, true)
+		res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true)
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
@@ -287,9 +287,9 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		defer mockCtrl.Finish()
 
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
-		mockPrDaoService := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		// expect the CreatePayableResource to be called once and return an error
-		mockPrDaoService.EXPECT().CreatePayableResource(gomock.Any()).Return(errors.New("any error"))
+		mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any()).Return(errors.New("any error"))
 
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenalty).Return(nil, nil)
@@ -303,7 +303,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 			},
 		})
 
-		res := serveCreatePayableResourceHandler(body, mockPrDaoService, mockApDaoSvc, true)
+		res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true)
 
 		So(res.Code, ShouldEqual, http.StatusInternalServerError)
 	})
@@ -344,9 +344,9 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 				defer mockCtrl.Finish()
 
 				httpmock.RegisterResponder("GET", tc.urlE5, httpmock.NewStringResponder(200, tc.e5Response))
-				mockPrDaoService := mocks.NewMockPayableResourceDaoService(mockCtrl)
+				mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 				// expect the CreatePayableResource to be called once and return without error
-				mockPrDaoService.EXPECT().CreatePayableResource(gomock.Any()).Return(nil)
+				mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any()).Return(nil)
 
 				mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 				mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, tc.companyCode).Return(nil, nil)
@@ -360,7 +360,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 					},
 				})
 
-				res := serveCreatePayableResourceHandler(body, mockPrDaoService, mockApDaoSvc, true)
+				res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true)
 
 				So(res.Code, ShouldEqual, http.StatusCreated)
 				So(res.Header().Get("Content-Type"), ShouldEqual, "application/json")
