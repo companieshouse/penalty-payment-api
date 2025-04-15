@@ -186,13 +186,13 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			getConfig = mockedConfigGet
 			getCompanyName = mockedGetCompanyName
 
-			mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 
 			Convey("Then an error should be returned", func() {
-				mockPenaltiesService.EXPECT().GetAccountPenalties(gomock.Any(), gomock.Any()).Return(nil, nil)
+				mockApDaoSvc.EXPECT().GetAccountPenalties(gomock.Any(), gomock.Any()).Return(nil, nil)
 
 				_, err := prepareKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, mockPenaltiesService)
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc)
 
 				So(err.Error(), ShouldStartWith, "error getting transaction for penalty: [")
 			})
