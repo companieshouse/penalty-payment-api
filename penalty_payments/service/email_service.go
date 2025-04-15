@@ -24,9 +24,7 @@ const ProducerTopic = "email-send"
 // ProducerSchemaName is the schema which will be used to send the email-send kafka message with
 const ProducerSchemaName = "email-send"
 
-var getConfig = func() (*config.Config, error) {
-	return config.Get()
-}
+var getConfig = config.Get
 var getProducer = func(config *config.Config) (*producer.Producer, error) {
 	return producer.New(&producer.Config{Acks: &producer.WaitForAll, BrokerAddrs: config.BrokerAddr})
 }

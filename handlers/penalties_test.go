@@ -38,8 +38,39 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 			return utils.LateFilingPenalty, nil
 		}
 
+		testCases := []struct {
+			companyCode string
+			response    int
+		}{
+			{companyCode: "NI123546", response: http.StatusOK},
+			{companyCode: "INVALID_DATA", response: http.StatusBadRequest},
+			{companyCode: "INTERNAL_SERVER_ERROR", response: http.StatusInternalServerError},
+		}
+
 		getCompanyCode = mockedGetCompanyCode
 		accountPenalties = mockedAccountPenalties
+
+		for _, testCases := range testCases {
+			tc := testCases
+
+			ctx := context.Background()
+			ctx = context.WithValue(ctx, config.CustomerCode, tc.companyCode)
+
+			req := httptest.NewRequest("GET", "/penalties", nil)
+			rr := httptest.NewRecorder()
+
+			handler := HandleGetPenalties(nil, penaltyDetailsMap, allowedTransactionsMap)
+			handler.ServeHTTP(rr, req.WithContext(ctx))
+
+			So(rr.Code, ShouldEqual, tc.response)
+		}
+	})
+	Convey("Given a request to get penalties when company code cannot be determined", t, func() {
+		mockedGetCompanyCode := func(penaltyReferenceType string) (string, error) {
+			return "", errors.New("cannot determine company code")
+		}
+
+		getCompanyCode = mockedGetCompanyCode
 
 		ctx := context.Background()
 		ctx = context.WithValue(ctx, config.CustomerCode, "NI123546")
@@ -50,6 +81,6 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 		handler := HandleGetPenalties(nil, penaltyDetailsMap, allowedTransactionsMap)
 		handler.ServeHTTP(rr, req.WithContext(ctx))
 
-		So(rr.Code, ShouldEqual, http.StatusOK)
+		So(rr.Code, ShouldEqual, http.StatusBadRequest)
 	})
 }

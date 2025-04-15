@@ -12,9 +12,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 )
 
-var getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
-	return utils.GetCompanyCodeFromTransaction(transactions)
-}
+var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
 
 // UpdateIssuerAccountWithPenaltyPaid will update the transactions in E5 as paid.
 // resource - is the payable resource from the db representing the penalty(ies)
