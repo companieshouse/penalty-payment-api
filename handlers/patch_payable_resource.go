@@ -100,7 +100,7 @@ func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.Accoun
 
 	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
 	if err != nil {
-		log.Error(fmt.Errorf("error updating penalty as paid because company code cannot be determined: [%v]", err),
+		log.Error(fmt.Errorf("error updating account penalties collection as paid because company code cannot be validated: [%v]", err),
 			log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
 		return
 	}
@@ -108,13 +108,13 @@ func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.Accoun
 
 	err = svc.UpdateAccountPenaltyAsPaid(resource.CustomerCode, companyCode, penalty.PenaltyRef)
 	if err != nil {
-		log.Error(fmt.Errorf("error updating penalty as paid: [%v]", err),
+		log.Error(fmt.Errorf("error updating account penalties collection as paid: [%v]", err),
 			log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
 				"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
 		return
 	}
 
-	log.Info("penalty is updated as paid",
+	log.Info("account penalties collection has been updated as paid",
 		log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
 			"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
 }
