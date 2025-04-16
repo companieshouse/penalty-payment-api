@@ -21,25 +21,30 @@ var generateTransactionList = private.GenerateTransactionListFromAccountPenaltie
 
 // AccountPenalties is a function that:
 // 1. makes a request to account_penalties collection to get a list of cached transactions for the specified customer
-// 2. if no cache entry is found it makes a request to e5 to get a list of transactions for the specified customer
+// 2. if no cache entry is found or if the cache entry is stale it makes a request to e5 to get a list of transactions for the specified customer
 // 2. takes the results of this request and maps them to a format that the penalty-payment-web can consume
 func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap,
 	apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
 	accountPenalties, err := apDaoSvc.GetAccountPenalties(customerCode, companyCode)
 
-	if accountPenalties == nil {
-		cfg, err := getConfig()
-		if err != nil {
-			return nil, services.Error, nil
-		}
+	cfg, err := getConfig()
+	if err != nil {
+		log.Error(fmt.Errorf("error getting config: %v", err))
+		return nil, services.Error, nil
+	}
 
+	if accountPenalties == nil || isStale(accountPenalties, cfg) {
 		e5Response, err := getTransactionListFromE5(customerCode, companyCode, cfg)
 		if err != nil {
 			log.Error(fmt.Errorf("error getting transaction list: [%v]", err))
 			return nil, services.Error, err
 		}
 
-		accountPenalties = createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
+		if accountPenalties == nil {
+			accountPenalties = createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
+		} else {
+			accountPenalties = updateAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
+		}
 	}
 
 	// Generate the CH preferred format of the results i.e. classify the transactions into
@@ -57,15 +62,26 @@ func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap
 	return generatedTransactionListFromAccountPenalties, services.Success, nil
 }
 
-func createAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse,
-	apDaoSvc dao.AccountPenaltiesDaoService) *models.AccountPenaltiesDao {
-	convertedResponse := convertE5Response(customerCode, companyCode, e5Response)
-	err := apDaoSvc.CreateAccountPenalties(&convertedResponse)
+func createAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse, apDaoSvc dao.AccountPenaltiesDaoService) *models.AccountPenaltiesDao {
+	accountPenalties := convertE5Response(customerCode, companyCode, e5Response)
+	err := apDaoSvc.CreateAccountPenalties(&accountPenalties)
 	if err != nil {
 		log.Error(fmt.Errorf("error creating account penalties: [%v]", err),
 			log.Data{"customer_code": customerCode, "company_code": companyCode})
 	}
-	return &convertedResponse
+
+	return &accountPenalties
+}
+
+func updateAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse, apDaoSvc dao.AccountPenaltiesDaoService) *models.AccountPenaltiesDao {
+	accountPenalties := convertE5Response(customerCode, companyCode, e5Response)
+	err := apDaoSvc.UpdateAccountPenalties(&accountPenalties)
+	if err != nil {
+		log.Error(fmt.Errorf("error updating account penalties: [%v]", err),
+			log.Data{"customer_code": customerCode, "company_code": companyCode})
+	}
+
+	return &accountPenalties
 }
 
 func getTransactionListFromE5(customerCode string, companyCode string, cfg *config.Config) (*e5.GetTransactionsResponse, error) {
@@ -104,4 +120,14 @@ func convertE5Response(customerCode, companyCode string, response *e5.GetTransac
 		CreatedAt:        &createdAt,
 		AccountPenalties: data,
 	}
+}
+
+func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config) bool {
+	ttlHours := cfg.AccountPenaltiesTTLHours
+	if ttlHours == 0 {
+		ttlHours = 24 // time to leave defaults to 24 hours if not set in config
+	}
+	cacheRecordExpirationTime := accountPenaltiesDao.CreatedAt.Add(time.Hour * cfg.AccountPenaltiesTTLHours)
+
+	return cacheRecordExpirationTime.Equal(time.Now()) || cacheRecordExpirationTime.Before(time.Now())
 }
