@@ -100,7 +100,7 @@ func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.Accoun
 
 	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
 	if err != nil {
-		log.Error(fmt.Errorf("error updating account penalties collection as paid because company code cannot be validated: [%v]", err),
+		log.Error(fmt.Errorf("error updating account penalties collection as paid because company code cannot be resolved: [%v]", err),
 			log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
 		return
 	}
