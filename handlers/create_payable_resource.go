@@ -45,8 +45,8 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 
 		companyCode, err := getCompanyCodeFromTransaction(request.Transactions)
 		if err != nil {
-			log.ErrorR(r, fmt.Errorf("company code cannot be determined"))
-			m := models.NewMessageResponse("company code cannot be determined")
+			log.ErrorR(r, fmt.Errorf("company code cannot be resolved"))
+			m := models.NewMessageResponse("company code cannot be resolved")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
