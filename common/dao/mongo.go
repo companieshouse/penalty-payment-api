@@ -194,8 +194,18 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode s
 
 	collection := m.db.Collection(m.CollectionName)
 
-	_, err := collection.UpdateOne(context.Background(), filter, update)
+	result, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
+		log.Error(err, log.Data{
+			"customer_code": customerCode,
+			"company_code":  companyCode,
+			"penalty_ref":   penaltyRef,
+		})
+		return err
+	}
+
+	if result.ModifiedCount == 0 {
+		err = errors.New("failed to update penalty as paid in account_penalties collection as no penalty was found")
 		log.Error(err, log.Data{
 			"customer_code": customerCode,
 			"company_code":  companyCode,

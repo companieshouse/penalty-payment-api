@@ -11,9 +11,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/config"
 )
 
-var getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
-	return utils.GetCompanyCodeFromTransaction(transactions)
-}
+var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
 
 // HandleGetPaymentDetails retrieves costs for a supplied company number and reference.
 func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.HandlerFunc {

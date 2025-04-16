@@ -15,13 +15,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var getCompanyCode = func(penaltyReferenceType string) (string, error) {
-	return utils.GetCompanyCode(penaltyReferenceType)
-}
-var accountPenalties = func(customerCode string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap,
-	apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
-	return api.AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
-}
+var getCompanyCode = utils.GetCompanyCode
+var accountPenalties = api.AccountPenalties
 
 // HandleGetPenalties retrieves the penalty details for the supplied customer code from e5
 func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,

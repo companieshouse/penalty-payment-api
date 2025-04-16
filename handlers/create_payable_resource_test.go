@@ -206,7 +206,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
 
-	Convey("Error when company code cannot be determined", t, func() {
+	Convey("Error when company code cannot be resolved", t, func() {
 		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
 			return "", errors.New("no penalty reference found")
 		}
