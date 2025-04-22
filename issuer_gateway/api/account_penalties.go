@@ -125,9 +125,9 @@ func convertE5Response(customerCode, companyCode string, response *e5.GetTransac
 func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config) bool {
 	ttlHours := cfg.AccountPenaltiesTTLHours
 	if ttlHours == 0 {
-		ttlHours = 24 // time to leave defaults to 24 hours if not set in config
+		ttlHours = 24 // time to live defaults to 24 hours if not set in config
 	}
-	cacheRecordExpirationTime := accountPenaltiesDao.CreatedAt.Add(time.Hour * cfg.AccountPenaltiesTTLHours)
+	cacheRecordExpirationTime := accountPenaltiesDao.CreatedAt.Add(time.Hour * ttlHours)
 
 	return cacheRecordExpirationTime.Equal(time.Now()) || cacheRecordExpirationTime.Before(time.Now())
 }
