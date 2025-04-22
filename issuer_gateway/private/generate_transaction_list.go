@@ -3,6 +3,7 @@ package private
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
@@ -29,7 +30,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 	// Loop through penalties and construct CH resources
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
 		transactionListItem, err := buildTransactionListItemFromAccountPenalty(
-			&accountPenalty, allowedTransactionsMap, penaltyDetailsMap, companyCode)
+			&accountPenalty, allowedTransactionsMap, penaltyDetailsMap, companyCode, accountPenalties.ClosedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -41,7 +42,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 }
 
 func buildTransactionListItemFromAccountPenalty(e5Transaction *models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap,
-	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string) (models.TransactionListItem, error) {
+	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string, closedAt *time.Time) (models.TransactionListItem, error) {
 	etag, err := utils.GenerateEtag()
 	if err != nil {
 		err = fmt.Errorf("error generating etag: [%v]", err)
@@ -62,7 +63,7 @@ func buildTransactionListItemFromAccountPenalty(e5Transaction *models.AccountPen
 	transactionListItem.Outstanding = e5Transaction.OutstandingAmount
 	transactionListItem.Type = getTransactionType(e5Transaction, allowedTransactionsMap)
 	transactionListItem.Reason = getReason(e5Transaction)
-	transactionListItem.PayableStatus = getPayableStatus(e5Transaction)
+	transactionListItem.PayableStatus = getPayableStatus(e5Transaction, closedAt)
 
 	return transactionListItem, nil
 }
@@ -101,8 +102,9 @@ const (
 	ConfirmationStatementReason = "Failure to file a confirmation statement"
 	PenaltyReason               = "Penalty"
 
-	OpenPayableStatus   = "OPEN"
-	ClosedPayableStatus = "CLOSED"
+	OpenPayableStatus          = "OPEN"
+	ClosedPayableStatus        = "CLOSED"
+	ClosedPendingPayableStatus = "CLOSED_PENDING"
 
 	CHSAccountStatus = "CHS"
 	DCAAccountStatus = "DCA"
@@ -115,7 +117,13 @@ const (
 	PEN3DunningStatus = "PEN3"
 )
 
-func getPayableStatus(transaction *models.AccountPenaltiesDataDao) string {
+func getPayableStatus(transaction *models.AccountPenaltiesDataDao, closedAt *time.Time) string {
+	if transaction.IsPaid && closedAt != nil {
+		if penaltyPaidToday(closedAt) {
+			return ClosedPendingPayableStatus
+		}
+	}
+
 	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || checkDunningStatus(transaction, DCADunningStatus) {
 		return ClosedPayableStatus
 	}
@@ -131,6 +139,13 @@ func getPayableStatus(transaction *models.AccountPenaltiesDataDao) string {
 	}
 
 	return ClosedPayableStatus
+}
+
+func penaltyPaidToday(closedAt *time.Time) bool {
+	now := time.Now()
+	y1, m1, d1 := now.Date()
+	y2, m2, d2 := closedAt.Date()
+	return y1 == y2 && m1 == m2 && d1 == d2
 }
 
 func checkDunningStatus(transaction *models.AccountPenaltiesDataDao, dunningStatus string) bool {
