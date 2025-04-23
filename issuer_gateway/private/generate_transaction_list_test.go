@@ -706,7 +706,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 	})
 }
 
-func createLateFilingPenalty(isPaid bool, outStandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
+func createLateFilingPenalty(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
 	return &models.AccountPenaltiesDataDao{
 		CompanyCode:          utils.LateFilingPenalty,
 		LedgerCode:           "EW",
@@ -715,7 +715,7 @@ func createLateFilingPenalty(isPaid bool, outStandingAmount float64, accountStat
 		TransactionDate:      "2025-02-25",
 		MadeUpDate:           "2025-02-12",
 		Amount:               150,
-		OutstandingAmount:    outStandingAmount,
+		OutstandingAmount:    outstandingAmount,
 		IsPaid:               isPaid,
 		TransactionType:      "1",
 		TransactionSubType:   "EH",
@@ -726,7 +726,7 @@ func createLateFilingPenalty(isPaid bool, outStandingAmount float64, accountStat
 	}
 }
 
-func createSanctionsPenalty(isPaid bool, outStandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
+func createSanctionsPenalty(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
 	return &models.AccountPenaltiesDataDao{
 		CompanyCode:          utils.Sanctions,
 		LedgerCode:           "E1",
@@ -735,7 +735,7 @@ func createSanctionsPenalty(isPaid bool, outStandingAmount float64, accountStatu
 		TransactionDate:      "2025-02-25",
 		MadeUpDate:           "2025-02-12",
 		Amount:               250,
-		OutstandingAmount:    outStandingAmount,
+		OutstandingAmount:    outstandingAmount,
 		IsPaid:               isPaid,
 		TransactionType:      SanctionsTransactionType,
 		TransactionSubType:   SanctionsTransactionSubType,
