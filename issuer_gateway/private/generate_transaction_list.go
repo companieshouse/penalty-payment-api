@@ -102,9 +102,9 @@ const (
 	ConfirmationStatementReason = "Failure to file a confirmation statement"
 	PenaltyReason               = "Penalty"
 
-	OpenPayableStatus          = "OPEN"
-	ClosedPayableStatus        = "CLOSED"
-	ClosedPendingPayableStatus = "CLOSED_PENDING"
+	OpenPayableStatus                    = "OPEN"
+	ClosedPayableStatus                  = "CLOSED"
+	ClosedPendingAllocationPayableStatus = "CLOSED_PENDING_ALLOCATION"
 
 	CHSAccountStatus = "CHS"
 	DCAAccountStatus = "DCA"
@@ -120,7 +120,7 @@ const (
 func getPayableStatus(transaction *models.AccountPenaltiesDataDao, closedAt *time.Time) string {
 	if transaction.IsPaid && closedAt != nil {
 		if penaltyPaidToday(closedAt) {
-			return ClosedPendingPayableStatus
+			return ClosedPendingAllocationPayableStatus
 		}
 	}
 

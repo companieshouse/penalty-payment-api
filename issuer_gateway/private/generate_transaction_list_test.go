@@ -676,7 +676,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			})
 		}
 	})
-	Convey("Get closed_pending payable status for penalty", t, func() {
+	Convey("Get closed pending allocation payable status for penalty", t, func() {
 		type args struct {
 			penalty *models.AccountPenaltiesDataDao
 		}
@@ -700,7 +700,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 				closedAt := &now
 				got := getPayableStatus(tc.args.penalty, closedAt)
 
-				So(got, ShouldEqual, ClosedPendingPayableStatus)
+				So(got, ShouldEqual, ClosedPendingAllocationPayableStatus)
 			})
 		}
 	})
