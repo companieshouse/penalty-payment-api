@@ -9,6 +9,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -174,7 +175,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			Outstanding:     250,
 			Type:            "other",
 			Reason:          LateFilingPenaltyReason,
-			PayableStatus:   OpenPayableStatus,
+			PayableStatus:   ClosedPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
 	})
@@ -440,8 +441,9 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
+				penalty := tc.args.penalty
 				closedAt := &yesterday
-				got := getPayableStatus(tc.args.penalty, closedAt)
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty})
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -516,8 +518,9 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
+				penalty := tc.args.penalty
 				closedAt := &yesterday
-				got := getPayableStatus(tc.args.penalty, closedAt)
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty})
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -590,7 +593,8 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
-				got := getPayableStatus(tc.args.penalty, &now)
+				penalty := tc.args.penalty
+				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty})
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -669,8 +673,9 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
+				penalty := tc.args.penalty
 				closedAt := &yesterday
-				got := getPayableStatus(tc.args.penalty, closedAt)
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty})
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -697,8 +702,9 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
+				penalty := tc.args.penalty
 				closedAt := &now
-				got := getPayableStatus(tc.args.penalty, closedAt)
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty})
 
 				So(got, ShouldEqual, ClosedPendingAllocationPayableStatus)
 			})
