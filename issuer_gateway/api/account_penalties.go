@@ -42,7 +42,7 @@ func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap
 
 		if accountPenalties == nil {
 			accountPenalties = createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
-		} else {
+		} else if paymentUpdatedInE5(e5Response, accountPenalties) {
 			accountPenalties = updateAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
 		}
 	}
@@ -123,11 +123,58 @@ func convertE5Response(customerCode, companyCode string, response *e5.GetTransac
 }
 
 func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config) bool {
-	ttlHours := cfg.AccountPenaltiesTTLHours
-	if ttlHours == 0 {
-		ttlHours = 24 // time to live defaults to 24 hours if not set in config
-	}
-	cacheRecordExpirationTime := accountPenaltiesDao.CreatedAt.Add(time.Hour * ttlHours)
+	if accountPenaltiesDao.ClosedAt == nil {
+		// Penalty is not yet marked as paid in cache so logic to determine if cache record is stale
+		// is based on a time to live of 24 hours or more.
+		ttlHours := cfg.AccountPenaltiesTTLHours
+		if ttlHours == 0 {
+			ttlHours = 24 // time to live defaults to 24 hours if not set in config
+		}
+		cacheRecordExpirationTime := accountPenaltiesDao.CreatedAt.Add(time.Hour * ttlHours)
+		now := time.Now()
 
-	return cacheRecordExpirationTime.Equal(time.Now()) || cacheRecordExpirationTime.Before(time.Now())
+		log.Info("checking if cached account penalties have become stale", log.Data{
+			"time to live in hours":         ttlHours,
+			"cache record expiration time ": cacheRecordExpirationTime,
+			"current time":                  now,
+		})
+
+		return cacheRecordExpirationTime.Equal(time.Now()) || cacheRecordExpirationTime.Before(now)
+	} else {
+		// Penalty is marked as paid in cache, so logic to determine if cache record is stale is based on
+		// E5 allocation routine run.
+		var e5AllocationRoutineWindow time.Duration = 4 // Approximate duration for E5 allocation routine to run
+		now := time.Now().Local()
+		yesterday := now.Add(-24 * time.Hour) // 24 hours ago from current time
+		yesterdayAtZeroHours := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, time.Local)
+
+		expectedE5AllocationRoutineStartTime := yesterdayAtZeroHours.Add(time.Hour * 20)                                      // 8pm of previous day
+		expectedE5AllocationRoutineEndTime := expectedE5AllocationRoutineStartTime.Add(time.Hour * e5AllocationRoutineWindow) // 12am of current day
+
+		log.Info("checking if cached account penalties have become stale", log.Data{
+			"expected E5 allocation routine start time": expectedE5AllocationRoutineStartTime,
+			"expected E5 allocation routine end time":   expectedE5AllocationRoutineEndTime,
+			"account penalties cache created at":        accountPenaltiesDao.CreatedAt,
+		})
+
+		return accountPenaltiesDao.ClosedAt.Before(expectedE5AllocationRoutineStartTime) && now.After(expectedE5AllocationRoutineEndTime)
+	}
+}
+
+// This checks that penalties marked as paid in cache are also marked as paid in e5
+// Returns false if a penalty marked as paid in cache is not marked as paid in e5, otherwise, returns true
+func paymentUpdatedInE5(e5Response *e5.GetTransactionsResponse, accountPenaltiesDao *models.AccountPenaltiesDao) bool {
+	var e5Transactions = make(map[string]e5.Transaction)
+	for _, transaction := range e5Response.Transactions {
+		e5Transactions[transaction.TransactionReference] = transaction
+	}
+
+	for _, accountPenalty := range accountPenaltiesDao.AccountPenalties {
+		e5Transaction := e5Transactions[accountPenalty.TransactionReference]
+		if accountPenalty.IsPaid == true && e5Transaction.IsPaid == false {
+			return false
+		}
+	}
+
+	return true
 }
