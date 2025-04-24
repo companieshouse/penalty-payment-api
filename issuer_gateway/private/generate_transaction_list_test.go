@@ -443,7 +443,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
-				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty})
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -520,7 +520,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
-				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty})
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -594,7 +594,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
-				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty})
+				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -675,7 +675,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
-				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty})
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -704,7 +704,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				closedAt := &now
-				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty})
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap)
 
 				So(got, ShouldEqual, ClosedPendingAllocationPayableStatus)
 			})
