@@ -19,7 +19,7 @@ In order to run this API locally you will need to install the following:
 | `E5_USERNAME`                              |   `-`   | E5 API Username                                                       |
 | `BIND_ADDR`                                |   `-`   | The host:port to bind to                                              |
 | `MONGODB_URL`                              |   `-`   | The mongo db connection string                                        |
-| `PPS_MONGODB_DATABASE`                     |   `-`   | The database name to connect to e.g. `late_filing_penalties`          |
+| `PPS_MONGODB_DATABASE`                     |   `-`   | The database name to connect to e.g. `financial_penalties`          |
 | `PPS_MONGODB_PAYABLE_RESOURCES_COLLECTION` |   `-`   | The collection name e.g. `payable_resources`                          |
 | `PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION` |   `-`   | The collection name e.g. `account_penalties`                          |
 | `PPS_ACCOUNT_PENALTIES_TTL_HOURS`          |   `-`   | Account penalties cache time to live  e.g. `24`                       |
