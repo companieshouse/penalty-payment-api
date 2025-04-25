@@ -30,7 +30,8 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 	// Loop through penalties and construct CH resources
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
 		transactionListItem, err := buildTransactionListItemFromAccountPenalty(
-			&accountPenalty, allowedTransactionsMap, penaltyDetailsMap, companyCode, accountPenalties.ClosedAt)
+			&accountPenalty, allowedTransactionsMap, penaltyDetailsMap, companyCode, accountPenalties.ClosedAt,
+			accountPenalties.AccountPenalties)
 		if err != nil {
 			return nil, err
 		}
@@ -42,13 +43,16 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 }
 
 func buildTransactionListItemFromAccountPenalty(e5Transaction *models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap,
-	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string, closedAt *time.Time) (models.TransactionListItem, error) {
+	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string, closedAt *time.Time,
+	e5Transactions []models.AccountPenaltiesDataDao) (models.TransactionListItem, error) {
 	etag, err := utils.GenerateEtag()
 	if err != nil {
 		err = fmt.Errorf("error generating etag: [%v]", err)
 		log.Error(err)
 		return models.TransactionListItem{}, err
 	}
+
+	transactionType := getTransactionType(e5Transaction, allowedTransactionsMap)
 
 	transactionListItem := models.TransactionListItem{}
 	transactionListItem.Etag = etag
@@ -61,9 +65,9 @@ func buildTransactionListItemFromAccountPenalty(e5Transaction *models.AccountPen
 	transactionListItem.TransactionDate = e5Transaction.TransactionDate
 	transactionListItem.OriginalAmount = e5Transaction.Amount
 	transactionListItem.Outstanding = e5Transaction.OutstandingAmount
-	transactionListItem.Type = getTransactionType(e5Transaction, allowedTransactionsMap)
+	transactionListItem.Type = transactionType
 	transactionListItem.Reason = getReason(e5Transaction)
-	transactionListItem.PayableStatus = getPayableStatus(e5Transaction, closedAt)
+	transactionListItem.PayableStatus = getPayableStatus(transactionType, e5Transaction, closedAt, e5Transactions, allowedTransactionsMap)
 
 	return transactionListItem, nil
 }
@@ -117,28 +121,60 @@ const (
 	PEN3DunningStatus = "PEN3"
 )
 
-func getPayableStatus(transaction *models.AccountPenaltiesDataDao, closedAt *time.Time) string {
-	if transaction.IsPaid && closedAt != nil {
-		if penaltyPaidToday(closedAt) {
-			return ClosedPendingAllocationPayableStatus
+func getPayableStatus(transactionType string, e5Transaction *models.AccountPenaltiesDataDao, closedAt *time.Time,
+	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap) string {
+	if types.Penalty.String() == transactionType {
+		closedPayableStatus, isClosed := checkClosedPayableStatus(e5Transaction, closedAt, e5Transactions, allowedTransactionsMap)
+		if isClosed {
+			return closedPayableStatus
+		}
+
+		openPayableStatus, isOpen := checkOpenPayableStatus(e5Transaction)
+		if isOpen {
+			return openPayableStatus
 		}
 	}
 
-	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || checkDunningStatus(transaction, DCADunningStatus) {
-		return ClosedPayableStatus
-	}
-
-	if transaction.CompanyCode == utils.LateFilingPenalty &&
-		(checkDunningStatus(transaction, PEN1DunningStatus) || checkDunningStatus(transaction, PEN2DunningStatus) || checkDunningStatus(transaction, PEN3DunningStatus)) &&
-		(transaction.AccountStatus == CHSAccountStatus || transaction.AccountStatus == DCAAccountStatus || transaction.AccountStatus == HLDAccountStatus || transaction.AccountStatus == WDRAccountStatus) {
-		return OpenPayableStatus
-	} else if transaction.CompanyCode == utils.Sanctions &&
-		(checkDunningStatus(transaction, PEN1DunningStatus) || checkDunningStatus(transaction, PEN2DunningStatus)) &&
-		(transaction.AccountStatus == CHSAccountStatus || transaction.AccountStatus == DCAAccountStatus || transaction.AccountStatus == HLDAccountStatus) {
-		return OpenPayableStatus
-	}
-
 	return ClosedPayableStatus
+}
+
+func checkClosedPayableStatus(penalty *models.AccountPenaltiesDataDao, closedAt *time.Time,
+	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap) (payableStatus string, isClosed bool) {
+	if (penalty.IsPaid && closedAt != nil) &&
+		penaltyPaidToday(closedAt) {
+		return ClosedPendingAllocationPayableStatus, true
+	}
+
+	if penalty.IsPaid || penalty.OutstandingAmount <= 0 || checkDunningStatus(penalty, DCADunningStatus) ||
+		len(getUnpaidCosts(penalty, e5Transactions, allowedTransactionsMap)) > 0 {
+		return ClosedPayableStatus, true
+	}
+	return "", false
+}
+
+func getUnpaidCosts(penalty *models.AccountPenaltiesDataDao, e5Transactions []models.AccountPenaltiesDataDao,
+	allowedTransactionsMap *models.AllowedTransactionMap) (unpaidCosts []models.AccountPenaltiesDataDao) {
+	for _, e5Transaction := range e5Transactions {
+		transactionType := getTransactionType(&e5Transaction, allowedTransactionsMap)
+		if (e5Transaction.TransactionReference != penalty.TransactionReference && !e5Transaction.IsPaid) &&
+			(types.Other.String() == transactionType && penalty.MadeUpDate == e5Transaction.MadeUpDate) {
+			unpaidCosts = append(unpaidCosts, e5Transaction)
+		}
+	}
+	return unpaidCosts
+}
+
+func checkOpenPayableStatus(penalty *models.AccountPenaltiesDataDao) (payableStatus string, isOpen bool) {
+	if penalty.CompanyCode == utils.LateFilingPenalty &&
+		(checkDunningStatus(penalty, PEN1DunningStatus) || checkDunningStatus(penalty, PEN2DunningStatus) || checkDunningStatus(penalty, PEN3DunningStatus)) &&
+		(penalty.AccountStatus == CHSAccountStatus || penalty.AccountStatus == DCAAccountStatus || penalty.AccountStatus == HLDAccountStatus || penalty.AccountStatus == WDRAccountStatus) {
+		return OpenPayableStatus, true
+	} else if penalty.CompanyCode == utils.Sanctions &&
+		(checkDunningStatus(penalty, PEN1DunningStatus) || checkDunningStatus(penalty, PEN2DunningStatus)) &&
+		(penalty.AccountStatus == CHSAccountStatus || penalty.AccountStatus == DCAAccountStatus || penalty.AccountStatus == HLDAccountStatus) {
+		return OpenPayableStatus, true
+	}
+	return "", false
 }
 
 func penaltyPaidToday(closedAt *time.Time) bool {
