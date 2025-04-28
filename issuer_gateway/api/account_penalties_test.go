@@ -205,6 +205,8 @@ var staleAccountPenalties = models.AccountPenaltiesDao{
 func TestUnitAccountPenalties(t *testing.T) {
 	cfg, _ := config.Get()
 	cfg.AccountPenaltiesTTL = "24h"
+	cfg.E5AllocationRoutineDuration = "4h"
+	cfg.E5AllocationRoutineStartHour = 20
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 

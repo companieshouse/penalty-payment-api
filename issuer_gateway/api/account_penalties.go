@@ -137,10 +137,11 @@ func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config
 
 		e5AllocationRoutineDuration := getE5AllocationRoutineDuration(cfg)
 		now := time.Now()
-		yesterday := now.Add(-24 * time.Hour) // 24 hours ago from current time
+		yesterday := now.Add(-24 * time.Hour)                            // 24 hours ago from current time
+		e5AllocationRoutineStartHour := cfg.E5AllocationRoutineStartHour // defaults to 0 hour (00:00) if not set in config
 		expectedE5AllocationRoutineStartTime := time.Date(
-			now.Year(), yesterday.Month(), yesterday.Day(), 20, 0, 0, 0, time.Local)                                // 8pm of previous day
-		expectedE5AllocationRoutineEndTime := expectedE5AllocationRoutineStartTime.Add(e5AllocationRoutineDuration) // 12am of current day
+			now.Year(), yesterday.Month(), yesterday.Day(), e5AllocationRoutineStartHour, 0, 0, 0, time.Local)
+		expectedE5AllocationRoutineEndTime := expectedE5AllocationRoutineStartTime.Add(e5AllocationRoutineDuration)
 
 		// Cache record is considered stale if penalty was marked as paid (and 'ClosedAt' time is) before the start of E5 allocation routine
 		// and cache record is assessed after E5 allocation routine has ended
@@ -174,7 +175,9 @@ func getTimeToLive(cfg *config.Config) time.Duration {
 
 	ttl, err := time.ParseDuration(ttlString)
 	if err != nil {
-		panic(fmt.Sprintf("error parsing account penalties TTL: %v", ttlString))
+		log.Error(fmt.Errorf("error parsing account penalties TTL: %v", err))
+		log.Info("Applying a TTL of 24 hours")
+		ttl = 24 * time.Hour // default to TTL of 24 hours if parsing the config TTL string fails
 	}
 
 	return ttl
@@ -188,7 +191,9 @@ func getE5AllocationRoutineDuration(cfg *config.Config) time.Duration {
 
 	e5AllocationRoutineDuration, err := time.ParseDuration(e5AllocationRoutineDurationString)
 	if err != nil {
-		panic(fmt.Sprintf("error parsing E5 allocation routine duration: %v", e5AllocationRoutineDurationString))
+		log.Error(fmt.Errorf("error parsing E5 allocation routine duration: %v", err))
+		log.Info("Applying a default duration of 4 hours")
+		e5AllocationRoutineDuration = 4 * time.Hour // default to 4 hours if parsing of the config duration string fails
 	}
 
 	return e5AllocationRoutineDuration
