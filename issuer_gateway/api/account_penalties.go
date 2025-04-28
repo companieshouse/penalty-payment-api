@@ -125,38 +125,25 @@ func convertE5Response(customerCode, companyCode string, response *e5.GetTransac
 func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config) bool {
 	if accountPenaltiesDao.ClosedAt == nil {
 		// Penalty is not yet marked as paid in cache so logic to determine if cache record is stale
-		// is based on a time to live of 24 hours or more.
-		ttlHours := cfg.AccountPenaltiesTTLHours
-		if ttlHours == 0 {
-			ttlHours = 24 // time to live defaults to 24 hours if not set in config
-		}
-		cacheRecordExpirationTime := accountPenaltiesDao.CreatedAt.Add(time.Hour * ttlHours)
-		now := time.Now()
+		// is based on a time to live of 24 hours.
 
-		log.Info("checking if cached account penalties have become stale", log.Data{
-			"time to live in hours":         ttlHours,
-			"cache record expiration time ": cacheRecordExpirationTime,
-			"current time":                  now,
-		})
+		ttl := getTimeToLive(cfg)
+		cacheRecordAge := time.Since(*accountPenaltiesDao.CreatedAt)
 
-		return cacheRecordExpirationTime.Equal(time.Now()) || cacheRecordExpirationTime.Before(now)
+		return cacheRecordAge == ttl || cacheRecordAge > ttl
 	} else {
 		// Penalty is marked as paid in cache, so logic to determine if cache record is stale is based on
 		// E5 allocation routine run.
-		var e5AllocationRoutineWindow time.Duration = 4 // Approximate duration for E5 allocation routine to run
-		now := time.Now().Local()
+
+		e5AllocationRoutineDuration := getE5AllocationRoutineDuration(cfg)
+		now := time.Now()
 		yesterday := now.Add(-24 * time.Hour) // 24 hours ago from current time
-		yesterdayAtZeroHours := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, time.Local)
+		expectedE5AllocationRoutineStartTime := time.Date(
+			now.Year(), yesterday.Month(), yesterday.Day(), 20, 0, 0, 0, time.Local)                                // 8pm of previous day
+		expectedE5AllocationRoutineEndTime := expectedE5AllocationRoutineStartTime.Add(e5AllocationRoutineDuration) // 12am of current day
 
-		expectedE5AllocationRoutineStartTime := yesterdayAtZeroHours.Add(time.Hour * 20)                                      // 8pm of previous day
-		expectedE5AllocationRoutineEndTime := expectedE5AllocationRoutineStartTime.Add(time.Hour * e5AllocationRoutineWindow) // 12am of current day
-
-		log.Info("checking if cached account penalties have become stale", log.Data{
-			"expected E5 allocation routine start time": expectedE5AllocationRoutineStartTime,
-			"expected E5 allocation routine end time":   expectedE5AllocationRoutineEndTime,
-			"account penalties cache created at":        accountPenaltiesDao.CreatedAt,
-		})
-
+		// Cache record is considered stale if penalty was marked as paid (and 'ClosedAt' time is) before the start of E5 allocation routine
+		// and cache record is assessed after E5 allocation routine has ended
 		return accountPenaltiesDao.ClosedAt.Before(expectedE5AllocationRoutineStartTime) && now.After(expectedE5AllocationRoutineEndTime)
 	}
 }
@@ -177,4 +164,32 @@ func paymentUpdatedInE5(e5Response *e5.GetTransactionsResponse, accountPenalties
 	}
 
 	return true
+}
+
+func getTimeToLive(cfg *config.Config) time.Duration {
+	ttlString := cfg.AccountPenaltiesTTL
+	if ttlString == "" {
+		ttlString = "24h" // time to live defaults to 24 hours if not set in config
+	}
+
+	ttl, err := time.ParseDuration(ttlString)
+	if err != nil {
+		panic(fmt.Sprintf("error parsing account penalties TTL: %v", ttlString))
+	}
+
+	return ttl
+}
+
+func getE5AllocationRoutineDuration(cfg *config.Config) time.Duration {
+	e5AllocationRoutineDurationString := cfg.E5AllocationRoutineDuration
+	if e5AllocationRoutineDurationString == "" {
+		e5AllocationRoutineDurationString = "4h" // E5 allocation routine duration defaults to 4 hours if not set in config
+	}
+
+	e5AllocationRoutineDuration, err := time.ParseDuration(e5AllocationRoutineDurationString)
+	if err != nil {
+		panic(fmt.Sprintf("error parsing E5 allocation routine duration: %v", e5AllocationRoutineDurationString))
+	}
+
+	return e5AllocationRoutineDuration
 }

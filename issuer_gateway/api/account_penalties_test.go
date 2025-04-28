@@ -52,18 +52,18 @@ var e5TransactionsResponse = e5.GetTransactionsResponse{
 	Page: page,
 	Transactions: []e5.Transaction{
 		{
-			CompanyCode:          utils.LateFilingPenalty,
-			LedgerCode:           "E1",
+			CompanyCode:          "LP",
+			LedgerCode:           "EW",
 			CustomerCode:         "12345678",
 			TransactionReference: "P1234567",
 			TransactionDate:      "2025-02-25",
 			MadeUpDate:           "2025-02-12",
 			Amount:               250,
-			OutstandingAmount:    250,
+			OutstandingAmount:    0,
 			IsPaid:               true,
 			TransactionType:      "1",
-			TransactionSubType:   "S1",
-			TypeDescription:      "CS01",
+			TransactionSubType:   "EL",
+			TypeDescription:      "Double DBL LTD E&W> 6 MNTHS   DLTWD     ",
 			DueDate:              "2025-03-26",
 			AccountStatus:        "CHS",
 			DunningStatus:        "PEN1",
@@ -174,27 +174,27 @@ var e5TransactionsResponse = e5.GetTransactionsResponse{
 }
 
 var yesterday = time.Now().Add(-24 * time.Hour)
-var yesterdayAtZer0Hours = time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, time.Local)
-var yesterdayAt2Pm = yesterdayAtZer0Hours.Add(time.Hour * 14)
+var yesterdayAt2Pm = time.Date(
+	yesterday.Year(), yesterday.Month(), yesterday.Day(), 14, 0, 0, 0, time.Local)
 var staleAccountPenalties = models.AccountPenaltiesDao{
 	CustomerCode: "12345678",
-	CompanyCode:  utils.LateFilingPenalty,
+	CompanyCode:  "LP",
 	CreatedAt:    &yesterday,
 	ClosedAt:     &yesterdayAt2Pm,
 	AccountPenalties: []models.AccountPenaltiesDataDao{
 		{
-			CompanyCode:          utils.LateFilingPenalty,
-			LedgerCode:           "E1",
+			CompanyCode:          "LP",
+			LedgerCode:           "EW",
 			CustomerCode:         "12345678",
 			TransactionReference: "P1234567",
 			TransactionDate:      "2025-02-25",
 			MadeUpDate:           "2025-02-12",
 			Amount:               250,
-			OutstandingAmount:    250,
+			OutstandingAmount:    0,
 			IsPaid:               true,
 			TransactionType:      "1",
-			TransactionSubType:   "S1",
-			TypeDescription:      "CS01",
+			TransactionSubType:   "EL",
+			TypeDescription:      "Double DBL LTD E&W> 6 MNTHS   DLTWD     ",
 			DueDate:              "2025-03-26",
 			AccountStatus:        "CHS",
 			DunningStatus:        "PEN1",
@@ -203,6 +203,8 @@ var staleAccountPenalties = models.AccountPenaltiesDao{
 }
 
 func TestUnitAccountPenalties(t *testing.T) {
+	cfg, _ := config.Get()
+	cfg.AccountPenaltiesTTL = "24h"
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
