@@ -13,26 +13,28 @@ In order to run this API locally you will need to install the following:
 1. Build the executable: `make build`
 
 ## Configuration
-| Variable                                   | Default | Description                                                           |
-|:-------------------------------------------|:-------:|:----------------------------------------------------------------------|
-| `E5_API_URL`                               |   `-`   | E5 API Address                                                        |
-| `E5_USERNAME`                              |   `-`   | E5 API Username                                                       |
-| `BIND_ADDR`                                |   `-`   | The host:port to bind to                                              |
-| `MONGODB_URL`                              |   `-`   | The mongo db connection string                                        |
-| `PPS_MONGODB_DATABASE`                     |   `-`   | The database name to connect to e.g. `financial_penalties`          |
-| `PPS_MONGODB_PAYABLE_RESOURCES_COLLECTION` |   `-`   | The collection name e.g. `payable_resources`                          |
-| `PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION` |   `-`   | The collection name e.g. `account_penalties`                          |
-| `PPS_ACCOUNT_PENALTIES_TTL_HOURS`          |   `-`   | Account penalties cache time to live  e.g. `24`                       |
-| `KAFKA_BROKER_ADDR`                        |   `_`   | Kafka Broker Address                                                  |
-| `SCHEMA_REGISTRY_URL`                      |   `_`   | Schema Registry URL                                                   |
-| `API_URL`                                  |   `_`   | The application endpoint for the API, for go-sdk-manager integration  |
-| `PAYMENTS_API_URL`                         |   `_`   | The base path for the payments API, for go-sdk-manager integration    |
-| `CHS_URL`                                  |   `_`   | CHS URL                                                               |
-| `WEEKLY_MAINTENANCE_START_TIME`            |   `_`   | Start time of weekly maintenance e.g. `0700`                          |
-| `WEEKLY_MAINTENANCE_END_TIME`              |   `_`   | End time of weekly maintenance e.g. `0730`                            |
-| `WEEKLY_MAINTENANCE_DAY`                   |   `_`   | Day of weekly maintenance e.g. `0` (zero for Sunday)                  |
-| `PLANNED_MAINTENANCE_START_TIME`           |   `_`   | Start time and date of planned maintenance e.g. `01 Jan 19 15:04 BST` |
-| `PLANNED_MAINTENANCE_END_TIME`             |   `_`   | End time and date of planned maintenance e.g. `31 Jan 19 16:59 BST`   |
+| Variable                                        | Default | Description                                                                                       |
+|:------------------------------------------------|:-------:|:--------------------------------------------------------------------------------------------------|
+| `E5_API_URL`                                    |   `-`   | E5 API Address                                                                                    |
+| `E5_USERNAME`                                   |   `-`   | E5 API Username                                                                                   |
+| `BIND_ADDR`                                     |   `-`   | The host:port to bind to                                                                          |
+| `MONGODB_URL`                                   |   `-`   | The mongo db connection string                                                                    |
+| `PPS_MONGODB_DATABASE`                          |   `-`   | The database name to connect to e.g. `financial_penalties`                                        |
+| `PPS_MONGODB_PAYABLE_RESOURCES_COLLECTION`      |   `-`   | The collection name e.g. `payable_resources`                                                      |
+| `PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION`      |   `-`   | The collection name e.g. `account_penalties`                                                      |
+| `PPS_ACCOUNT_PENALTIES_TTL`                     |   `-`   | Account penalties cache time to live  e.g. `24h`                                                  |
+| `E5_ALLOCATION_ROUTINE_DURATION`                |   `-`   | Duration for a complete E5 allocation routine run  e.g. `4h`                                      |
+| `E5_ALLOCATION_ROUTINE_START_HOUR`              |   `-`   | A number representing the hour of the day when E5 allocation routine starts  e.g. `20` (for 8 pm) |
+| `KAFKA_BROKER_ADDR`                             |   `_`   | Kafka Broker Address                                                                              |
+| `SCHEMA_REGISTRY_URL`                           |   `_`   | Schema Registry URL                                                                               |
+| `API_URL`                                       |   `_`   | The application endpoint for the API, for go-sdk-manager integration                              |
+| `PAYMENTS_API_URL`                              |   `_`   | The base path for the payments API, for go-sdk-manager integration                                |
+| `CHS_URL`                                       |   `_`   | CHS URL                                                                                           |
+| `WEEKLY_MAINTENANCE_START_TIME`                 |   `_`   | Start time of weekly maintenance e.g. `0700`                                                      |
+| `WEEKLY_MAINTENANCE_END_TIME`                   |   `_`   | End time of weekly maintenance e.g. `0730`                                                        |
+| `WEEKLY_MAINTENANCE_DAY`                        |   `_`   | Day of weekly maintenance e.g. `0` (zero for Sunday)                                              |
+| `PLANNED_MAINTENANCE_START_TIME`                |   `_`   | Start time and date of planned maintenance e.g. `01 Jan 19 15:04 BST`                             |
+| `PLANNED_MAINTENANCE_END_TIME`                  |   `_`   | End time and date of planned maintenance e.g. `31 Jan 19 16:59 BST`                               |
 
 ## Endpoints
 
