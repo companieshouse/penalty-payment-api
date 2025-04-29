@@ -130,7 +130,17 @@ func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config
 		ttl := getTimeToLive(cfg)
 		cacheRecordAge := time.Since(*accountPenaltiesDao.CreatedAt)
 
-		return cacheRecordAge == ttl || cacheRecordAge > ttl
+		stale := cacheRecordAge == ttl || cacheRecordAge > ttl
+
+		log.Info("Checking if account penalties record is stale ", log.Data{
+			"customer_code":       accountPenaltiesDao.CustomerCode,
+			"company_code":        accountPenaltiesDao.CompanyCode,
+			"TTL":                 ttl.String(),
+			"cache_created_since": cacheRecordAge.String(),
+			"is_stale":            stale,
+		})
+
+		return stale
 	} else {
 		// Penalty is marked as paid in cache, so logic to determine if cache record is stale is based on
 		// E5 allocation routine run.
@@ -142,10 +152,22 @@ func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config
 		expectedE5AllocationRoutineStartTime := time.Date(
 			now.Year(), yesterday.Month(), yesterday.Day(), e5AllocationRoutineStartHour, 0, 0, 0, time.Local)
 		expectedE5AllocationRoutineEndTime := expectedE5AllocationRoutineStartTime.Add(e5AllocationRoutineDuration)
+		stale := accountPenaltiesDao.ClosedAt.Before(expectedE5AllocationRoutineStartTime) && now.After(expectedE5AllocationRoutineEndTime)
+
+		log.Info("Checking if account penalties record is stale ", log.Data{
+			"customer_code":                    accountPenaltiesDao.CustomerCode,
+			"company_code":                     accountPenaltiesDao.CompanyCode,
+			"e5_allocation_routine_duration":   e5AllocationRoutineDuration.String(),
+			"current_time":                     now.Format(time.RFC3339),
+			"e5_allocation_routine_start_hour": e5AllocationRoutineStartHour,
+			"e5_allocation_routine_start_time": expectedE5AllocationRoutineStartTime.Format(time.RFC3339),
+			"e5_allocation_routine_end_time":   expectedE5AllocationRoutineEndTime.Format(time.RFC3339),
+			"stale":                            stale,
+		})
 
 		// Cache record is considered stale if penalty was marked as paid (and 'ClosedAt' time is) before the start of E5 allocation routine
 		// and cache record is assessed after E5 allocation routine has ended
-		return accountPenaltiesDao.ClosedAt.Before(expectedE5AllocationRoutineStartTime) && now.After(expectedE5AllocationRoutineEndTime)
+		return stale
 	}
 }
 
@@ -160,6 +182,11 @@ func paymentUpdatedInE5(e5Response *e5.GetTransactionsResponse, accountPenalties
 	for _, accountPenalty := range accountPenaltiesDao.AccountPenalties {
 		e5Transaction := e5Transactions[accountPenalty.TransactionReference]
 		if accountPenalty.IsPaid == true && e5Transaction.IsPaid == false {
+			log.Info("cache will not be updated because penalty is marked as paid in cache but not in E5", log.Data{
+				"customer_code":         e5Transaction.CustomerCode,
+				"company_code":          e5Transaction.CompanyCode,
+				"transaction_reference": e5Transaction.TransactionReference,
+			})
 			return false
 		}
 	}
