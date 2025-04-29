@@ -147,11 +147,14 @@ func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config
 
 		e5AllocationRoutineDuration := getE5AllocationRoutineDuration(cfg)
 		now := time.Now()
-		yesterday := now.Add(-24 * time.Hour)                            // 24 hours ago from current time
+		yesterday := now.AddDate(0, 0, -1)
 		e5AllocationRoutineStartHour := cfg.E5AllocationRoutineStartHour // defaults to 0 hour (00:00) if not set in config
 		expectedE5AllocationRoutineStartTime := time.Date(
 			now.Year(), yesterday.Month(), yesterday.Day(), e5AllocationRoutineStartHour, 0, 0, 0, time.Local)
 		expectedE5AllocationRoutineEndTime := expectedE5AllocationRoutineStartTime.Add(e5AllocationRoutineDuration)
+
+		// Cache record is considered stale if penalty was marked as paid (and 'ClosedAt' time is) before the start of E5 allocation routine
+		// and cache record is assessed after E5 allocation routine has ended
 		stale := accountPenaltiesDao.ClosedAt.Before(expectedE5AllocationRoutineStartTime) && now.After(expectedE5AllocationRoutineEndTime)
 
 		log.Info("Checking if account penalties record is stale ", log.Data{
@@ -165,8 +168,6 @@ func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config
 			"stale":                            stale,
 		})
 
-		// Cache record is considered stale if penalty was marked as paid (and 'ClosedAt' time is) before the start of E5 allocation routine
-		// and cache record is assessed after E5 allocation routine has ended
 		return stale
 	}
 }
