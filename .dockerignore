@@ -19,3 +19,4 @@
 !go.mod
 !go.sum
 !main.go
+!bin/go_build
