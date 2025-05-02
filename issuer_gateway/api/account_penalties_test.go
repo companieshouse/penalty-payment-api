@@ -55,23 +55,6 @@ var e5TransactionsResponse = e5.GetTransactionsResponse{
 			CompanyCode:          "LP",
 			LedgerCode:           "EW",
 			CustomerCode:         "12345678",
-			TransactionReference: "A1234567",
-			TransactionDate:      "2025-02-25",
-			MadeUpDate:           "2025-02-12",
-			Amount:               250,
-			OutstandingAmount:    0,
-			IsPaid:               true,
-			TransactionType:      "1",
-			TransactionSubType:   "EL",
-			TypeDescription:      "Double DBL LTD E&W> 6 MNTHS   DLTWD     ",
-			DueDate:              "2025-03-26",
-			AccountStatus:        "CHS",
-			DunningStatus:        "PEN1",
-		},
-		{
-			CompanyCode:          "LP",
-			LedgerCode:           "EW",
-			CustomerCode:         "12345678",
 			TransactionReference: "A0000001",
 			TransactionDate:      "2020-07-21",
 			MadeUpDate:           "2018-06-30",
@@ -173,35 +156,6 @@ var e5TransactionsResponse = e5.GetTransactionsResponse{
 	},
 }
 
-var yesterday = time.Now().Add(-24 * time.Hour)
-var yesterdayAt2Pm = time.Date(
-	yesterday.Year(), yesterday.Month(), yesterday.Day(), 14, 0, 0, 0, time.Local)
-var staleAccountPenalties = models.AccountPenaltiesDao{
-	CustomerCode: "12345678",
-	CompanyCode:  "LP",
-	CreatedAt:    &yesterday,
-	ClosedAt:     &yesterdayAt2Pm,
-	AccountPenalties: []models.AccountPenaltiesDataDao{
-		{
-			CompanyCode:          "LP",
-			LedgerCode:           "EW",
-			CustomerCode:         "12345678",
-			TransactionReference: "A1234567",
-			TransactionDate:      "2025-02-25",
-			MadeUpDate:           "2025-02-12",
-			Amount:               250,
-			OutstandingAmount:    0,
-			IsPaid:               true,
-			TransactionType:      "1",
-			TransactionSubType:   "EL",
-			TypeDescription:      "Double DBL LTD E&W> 6 MNTHS   DLTWD     ",
-			DueDate:              "2025-03-26",
-			AccountStatus:        "CHS",
-			DunningStatus:        "PEN1",
-		},
-	},
-}
-
 func TestUnitAccountPenalties(t *testing.T) {
 	cfg, _ := config.Get()
 	cfg.AccountPenaltiesTTL = "24h"
@@ -233,25 +187,25 @@ func TestUnitAccountPenalties(t *testing.T) {
 		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
-		So(len(listResponse.Items), ShouldEqual, 7)
+		So(len(listResponse.Items), ShouldEqual, 6)
 		So(responseType, ShouldEqual, services.Success)
 
-		assertTransactionListItem(listResponse.Items[1], "A0000001", false, false,
+		assertTransactionListItem(listResponse.Items[0], "A0000001", false, false,
 			"2020-07-21", "2018-06-30", "2020-07-21",
 			3000, 3000, "penalty", "Late filing of accounts", "CLOSED")
-		assertTransactionListItem(listResponse.Items[2], "CF1", false, false,
+		assertTransactionListItem(listResponse.Items[1], "CF1", false, false,
 			"2021-04-09", "2018-06-30", "2021-04-09",
 			105, 105, "other", "Late filing of accounts", "CLOSED")
-		assertTransactionListItem(listResponse.Items[3], "FC1", false, false,
+		assertTransactionListItem(listResponse.Items[2], "FC1", false, false,
 			"2021-04-09", "2018-06-30", "2021-04-09",
 			80, 80, "other", "Late filing of accounts", "CLOSED")
-		assertTransactionListItem(listResponse.Items[4], "A0000002", true, false,
+		assertTransactionListItem(listResponse.Items[3], "A0000002", true, false,
 			"2021-08-10", "2019-06-30", "2021-08-10",
 			3000, 0, "penalty", "Late filing of accounts", "CLOSED")
-		assertTransactionListItem(listResponse.Items[5], "A0000003", false, false,
+		assertTransactionListItem(listResponse.Items[4], "A0000003", false, false,
 			"2021-12-15", "2020-06-26", "2021-12-15",
 			1500, 1210, "penalty", "Late filing of accounts", "OPEN")
-		assertTransactionListItem(listResponse.Items[6], "A0000004", false, false,
+		assertTransactionListItem(listResponse.Items[5], "A0000004", false, false,
 			"2022-06-06", "2021-06-26", "2022-06-06",
 			750, 750, "penalty", "Late filing of accounts", "OPEN")
 	})
@@ -274,40 +228,15 @@ func TestUnitAccountPenalties(t *testing.T) {
 		So(responseType, ShouldEqual, services.Success)
 	})
 
-	Convey("penalties returned when valid transactions returned from cache", t, func() {
-		today := time.Now().Add(time.Hour * 1)
-
-		accountPenalties := models.AccountPenaltiesDao{
-			CustomerCode: "12345678",
-			CompanyCode:  utils.Sanctions,
-			CreatedAt:    &today,
-			AccountPenalties: []models.AccountPenaltiesDataDao{
-				{
-					CompanyCode:          utils.Sanctions,
-					LedgerCode:           "E1",
-					CustomerCode:         "12345678",
-					TransactionReference: "P1234567",
-					TransactionDate:      "2025-02-25",
-					MadeUpDate:           "2025-02-12",
-					Amount:               250,
-					OutstandingAmount:    250,
-					IsPaid:               false,
-					TransactionType:      "1",
-					TransactionSubType:   "S1",
-					TypeDescription:      "CS01",
-					DueDate:              "2025-03-26",
-					AccountStatus:        "CHS",
-					DunningStatus:        "PEN1",
-				},
-			},
-		}
+	Convey("penalties returned when valid transactions returned from cache (payableStatus = OPEN)", t, func() {
+		accountPenalties, transactionsResponse := createData(false, false)
 
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
 
 		mockedGetTransactions := func(customerCode string, companyCode string,
 			client *e5.Client) (*e5.GetTransactionsResponse, error) {
-			return &e5TransactionsResponse, nil
+			return &transactionsResponse, nil
 		}
 
 		getTransactions = mockedGetTransactions
@@ -315,78 +244,41 @@ func TestUnitAccountPenalties(t *testing.T) {
 		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
+		So(listResponse.Items[0].PayableStatus, ShouldEqual, "OPEN")
 		So(responseType, ShouldEqual, services.Success)
 	})
 
-	Convey("penalties returned without cache update when stale transactions in cache and payment updated in cache but not in e5", t, func() {
-		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&staleAccountPenalties, nil)
-		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).MaxTimes(0)
+	Convey("penalties returned when valid transactions returned from cache (payableStatus = CLOSED_PENDING_ALLOCATION)", t, func() {
 
-		e5TransactionsResponse.Transactions[0].IsPaid = false
-		getTransactions = func(customerCode string, companyCode string,
+		accountPenalties, transactionsResponse := createData(true, false)
+
+		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
+
+		mockedGetTransactions := func(customerCode string, companyCode string,
 			client *e5.Client) (*e5.GetTransactionsResponse, error) {
-			return &e5TransactionsResponse, nil
+			return &transactionsResponse, nil
 		}
 
-		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
+		getTransactions = mockedGetTransactions
+
+		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
-		So(responseType, ShouldEqual, services.Success)
-	})
-
-	Convey("cache updated and penalties returned when stale transactions in cache and payment updated in e5 but not in cache", t, func() {
-		staleAccountPenalties.AccountPenalties[0].IsPaid = false
-		staleAccountPenalties.ClosedAt = nil
-
-		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&staleAccountPenalties, nil)
-		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(nil)
-
-		e5TransactionsResponse.Transactions[0].IsPaid = true
-		getTransactions = func(customerCode string, companyCode string,
-			client *e5.Client) (*e5.GetTransactionsResponse, error) {
-			return &e5TransactionsResponse, nil
-		}
-
-		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
-		So(err, ShouldBeNil)
-		So(listResponse, ShouldNotBeNil)
-		So(responseType, ShouldEqual, services.Success)
-	})
-
-	Convey("cache updated and penalties returned when stale transactions in cache and payment updated neither in e5 nor in cache", t, func() {
-		staleAccountPenalties.AccountPenalties[0].IsPaid = false
-		staleAccountPenalties.ClosedAt = nil
-
-		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&staleAccountPenalties, nil)
-		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(nil)
-
-		e5TransactionsResponse.Transactions[0].IsPaid = false
-		getTransactions = func(customerCode string, companyCode string,
-			client *e5.Client) (*e5.GetTransactionsResponse, error) {
-			return &e5TransactionsResponse, nil
-		}
-
-		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
-		So(err, ShouldBeNil)
-		So(listResponse, ShouldNotBeNil)
+		So(listResponse.Items[0].PayableStatus, ShouldEqual, "CLOSED_PENDING_ALLOCATION")
 		So(responseType, ShouldEqual, services.Success)
 	})
 
 	Convey("penalties returned when stale transactions in cache but failed cache update", t, func() {
-		staleAccountPenalties.AccountPenalties[0].IsPaid = true
-		staleAccountPenalties.ClosedAt = nil
+		accountPenalties, transactionsResponse := createData(false, true)
 
 		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&staleAccountPenalties, nil)
+		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
 		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(errors.New("error updating account penalties"))
 
-		e5TransactionsResponse.Transactions[0].IsPaid = true
 		getTransactions = func(customerCode string, companyCode string,
 			client *e5.Client) (*e5.GetTransactionsResponse, error) {
-			return &e5TransactionsResponse, nil
+			return &transactionsResponse, nil
 		}
 
 		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
@@ -395,24 +287,43 @@ func TestUnitAccountPenalties(t *testing.T) {
 		So(responseType, ShouldEqual, services.Success)
 	})
 
-	// This test will fail between 8pm and 12.00am.
-	Convey("cache updated and penalties returned when stale transactions in cache and payment updated in e5 and in cache", t, func() {
-		staleAccountPenalties.AccountPenalties[0].IsPaid = true
-		staleAccountPenalties.ClosedAt = &yesterday
+	Convey("cache updated and penalties returned when stale transactions in cache (PayableStatus = OPEN)", t, func() {
+		accountPenalties, transactionsResponse := createData(false, true)
 
 		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&staleAccountPenalties, nil)
+		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
 		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(nil)
 
-		e5TransactionsResponse.Transactions[0].IsPaid = true
 		getTransactions = func(customerCode string, companyCode string,
 			client *e5.Client) (*e5.GetTransactionsResponse, error) {
-			return &e5TransactionsResponse, nil
+			return &transactionsResponse, nil
 		}
 
 		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
+		So(listResponse.Items[0].PayableStatus, ShouldEqual, "OPEN")
+		So(responseType, ShouldEqual, services.Success)
+	})
+
+	// This test will fail between 8pm and 12.00am.
+	Convey("cache updated and penalties returned when stale transactions in cache (PayableStatus = CLOSED)", t, func() {
+		accountPenalties, transactionsResponse := createData(true, true)
+
+		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
+		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(nil)
+
+		e5TransactionsResponse.Transactions[0].IsPaid = true
+		getTransactions = func(customerCode string, companyCode string,
+			client *e5.Client) (*e5.GetTransactionsResponse, error) {
+			return &transactionsResponse, nil
+		}
+
+		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
+		So(err, ShouldBeNil)
+		So(listResponse, ShouldNotBeNil)
+		So(listResponse.Items[0].PayableStatus, ShouldEqual, "CLOSED")
 		So(responseType, ShouldEqual, services.Success)
 	})
 
@@ -495,4 +406,71 @@ func assertTransactionListItem(transactionListItem models.TransactionListItem, e
 		PayableStatus:   expectedPayableStatus,
 	}
 	So(transactionListItem, ShouldResemble, expectedTransactionListItem)
+}
+
+func createData(isPaid bool, isStale bool) (models.AccountPenaltiesDao, e5.GetTransactionsResponse) {
+	createdAt := time.Now().Add(time.Minute * 10)
+	if isStale {
+		createdAt = time.Now().Add(-24 * time.Hour)
+	}
+	closedAt := &createdAt
+	outstandingAmount := 0.0
+	if !isPaid {
+		closedAt = nil
+		outstandingAmount = 250.0
+	}
+	accountPenalties := models.AccountPenaltiesDao{
+		CustomerCode: "12345678",
+		CompanyCode:  "LP",
+		CreatedAt:    &createdAt,
+		ClosedAt:     closedAt,
+		AccountPenalties: []models.AccountPenaltiesDataDao{
+			{
+				CompanyCode:          "LP",
+				LedgerCode:           "EW",
+				CustomerCode:         "12345678",
+				TransactionReference: "A1234567",
+				TransactionDate:      "2025-02-25",
+				MadeUpDate:           "2025-02-12",
+				Amount:               250.0,
+				OutstandingAmount:    outstandingAmount,
+				IsPaid:               isPaid,
+				TransactionType:      "1",
+				TransactionSubType:   "EL",
+				TypeDescription:      "Double DBL LTD E&W> 6 MNTHS   DLTWD     ",
+				DueDate:              "2025-03-26",
+				AccountStatus:        "CHS",
+				DunningStatus:        "PEN1",
+			},
+		},
+	}
+	getTransactionsResponse := e5.GetTransactionsResponse{
+		Page: e5.Page{
+			Size:          1,
+			TotalElements: 1,
+			TotalPages:    1,
+			Number:        0,
+		},
+		Transactions: []e5.Transaction{
+			{
+				CompanyCode:          "LP",
+				LedgerCode:           "EW",
+				CustomerCode:         "12345678",
+				TransactionReference: "A1234567",
+				TransactionDate:      "2025-02-25",
+				MadeUpDate:           "2025-02-12",
+				Amount:               250.0,
+				OutstandingAmount:    outstandingAmount,
+				IsPaid:               isPaid,
+				TransactionType:      "1",
+				TransactionSubType:   "EL",
+				TypeDescription:      "Double DBL LTD E&W> 6 MNTHS   DLTWD     ",
+				DueDate:              "2025-03-26",
+				AccountStatus:        "CHS",
+				DunningStatus:        "PEN1",
+			},
+		},
+	}
+
+	return accountPenalties, getTransactionsResponse
 }

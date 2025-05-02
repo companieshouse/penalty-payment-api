@@ -42,7 +42,7 @@ func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap
 
 		if accountPenalties == nil {
 			accountPenalties = createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
-		} else if paymentUpdatedInE5(e5Response, accountPenalties) {
+		} else {
 			accountPenalties = updateAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
 		}
 	}
@@ -136,7 +136,7 @@ func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config
 			"customer_code":       accountPenaltiesDao.CustomerCode,
 			"company_code":        accountPenaltiesDao.CompanyCode,
 			"TTL":                 ttl.String(),
-			"cache_created_since": cacheRecordAge.String(),
+			"cache_created_since": fmt.Sprintf("%0.0f hours", cacheRecordAge.Hours()),
 			"is_stale":            stale,
 		})
 
@@ -170,29 +170,6 @@ func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config
 
 		return stale
 	}
-}
-
-// This checks that penalties marked as paid in cache are also marked as paid in e5
-// Returns false if a penalty marked as paid in cache is not marked as paid in e5, otherwise, returns true
-func paymentUpdatedInE5(e5Response *e5.GetTransactionsResponse, accountPenaltiesDao *models.AccountPenaltiesDao) bool {
-	var e5Transactions = make(map[string]e5.Transaction)
-	for _, transaction := range e5Response.Transactions {
-		e5Transactions[transaction.TransactionReference] = transaction
-	}
-
-	for _, accountPenalty := range accountPenaltiesDao.AccountPenalties {
-		e5Transaction := e5Transactions[accountPenalty.TransactionReference]
-		if accountPenalty.IsPaid == true && e5Transaction.IsPaid == false {
-			log.Info("cache will not be updated because penalty is marked as paid in cache but not in E5", log.Data{
-				"customer_code":         e5Transaction.CustomerCode,
-				"company_code":          e5Transaction.CompanyCode,
-				"transaction_reference": e5Transaction.TransactionReference,
-			})
-			return false
-		}
-	}
-
-	return true
 }
 
 func getTimeToLive(cfg *config.Config) time.Duration {
