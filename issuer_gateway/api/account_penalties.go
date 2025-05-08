@@ -123,53 +123,31 @@ func convertE5Response(customerCode, companyCode string, response *e5.GetTransac
 }
 
 func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config) bool {
-	if accountPenaltiesDao.ClosedAt == nil {
-		// Penalty is not yet marked as paid in cache so logic to determine if cache record is stale
-		// is based on a time to live of 24 hours.
-
-		ttl := getTimeToLive(cfg)
-		cacheRecordAge := time.Since(*accountPenaltiesDao.CreatedAt)
-
-		stale := cacheRecordAge == ttl || cacheRecordAge > ttl
-
-		log.Info("Checking if account penalties record is stale ", log.Data{
-			"customer_code":       accountPenaltiesDao.CustomerCode,
-			"company_code":        accountPenaltiesDao.CompanyCode,
-			"TTL":                 ttl.String(),
-			"cache_created_since": fmt.Sprintf("%0.0f hours", cacheRecordAge.Hours()),
-			"is_stale":            stale,
-		})
-
-		return stale
-	} else {
-		// Penalty is marked as paid in cache, so logic to determine if cache record is stale is based on
-		// E5 allocation routine run.
-
-		e5AllocationRoutineDuration := getE5AllocationRoutineDuration(cfg)
-		now := time.Now()
-		yesterday := now.AddDate(0, 0, -1)
-		e5AllocationRoutineStartHour := cfg.E5AllocationRoutineStartHour // defaults to 0 hour (00:00) if not set in config
-		expectedE5AllocationRoutineStartTime := time.Date(
-			now.Year(), yesterday.Month(), yesterday.Day(), e5AllocationRoutineStartHour, 0, 0, 0, time.Local)
-		expectedE5AllocationRoutineEndTime := expectedE5AllocationRoutineStartTime.Add(e5AllocationRoutineDuration)
-
-		// Cache record is considered stale if penalty was marked as paid (and 'ClosedAt' time is) before the start of E5 allocation routine
-		// and cache record is assessed after E5 allocation routine has ended
-		stale := accountPenaltiesDao.ClosedAt.Before(expectedE5AllocationRoutineStartTime) && now.After(expectedE5AllocationRoutineEndTime)
-
-		log.Info("Checking if account penalties record is stale ", log.Data{
-			"customer_code":                    accountPenaltiesDao.CustomerCode,
-			"company_code":                     accountPenaltiesDao.CompanyCode,
-			"e5_allocation_routine_duration":   e5AllocationRoutineDuration.String(),
-			"current_time":                     now.Format(time.RFC3339),
-			"e5_allocation_routine_start_hour": e5AllocationRoutineStartHour,
-			"e5_allocation_routine_start_time": expectedE5AllocationRoutineStartTime.Format(time.RFC3339),
-			"e5_allocation_routine_end_time":   expectedE5AllocationRoutineEndTime.Format(time.RFC3339),
-			"stale":                            stale,
-		})
-
-		return stale
+	// If ClosedAt time is set, start counting ttl from then, otherwise, start from CreatedAt
+	// Starting from ClosedAt time will ensure that if a user initiates a penalty payment without completing it at the same time
+	// and comes back later to complete the payment, we'll have enough confidence that E5 allocation routine
+	// would have run before the cache is considered stale and updated. If the ClosedAt time is not set, then we can
+	// safely start counting from CreatedAt time.
+	ttlStart := accountPenaltiesDao.ClosedAt
+	if ttlStart == nil {
+		ttlStart = accountPenaltiesDao.CreatedAt
 	}
+
+	ttl := getTimeToLive(cfg)
+	cacheRecordAge := time.Since(*accountPenaltiesDao.CreatedAt)
+
+	stale := cacheRecordAge == ttl || cacheRecordAge > ttl
+
+	log.Info("Checking if account penalties record is stale ", log.Data{
+		"customer_code": accountPenaltiesDao.CustomerCode,
+		"company_code":  accountPenaltiesDao.CompanyCode,
+		"ttl":           ttl.String(),
+		"created_at":    accountPenaltiesDao.CreatedAt,
+		"closed_at":     accountPenaltiesDao.ClosedAt,
+		"is_stale":      stale,
+	})
+
+	return stale
 }
 
 func getTimeToLive(cfg *config.Config) time.Duration {
@@ -186,20 +164,4 @@ func getTimeToLive(cfg *config.Config) time.Duration {
 	}
 
 	return ttl
-}
-
-func getE5AllocationRoutineDuration(cfg *config.Config) time.Duration {
-	e5AllocationRoutineDurationString := cfg.E5AllocationRoutineDuration
-	if e5AllocationRoutineDurationString == "" {
-		e5AllocationRoutineDurationString = "4h" // E5 allocation routine duration defaults to 4 hours if not set in config
-	}
-
-	e5AllocationRoutineDuration, err := time.ParseDuration(e5AllocationRoutineDurationString)
-	if err != nil {
-		log.Error(fmt.Errorf("error parsing E5 allocation routine duration: %v", err))
-		log.Info("Applying a default duration of 4 hours")
-		e5AllocationRoutineDuration = 4 * time.Hour // default to 4 hours if parsing of the config duration string fails
-	}
-
-	return e5AllocationRoutineDuration
 }

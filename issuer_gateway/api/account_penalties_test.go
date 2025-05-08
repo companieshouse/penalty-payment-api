@@ -159,8 +159,6 @@ var e5TransactionsResponse = e5.GetTransactionsResponse{
 func TestUnitAccountPenalties(t *testing.T) {
 	cfg, _ := config.Get()
 	cfg.AccountPenaltiesTTL = "24h"
-	cfg.E5AllocationRoutineDuration = "4h"
-	cfg.E5AllocationRoutineStartHour = 20
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -306,7 +304,6 @@ func TestUnitAccountPenalties(t *testing.T) {
 		So(responseType, ShouldEqual, services.Success)
 	})
 
-	// This test will fail between 8pm and 12.00am.
 	Convey("cache updated and penalties returned when stale transactions in cache (PayableStatus = CLOSED)", t, func() {
 		accountPenalties, transactionsResponse := createData(true, true)
 
@@ -409,7 +406,7 @@ func assertTransactionListItem(transactionListItem models.TransactionListItem, e
 }
 
 func createData(isPaid bool, isStale bool) (models.AccountPenaltiesDao, e5.GetTransactionsResponse) {
-	createdAt := time.Now().Add(time.Minute * 10)
+	createdAt := time.Now().Add(time.Hour * -6)
 	if isStale {
 		createdAt = time.Now().Add(-24 * time.Hour)
 	}

@@ -23,8 +23,6 @@ In order to run this API locally you will need to install the following:
 | `PPS_MONGODB_PAYABLE_RESOURCES_COLLECTION`      |   `-`   | The collection name e.g. `payable_resources`                                                      |
 | `PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION`      |   `-`   | The collection name e.g. `account_penalties`                                                      |
 | `PPS_ACCOUNT_PENALTIES_TTL`                     |   `-`   | Account penalties cache time to live  e.g. `24h`                                                  |
-| `E5_ALLOCATION_ROUTINE_DURATION`                |   `-`   | Duration for a complete E5 allocation routine run  e.g. `4h`                                      |
-| `E5_ALLOCATION_ROUTINE_START_HOUR`              |   `-`   | A number representing the hour of the day when E5 allocation routine starts  e.g. `20` (for 8 pm) |
 | `KAFKA_BROKER_ADDR`                             |   `_`   | Kafka Broker Address                                                                              |
 | `SCHEMA_REGISTRY_URL`                           |   `_`   | Schema Registry URL                                                                               |
 | `API_URL`                                       |   `_`   | The application endpoint for the API, for go-sdk-manager integration                              |
