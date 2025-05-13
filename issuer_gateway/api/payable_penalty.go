@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
@@ -11,26 +12,25 @@ import (
 var getAccountPenalties = AccountPenalties
 var getMatchingPenalty = private.MatchPenalty
 
-func PayablePenalty(companyNumber string, companyCode string, txs []models.TransactionItem,
-	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) ([]models.TransactionItem, error) {
+func PayablePenalty(customerCode string, companyCode string, transaction models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionItem, error) {
 
-	response, _, err := getAccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
+	response, _, err := getAccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 	if err != nil {
 		log.Error(err)
 		return nil, err
 	}
 
-	// for the first release, the company must only have one outstanding penalty
 	unpaidPenaltyCount := getUnpaidPenaltyCount(response.Items)
 	if unpaidPenaltyCount > 1 {
-		log.Info("company has more than one outstanding penalty", log.Data{
-			"company_number": companyNumber,
-			"penalty_count":  unpaidPenaltyCount,
+		log.Info("customer has more than one outstanding penalty", log.Data{
+			"customer_code": customerCode,
+			"company_code":  companyCode,
+			"penalty_count": unpaidPenaltyCount,
 		})
-		return []models.TransactionItem{}, private.ErrMultiplePenalties
 	}
 
-	return getMatchingPenalty(response.Items, txs, companyNumber)
+	return getMatchingPenalty(response.Items, transaction, customerCode)
 }
 
 func getUnpaidPenaltyCount(transactionListItems []models.TransactionListItem) int {

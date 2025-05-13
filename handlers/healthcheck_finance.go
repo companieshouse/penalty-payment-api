@@ -6,8 +6,8 @@ import (
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
-	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // HandleHealthCheckFinanceSystem checks whether the e5 system is available to take requests
