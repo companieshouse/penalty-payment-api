@@ -10,24 +10,28 @@ import (
 func TestUnitMatchPenalty(t *testing.T) {
 
 	companyNumber := "123"
-	transactionsToMatch := models.TransactionItem{
-		PenaltyRef: "121",
-		Type:       "penalty",
-		Amount:     150,
-		Reason:     "Failure to file a confirmation statement",
+	transactionsToMatch := []models.TransactionItem{
+		{
+			TransactionID: "121",
+			Type:          "penalty",
+			Amount:        150,
+			Reason:        "Failure to file a confirmation statement",
+		},
 	}
-	matchedPenalty := models.TransactionItem{
-		PenaltyRef: "121",
-		Amount:     150,
-		Type:       "penalty",
-		MadeUpDate: "2017-06-30",
-		Reason:     "Failure to file a confirmation statement",
-		IsDCA:      false,
-		IsPaid:     false,
+	matchedPenalties := []models.TransactionItem{
+		{
+			TransactionID: "121",
+			Amount:        150,
+			Type:          "penalty",
+			MadeUpDate:    "2017-06-30",
+			Reason:        "Failure to file a confirmation statement",
+			IsDCA:         false,
+			IsPaid:        false,
+		},
 	}
 
 	testCases := []struct {
-		PenaltyRef     string
+		TransactionID  string
 		Type           string
 		MadeUpDate     string
 		Reason         string
@@ -35,30 +39,30 @@ func TestUnitMatchPenalty(t *testing.T) {
 		IsPaid         bool
 		OriginalAmount float64
 		Outstanding    float64
-		WantMatched    *models.TransactionItem
+		WantMatched    []models.TransactionItem
 		WantError      error
 	}{
-		{PenaltyRef: "120", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrPenaltyDoesNotExist},
-		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 200, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrPenaltyIsPartPaid},
-		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 150, IsDCA: false, IsPaid: true, WantMatched: nil, WantError: ErrPenaltyIsPaid},
-		{PenaltyRef: "121", Outstanding: 100, Type: "other", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrPenaltyNotPayable},
-		{PenaltyRef: "121", Outstanding: 100, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrPenaltyAmountMismatch},
-		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 150, IsDCA: true, IsPaid: false, WantMatched: nil, WantError: ErrPenaltyDCA},
-		{PenaltyRef: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
-			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: &matchedPenalty, WantError: nil},
+		{TransactionID: "120", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionDoesNotExist},
+		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 200, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionIsPartPaid},
+		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 150, IsDCA: false, IsPaid: true, WantMatched: nil, WantError: ErrTransactionIsPaid},
+		{TransactionID: "121", Outstanding: 100, Type: "other", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionNotPayable},
+		{TransactionID: "121", Outstanding: 100, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 100, IsDCA: false, IsPaid: false, WantMatched: nil, WantError: ErrTransactionAmountMismatch},
+		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 150, IsDCA: true, IsPaid: false, WantMatched: nil, WantError: ErrTransactionDCA},
+		{TransactionID: "121", Outstanding: 150, Type: "penalty", MadeUpDate: "2017-06-30", Reason: "Failure to file a confirmation statement",
+			OriginalAmount: 150, IsDCA: false, IsPaid: false, WantMatched: matchedPenalties, WantError: nil},
 	}
 
 	Convey("matchPenalty works correctly for different scenarios", t, func() {
 		for _, testCase := range testCases {
 			refTransactions := []models.TransactionListItem{
 				{
-					ID:             testCase.PenaltyRef,
+					ID:             testCase.TransactionID,
 					Type:           testCase.Type,
 					OriginalAmount: testCase.OriginalAmount,
 					Outstanding:    testCase.Outstanding,

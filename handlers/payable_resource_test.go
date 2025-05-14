@@ -22,11 +22,11 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 	Convey("Valid PayableResource", t, func() {
 		createdAt := time.Now().Truncate(time.Millisecond)
 		payable := models.PayableResource{
-			CustomerCode: "12345678",
-			PayableRef:   "abcdef",
+			CompanyNumber: "12345678",
+			Reference:     "abcdef",
 			Links: models.PayableResourceLinks{
-				Self:    "/company/12345678/penalties/abcdef",
-				Payment: "/company/12345678/penalties/abcdef/payment",
+				Self:    "/company/12345678/penalties/late-filing/abcdef",
+				Payment: "/company/12345678/penalties/late-filing/abcdef/payment",
 			},
 			Etag:      "qwertyetag1234",
 			CreatedAt: &createdAt,
@@ -36,9 +36,9 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 			},
 			Transactions: []models.TransactionItem{
 				{
-					Amount:     5,
-					Type:       "penalty",
-					PenaltyRef: "A1234567",
+					Amount:        5,
+					Type:          "penalty",
+					TransactionID: "A1234567",
 				},
 			},
 			Payment: models.Payment{
@@ -58,8 +58,8 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 
 		resultPayable := &models.PayableResource{}
 		json.NewDecoder(w.Body).Decode(&resultPayable)
-		So(resultPayable.CustomerCode, ShouldEqual, payable.CustomerCode)
-		So(resultPayable.PayableRef, ShouldEqual, payable.PayableRef)
+		So(resultPayable.CompanyNumber, ShouldEqual, payable.CompanyNumber)
+		So(resultPayable.Reference, ShouldEqual, payable.Reference)
 		So(resultPayable.Etag, ShouldEqual, payable.Etag)
 		So(resultPayable.CreatedAt.Nanosecond(), ShouldEqual, payable.CreatedAt.Nanosecond())
 		So(resultPayable.Links.Self, ShouldEqual, payable.Links.Self)
@@ -71,7 +71,7 @@ func TestUnitHandleGetPayableResource(t *testing.T) {
 		So(len(resultPayable.Transactions), ShouldEqual, 1)
 		So(resultPayable.Transactions[0].Amount, ShouldEqual, payable.Transactions[0].Amount)
 		So(resultPayable.Transactions[0].Type, ShouldEqual, payable.Transactions[0].Type)
-		So(resultPayable.Transactions[0].PenaltyRef, ShouldEqual, payable.Transactions[0].PenaltyRef)
+		So(resultPayable.Transactions[0].TransactionID, ShouldEqual, payable.Transactions[0].TransactionID)
 
 	})
 }
