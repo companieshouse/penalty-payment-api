@@ -4,8 +4,8 @@ package config
 type ContextKey string
 
 const (
-	// CustomerCode is the key that stores the customer code
-	CustomerCode = ContextKey("CustomerCode")
+	// CompanyNumber is the key that stores the company number
+	CompanyNumber = ContextKey("CompanyNumber")
 	// PayableResource is the key that stores the payable resource
 	PayableResource = ContextKey("PayableResource")
 )

@@ -11,16 +11,16 @@ import (
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/common/dao"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
-	"github.com/companieshouse/penalty-payment-api/penalty_payments/transformers"
+	"github.com/companieshouse/penalty-payment-api/transformers"
+	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // CreatePayableResourceHandler takes a http requests and creates a new payable resource
-func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
-	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
+func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var request models.PayableRequest
 		err := json.NewDecoder(r.Body).Decode(&request)
@@ -41,31 +41,27 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 			return
 		}
 
-		customerCode := r.Context().Value(config.CustomerCode).(string)
+		companyNumber := r.Context().Value(config.CompanyNumber).(string)
 
 		companyCode, err := getCompanyCodeFromTransaction(request.Transactions)
 		if err != nil {
-			log.ErrorR(r, fmt.Errorf("company code cannot be resolved"))
-			m := models.NewMessageResponse("company code cannot be resolved")
+			log.ErrorR(r, fmt.Errorf("company code cannot be determined"))
+			m := models.NewMessageResponse("company code cannot be determined")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
 
-		request.CustomerCode = strings.ToUpper(customerCode)
+		request.CompanyNumber = strings.ToUpper(companyNumber)
 		request.CreatedBy = userDetails.(authentication.AuthUserDetails)
 
 		// Ensure that the transactions in the request are valid payable penalties that exist in E5
-		var payablePenalties []models.TransactionItem
-		for _, transaction := range request.Transactions {
-			payablePenalty, err := api.PayablePenalty(request.CustomerCode, companyCode,
-				transaction, penaltyDetailsMap, allowedTransactionMap, apDaoSvc)
-			if err != nil {
-				log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))
-				m := models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time")
-				utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-				return
-			}
-			payablePenalties = append(payablePenalties, *payablePenalty)
+		payablePenalties, err := api.PayablePenalty(request.CompanyNumber, companyCode,
+			request.Transactions, penaltyDetailsMap, allowedTransactionMap)
+		if err != nil {
+			log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))
+			m := models.NewMessageResponse("the transactions you want to pay for do not exist or are not payable at this time")
+			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
+			return
 		}
 
 		// Replace request transactions with payable penalties to include updated values in the request
@@ -83,7 +79,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 
 		model := transformers.PayableResourceRequestToDB(&request)
 
-		err = prDaoSvc.CreatePayableResource(model)
+		err = svc.CreatePayableResource(model)
 		if err != nil {
 			log.ErrorR(r, fmt.Errorf("failed to create payable request in database"))
 			m := models.NewMessageResponse("there was a problem handling your request")

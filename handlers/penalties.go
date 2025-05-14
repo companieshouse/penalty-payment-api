@@ -5,26 +5,29 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/common/dao"
-	"github.com/companieshouse/penalty-payment-api/common/services"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
-	"github.com/gorilla/mux"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
+	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
-var getCompanyCode = utils.GetCompanyCode
-var accountPenalties = api.AccountPenalties
+var getCompanyCode = func(penaltyReferenceType string) (string, error) {
+	return utils.GetCompanyCode(penaltyReferenceType)
+}
+var accountPenalties = func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, types.ResponseType, error) {
+	return api.AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
+}
 
-// HandleGetPenalties retrieves the penalty details for the supplied customer code from e5
-func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
+// HandleGetPenalties retrieves the penalty details for the supplied company number from e5
+func HandleGetPenalties(penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		log.InfoR(req, "start GET penalties request from e5")
 
-		customerCode := req.Context().Value(config.CustomerCode).(string)
+		companyNumber := req.Context().Value(config.CompanyNumber).(string)
 
 		// Determine the CompanyCode from the penaltyReferenceType which should be on the path
 		vars := mux.Vars(req)
@@ -39,17 +42,15 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 		}
 
 		// Call service layer to handle request to E5
-		transactionListResponse, responseType, err := accountPenalties(customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
-
+		transactionListResponse, responseType, err := accountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionsMap)
 		if err != nil {
 			log.ErrorR(req, fmt.Errorf("error calling e5 to get transactions: %v", err))
 			switch responseType {
-			case services.InvalidData:
+			case types.InvalidData:
 				m := models.NewMessageResponse("failed to read finance transactions")
 				utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 				return
-			case services.Error:
+			case types.Error:
 			default:
 				m := models.NewMessageResponse("there was a problem communicating with the finance backend")
 				utils.WriteJSONWithStatus(w, req, m, http.StatusInternalServerError)
@@ -65,6 +66,6 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 			log.ErrorR(req, fmt.Errorf("error writing response: %v", err))
 			return
 		}
-		log.InfoR(req, "Successfully GET penalties from e5", log.Data{"customer_code": customerCode})
+		log.InfoR(req, "Successfully GET penalties from e5", log.Data{"company_number": companyNumber})
 	}
 }

@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/utils"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func serveGetPaymentDetailsHandler(payableResource *models.PayableResource) *httptest.ResponseRecorder {
-	path := "/company/12345/penalties/payable/321"
+	path := "/company/12345/penalties/late-filing/payable/321/penalties"
 	req := httptest.NewRequest(http.MethodGet, path, nil)
 	res := httptest.NewRecorder()
 
@@ -48,8 +49,8 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 		t := time.Now().Truncate(time.Millisecond)
 
 		payable := models.PayableResource{
-			CustomerCode: "12345678",
-			PayableRef:   "abcdef",
+			CompanyNumber: "12345678",
+			Reference:     "abcdef",
 			Links: models.PayableResourceLinks{
 				Self:    "/company/12345678/penalties/abcdef",
 				Payment: "/company/12345678/penalties/abcdef/payment",
@@ -72,19 +73,19 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 
 	Convey("Payment PenaltyDetails success", t, func() {
 		testCases := []struct {
-			name        string
-			companyCode string
-			penaltyRef  string
+			name             string
+			companyCode      string
+			penaltyReference string
 		}{
 			{
-				name:        "Late Filing",
-				companyCode: utils.LateFilingPenalty,
-				penaltyRef:  "A1234567",
+				name:             "Late Filing",
+				companyCode:      utils.LateFilingPenalty,
+				penaltyReference: "A1234567",
 			},
 			{
-				name:        "Sanctions",
-				companyCode: utils.Sanctions,
-				penaltyRef:  "P1234567",
+				name:             "Sanctions",
+				companyCode:      utils.Sanctions,
+				penaltyReference: "P1234567",
 			},
 		}
 
@@ -94,8 +95,8 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 				t := time.Now().Truncate(time.Millisecond)
 
 				payable := models.PayableResource{
-					CustomerCode: "12345678",
-					PayableRef:   "abcdef",
+					CompanyNumber: "12345678",
+					Reference:     "abcdef",
 					Links: models.PayableResourceLinks{
 						Self:    "/company/12345678/penalties/abcdef",
 						Payment: "/company/12345678/penalties/abcdef/payment",
@@ -108,9 +109,9 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 					},
 					Transactions: []models.TransactionItem{
 						{
-							Amount:     5,
-							Type:       "penalty",
-							PenaltyRef: tc.penaltyRef,
+							Amount:        5,
+							Type:          "penalty",
+							TransactionID: tc.penaltyReference,
 						},
 					},
 					Payment: models.Payment{

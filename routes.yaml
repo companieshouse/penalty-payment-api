@@ -6,5 +6,5 @@ group: api
 weight: 900
 routes:
   1: ^/company/(.*)/penalties/late-filing
-  2: ^/company/(.*)/penalties.*
+  2: ^/company/(.*)/penalties/late-filing.*
   3: ^/penalty-payment-api/healthcheck/finance-system
