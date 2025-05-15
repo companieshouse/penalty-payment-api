@@ -4,7 +4,6 @@ details:
   LP:
     Description: "Late Filing Penalty"
     DescriptionId: "late-filing-penalty"
-    ClassOfPayment: "penalty"
     ResourceKind: "late-filing-penalty#late-filing-penalty"
     ProductType: "late-filing-penalty"
     EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
@@ -12,7 +11,6 @@ details:
   C1:
     Description: "Sanctions Penalty Payment"
     DescriptionId: "penalty-sanctions"
-    ClassOfPayment: "penalty-sanctions"
     ResourceKind: "penalty#sanctions"
     ProductType: "penalty-sanctions"
     EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"

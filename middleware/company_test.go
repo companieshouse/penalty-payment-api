@@ -19,7 +19,7 @@ func TestUnitCompanyMiddleware(t *testing.T) {
 		}{
 			{
 				name:               "Success",
-				input:              map[string]string{"customer_code": "NI123456"},
+				input:              map[string]string{"company_number": "NI123456"},
 				expectedStatusCode: http.StatusOK,
 			},
 			{
