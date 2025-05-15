@@ -1,4 +1,4 @@
-FROM golang:1.24.2-bullseye as builder
+FROM golang:1.24.2-bullseye AS builder
 
 ENV GOPRIVATE="github.com/companieshouse"
 
