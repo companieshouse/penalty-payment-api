@@ -16,13 +16,7 @@ COPY . /build/
 
 RUN /bin/go_build
 
-FROM debian:bullseye
-
-RUN apt-get update && \
-    apt-get install -y --allow-downgrades --no-install-recommends\
-    ca-certificates=20210119 && \
-    rm -rf /var/lib/apt/lists/* && \
-    mkdir /app/
+FROM gcr.io/distroless/base-debian11 AS runner
 
 WORKDIR /app
 
@@ -30,8 +24,10 @@ COPY --from=builder /build/out/app ./
 
 COPY assets ./assets
 
-ENTRYPOINT ["/app/app"]
-
 CMD ["-bind-addr=:4086"]
 
 EXPOSE 4086
+
+USER nonroot:nonroot
+
+ENTRYPOINT ["/app/app"]
