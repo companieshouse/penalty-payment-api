@@ -86,10 +86,13 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
 		go updateAsPaidInDatabase(resource, payment, payableResourceService, r, w)
-		go updateAccountPenaltyAsPaid(resource, apDaoSvc)
 		go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
 
 		wg.Wait()
+
+		// need to wait to mark the penalty as paid until the go routines above execute as the email
+		// sender relies on the state of the penalty in the DB i.e. not paid yet
+		updateAccountPenaltyAsPaid(resource, apDaoSvc)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNoContent) // This will not be set if status has already been set
@@ -97,7 +100,6 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 }
 
 func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.AccountPenaltiesDaoService) {
-
 	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
 	if err != nil {
 		log.Error(fmt.Errorf("error updating account penalties collection as paid because company code cannot be resolved: [%v]", err),
