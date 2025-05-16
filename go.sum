@@ -27,8 +27,8 @@ github.com/companieshouse/gofigure v0.1.0/go.mod h1:W7NZ4kQdDXqvqK1f7EKTc+pnnqpF
 github.com/companieshouse/gofigure v0.1.4 h1:BN7Dqn0xvNHwC+KHOUHigwP7ajkfHORos3hKRtEACUU=
 github.com/companieshouse/gofigure v0.1.4/go.mod h1:lBAsI13q21rMce+pO7x4xUYAXzO0MchuDsZUbCs0Yng=
 github.com/companieshouse/htmlform v0.1.0/go.mod h1:fWScPVYjGyeBhYwppGaGRDtCQ5hMd3t3Q+0I6HaUZT4=
-github.com/companieshouse/penalty-payment-api-core v1.1.2 h1:00SlMHAwTyKJ/aeDEjyuXQWYNb7OVq90nwoXQza4SmY=
-github.com/companieshouse/penalty-payment-api-core v1.1.2/go.mod h1:9cqGa5ZlpwYqFh5NlqIJJK39G4p2wBdoWJkuVW8Ssxc=
+github.com/companieshouse/penalty-payment-api-core v1.11.1 h1:y+5qVKzV1zRt+w5Gs0aO5ZmiIn6vYN7HskSymSNbrak=
+github.com/companieshouse/penalty-payment-api-core v1.11.1/go.mod h1:4sT6uUinDGvzFz+yIJQ+8PW/E5twgK3VM5mFVplgENQ=
 github.com/companieshouse/private-api-sdk-go v0.1.11/go.mod h1:EaRgxVpcHv6IZ1LKp2xqE4rdEsQwgYqVz3g/BIHQVD4=
 github.com/companieshouse/private-api-sdk-go v0.1.13 h1:o9PD1aSVu3+tbf/WUZT/wX1e0DNx+9xcJugbqo7rbxE=
 github.com/companieshouse/private-api-sdk-go v0.1.13/go.mod h1:g1zvBCn8Tyc45x+5BmlHsq+BYwuekd5FLRaFOqTUu+A=
@@ -206,8 +206,8 @@ golang.org/x/sys v0.0.0-20210423082822-04245dca01da/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20210510120138-977fb7262007/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.28.0 h1:Fksou7UEQUWlKvIdsqzJmUmCX3cZuD2+P3XyyzwMhlA=
-golang.org/x/sys v0.28.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+golang.org/x/sys v0.33.0 h1:q3i8TbbEz+JRD9ywIRlyRAQbM0qF7hu24q3teo2hbuw=
+golang.org/x/sys v0.33.0/go.mod h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=
