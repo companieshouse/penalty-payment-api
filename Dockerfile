@@ -16,7 +16,7 @@ COPY . /build/
 
 RUN /bin/go_build
 
-FROM gcr.io/distroless/base-debian11 AS runner
+FROM gcr.io/distroless/base-debian11:latest@sha256:ac69aa622ea5dcbca0803ca877d47d069f51bd4282d5c96977e0390d7d256455 AS runner
 
 WORKDIR /app
 
