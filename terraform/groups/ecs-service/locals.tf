@@ -9,7 +9,7 @@ locals {
   eric_port                  = "10000"
   docker_repo                = "penalty-payment-api"
   kms_alias                  = "alias/${var.aws_profile}/environment-services-kms"
-  lb_listener_rule_priority  = 200
+  lb_listener_rule_priority  = 300
   lb_listener_paths          = ["/company/*/penalties/*"]
   healthcheck_path           = "/penalty-payment-api/healthcheck" # healthcheck path for penalty-payment-api
   healthcheck_matcher        = "200"
