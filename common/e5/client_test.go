@@ -4,10 +4,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/companieshouse/penalty-payment-api/common/utils"
-
 	"gopkg.in/go-playground/validator.v9"
 
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/jarcoal/httpmock"
 
 	. "github.com/smartystreets/goconvey/convey"

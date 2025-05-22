@@ -39,8 +39,8 @@ type AccountPenaltiesDaoService interface {
 	GetAccountPenalties(customerCode string, companyCode string) (*models.AccountPenaltiesDao, error)
 	// UpdateAccountPenaltyAsPaid will update a transactions as paid for a given customerCode, companyCode and penaltyRef
 	UpdateAccountPenaltyAsPaid(customerCode string, companyCode string, penaltyRef string) error
-	// DeleteAccountPenalties will delete the entry for a given customerCode and companyCode
-	DeleteAccountPenalties(customerCode string, companyCode string) error
+	// UpdateAccountPenalties will update the created_at, closed_at and data fields of an existing document
+	UpdateAccountPenalties(dao *models.AccountPenaltiesDao) error
 }
 
 // NewAccountPenaltiesDaoService will create a new instance of the AccountPenaltiesDaoService interface.

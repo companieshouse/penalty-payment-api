@@ -11,6 +11,7 @@ import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
+	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
@@ -26,8 +27,8 @@ var wg sync.WaitGroup
 
 // PayResourceHandler will update the resource to mark it as paid and also tell the finance system that the
 // transaction(s) associated with it are paid.
-func PayResourceHandler(payableResourceService *services.PayableResourceService, e5Client *e5.Client,
-	penaltyPaymentDetails *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) http.Handler {
+func PayResourceHandler(payableResourceService *services.PayableResourceService, e5Client *e5.Client, penaltyPaymentDetails *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 1. get the payable resource our of the context. authorisation is already handled in the interceptor
 		i := r.Context().Value(config.PayableResource)
@@ -83,8 +84,9 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		wg.Add(3)
 
-		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails, allowedTransactionsMap)
+		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
 		go updateAsPaidInDatabase(resource, payment, payableResourceService, r, w)
+		go updateAccountPenaltyAsPaid(resource, apDaoSvc)
 		go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
 
 		wg.Wait()
@@ -93,11 +95,35 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		w.WriteHeader(http.StatusNoContent) // This will not be set if status has already been set
 	})
 }
-func sendConfirmationEmail(resource *models.PayableResource, payment *validators.PaymentInformation,
-	r *http.Request, w http.ResponseWriter, penaltyPaymentDetails *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) {
+
+func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.AccountPenaltiesDaoService) {
+
+	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
+	if err != nil {
+		log.Error(fmt.Errorf("error updating account penalties collection as paid because company code cannot be resolved: [%v]", err),
+			log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
+		return
+	}
+	penalty := resource.Transactions[0]
+
+	err = svc.UpdateAccountPenaltyAsPaid(resource.CustomerCode, companyCode, penalty.PenaltyRef)
+	if err != nil {
+		log.Error(fmt.Errorf("error updating account penalties collection as paid: [%v]", err),
+			log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
+				"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
+		return
+	}
+
+	log.Info("account penalties collection has been updated as paid",
+		log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
+			"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
+}
+
+func sendConfirmationEmail(resource *models.PayableResource, payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter,
+	penaltyPaymentDetails *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) {
 	// Send confirmation email
 	defer wg.Done()
-	err := handleEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap)
+	err := handleEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
 	if err != nil {
 		log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef, "payment_reference": payment.Reference})
 		w.WriteHeader(http.StatusInternalServerError)
