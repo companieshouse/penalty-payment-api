@@ -1,9 +1,9 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "1.1.0",
+    "version": "1.4.0",
     "title": "Penalty Payment API",
-    "description": "An API for retrieving Penalties from the E5 finance system and recording / viewing Penalty Payments"
+    "description": "An API for retrieving penalties from the E5 finance system and recording / viewing penalty payments"
   },
   "host": "api.companieshouse.gov.uk",
   "schemes": [
@@ -27,6 +27,7 @@
           "Healthcheck"
         ],
         "description": "Check the health of the Penalty Payment API",
+        "operationId": "healthcheck",
         "responses": {
           "200": {
             "description": "Healthy"
@@ -40,6 +41,7 @@
           "Healthcheck"
         ],
         "description": "Check the health of the Finance System",
+        "operationId": "healthcheck-finance-system",
         "responses": {
           "200": {
             "description": "Healthy"
@@ -53,18 +55,56 @@
         }
       }
     },
-    "/company/{company_number}/penalties/late-filing/{penalty_reference_type}": {
+    "/company/{company_number}/penalties/late-filing": {
       "get": {
         "tags": [
           "Penalties"
         ],
-        "description": "List the penalties for a company. This passes through the transactions from E5 and does not cache.",
+        "description": "List the penalties for a company. This passes through the transactions from E5 and does not cache. (Deprecated since 03 Feb 2025 - currently used by LFP Appeals)",
+        "operationId": "get-penalties-legacy",
         "produces": [
           "application/json"
         ],
         "parameters": [
           {
             "name": "company_number",
+            "in": "path",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of payable transactions",
+            "schema": {
+              "$ref": "#/definitions/FinancialPenalties"
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid input"
+          },
+          "404": {
+            "description": "The company does not exist"
+          },
+          "500": {
+            "description": "There was a problem communicating with the finance backend"
+          }
+        }
+      }
+    },
+    "/company/{customer_code}/penalties/{penalty_reference_type}": {
+      "get": {
+        "tags": [
+          "Penalties"
+        ],
+        "description": "List the financial penalties for a customer with a payable status to indicate the current state of the payable transaction from E5 and does not cache.",
+        "operationId": "get-penalties",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "customer_code",
             "in": "path",
             "type": "string",
             "required": true
@@ -81,29 +121,14 @@
           "200": {
             "description": "A list of payable transactions",
             "schema": {
-              "allOf": [
-                {
-                  "$ref": "#/definitions/ListResponse"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/definitions/Transaction"
-                      }
-                    }
-                  }
-                }
-              ]
+              "$ref": "#/definitions/FinancialPenalties"
             }
           },
           "400": {
             "description": "Bad request - Invalid input"
           },
           "404": {
-            "description": "The company does not exist"
+            "description": "The customer does not exist"
           },
           "500": {
             "description": "There was a problem communicating with the finance backend"
@@ -111,10 +136,10 @@
         }
       }
     },
-    "/company/{company_number}/penalties/late-filing/payable": {
+    "/company/{customer_code}/penalties/payable": {
       "parameters": [
         {
-          "name": "company_number",
+          "name": "customer_code",
           "in": "path",
           "type": "string",
           "required": true
@@ -129,19 +154,20 @@
             "name": "body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/CreatePayableResource"
+              "$ref": "#/definitions/FinancialPenaltySession"
             }
           }
         ],
-        "description": "Create a new payable penalty resource with one or more transactions to pay for",
+        "description": "Create a new payable resource with one or more penalty transactions to pay for",
+        "operationId": "create-payable",
         "produces": [
           "application/json"
         ],
         "responses": {
           "201": {
-            "description": "The transactions have been marked as paid",
+            "description": "The created payable resource id (payable_ref) and links",
             "schema": {
-              "$ref": "#/definitions/CreatedPayableResource"
+              "$ref": "#/definitions/PayableFinancialPenaltySession"
             }
           },
           "400": {
@@ -153,11 +179,11 @@
         }
       }
     },
-    "/company/{company_number}/penalties/late-filing/payable/{payable_ref}": {
+    "/company/{customer_code}/penalties/payable/{payable_ref}": {
       "parameters": [
         {
           "in": "path",
-          "name": "company_number",
+          "name": "customer_code",
           "required": true,
           "type": "string"
         },
@@ -173,14 +199,15 @@
           "Payment"
         ],
         "description": "The payable resource that includes a number of transactions relating to penalties",
+        "operationId": "get-payable",
         "produces": [
           "application/json"
         ],
         "responses": {
           "200": {
-            "description": "A representation of the full Penalty payable resource",
+            "description": "A representation of the full financial penalties payable resource",
             "schema": {
-              "$ref": "#/definitions/PayableResource"
+              "$ref": "#/definitions/PayableFinancialPenalties"
             }
           },
           "500": {
@@ -189,11 +216,11 @@
         }
       }
     },
-    "/company/{company_number}/penalties/late-filing/payable/{payable_ref}/payment": {
+    "/company/{customer_code}/penalties/payable/{payable_ref}/payment": {
       "parameters": [
         {
           "in": "path",
-          "name": "company_number",
+          "name": "customer_code",
           "required": true,
           "type": "string"
         },
@@ -209,6 +236,7 @@
           "Payment"
         ],
         "description": "List the payment details resource related to the penalty resource",
+        "operationId": "get-payment-details",
         "responses": {
           "200": {
             "description": "The payment details resource read by the payment api",
@@ -235,7 +263,7 @@
             "in": "body",
             "name": "body",
             "schema": {
-              "$ref": "#/definitions/ResourceDetails"
+              "$ref": "#/definitions/PatchResourceRequest"
             }
           }
         ],
@@ -243,6 +271,7 @@
           "Payment"
         ],
         "description": "Mark this resource as paid. This will also mark the transactions as paid in E5",
+        "operationId": "mark-as-paid",
         "responses": {
           "204": {
             "description": "The Penalty payable resource has successfully been marked as paid"
@@ -283,39 +312,56 @@
         }
       }
     },
-    "ResourceDetails": {
+    "PatchResourceRequest": {
       "type": "object",
       "properties": {
-        "reference": {
+        "payment_reference": {
           "type": "string"
         }
       }
     },
-    "PayableResource": {
+    "PayableFinancialPenalties": {
       "type": "object",
       "properties": {
-        "id": {
+        "customer_code": {
+          "type": "string"
+        },
+        "payable_ref": {
           "type": "string"
         },
         "etag": {
           "type": "string"
         },
+        "created_by": {
+          "$ref": "#/definitions/CreatedBy"
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
         },
-        "created_by": {
-          "$ref": "#/definitions/CreatedBy"
-        },
-        "company_number": {
-          "type": "string"
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string",
+              "format": "uri"
+            },
+            "payment": {
+              "type": "string",
+              "format": "uri"
+            },
+            "resume_journey_uri": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
         },
         "transactions": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "transaction_id": {
+              "penalty_ref": {
                 "type": "string"
               },
               "amount": {
@@ -323,7 +369,8 @@
                 "format": "float"
               },
               "type": {
-                "type": "string"
+                "type": "string",
+                "example": "penalty"
               },
               "made_up_date": {
                 "type": "string",
@@ -357,30 +404,33 @@
         }
       }
     },
-    "CreatePayableResource": {
+    "FinancialPenaltySession": {
       "type": "object",
       "properties": {
         "transactions": {
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "transaction_id": {
-                "type": "string"
-              },
-              "amount": {
-                "type": "number",
-                "format": "float"
-              }
-            }
+            "$ref": "#/definitions/Transaction"
           }
         }
       }
     },
-    "CreatedPayableResource": {
+    "Transaction": {
       "type": "object",
       "properties": {
-        "id": {
+        "penalty_ref": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
+    "PayableFinancialPenaltySession": {
+      "type": "object",
+      "properties": {
+        "payable_ref": {
           "type": "string"
         },
         "links": {
@@ -394,7 +444,7 @@
         }
       }
     },
-    "ListResponse": {
+    "FinancialPenalties": {
       "type": "object",
       "properties": {
         "etag": {
@@ -408,10 +458,16 @@
         },
         "total_results": {
           "type": "integer"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FinancialPenalty"
+          }
         }
       }
     },
-    "Transaction": {
+    "FinancialPenalty": {
       "type": "object",
       "properties": {
         "id": {
@@ -470,6 +526,13 @@
             "Late filing of accounts",
             "Failure to file a confirmation statement",
             "Penalty"
+          ]
+        },
+        "payable_status": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "CLOSED"
           ]
         }
       }
@@ -608,7 +671,8 @@
           "items": {
             "type": "string",
             "enum": [
-              "penalty"
+              "penalty",
+              "data-maintenance"
             ]
           }
         },
