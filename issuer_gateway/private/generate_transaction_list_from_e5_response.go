@@ -2,13 +2,15 @@ package private
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
-	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 var etagGenerator = utils.GenerateEtag
@@ -53,7 +55,7 @@ func buildTransactionListItemFromE5Transaction(e5Transaction *e5.Transaction, al
 	transactionListItem.ID = e5Transaction.TransactionReference
 	transactionListItem.IsPaid = e5Transaction.IsPaid
 	transactionListItem.Kind = penaltyDetailsMap.Details[companyCode].ResourceKind
-	transactionListItem.IsDCA = e5Transaction.AccountStatus == "DCA"
+	transactionListItem.IsDCA = checkDunningStatus(e5Transaction, DCADunningStatus)
 	transactionListItem.DueDate = e5Transaction.DueDate
 	transactionListItem.MadeUpDate = e5Transaction.MadeUpDate
 	transactionListItem.TransactionDate = e5Transaction.TransactionDate
@@ -61,6 +63,7 @@ func buildTransactionListItemFromE5Transaction(e5Transaction *e5.Transaction, al
 	transactionListItem.Outstanding = e5Transaction.OutstandingAmount
 	transactionListItem.Type = getTransactionType(e5Transaction, allowedTransactionsMap)
 	transactionListItem.Reason = getReason(e5Transaction)
+	transactionListItem.PayableStatus = getPayableStatus(e5Transaction)
 
 	return transactionListItem, nil
 }
@@ -78,9 +81,59 @@ func getTransactionType(e5Transaction *e5.Transaction, allowedTransactionsMap *m
 
 func getReason(transaction *e5.Transaction) string {
 	if transaction.CompanyCode == utils.LateFilingPenalty {
-		return "Late filing of accounts"
-	} else if transaction.CompanyCode == utils.Sanctions && (transaction.TransactionSubType == "S1" && transaction.TypeDescription == "CS01") {
-		return "Failure to file a confirmation statement"
+		return LateFilingPenaltyReason
+	} else if transaction.CompanyCode == utils.Sanctions && checkSanctionsTypeDescription(transaction, CS01TypeDescription) {
+		return ConfirmationStatementReason
 	}
-	return "Penalty"
+	return PenaltyReason
+}
+
+func checkSanctionsTypeDescription(transaction *e5.Transaction, typeDescription string) bool {
+	return (transaction.TransactionType == SanctionsTransactionType && transaction.TransactionSubType == SanctionsTransactionSubType) &&
+		strings.TrimSpace(transaction.TypeDescription) == typeDescription
+}
+
+const (
+	SanctionsTransactionType    = "1"
+	SanctionsTransactionSubType = "S1"
+	CS01TypeDescription         = "CS01"
+
+	LateFilingPenaltyReason     = "Late filing of accounts"
+	ConfirmationStatementReason = "Failure to file a confirmation statement"
+	PenaltyReason               = "Penalty"
+
+	OpenPayableStatus   = "OPEN"
+	ClosedPayableStatus = "CLOSED"
+
+	CHSAccountStatus = "CHS"
+	DCAAccountStatus = "DCA"
+	HLDAccountStatus = "HLD"
+	WDRAccountStatus = "WDR"
+
+	DCADunningStatus  = "DCA"
+	PEN1DunningStatus = "PEN1"
+	PEN2DunningStatus = "PEN2"
+	PEN3DunningStatus = "PEN3"
+)
+
+func getPayableStatus(transaction *e5.Transaction) string {
+	if transaction.IsPaid || transaction.OutstandingAmount <= 0 || checkDunningStatus(transaction, DCADunningStatus) {
+		return ClosedPayableStatus
+	}
+
+	if transaction.CompanyCode == utils.LateFilingPenalty &&
+		(checkDunningStatus(transaction, PEN1DunningStatus) || checkDunningStatus(transaction, PEN2DunningStatus) || checkDunningStatus(transaction, PEN3DunningStatus)) &&
+		(transaction.AccountStatus == CHSAccountStatus || transaction.AccountStatus == DCAAccountStatus || transaction.AccountStatus == HLDAccountStatus || transaction.AccountStatus == WDRAccountStatus) {
+		return OpenPayableStatus
+	} else if transaction.CompanyCode == utils.Sanctions &&
+		(checkDunningStatus(transaction, PEN1DunningStatus) || checkDunningStatus(transaction, PEN2DunningStatus)) &&
+		(transaction.AccountStatus == CHSAccountStatus || transaction.AccountStatus == DCAAccountStatus || transaction.AccountStatus == HLDAccountStatus) {
+		return OpenPayableStatus
+	}
+
+	return ClosedPayableStatus
+}
+
+func checkDunningStatus(transaction *e5.Transaction, dunningStatus string) bool {
+	return strings.TrimSpace(transaction.DunningStatus) == dunningStatus
 }

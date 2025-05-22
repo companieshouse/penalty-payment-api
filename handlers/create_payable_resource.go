@@ -6,20 +6,21 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/companieshouse/penalty-payment-api/common/dao"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/transformers"
+
 	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/dao"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
-	"github.com/companieshouse/penalty-payment-api/transformers"
-	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 // CreatePayableResourceHandler takes a http requests and creates a new payable resource
-func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.PenaltyDetailsMap,
+func CreatePayableResourceHandler(svc dao.PayableResourceDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var request models.PayableRequest
@@ -41,7 +42,7 @@ func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.Pen
 			return
 		}
 
-		companyNumber := r.Context().Value(config.CompanyNumber).(string)
+		customerCode := r.Context().Value(config.CustomerCode).(string)
 
 		companyCode, err := getCompanyCodeFromTransaction(request.Transactions)
 		if err != nil {
@@ -51,17 +52,21 @@ func CreatePayableResourceHandler(svc dao.Service, penaltyDetailsMap *config.Pen
 			return
 		}
 
-		request.CompanyNumber = strings.ToUpper(companyNumber)
+		request.CustomerCode = strings.ToUpper(customerCode)
 		request.CreatedBy = userDetails.(authentication.AuthUserDetails)
 
 		// Ensure that the transactions in the request are valid payable penalties that exist in E5
-		payablePenalties, err := api.PayablePenalty(request.CompanyNumber, companyCode,
-			request.Transactions, penaltyDetailsMap, allowedTransactionMap)
-		if err != nil {
-			log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))
-			m := models.NewMessageResponse("the transactions you want to pay for do not exist or are not payable at this time")
-			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-			return
+		var payablePenalties []models.TransactionItem
+		for _, transaction := range request.Transactions {
+			payablePenalty, err := api.PayablePenalty(request.CustomerCode, companyCode,
+				transaction, penaltyDetailsMap, allowedTransactionMap)
+			if err != nil {
+				log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))
+				m := models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time")
+				utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
+				return
+			}
+			payablePenalties = append(payablePenalties, *payablePenalty)
 		}
 
 		// Replace request transactions with payable penalties to include updated values in the request
