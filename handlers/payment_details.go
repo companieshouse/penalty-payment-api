@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/service"
-	"github.com/companieshouse/penalty-payment-api/utils"
 )
 
 var getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
@@ -36,13 +37,15 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 			return
 		}
 
+		penaltyDetails := penaltyDetailsMap.Details[companyCode]
+
 		// Get the payment details from the payable resource
 		paymentDetails, responseType, err := paymentDetailsService.GetPaymentDetailsFromPayableResource(req,
-			payableResource, penaltyDetailsMap, companyCode)
-		logData := log.Data{"company_number": payableResource.CompanyNumber, "reference": payableResource.Reference}
+			payableResource, penaltyDetails)
+		logData := log.Data{"customer_code": payableResource.CustomerCode, "payable_ref": payableResource.PayableRef}
 		if err != nil {
 			switch responseType {
-			case service.InvalidData:
+			case services.InvalidData:
 				log.DebugR(req, fmt.Sprintf("invalid data getting payment details from payable resource so returning not found [%s]", err.Error()), logData)
 				m := models.NewMessageResponse("payable resource does not exist or has insufficient data")
 				utils.WriteJSONWithStatus(w, req, m, http.StatusNotFound)
