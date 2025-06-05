@@ -10,6 +10,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/companieshouse/penalty-payment-api/common/dao"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
 
@@ -18,13 +22,9 @@ import (
 	"github.com/companieshouse/go-session-handler/session"
 	"github.com/companieshouse/penalty-payment-api-core/constants"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/dao"
-	"github.com/companieshouse/penalty-payment-api/e5"
 	"github.com/companieshouse/penalty-payment-api/mocks"
-	"github.com/companieshouse/penalty-payment-api/service"
-	"github.com/companieshouse/penalty-payment-api/utils"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -56,16 +56,13 @@ var allowedTransactionsMap = &models.AllowedTransactionMap{
 }
 
 // reduces the boilerplate code needed to create, dispatch and unmarshal response body
-func dispatchPayResourceHandler(
-	ctx context.Context,
-	t *testing.T,
-	reqBody *models.PatchResourceRequest,
-	daoSvc dao.Service) (*httptest.ResponseRecorder, *models.ResponseResource) {
+func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *models.PatchResourceRequest,
+	daoSvc dao.PayableResourceDaoService) (*httptest.ResponseRecorder, *models.ResponseResource) {
 
-	svc := &service.PayableResourceService{}
+	payableResourceService := &services.PayableResourceService{}
 
 	if daoSvc != nil {
-		svc.DAO = daoSvc
+		payableResourceService.DAO = daoSvc
 	}
 
 	var body io.Reader
@@ -79,7 +76,7 @@ func dispatchPayResourceHandler(
 
 	ctx = context.WithValue(ctx, httpsession.ContextKeySession, &session.Session{})
 
-	h := PayResourceHandler(svc, e5.NewClient("foo", "e5api"), penaltyDetailsMap, allowedTransactionsMap)
+	h := PayResourceHandler(payableResourceService, e5.NewClient("foo", "e5api"), penaltyDetailsMap, allowedTransactionsMap)
 	req := httptest.NewRequest(http.MethodPost, "/", body).WithContext(ctx)
 	res := httptest.NewRecorder()
 
@@ -122,7 +119,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			So(body.Message, ShouldEqual, "no payable request present in request context")
 		})
 
-		Convey("reference is required in request body", func() {
+		Convey("payment reference is required in request body", func() {
 			ctx := context.WithValue(context.Background(), config.PayableResource, &models.PayableResource{})
 			res, body := dispatchPayResourceHandler(ctx, t, &models.PatchResourceRequest{}, nil)
 
@@ -139,7 +136,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 				httpmock.NewStringResponder(404, ""),
 			)
 
-			model := &models.PayableResource{Reference: "123"}
+			model := &models.PayableResource{PayableRef: "123"}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
 
@@ -168,7 +165,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			)
 
 			// the payable resource in the request context
-			model := &models.PayableResource{Reference: "123"}
+			model := &models.PayableResource{PayableRef: "123"}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
@@ -189,7 +186,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "late_filing_penalty_123"}
+			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "financial_penalty_123"}
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
 				http.MethodGet,
@@ -212,9 +209,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
-				Reference: "123",
+				PayableRef: "123",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "A1234567"},
+					{PenaltyRef: "A1234567"},
 				},
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
@@ -231,11 +228,17 @@ func TestUnitPayResourceHandler(t *testing.T) {
 		})
 
 		Convey("Penalty has already been paid", func() {
+			mockedGetCompanyCode := func(penaltyReference string) (string, error) {
+				return utils.LateFilingPenalty, nil
+			}
+
+			getCompanyCode = mockedGetCompanyCode
+
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "late_filing_penalty_123"}
+			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "financial_penalty_123"}
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
 				http.MethodGet,
@@ -264,9 +267,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
-				Reference: "123",
+				PayableRef: "123",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "A1234567"},
+					{PenaltyRef: "A1234567"},
 				},
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
@@ -287,7 +290,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "late_filing_penalty_123"}
+			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "financial_penalty_123"}
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
 				http.MethodGet,
@@ -314,9 +317,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
-				Reference: "123",
+				PayableRef: "123",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "A1234567"},
+					{PenaltyRef: "A1234567"},
 				},
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
@@ -340,7 +343,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			p := &companieshouseapi.PaymentResource{
 				Status:    "paid",
 				Amount:    "150",
-				Reference: "late_filing_penalty_123",
+				Reference: "financial_penalty_123",
 				CreatedBy: companieshouseapi.CreatedBy{
 					Email: "test@example.com",
 				},
@@ -373,10 +376,10 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
-				Reference:     "123",
-				CompanyNumber: "10000024",
+				PayableRef:   "123",
+				CustomerCode: "10000024",
 				Transactions: []models.TransactionItem{
-					{TransactionID: "A1234567", Amount: 150},
+					{PenaltyRef: "A1234567", Amount: 150},
 				},
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)

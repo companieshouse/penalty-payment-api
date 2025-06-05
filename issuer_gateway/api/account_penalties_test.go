@@ -4,14 +4,15 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/companieshouse/penalty-payment-api/common/e5"
+
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/e5"
-	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var companyNumber = "NI123456"
+var customerCode = "NI123456"
 var companyCode = "LP"
 var penaltyDetailsMap = &config.PenaltyDetailsMap{}
 var allowedTransactionMap = &models.AllowedTransactionMap{
@@ -41,43 +42,43 @@ var e5TransactionsResponse = e5.GetTransactionsResponse{
 
 func TestUnitAccountPenalties(t *testing.T) {
 	Convey("error when no transactions provided", t, func() {
-		_, responseType, err := AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		_, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldNotBeNil)
-		So(responseType, ShouldEqual, types.Error)
+		So(responseType, ShouldEqual, services.Error)
 	})
 
 	Convey("penalties returned when valid transactions", t, func() {
-		mockedGetTransactions := func(companyNumber string, companyCode string,
+		mockedGetTransactions := func(customerCode string, companyCode string,
 			client *e5.Client) (*e5.GetTransactionsResponse, error) {
 			return &e5TransactionsResponse, nil
 		}
 
 		getTransactions = mockedGetTransactions
 
-		listResponse, responseType, err := AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
-		So(responseType, ShouldEqual, types.Success)
+		So(responseType, ShouldEqual, services.Success)
 	})
 
 	Convey("error when transactions cannot be found", t, func() {
 		errGettingTransactions := errors.New("error getting transactions")
-		mockedGetTransactions := func(companyNumber string, companyCode string, client *e5.Client) (*e5.GetTransactionsResponse, error) {
+		mockedGetTransactions := func(customerCode string, companyCode string, client *e5.Client) (*e5.GetTransactionsResponse, error) {
 			return &e5.GetTransactionsResponse{}, errGettingTransactions
 		}
 
 		getTransactions = mockedGetTransactions
 
-		listResponse, responseType, err := AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldEqual, errGettingTransactions)
 		So(listResponse, ShouldBeNil)
-		So(responseType, ShouldEqual, types.Error)
+		So(responseType, ShouldEqual, services.Error)
 	})
 
 	Convey("error when generating transaction list fails", t, func() {
 		errGeneratingTransactionList := errors.New("error generating transaction list from the e5 response: [error generating etag]")
 		payableTransactionList := models.TransactionListResponse{}
-		mockedGetTransactions := func(companyNumber string, companyCode string,
+		mockedGetTransactions := func(customerCode string, companyCode string,
 			client *e5.Client) (*e5.GetTransactionsResponse, error) {
 			return &e5TransactionsResponse, nil
 		}
@@ -89,10 +90,10 @@ func TestUnitAccountPenalties(t *testing.T) {
 		getTransactions = mockedGetTransactions
 		generateTransactionList = mockedGenerateTransactionList
 
-		listResponse, responseType, err := AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldResemble, errGeneratingTransactionList)
 		So(listResponse, ShouldBeNil)
-		So(responseType, ShouldEqual, types.Error)
+		So(responseType, ShouldEqual, services.Error)
 	})
 
 	Convey("error when getConfig fails", t, func() {
@@ -103,9 +104,9 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 		getConfig = mockedGetConfig
 
-		listResponse, responseType, err := AccountPenalties(companyNumber, companyCode, penaltyDetailsMap, allowedTransactionMap)
+		listResponse, responseType, err := AccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldBeNil)
-		So(responseType, ShouldEqual, types.Error)
+		So(responseType, ShouldEqual, services.Error)
 	})
 }
