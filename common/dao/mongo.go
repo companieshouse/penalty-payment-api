@@ -72,25 +72,55 @@ type MongoAccountPenaltiesService struct {
 	CollectionName string
 }
 
-// CreateAccountPenalties creates a new document in the account_penalties database collection
+// CreateAccountPenalties creates a new document in the account_penalties database collection if a
+// document does not already exist for the customer
 func (m *MongoAccountPenaltiesService) CreateAccountPenalties(dao *models.AccountPenaltiesDao) error {
 	log.Info("creating new document in account_penalties collection", log.Data{
 		"customer_code": dao.CustomerCode,
 		"company_code":  dao.CompanyCode,
 	})
 
+	filter := bson.M{
+		"customer_code": dao.CustomerCode,
+		"company_code":  dao.CompanyCode,
+	}
+
+	// setOnInsert is used here with SetUpsert below to ensure that if a document exists then it is not updated
+	update := bson.M{
+		"$setOnInsert": bson.M{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+			"created_at":    dao.CreatedAt,
+			"closed_at":     dao.ClosedAt,
+			"data":          dao.AccountPenalties,
+		},
+	}
+
+	opts := options.Update().SetUpsert(true)
+
 	collection := m.db.Collection(m.CollectionName)
 
-	createdAt := time.Now().Truncate(time.Millisecond)
-	dao.CreatedAt = &createdAt
-
-	_, err := collection.InsertOne(context.Background(), dao)
+	// this allows the creation of the new entry if the document does not already exist to be
+	// completed in an atomic operation
+	result, err := collection.UpdateOne(context.Background(), filter, update, opts)
 	if err != nil {
 		log.Error(err, log.Data{
 			"customer_code": dao.CustomerCode,
 			"company_code":  dao.CompanyCode,
 		})
 		return err
+	}
+
+	if result.MatchedCount == 0 && result.UpsertedCount == 1 {
+		log.Info("created new document in account_penalties collection", log.Data{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+		})
+	} else {
+		log.Info("no new document created in account_penalties collection as one already exists", log.Data{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+		})
 	}
 
 	return nil
@@ -164,8 +194,18 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode s
 
 	collection := m.db.Collection(m.CollectionName)
 
-	_, err := collection.UpdateOne(context.Background(), filter, update)
+	result, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
+		log.Error(err, log.Data{
+			"customer_code": customerCode,
+			"company_code":  companyCode,
+			"penalty_ref":   penaltyRef,
+		})
+		return err
+	}
+
+	if result.ModifiedCount == 0 {
+		err = errors.New("failed to update penalty as paid in account_penalties collection as no penalty was found")
 		log.Error(err, log.Data{
 			"customer_code": customerCode,
 			"company_code":  companyCode,
@@ -184,28 +224,50 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode s
 	return nil
 }
 
-// DeleteAccountPenalties deletes an entry from the account_penalties database collection
-func (m *MongoAccountPenaltiesService) DeleteAccountPenalties(customerCode string, companyCode string) error {
-	log.Info("deleting document in account_penalties collection", log.Data{
-		"customer_code": customerCode,
-		"company_code":  companyCode,
+// UpdateAccountPenalties updates the created_at, closed_at and data fields of an existing document
+func (m *MongoAccountPenaltiesService) UpdateAccountPenalties(dao *models.AccountPenaltiesDao) error {
+	log.Info("updating existing document in account_penalties collection", log.Data{
+		"customer_code": dao.CustomerCode,
+		"company_code":  dao.CompanyCode,
 	})
 
-	filter := bson.M{"customer_code": customerCode, "company_code": companyCode}
+	filter := bson.M{
+		"customer_code": dao.CustomerCode,
+		"company_code":  dao.CompanyCode,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"created_at": dao.CreatedAt,
+			"closed_at":  dao.ClosedAt,
+			"data":       dao.AccountPenalties,
+		},
+	}
 
 	collection := m.db.Collection(m.CollectionName)
 
-	_, err := collection.DeleteOne(context.Background(), filter)
-
+	result, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.Error(err, log.Data{"customer_code": customerCode, "company_code": companyCode})
+		log.Error(err, log.Data{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+		})
 		return err
 	}
 
-	log.Info("successfully deleted document in account_penalties collection", log.Data{
-		"customer_code": customerCode,
-		"company_code":  companyCode,
-	})
+	if result.ModifiedCount == 1 {
+		log.Info("updated a document in account_penalties collection", log.Data{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+		})
+	} else {
+		err = errors.New("failed to update document in account_penalties collection")
+		log.Error(err, log.Data{
+			"customer_code": dao.CustomerCode,
+			"company_code":  dao.CompanyCode,
+		})
+		return err
+	}
 
 	return nil
 }
