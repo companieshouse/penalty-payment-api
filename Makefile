@@ -48,6 +48,7 @@ endif
 	$(eval tmpdir := $(shell mktemp -d build-XXXXXXXXXX))
 	cp ./$(bin) $(tmpdir)
 	cp -r ./assets  $(tmpdir)/assets
+	cd $(tmpdir) && zip -r ../$(bin)-$(version).zip $(bin) assets
 	rm -rf $(tmpdir)
 
 .PHONY: dist
