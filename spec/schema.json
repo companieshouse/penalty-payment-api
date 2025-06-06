@@ -532,7 +532,8 @@
           "type": "string",
           "enum": [
             "OPEN",
-            "CLOSED"
+            "CLOSED",
+            "CLOSED_PENDING_ALLOCATION"
           ]
         }
       }

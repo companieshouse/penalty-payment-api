@@ -26,7 +26,7 @@ func GetTestHandler() http.HandlerFunc {
 	}
 }
 
-func createMockPayableResourceService(mockDAO *mocks.MockService, cfg *config.Config) services.PayableResourceService {
+func createMockPayableResourceService(mockDAO *mocks.MockPayableResourceDaoService, cfg *config.Config) services.PayableResourceService {
 	return services.PayableResourceService{
 		DAO:    mockDAO,
 		Config: cfg,
@@ -35,7 +35,7 @@ func createMockPayableResourceService(mockDAO *mocks.MockService, cfg *config.Co
 
 // Function to create a PayableAuthenticationInterceptor with mock mongo DAO and a mock payment service
 func createPayableAuthenticationInterceptorWithMockDAOAndService(controller *gomock.Controller, cfg *config.Config) PayableAuthenticationInterceptor {
-	mockDAO := mocks.NewMockService(controller)
+	mockDAO := mocks.NewMockPayableResourceDaoService(controller)
 	mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
 	return PayableAuthenticationInterceptor{
 		Service: mockPayableResourceService,
@@ -152,11 +152,11 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
-		mockDAO := mocks.NewMockService(mockCtrl)
-		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
-		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
+		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
+		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
 
-		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(nil, nil)
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(nil, nil)
 
 		w := httptest.NewRecorder()
 		httpmock.Activate()
@@ -181,11 +181,11 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
-		mockDAO := mocks.NewMockService(mockCtrl)
-		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
-		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
+		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
+		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
 
-		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(&models.PayableResourceDao{}, fmt.Errorf("error"))
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(&models.PayableResourceDao{}, fmt.Errorf("error"))
 
 		w := httptest.NewRecorder()
 		httpmock.Activate()
@@ -210,15 +210,15 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
-		mockDAO := mocks.NewMockService(mockCtrl)
-		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
-		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
+		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
+		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
 
 		txs := map[string]models.TransactionDao{
 			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
-		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
 				PayableRef:   "1234",
@@ -264,15 +264,15 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
-		mockDAO := mocks.NewMockService(mockCtrl)
-		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
-		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
+		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
+		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
 
 		txs := map[string]models.TransactionDao{
 			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
-		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
 				PayableRef:   "1234",
@@ -318,15 +318,15 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
-		mockDAO := mocks.NewMockService(mockCtrl)
-		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
-		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
+		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
+		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
 
 		txs := map[string]models.TransactionDao{
 			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
-		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
 				PayableRef:   "1234",
@@ -366,15 +366,16 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		req.Header.Set("Eric-Identity", "api_key")
 		req.Header.Set("Eric-Identity-Type", "key")
 		req.Header.Set("ERIC-Authorised-Key-Roles", "*")
-		mockDAO := mocks.NewMockService(mockCtrl)
-		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
-		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
+
+		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
+		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
 
 		txs := map[string]models.TransactionDao{
 			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
-		mockDAO.EXPECT().GetPayableResource("12345678", "1234").Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
 				PayableRef:   "1234",
@@ -414,15 +415,16 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		req.Header.Set("Eric-Identity", "api_key")
 		req.Header.Set("Eric-Identity-Type", "key")
 		req.Header.Set("ERIC-Authorised-Key-Roles", "*")
-		mockDAO := mocks.NewMockService(mockCtrl)
-		mockPayableResourceService := createMockPayableResourceService(mockDAO, cfg)
-		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceService)
+
+		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
+		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
 
 		txs := map[string]models.TransactionDao{
 			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
-		mockDAO.EXPECT().GetPayableResource("OC444555", "1234").Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("OC444555", "1234").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "OC444555",
 				PayableRef:   "1234",
