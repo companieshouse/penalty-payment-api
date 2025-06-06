@@ -8,25 +8,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/companieshouse/penalty-payment-api-core/constants"
-	"github.com/companieshouse/penalty-payment-api/common/services"
-
 	"github.com/companieshouse/chs.go/authentication"
+	"github.com/companieshouse/penalty-payment-api-core/constants"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	"github.com/jarcoal/httpmock"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func GetTestHandler() http.HandlerFunc {
-	fn := func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
-	return http.HandlerFunc(fn)
 }
 
 func createMockPayableResourceService(mockDAO *mocks.MockService, cfg *config.Config) services.PayableResourceService {
@@ -95,6 +92,29 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		test := payableAuthenticationInterceptor.PayableAuthenticationIntercept(GetTestHandler())
 		test.ServeHTTP(w, req.WithContext(ctx))
 		So(w.Code, ShouldEqual, http.StatusInternalServerError)
+	})
+
+	Convey("Payable ref empty", t, func() {
+		path := fmt.Sprintf("/company/12345678/penalties/payable/%s", "1234")
+		req, err := http.NewRequest("GET", path, nil)
+		So(err, ShouldBeNil)
+		req = mux.SetURLVars(req, map[string]string{"customer_code": "12345678", "payable_ref": ""})
+		req.Header.Set("Eric-Identity", "authorised_identity")
+		req.Header.Set("Eric-Identity-Type", "oauth2")
+		req.Header.Set("ERIC-Authorised-User", "test@test.com;test;user")
+		req.Header.Set("ERIC-Authorised-Roles", "noroles")
+		// The details have to be in a authUserDetails struct, so pass a different struct to fail
+		authUserDetails := models.PayableResource{
+			PayableRef: "test",
+		}
+		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
+
+		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockDAOAndService(mockCtrl, cfg)
+
+		w := httptest.NewRecorder()
+		test := payableAuthenticationInterceptor.PayableAuthenticationIntercept(GetTestHandler())
+		test.ServeHTTP(w, req.WithContext(ctx))
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
 	})
 
 	Convey("No authorised identity", t, func() {

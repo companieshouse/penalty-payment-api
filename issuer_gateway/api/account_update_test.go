@@ -54,6 +54,35 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 		So(err, ShouldNotBeNil)
 	})
 
+	Convey("invalid company code", t, func() {
+		httpmock.Activate()
+		defer httpmock.DeactivateAndReset()
+
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
+		mockService := mocks.NewMockService(mockCtrl)
+		svc := &services.PayableResourceService{DAO: mockService}
+
+		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+			return "", errors.New("cannot determine company code")
+		}
+		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
+
+		c := &e5.Client{}
+		p := validators.PaymentInformation{Amount: "150", PaymentID: "123"}
+		r := models.PayableResource{
+			PayableRef:   "123",
+			CustomerCode: "10000024",
+			Transactions: []models.TransactionItem{
+				{PenaltyRef: "123", Amount: 150},
+			},
+		}
+
+		err := UpdateIssuerAccountWithPenaltyPaid(svc, c, r, p)
+
+		So(err, ShouldBeError, "cannot determine company code")
+	})
+
 	Convey("E5 request errors", t, func() {
 		httpmock.Activate()
 		defer httpmock.DeactivateAndReset()

@@ -168,6 +168,29 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 				So(err.Error(), ShouldStartWith, "error getting company name: [")
 			})
 		})
+		Convey("When config is called with valid config and invalid company code", func() {
+			mockedConfigGet := func() (*config.Config, error) {
+				return &config.Config{}, nil
+			}
+			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
+				return "Brewery", nil
+			}
+
+			mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+				return "", errors.New("error getting company code")
+			}
+			getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
+
+			getConfig = mockedConfigGet
+			getCompanyName = mockedGetCompanyName
+
+			Convey("Then an error should be returned", func() {
+				_, err := prepareKafkaMessage(
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+
+				So(err.Error(), ShouldEqual, "error getting company code")
+			})
+		})
 		Convey("When config is called with valid config and valid company number but invalid transaction", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
