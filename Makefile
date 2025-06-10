@@ -29,8 +29,6 @@ test: test-unit test-integration
 .PHONY: test-unit
 test-unit:
 	go test $(TESTS) -run 'Unit' -coverprofile=coverage.out
-	grep -v "common/dao/mongo.go" coverage.out > filtered_coverage.out
-	mv filtered_coverage.out coverage.out
 
 .PHONY: test-integration
 test-integration:
