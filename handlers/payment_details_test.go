@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/companieshouse/penalty-payment-api/common/utils"
-
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -41,6 +41,37 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 	Convey("No payable resource in request context", t, func() {
 		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenalty)
 		res := serveGetPaymentDetailsHandler(nil)
+		So(res.Code, ShouldEqual, http.StatusBadRequest)
+	})
+
+	Convey("Invalid company code", t, func() {
+		t := time.Now().Truncate(time.Millisecond)
+
+		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+			return "", errors.New("cannot determine company code")
+		}
+		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
+
+		payable := models.PayableResource{
+			CustomerCode: "12345678",
+			PayableRef:   "abcdef",
+			Links: models.PayableResourceLinks{
+				Self:    "/company/12345678/penalties/abcdef",
+				Payment: "/company/12345678/penalties/abcdef/payment",
+			},
+			Etag:      "qwertyetag1234",
+			CreatedAt: &t,
+			CreatedBy: models.CreatedBy{
+				Email: "test@user.com",
+				ID:    "uz3r1D_H3r3",
+			},
+			Payment: models.Payment{
+				Amount: "5",
+				Status: "pending",
+			},
+		}
+
+		res := serveGetPaymentDetailsHandler(&payable)
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
 
