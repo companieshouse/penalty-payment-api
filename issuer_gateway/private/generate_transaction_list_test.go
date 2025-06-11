@@ -19,7 +19,7 @@ var yesterday = time.Now().AddDate(0, 0, -1).Truncate(time.Millisecond)
 var sanctionsPenaltyDetailsMap = &config.PenaltyDetailsMap{
 	Name: "penalty details",
 	Details: map[string]config.PenaltyDetails{
-		utils.Sanctions: {
+		utils.SanctionsCompanyCode: {
 			Description:        "Sanctions Penalty Payment",
 			DescriptionId:      "penalty-sanctions",
 			ClassOfPayment:     "penalty-sanctions",
@@ -33,7 +33,7 @@ var sanctionsPenaltyDetailsMap = &config.PenaltyDetailsMap{
 var lfpPenaltyDetailsMap = &config.PenaltyDetailsMap{
 	Name: "penalty details",
 	Details: map[string]config.PenaltyDetails{
-		utils.LateFilingPenalty: {
+		utils.LateFilingPenaltyCompanyCode: {
 			Description:        "Late Filing Penalty",
 			DescriptionId:      "late-filing-penalty",
 			ClassOfPayment:     "penalty",
@@ -54,7 +54,7 @@ var allowedTransactionMap = &models.AllowedTransactionMap{
 	},
 }
 var validSanctionsTransaction = models.AccountPenaltiesDataDao{
-	CompanyCode:          utils.Sanctions,
+	CompanyCode:          utils.SanctionsCompanyCode,
 	LedgerCode:           "E1",
 	CustomerCode:         "12345678",
 	TransactionReference: "P1234567",
@@ -71,7 +71,7 @@ var validSanctionsTransaction = models.AccountPenaltiesDataDao{
 	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 }
 var validLFPTransaction = models.AccountPenaltiesDataDao{
-	CompanyCode:          utils.LateFilingPenalty,
+	CompanyCode:          utils.LateFilingPenaltyCompanyCode,
 	LedgerCode:           "EW",
 	CustomerCode:         "12345678",
 	TransactionReference: "A1234567",
@@ -88,7 +88,7 @@ var validLFPTransaction = models.AccountPenaltiesDataDao{
 }
 var e5TransactionsResponseValidSanctions = models.AccountPenaltiesDao{
 	CustomerCode: "12345678",
-	CompanyCode:  utils.Sanctions,
+	CompanyCode:  utils.SanctionsCompanyCode,
 	CreatedAt:    &now,
 	AccountPenalties: []models.AccountPenaltiesDataDao{
 		validSanctionsTransaction,
@@ -96,7 +96,7 @@ var e5TransactionsResponseValidSanctions = models.AccountPenaltiesDao{
 }
 var e5TransactionsResponseValidLFPTransaction = models.AccountPenaltiesDao{
 	CustomerCode: "12345678",
-	CompanyCode:  utils.LateFilingPenalty,
+	CompanyCode:  utils.LateFilingPenaltyCompanyCode,
 	CreatedAt:    &now,
 	AccountPenalties: []models.AccountPenaltiesDataDao{
 		validLFPTransaction,
@@ -111,7 +111,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenalty, lfpPenaltyDetailsMap, allowedTransactionMap)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldNotBeNil)
 		So(transactionList, ShouldBeNil)
 	})
@@ -124,7 +124,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 
 		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenalty, lfpPenaltyDetailsMap, allowedTransactionMap)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -156,7 +156,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 
 		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "Other"
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenalty, lfpPenaltyDetailsMap, allowedTransactionMap)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -189,7 +189,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
 		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenalty, lfpPenaltyDetailsMap, allowedTransactionMap)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -220,7 +220,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidSanctions, utils.Sanctions, sanctionsPenaltyDetailsMap, allowedTransactionMap)
+			&e5TransactionsResponseValidSanctions, utils.SanctionsCompanyCode, sanctionsPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -252,7 +252,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 
 		e5TransactionsResponseValidSanctions.AccountPenalties[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidSanctions, utils.Sanctions, sanctionsPenaltyDetailsMap, allowedTransactionMap)
+			&e5TransactionsResponseValidSanctions, utils.SanctionsCompanyCode, sanctionsPenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -290,7 +290,7 @@ func TestUnit_getReason(t *testing.T) {
 			{
 				name: "Late filing of accounts",
 				args: args{penalty: &models.AccountPenaltiesDataDao{
-					CompanyCode:        utils.LateFilingPenalty,
+					CompanyCode:        utils.LateFilingPenaltyCompanyCode,
 					TransactionType:    "1",
 					TransactionSubType: "C1",
 				}},
@@ -299,7 +299,7 @@ func TestUnit_getReason(t *testing.T) {
 			{
 				name: "Failure to file a confirmation statement",
 				args: args{penalty: &models.AccountPenaltiesDataDao{
-					CompanyCode:        utils.Sanctions,
+					CompanyCode:        utils.SanctionsCompanyCode,
 					TransactionType:    SanctionsTransactionType,
 					TransactionSubType: SanctionsTransactionSubType,
 					TypeDescription:    "CS01                                    ",
@@ -309,7 +309,7 @@ func TestUnit_getReason(t *testing.T) {
 			{
 				name: "Penalty",
 				args: args{penalty: &models.AccountPenaltiesDataDao{
-					CompanyCode:        utils.Sanctions,
+					CompanyCode:        utils.SanctionsCompanyCode,
 					TransactionType:    SanctionsTransactionType,
 					TransactionSubType: SanctionsTransactionSubType,
 					TypeDescription:    "P&S Penalty                             ",
@@ -714,7 +714,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 
 func createLateFilingPenalty(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
 	return &models.AccountPenaltiesDataDao{
-		CompanyCode:          utils.LateFilingPenalty,
+		CompanyCode:          utils.LateFilingPenaltyCompanyCode,
 		LedgerCode:           "EW",
 		CustomerCode:         "12345678",
 		TransactionReference: "A1234567",
@@ -734,7 +734,7 @@ func createLateFilingPenalty(isPaid bool, outstandingAmount float64, accountStat
 
 func createSanctionsPenalty(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
 	return &models.AccountPenaltiesDataDao{
-		CompanyCode:          utils.Sanctions,
+		CompanyCode:          utils.SanctionsCompanyCode,
 		LedgerCode:           "E1",
 		CustomerCode:         "12345678",
 		TransactionReference: "P1234567",

@@ -84,9 +84,9 @@ func getTransactionType(e5Transaction *models.AccountPenaltiesDataDao, allowedTr
 }
 
 func getReason(transaction *models.AccountPenaltiesDataDao) string {
-	if transaction.CompanyCode == utils.LateFilingPenalty {
+	if transaction.CompanyCode == utils.LateFilingPenaltyCompanyCode {
 		return LateFilingPenaltyReason
-	} else if transaction.CompanyCode == utils.Sanctions && checkSanctionsTypeDescription(transaction, CS01TypeDescription) {
+	} else if transaction.CompanyCode == utils.SanctionsCompanyCode && checkSanctionsTypeDescription(transaction, CS01TypeDescription) {
 		return ConfirmationStatementReason
 	}
 	return PenaltyReason
@@ -165,11 +165,11 @@ func getUnpaidCosts(penalty *models.AccountPenaltiesDataDao, e5Transactions []mo
 }
 
 func checkOpenPayableStatus(penalty *models.AccountPenaltiesDataDao) (payableStatus string, isOpen bool) {
-	if penalty.CompanyCode == utils.LateFilingPenalty &&
+	if penalty.CompanyCode == utils.LateFilingPenaltyCompanyCode &&
 		(checkDunningStatus(penalty, PEN1DunningStatus) || checkDunningStatus(penalty, PEN2DunningStatus) || checkDunningStatus(penalty, PEN3DunningStatus)) &&
 		(penalty.AccountStatus == CHSAccountStatus || penalty.AccountStatus == DCAAccountStatus || penalty.AccountStatus == HLDAccountStatus || penalty.AccountStatus == WDRAccountStatus) {
 		return OpenPayableStatus, true
-	} else if penalty.CompanyCode == utils.Sanctions &&
+	} else if penalty.CompanyCode == utils.SanctionsCompanyCode &&
 		(checkDunningStatus(penalty, PEN1DunningStatus) || checkDunningStatus(penalty, PEN2DunningStatus)) &&
 		(penalty.AccountStatus == CHSAccountStatus || penalty.AccountStatus == DCAAccountStatus || penalty.AccountStatus == HLDAccountStatus) {
 		return OpenPayableStatus, true

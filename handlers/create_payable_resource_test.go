@@ -52,8 +52,8 @@ func testContext(withAuthUserDetails bool) context.Context {
 var e5ResponseLateFiling = `
 {
   "page": {
-    "size": 4,
-    "totalElements": 4,
+    "size": 1,
+    "totalElements": 1,
     "totalPages": 1,
     "number": 0
   },
@@ -71,7 +71,9 @@ var e5ResponseLateFiling = `
       "transactionType": "1",
       "transactionSubType": "EU",
       "typeDescription": "Penalty Ltd Wel & Eng <=1m     LTDWA    ",
-      "dueDate": "2017-12-12"
+      "dueDate": "2017-12-12",
+      "accountStatus": "CHS",
+      "dunningStatus": "PEN1        "
     }
   ]
 }
@@ -80,15 +82,15 @@ var e5ResponseLateFiling = `
 var e5ResponseSanctions = `
 {
   "page": {
-    "size": 4,
-    "totalElements": 4,
+    "size": 1,
+    "totalElements": 1,
     "totalPages": 1,
     "number": 0
   },
   "data": [
     {
       "companyCode": "C1",
-      "ledgerCode": "EW",
+      "ledgerCode": "E1",
       "customerCode": "10000024",
       "transactionReference": "P1234567",
       "transactionDate": "2017-11-28",
@@ -99,7 +101,39 @@ var e5ResponseSanctions = `
       "transactionType": "1",
       "transactionSubType": "S1",
       "typeDescription": "Penalty Ltd Wel & Eng <=1m     LTDWA    ",
-      "dueDate": "2017-12-12"
+      "dueDate": "2017-12-12",
+      "accountStatus": "CHS",
+      "dunningStatus": "PEN1        "
+    }
+  ]
+}
+`
+
+var e5ResponseSanctionsRoe = `
+{
+  "page": {
+    "size": 1,
+    "totalElements": 1,
+    "totalPages": 1,
+    "number": 0
+  },
+  "data": [
+    {
+      "companyCode": "C1",
+      "ledgerCode": "FU",
+      "customerCode": "OE123456",
+      "transactionReference": "U1234567",
+      "transactionDate": "2017-11-28",
+      "madeUpDate": "2017-02-28",
+      "amount": 150,
+      "outstandingAmount": 150,
+      "isPaid": false,
+      "transactionType": "1",
+      "transactionSubType": "A2",
+      "typeDescription": "Failure to update",
+      "dueDate": "2017-12-12",
+      "accountStatus": "CHS",
+      "dunningStatus": "PEN1        "
     }
   ]
 }
@@ -108,8 +142,8 @@ var e5ResponseSanctions = `
 var e5ResponseMultipleTx = `
 {
   "page": {
-    "size": 4,
-    "totalElements": 4,
+    "size": 2,
+    "totalElements": 2,
     "totalPages": 1,
     "number": 0
   },
@@ -127,7 +161,9 @@ var e5ResponseMultipleTx = `
       "transactionType": "1",
       "transactionSubType": "EU",
       "typeDescription": "Penalty Ltd Wel & Eng <=1m     LTDWA    ",
-      "dueDate": "2017-12-12"
+      "dueDate": "2017-12-12",
+      "accountStatus": "CHS",
+      "dunningStatus": "PEN1        "
     },
     {
       "companyCode": "LP",
@@ -142,7 +178,9 @@ var e5ResponseMultipleTx = `
       "transactionType": "1",
       "transactionSubType": "EU",
       "typeDescription": "Penalty Ltd Wel & Eng <=1m     LTDWA    ",
-      "dueDate": "2017-12-12"
+      "dueDate": "2017-12-12",
+      "accountStatus": "CHS",
+      "dunningStatus": "PEN1        "
     }
   ]
 }
@@ -157,7 +195,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 	cfg.E5APIURL = "https://e5"
 	cfg.E5Username = "SYSTEM"
 
-	url := "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" + utils.LateFilingPenalty + "&fromDate=1990-01-01"
+	url := "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" + utils.LateFilingPenaltyCompanyCode + "&fromDate=1990-01-01"
 
 	Convey("Error decoding request body", t, func() {
 		httpmock.Activate()
@@ -229,7 +267,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 	})
 
 	Convey("Must need at least one transaction", t, func() {
-		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenalty)
+		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenaltyCompanyCode)
 
 		httpmock.Activate()
 		mockCtrl := gomock.NewController(t)
@@ -249,7 +287,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 	})
 
 	Convey("Only allowed 1 transaction in a resource", t, func() {
-		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenalty)
+		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenaltyCompanyCode)
 
 		httpmock.Activate()
 		mockCtrl := gomock.NewController(t)
@@ -261,7 +299,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 		// as there are two transaction, the Times is 2 here, possible enhancement to remove this duplicate call
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenalty).Return(nil, nil).Times(2)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenaltyCompanyCode).Return(nil, nil).Times(2)
 		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil).Times(2)
 
 		body, _ := json.Marshal(&models.PayableRequest{
@@ -279,7 +317,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 	})
 
 	Convey("internal server error when failing to create payable resource", t, func() {
-		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenalty)
+		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenaltyCompanyCode)
 
 		httpmock.Activate()
 		mockCtrl := gomock.NewController(t)
@@ -292,7 +330,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any()).Return(errors.New("any error"))
 
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenalty).Return(nil, nil)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenaltyCompanyCode).Return(nil, nil)
 		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil)
 
 		body, _ := json.Marshal(&models.PayableRequest{
@@ -318,19 +356,27 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		}{
 			{
 				name:        "Late Filing",
-				companyCode: utils.LateFilingPenalty,
+				companyCode: utils.LateFilingPenaltyCompanyCode,
 				penaltyRef:  "A1234567",
 				urlE5: "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" +
-					utils.LateFilingPenalty + "&fromDate=1990-01-01",
+					utils.LateFilingPenaltyCompanyCode + "&fromDate=1990-01-01",
 				e5Response: e5ResponseLateFiling,
 			},
 			{
 				name:        "Sanctions",
-				companyCode: utils.Sanctions,
+				companyCode: utils.SanctionsCompanyCode,
 				penaltyRef:  "P1234567",
 				urlE5: "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" +
-					utils.Sanctions + "&fromDate=1990-01-01",
+					utils.SanctionsCompanyCode + "&fromDate=1990-01-01",
 				e5Response: e5ResponseSanctions,
+			},
+			{
+				name:        "Sanctions ROE",
+				companyCode: utils.SanctionsCompanyCode,
+				penaltyRef:  "U1234567",
+				urlE5: "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" +
+					utils.SanctionsCompanyCode + "&fromDate=1990-01-01",
+				e5Response: e5ResponseSanctionsRoe,
 			},
 		}
 
@@ -367,4 +413,11 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 			})
 		}
 	})
+}
+
+func setGetCompanyCodeFromTransactionMock(companyCode string) {
+	mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+		return companyCode, nil
+	}
+	getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 }

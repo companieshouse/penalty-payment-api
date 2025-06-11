@@ -113,7 +113,7 @@
             "name": "penalty_reference_type",
             "in": "path",
             "type": "string",
-            "enum": ["LATE_FILING", "SANCTIONS"],
+            "enum": ["LATE_FILING", "SANCTIONS", "SANCTIONS_ROE"],
             "required": true
           }
         ],

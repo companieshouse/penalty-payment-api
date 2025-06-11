@@ -11,7 +11,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/config"
 )
 
-var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
+var getPenaltyRefTypeFromTransaction = utils.GetPenaltyRefTypeFromTransaction
 
 // HandleGetPaymentDetails retrieves costs for a supplied company number and reference.
 func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.HandlerFunc {
@@ -26,7 +26,7 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 			return
 		}
 
-		companyCode, err := getCompanyCodeFromTransaction(payableResource.Transactions)
+		penaltyRefType, err := getPenaltyRefTypeFromTransaction(payableResource.Transactions)
 		if err != nil {
 			log.ErrorR(req, err)
 			m := models.NewMessageResponse(err.Error())
@@ -34,7 +34,7 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 			return
 		}
 
-		penaltyDetails := penaltyDetailsMap.Details[companyCode]
+		penaltyDetails := penaltyDetailsMap.Details[penaltyRefType]
 
 		// Get the payment details from the payable resource
 		paymentDetails, responseType, err := paymentDetailsService.GetPaymentDetailsFromPayableResource(req,

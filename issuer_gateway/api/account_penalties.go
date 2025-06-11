@@ -23,7 +23,8 @@ var generateTransactionList = private.GenerateTransactionListFromAccountPenaltie
 // 1. makes a request to account_penalties collection to get a list of cached transactions for the specified customer
 // 2. if no cache entry is found or if the cache entry is stale it makes a request to e5 to get a list of transactions for the specified customer
 // 2. takes the results of this request and maps them to a format that the penalty-payment-web can consume
-func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap,
+func AccountPenalties(penaltyRefType, customerCode, companyCode string,
+	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap,
 	apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
 	accountPenalties, err := apDaoSvc.GetAccountPenalties(customerCode, companyCode)
 
@@ -50,7 +51,7 @@ func AccountPenalties(customerCode string, companyCode string, penaltyDetailsMap
 	// Generate the CH preferred format of the results i.e. classify the transactions into
 	// payable "penalty" types or non-payable "other" types
 	generatedTransactionListFromAccountPenalties, err :=
-		generateTransactionList(accountPenalties, companyCode, penaltyDetailsMap, allowedTransactionsMap)
+		generateTransactionList(accountPenalties, penaltyRefType, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		err = fmt.Errorf("error generating transaction list from account penalties: [%v]", err)
 		log.Error(err)

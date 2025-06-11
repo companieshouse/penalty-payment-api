@@ -12,10 +12,10 @@ import (
 var getAccountPenalties = AccountPenalties
 var getMatchingPenalty = private.MatchPenalty
 
-func PayablePenalty(customerCode string, companyCode string, transaction models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
+func PayablePenalty(penaltyRefType, customerCode, companyCode string, transaction models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionItem, error) {
 
-	response, _, err := getAccountPenalties(customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+	response, _, err := getAccountPenalties(penaltyRefType, customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 	if err != nil {
 		log.Error(err)
 		return nil, err

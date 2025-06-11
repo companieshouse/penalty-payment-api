@@ -26,10 +26,12 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 
 		customerCode := req.Context().Value(config.CustomerCode).(string)
 
-		// Determine the CompanyCode from the penaltyReferenceType which should be on the path
+		// Determine the CompanyCode from the penaltyRefType which should be on the path
 		vars := mux.Vars(req)
-		penaltyReferenceType := vars["penalty_reference_type"]
-		companyCode, err := getCompanyCode(penaltyReferenceType)
+		// the penalty reference type is needed further on in the generate_transaction_list to get
+		// the ResourceKind from the penalty_details.yaml
+		penaltyRefType := GetPenaltyRefType(vars["penalty_reference_type"])
+		companyCode, err := getCompanyCode(penaltyRefType)
 
 		if err != nil {
 			log.ErrorR(req, err)
@@ -39,8 +41,8 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 		}
 
 		// Call service layer to handle request to E5
-		transactionListResponse, responseType, err := accountPenalties(customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+		transactionListResponse, responseType, err := accountPenalties(penaltyRefType,
+			customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 
 		if err != nil {
 			log.ErrorR(req, fmt.Errorf("error calling e5 to get transactions: %v", err))
@@ -66,5 +68,16 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 			return
 		}
 		log.InfoR(req, "Successfully GET penalties from e5", log.Data{"customer_code": customerCode})
+	}
+}
+
+// GetPenaltyRefType gets the penalty reference type from the url vars
+// If no penalty reference type is supplied then the request is coming in on the old url
+// so defaulting to LateFiling until agreement is made to update other services calling the api
+func GetPenaltyRefType(penaltyRefType string) string {
+	if len(penaltyRefType) == 0 {
+		return utils.LateFilingPenRef
+	} else {
+		return penaltyRefType
 	}
 }
