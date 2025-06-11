@@ -1,19 +1,27 @@
 ---
 name: penalty details
 details:
-  LP:
+  LATE_FILING:
     Description: "Late Filing Penalty"
     DescriptionId: "late-filing-penalty"
     ClassOfPayment: "penalty"
     ResourceKind: "late-filing-penalty#late-filing-penalty"
     ProductType: "late-filing-penalty"
-    EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
     EmailMsgType: "penalty_payment_received_email"
-  C1:
+    EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
+  SANCTIONS:
     Description: "Sanctions Penalty Payment"
     DescriptionId: "penalty-sanctions"
     ClassOfPayment: "penalty-sanctions"
     ResourceKind: "penalty#sanctions"
     ProductType: "penalty-sanctions"
-    EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
     EmailMsgType: "penalty_payment_received_email"
+    EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
+  SANCTIONS_ROE:
+    Description: "Overseas Entity Penalty Payment"
+    DescriptionId: "penalty-sanctions"
+    ClassOfPayment: "penalty-sanctions"
+    ResourceKind: "penalty#sanctions"
+    ProductType: "penalty-sanctions"
+    EmailMsgType: "penalty_payment_received_email"
+    EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"

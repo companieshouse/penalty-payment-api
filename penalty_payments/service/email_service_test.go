@@ -109,6 +109,13 @@ func setGetCompanyCodeFromTransactionMock(companyCode string) {
 	getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 }
 
+func setGetPenaltyRefTypeFromTransactionMock(penaltyRefType string) {
+	mockedGetPenaltyRefTypeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+		return penaltyRefType, nil
+	}
+	getPenaltyRefTypeFromTransaction = mockedGetPenaltyRefTypeFromTransaction
+}
+
 func TestUnitPrepareKafkaMessage(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -126,22 +133,31 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
 		testCases := []struct {
-			name        string
-			companyCode string
+			name           string
+			companyCode    string
+			penaltyRefType string
 		}{
 			{
-				name:        "Late Filing",
-				companyCode: utils.LateFilingPenalty,
+				name:           "Late Filing",
+				companyCode:    utils.LateFilingPenaltyCompanyCode,
+				penaltyRefType: utils.LateFilingPenRef,
 			},
 			{
-				name:        "Sanctions",
-				companyCode: utils.Sanctions,
+				name:           "Sanctions",
+				companyCode:    utils.SanctionsCompanyCode,
+				penaltyRefType: utils.SanctionsPenRef,
+			},
+			{
+				name:           "Sanctions ROE",
+				companyCode:    utils.SanctionsCompanyCode,
+				penaltyRefType: utils.SanctionsRoePenRef,
 			},
 		}
 
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				setGetCompanyCodeFromTransactionMock(tc.companyCode)
+				setGetPenaltyRefTypeFromTransactionMock(tc.penaltyRefType)
 
 				Convey("When config is called with invalid config", func() {
 					errMsg := "config is invalid"
@@ -162,7 +178,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			})
 		}
 
-		Convey("When config is called with valid config and invalid company number", func() {
+		Convey("When config is called with invalid config", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
@@ -198,6 +214,55 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 				So(err.Error(), ShouldEqual, "error getting company code")
 			})
 		})
+		Convey("When config is called with valid config and valid company number but invalid penalty ref", func() {
+			mockedConfigGet := func() (*config.Config, error) {
+				return &config.Config{}, nil
+			}
+			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
+				return "Brewery", nil
+			}
+
+			mockedGetPenaltyRefTypeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+				return "", errors.New("error getting penalty ref type")
+			}
+
+			getConfig = mockedConfigGet
+			getCompanyName = mockedGetCompanyName
+			getPenaltyRefTypeFromTransaction = mockedGetPenaltyRefTypeFromTransaction
+
+			Convey("Then an error should be returned", func() {
+				_, err := prepareKafkaMessage(
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+
+				So(err, ShouldResemble, errors.New("error getting penalty ref type"))
+			})
+		})
+		Convey("When config is called with valid config and valid company number but no transaction items", func() {
+			mockedConfigGet := func() (*config.Config, error) {
+				return &config.Config{}, nil
+			}
+			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
+				return "Brewery", nil
+			}
+
+			getConfig = mockedConfigGet
+			getCompanyName = mockedGetCompanyName
+			setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenRef)
+
+			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+
+			Convey("Then an error should be returned", func() {
+				payableResourceNoItems := models.PayableResource{
+					CustomerCode: customerCode,
+					Transactions: []models.TransactionItem{},
+				}
+
+				_, err := prepareKafkaMessage(
+					producerSchema, payableResourceNoItems, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc)
+
+				So(err.Error(), ShouldStartWith, "empty transactions list in payable resource:")
+			})
+		})
 		Convey("When config is called with valid config and valid company number but invalid transaction", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
@@ -208,6 +273,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 
 			getConfig = mockedConfigGet
 			getCompanyName = mockedGetCompanyName
+			setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenRef)
 
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 
@@ -227,7 +293,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetPayablePenalty := func(customerCode string, companyCode string, t models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
+			mockedGetPayablePenalty := func(penaltyRefType, customerCode, companyCode string, t models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
 				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionItem, error) {
 
 				return &models.TransactionItem{PenaltyRef: "A1234567", Reason: "Late filing of accounts"}, nil
@@ -251,7 +317,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetPayablePenalty := func(customerCode string, companyCode string, t models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
+			mockedGetPayablePenalty := func(penaltyRefType, customerCode, companyCode string, t models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
 				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionItem, error) {
 
 				return &models.TransactionItem{

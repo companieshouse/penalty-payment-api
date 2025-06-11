@@ -30,27 +30,28 @@ func serveGetPaymentDetailsHandler(payableResource *models.PayableResource) *htt
 	return res
 }
 
-func setGetCompanyCodeFromTransactionMock(companyCode string) {
-	mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
-		return companyCode, nil
+func setGetPenaltyRefTypeFromTransactionMock(penaltyRefType string) {
+	mockedGetPenaltyRefTypeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+		return penaltyRefType, nil
 	}
-	getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
+	getPenaltyRefTypeFromTransaction = mockedGetPenaltyRefTypeFromTransaction
 }
 
 func TestUnitHandleGetPaymentDetails(t *testing.T) {
 	Convey("No payable resource in request context", t, func() {
-		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenalty)
+		setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenRef)
+
 		res := serveGetPaymentDetailsHandler(nil)
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
 
-	Convey("Invalid company code", t, func() {
+	Convey("Cannot determine penalty ref type from transaction ID", t, func() {
 		t := time.Now().Truncate(time.Millisecond)
 
-		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
-			return "", errors.New("cannot determine company code")
+		mockedGetPenaltyRefTypeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+			return "", errors.New("cannot determine penalty ref type")
 		}
-		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
+		getPenaltyRefTypeFromTransaction = mockedGetPenaltyRefTypeFromTransaction
 
 		payable := models.PayableResource{
 			CustomerCode: "12345678",
@@ -76,7 +77,7 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 	})
 
 	Convey("Payment PenaltyDetails not found due to no costs", t, func() {
-		setGetCompanyCodeFromTransactionMock(utils.Sanctions)
+		setGetPenaltyRefTypeFromTransactionMock(utils.SanctionsPenRef)
 		t := time.Now().Truncate(time.Millisecond)
 
 		payable := models.PayableResource{
@@ -104,25 +105,34 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 
 	Convey("Payment PenaltyDetails success", t, func() {
 		testCases := []struct {
-			name        string
-			companyCode string
-			penaltyRef  string
+			name           string
+			companyCode    string
+			penaltyRefType string
+			penaltyRef     string
 		}{
 			{
-				name:        "Late Filing",
-				companyCode: utils.LateFilingPenalty,
-				penaltyRef:  "A1234567",
+				name:           "Late Filing",
+				companyCode:    utils.LateFilingPenaltyCompanyCode,
+				penaltyRefType: utils.LateFilingPenRef,
+				penaltyRef:     "A1234567",
 			},
 			{
-				name:        "Sanctions",
-				companyCode: utils.Sanctions,
-				penaltyRef:  "P1234567",
+				name:           "Sanctions",
+				companyCode:    utils.SanctionsCompanyCode,
+				penaltyRefType: utils.SanctionsPenRef,
+				penaltyRef:     "P1234567",
+			},
+			{
+				name:           "Sanctions ROE",
+				companyCode:    utils.SanctionsCompanyCode,
+				penaltyRefType: utils.SanctionsRoePenRef,
+				penaltyRef:     "U1234567",
 			},
 		}
 
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
-				setGetCompanyCodeFromTransactionMock(tc.companyCode)
+				setGetPenaltyRefTypeFromTransactionMock(tc.penaltyRefType)
 				t := time.Now().Truncate(time.Millisecond)
 
 				payable := models.PayableResource{

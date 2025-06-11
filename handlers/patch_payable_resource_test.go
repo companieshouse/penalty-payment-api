@@ -49,6 +49,7 @@ var allowedTransactionsMap = &models.AllowedTransactionMap{
 			"EJ": true,
 			"EU": true,
 			"S1": true,
+			"A2": true,
 		},
 	},
 }
@@ -107,7 +108,7 @@ func mockSendEmailKafkaMessage(payableResource models.PayableResource, req *http
 }
 
 func mockedGetCompanyCodeFromTransaction(transactions []models.TransactionItem) (string, error) {
-	return utils.LateFilingPenalty, nil
+	return utils.LateFilingPenaltyCompanyCode, nil
 }
 
 func mockedGetCompanyCodeFromTransactionError(transactions []models.TransactionItem) (string, error) {
@@ -184,7 +185,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 		Convey("problem with sending confirmation email", func() {
 			mockedGetCompanyCode := func(penaltyReference string) (string, error) {
-				return utils.LateFilingPenalty, nil
+				return utils.LateFilingPenaltyCompanyCode, nil
 			}
 
 			getCompanyCode = mockedGetCompanyCode
@@ -238,7 +239,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 		Convey("Penalty has already been paid", func() {
 			mockedGetCompanyCode := func(penaltyReference string) (string, error) {
-				return utils.LateFilingPenalty, nil
+				return utils.LateFilingPenaltyCompanyCode, nil
 			}
 
 			getCompanyCode = mockedGetCompanyCode

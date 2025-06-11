@@ -91,7 +91,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 		payableResourceSvc := &services.PayableResourceService{DAO: mockPrDaoSvc}
 
 		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
-			return utils.LateFilingPenalty, nil
+			return utils.LateFilingPenaltyCompanyCode, nil
 		}
 		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
