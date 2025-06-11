@@ -23,5 +23,5 @@ details:
     ClassOfPayment: "penalty-sanctions"
     ResourceKind: "penalty#sanctions"
     ProductType: "penalty-sanctions"
-    EmailMsgType: "penalty_payment_received_email"
-    EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
+    EmailMsgType: "sanctions_roe_penalty_payment_received_email"
+    EmailReceivedAppId: "penalty-payment-api.sanctions_roe_penalty_payment_received_email"
