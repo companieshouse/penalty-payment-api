@@ -84,26 +84,42 @@ func getTransactionType(e5Transaction *models.AccountPenaltiesDataDao, allowedTr
 }
 
 func getReason(transaction *models.AccountPenaltiesDataDao) string {
-	if transaction.CompanyCode == utils.LateFilingPenaltyCompanyCode {
+	switch transaction.CompanyCode {
+	case utils.LateFilingPenaltyCompanyCode:
 		return LateFilingPenaltyReason
-	} else if transaction.CompanyCode == utils.SanctionsCompanyCode && checkSanctionsTypeDescription(transaction, CS01TypeDescription) {
-		return ConfirmationStatementReason
+	case utils.SanctionsCompanyCode:
+		return getSanctionsReason(transaction)
 	}
 	return PenaltyReason
 }
 
-func checkSanctionsTypeDescription(transaction *models.AccountPenaltiesDataDao, typeDescription string) bool {
-	return (transaction.TransactionType == SanctionsTransactionType && transaction.TransactionSubType == SanctionsTransactionSubType) &&
-		strings.TrimSpace(transaction.TypeDescription) == typeDescription
+func getSanctionsReason(transaction *models.AccountPenaltiesDataDao) string {
+	if transaction.TransactionType != SanctionsTransactionType {
+		return PenaltyReason
+	}
+
+	if transaction.TransactionSubType == SanctionsTransactionSubType &&
+		strings.TrimSpace(transaction.TypeDescription) == CS01TypeDescription {
+		return ConfirmationStatementReason
+	}
+
+	switch transaction.TransactionSubType {
+	case RoeTransactionSubType:
+		return RoeReason
+	default:
+		return PenaltyReason
+	}
 }
 
 const (
 	SanctionsTransactionType    = "1"
 	SanctionsTransactionSubType = "S1"
+	RoeTransactionSubType       = "A2"
 	CS01TypeDescription         = "CS01"
 
 	LateFilingPenaltyReason     = "Late filing of accounts"
 	ConfirmationStatementReason = "Failure to file a confirmation statement"
+	RoeReason                   = "Failure to update the Register of Overseas Entities"
 	PenaltyReason               = "Penalty"
 
 	OpenPayableStatus                    = "OPEN"
