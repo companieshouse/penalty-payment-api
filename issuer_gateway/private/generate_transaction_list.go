@@ -94,21 +94,16 @@ func getReason(transaction *models.AccountPenaltiesDataDao) string {
 }
 
 func getSanctionsReason(transaction *models.AccountPenaltiesDataDao) string {
-	if transaction.TransactionType != SanctionsTransactionType {
-		return PenaltyReason
-	}
-
 	if transaction.TransactionSubType == SanctionsTransactionSubType &&
 		strings.TrimSpace(transaction.TypeDescription) == CS01TypeDescription {
 		return ConfirmationStatementReason
 	}
 
-	switch transaction.TransactionSubType {
-	case RoeTransactionSubType:
+	if transaction.TransactionSubType == RoeTransactionSubType {
 		return RoeReason
-	default:
-		return PenaltyReason
 	}
+
+	return PenaltyReason
 }
 
 const (
