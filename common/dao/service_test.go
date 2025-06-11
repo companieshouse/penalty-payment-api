@@ -4,38 +4,37 @@ import (
 	"testing"
 
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"github.com/companieshouse/penalty-payment-api/common/interfaces"
 	"github.com/companieshouse/penalty-payment-api/config"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-type MockDatabase struct{}
-
-func (m *MockDatabase) Collection(name string, opts ...*options.CollectionOptions) *mongo.Collection {
-	return nil
-}
-
 func TestUnitService(t *testing.T) {
-	original := getMongoDB
-	defer func() { getMongoDB = original }()
-
-	getMongoDB = func(mongoDBURL, databaseName string) MongoDatabaseInterface {
-		return &MockDatabase{}
+	getMongoDB = func(mongoDBURL, databaseName string) interfaces.MongoDatabaseInterface {
+		return &MongoDatabaseWrapper{
+			db: &mongo.Database{},
+		}
 	}
 
-	cfg := &config.Config{
-		MongoDBURL:                 "mongodb://localhost:27017",
-		Database:                   "test",
-		PayableResourcesCollection: "payable_resources",
-	}
+	Convey("successful creation of new payable resources dao service", t, func() {
+		cfg := &config.Config{
+			MongoDBURL:                 "mongodb://localhost:27017",
+			Database:                   "test",
+			PayableResourcesCollection: "payable_resources",
+		}
 
-	Convey("successful confirmation", t, func() {
 		pr := NewPayableResourcesDaoService(cfg)
 		So(pr, ShouldNotBeNil)
 	})
 
-	Convey("successful confirmation", t, func() {
+	Convey("successful creation of new account penalties dao service", t, func() {
+		cfg := &config.Config{
+			MongoDBURL:                 "mongodb://localhost:27017",
+			Database:                   "test",
+			AccountPenaltiesCollection: "account_penalties",
+		}
+
 		ap := NewAccountPenaltiesDaoService(cfg)
 		So(ap, ShouldNotBeNil)
 	})

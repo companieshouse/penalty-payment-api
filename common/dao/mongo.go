@@ -14,6 +14,7 @@ import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/interfaces"
 )
 
 var client *mongo.Client
@@ -49,26 +50,50 @@ func getMongoClient(mongoDBURL string) *mongo.Client {
 	return client
 }
 
-// MongoDatabaseInterface is an interface that describes the mongodb driver
-type MongoDatabaseInterface interface {
-	Collection(name string, opts ...*options.CollectionOptions) *mongo.Collection
+func getMongoDatabase(mongoDBURL, databaseName string) interfaces.MongoDatabaseInterface {
+	db := getMongoClient(mongoDBURL).Database(databaseName)
+	return &MongoDatabaseWrapper{db: db}
 }
 
-func getMongoDatabase(mongoDBURL, databaseName string) MongoDatabaseInterface {
-	return getMongoClient(mongoDBURL).Database(databaseName)
+type MongoCollectionWrapper struct {
+	collection *mongo.Collection
+}
+
+type MongoDatabaseWrapper struct {
+	db *mongo.Database
+}
+
+func (m *MongoDatabaseWrapper) Collection(name string, opts ...*options.CollectionOptions) interfaces.MongoCollectionInterface {
+	return &MongoCollectionWrapper{collection: m.db.Collection(name, opts...)}
+}
+
+func (m *MongoCollectionWrapper) InsertOne(ctx context.Context, document interface{}, opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error) {
+	return m.collection.InsertOne(ctx, document, opts...)
+}
+
+func (m *MongoCollectionWrapper) FindOne(ctx context.Context, filter interface{}, opts ...*options.FindOneOptions) *mongo.SingleResult {
+	return m.collection.FindOne(ctx, filter, opts...)
+}
+
+func (m *MongoCollectionWrapper) UpdateOne(ctx context.Context, filter interface{}, update interface{}, opts ...*options.UpdateOptions) (*mongo.UpdateResult, error) {
+	return m.collection.UpdateOne(ctx, filter, update, opts...)
+}
+
+func (m *MongoCollectionWrapper) DeleteOne(ctx context.Context, filter interface{}, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
+	return m.collection.DeleteOne(ctx, filter, opts...)
 }
 
 // MongoPayableResourceService is an implementation of the PayableResourceDaoService interface using
 // MongoDB as the backend driver.
 type MongoPayableResourceService struct {
-	db             MongoDatabaseInterface
+	db             interfaces.MongoDatabaseInterface
 	CollectionName string
 }
 
 // MongoAccountPenaltiesService is an implementation of the AccountPenaltiesDaoService interface using
 // MongoDB as the backend driver.
 type MongoAccountPenaltiesService struct {
-	db             MongoDatabaseInterface
+	db             interfaces.MongoDatabaseInterface
 	CollectionName string
 }
 
