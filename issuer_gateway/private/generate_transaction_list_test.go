@@ -409,7 +409,7 @@ func TestUnit_getReason(t *testing.T) {
 				want: ConfirmationStatementReason,
 			},
 			{
-				name: "Failure to file a confirmation statement",
+				name: "Failure to update the Register of Overseas Entities",
 				args: args{penalty: &models.AccountPenaltiesDataDao{
 					CompanyCode:        utils.SanctionsCompanyCode,
 					TransactionType:    SanctionsTransactionType,
