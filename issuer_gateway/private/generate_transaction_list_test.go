@@ -34,7 +34,7 @@ var roePenaltyDetailsMap = &config.PenaltyDetailsMap{
 	Name: "penalty details",
 	Details: map[string]config.PenaltyDetails{
 		utils.SanctionsCompanyCode: {
-			Description:        "Sanctions Penalty Payment",
+			Description:        "Overseas Entity Penalty Payment",
 			DescriptionId:      "penalty-sanctions",
 			ClassOfPayment:     "penalty-sanctions",
 			ResourceKind:       "penalty#sanctions",
@@ -64,6 +64,7 @@ var allowedTransactionMap = &models.AllowedTransactionMap{
 			"EJ": true,
 			"EU": true,
 			"S1": true,
+			"A2": true,
 		},
 	},
 }
