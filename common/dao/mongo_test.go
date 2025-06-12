@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
 
@@ -17,6 +18,7 @@ import (
 var companyCode = "LP"
 var customerCode = "12345678"
 var penaltyRef = "A1234567"
+var payableRef = "1234568"
 
 func TestMongoPayableResourceService_CreateAccountPenalties(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -32,7 +34,7 @@ func TestMongoPayableResourceService_CreateAccountPenalties(t *testing.T) {
 		CollectionName: "account_penalties",
 	}
 
-	Convey("account penalties", t, func() {
+	Convey("create account penalties should return", t, func() {
 		mockDatabase.EXPECT().Collection("account_penalties").Return(mockCollection)
 
 		Convey("success when creating account penalty when no entry exists", func() {
@@ -84,7 +86,7 @@ func TestMongoPayableResourceService_GetAccountPenalties(t *testing.T) {
 		CollectionName: "account_penalties",
 	}
 
-	Convey("account penalties", t, func() {
+	Convey("get account penalties should return", t, func() {
 		mockDatabase.EXPECT().Collection("account_penalties").Return(mockCollection)
 
 		Convey("success when getting account penalty", func() {
@@ -139,7 +141,7 @@ func TestMongoPayableResourceService_UpdateAccountPenaltyAsPaid(t *testing.T) {
 		CollectionName: "account_penalties",
 	}
 
-	Convey("account penalties", t, func() {
+	Convey("update account penalty as paid should return", t, func() {
 		mockDatabase.EXPECT().Collection("account_penalties").Return(mockCollection)
 
 		Convey("success when account penalty updated", func() {
@@ -198,7 +200,7 @@ func TestMongoPayableResourceService_UpdateAccountPenalties(t *testing.T) {
 		CollectionName: "account_penalties",
 	}
 
-	Convey("account penalties", t, func() {
+	Convey("update account penalties should return", t, func() {
 		mockDatabase.EXPECT().Collection("account_penalties").Return(mockCollection)
 
 		Convey("success when account penalties updated", func() {
@@ -257,7 +259,7 @@ func TestMongoPayableResourceService_CreatePayableResource(t *testing.T) {
 		CollectionName: "payable_resources",
 	}
 
-	Convey("payable resource", t, func() {
+	Convey("create payable resource should return", t, func() {
 		mockDatabase.EXPECT().Collection("payable_resources").Return(mockCollection)
 
 		Convey("success when creating payable resource", func() {
@@ -294,7 +296,7 @@ func TestMongoPayableResourceService_UpdatePaymentDetails(t *testing.T) {
 		CollectionName: "payable_resources",
 	}
 
-	Convey("payable resource", t, func() {
+	Convey("create payment details should return", t, func() {
 		mockDatabase.EXPECT().Collection("payable_resources").Return(mockCollection)
 
 		Convey("success when updating payable resource", func() {
@@ -317,39 +319,7 @@ func TestMongoPayableResourceService_UpdatePaymentDetails(t *testing.T) {
 
 }
 
-//func TestMongoPayableResourceService_Shutdown(t *testing.T) {
-//	ctrl := gomock.NewController(t)
-//	defer ctrl.Finish()
-//
-//	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
-//
-//	svc := MongoPayableResourceService{
-//		db:             mockDatabase,
-//		CollectionName: "payable_resources",
-//	}
-//
-//	Convey("shutdown", t, func() {
-//		Convey("error no client", func() {
-//
-//			svc.Shutdown()
-//		})
-//
-//		//Convey("error when creating payable resource", func() {
-//		//	mockCollection.EXPECT().InsertOne(gomock.Any(), gomock.Any()).Return(nil, errors.New("error creating payable resource"))
-//		//
-//		//	svc.Shutdown()
-//		//
-//		//	So(err, ShouldNotBeNil)
-//		//})
-//
-//	})
-//
-//}
-
 func TestMongoPayableResourceService_GetPayableResource(t *testing.T) {
-	customerCode := "1234568"
-	payableRef := "1234568"
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -361,9 +331,7 @@ func TestMongoPayableResourceService_GetPayableResource(t *testing.T) {
 		CollectionName: "payable_resources",
 	}
 
-	payableRef = "1234568"
-
-	Convey("payable resource", t, func() {
+	Convey("get payable resource should return", t, func() {
 		mockDatabase.EXPECT().Collection("payable_resources").Return(mockCollection)
 
 		Convey("success when getting payable resource", func() {
@@ -398,7 +366,7 @@ func TestMongoPayableResourceService_GetPayableResource(t *testing.T) {
 
 			resource, err := svc.GetPayableResource(customerCode, payableRef)
 
-			So(err, ShouldBeNil)
+			So(err, ShouldNotBeNil)
 			So(resource, ShouldBeNil)
 		})
 
@@ -406,37 +374,64 @@ func TestMongoPayableResourceService_GetPayableResource(t *testing.T) {
 
 }
 
-//func TestMongoPayableResourceService_SaveE5Error(t *testing.T) {
-//	ctrl := gomock.NewController(t)
-//	defer ctrl.Finish()
-//
-//	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
-//	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
-//
-//	svc := MongoPayableResourceService{
-//		db:             mockDatabase,
-//		CollectionName: "payable_resources",
-//	}
-//
-//	Convey("account penalties", t, func() {
-//		mockDatabase.EXPECT().Collection("payable_resources").Return(mockCollection)
-//
-//		Convey("success when E5 error saved", func() {
-//			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-//			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
-//
-//			err := svc.SaveE5Error(customerCode, penaltyRef, e5.CreateAction)
-//
-//			So(err, ShouldBeNil)
-//		})
-//
-//		Convey("error E5 error not saved due to DB error", func() {
-//			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-//			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error updating penalties"))
-//
-//			err := svc.SaveE5Error(customerCode, penaltyRef, e5.CreateAction)
-//
-//			So(err, ShouldNotBeNil)
-//		})
-//	})
-//}
+func TestMongoPayableResourceService_SaveE5Error(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
+	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
+
+	svc := MongoPayableResourceService{
+		db:             mockDatabase,
+		CollectionName: "payable_resources",
+	}
+
+	Convey("save e5 should return", t, func() {
+
+		Convey("success when E5 error saved", func() {
+			// called twice as this method calls GetPayableResource
+			mockDatabase.EXPECT().Collection("payable_resources").Return(mockCollection).Times(2)
+
+			result := mongo.NewSingleResultFromDocument(bson.M{
+				"customer_code": customerCode,
+				"payable_ref":   payableRef,
+			}, nil, nil)
+
+			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
+			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
+
+			err := svc.SaveE5Error(customerCode, penaltyRef, e5.CreateAction)
+
+			So(err, ShouldBeNil)
+		})
+
+		Convey("error when payable resource cannot be found", func() {
+			result := mongo.NewSingleResultFromDocument(bson.M{}, mongo.ErrNoDocuments, nil)
+
+			mockDatabase.EXPECT().Collection("payable_resources").Return(mockCollection)
+			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
+
+			err := svc.SaveE5Error(customerCode, penaltyRef, e5.CreateAction)
+
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("error when updating e5 command error in mongo document", func() {
+			// called twice as this method calls GetPayableResource
+			mockDatabase.EXPECT().Collection("payable_resources").Return(mockCollection).Times(2)
+
+			result := mongo.NewSingleResultFromDocument(bson.M{
+				"customer_code": customerCode,
+				"payable_ref":   payableRef,
+			}, nil, nil)
+
+			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
+			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, mongo.ErrInvalidIndexValue)
+
+			err := svc.SaveE5Error(customerCode, penaltyRef, e5.CreateAction)
+
+			So(err, ShouldNotBeNil)
+		})
+
+	})
+}

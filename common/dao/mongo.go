@@ -353,7 +353,7 @@ func (m *MongoPayableResourceService) GetPayableResource(customerCode, payableRe
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			log.Debug("no payable resource found", log.Data{"customer_code": customerCode, "payable_ref": payableRef})
-			return nil, nil
+			return nil, err
 		}
 		log.Error(err, log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 		return nil, err
