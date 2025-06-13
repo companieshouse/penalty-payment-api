@@ -94,6 +94,25 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		So(gotParseError, ShouldBeTrue)
 	})
 
+	Convey("Planned maintenance end time is in wrong format", t, func() {
+		// Given
+		weeklyEndHour := currentTime.Hour() + 2
+		cfg.WeeklyMaintenanceStartTime = fmt.Sprintf("%02d00", currentTime.Hour())
+		cfg.WeeklyMaintenanceEndTime = fmt.Sprintf("%02d00", weeklyEndHour)
+		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
+		plannedStartTime := currentTime.Add(time.Hour * -1).Truncate(time.Minute).Round(0)
+		cfg.PlannedMaintenanceStart = plannedStartTime.Format(time.RFC822)
+		cfg.PlannedMaintenanceEnd = "1111111111"
+
+		// When
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+
+		// Then
+		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
+		So(gotSystemUnavailable, ShouldBeFalse)
+		So(gotParseError, ShouldBeTrue)
+	})
+
 	Convey("Current time is before planned maintenance times", t, func() {
 		// Given
 		cfg.WeeklyMaintenanceStartTime = "1900"

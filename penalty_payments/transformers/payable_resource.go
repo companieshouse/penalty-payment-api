@@ -11,6 +11,8 @@ import (
 	"github.com/companieshouse/penalty-payment-api/config"
 )
 
+var etagGenerator = utils.GenerateEtag
+
 // PayableResourceRequestToDB will take the input request from the REST call and transform it to a dao ready for
 // insertion into the database
 func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResourceDao {
@@ -25,7 +27,7 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 	}
 
 	reference := utils.GenerateReferenceNumber()
-	etag, err := utils.GenerateEtag()
+	etag, err := etagGenerator()
 	if err != nil {
 		log.Error(fmt.Errorf("error generating etag: [%s]", err))
 	}

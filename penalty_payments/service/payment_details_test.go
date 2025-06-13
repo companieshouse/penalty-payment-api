@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	. "github.com/smartystreets/goconvey/convey"
@@ -51,10 +50,9 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
+		paymentDetails, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 		So(paymentDetails, ShouldBeNil)
-		So(responseType, ShouldEqual, services.InvalidData)
 		So(err, ShouldNotBeNil)
 
 	})
@@ -138,7 +136,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				service := &PaymentDetailsService{}
 
 				penaltyDetails := penaltyDetailsMap.Details[tc.penaltyRefType]
-				paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
+				paymentDetails, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 				expectedCost := models.Cost{
 					Description:             tc.description,
@@ -160,7 +158,6 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				So(paymentDetails.Status, ShouldEqual, "pending")
 				So(paymentDetails.CustomerCode, ShouldEqual, "12345678")
 				So(paymentDetails.Items[0], ShouldResemble, expectedCost)
-				So(responseType, ShouldEqual, services.Success)
 				So(err, ShouldBeNil)
 			})
 		}
@@ -248,7 +245,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				service := &PaymentDetailsService{}
 
 				penaltyDetails := penaltyDetailsMap.Details[tc.penaltyRefType]
-				paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
+				paymentDetails, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 				expectedCost := models.Cost{
 					Description:             tc.description,
@@ -271,7 +268,6 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				So(paymentDetails.Status, ShouldEqual, "paid")
 				So(paymentDetails.CustomerCode, ShouldEqual, "12345678")
 				So(paymentDetails.Items[0], ShouldResemble, expectedCost)
-				So(responseType, ShouldEqual, services.Success)
 				So(err, ShouldBeNil)
 			})
 		}

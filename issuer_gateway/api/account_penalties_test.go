@@ -294,6 +294,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 	})
 
 	Convey("cache updated and penalties returned when stale transactions in cache (PayableStatus = OPEN)", t, func() {
+		// should default to 24h when empty string passed
+		cfg.AccountPenaltiesTTL = ""
 		accountPenalties, transactionsResponse := createData(false, true)
 
 		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
@@ -314,6 +316,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 	})
 
 	Convey("cache updated and penalties returned when stale transactions in cache (PayableStatus = CLOSED)", t, func() {
+		// should default to 24h when unparsable value passed
+		cfg.AccountPenaltiesTTL = "24hhn"
 		accountPenalties, transactionsResponse := createData(true, true)
 
 		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
