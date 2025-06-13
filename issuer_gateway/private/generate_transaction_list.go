@@ -45,7 +45,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 func buildTransactionListItemFromAccountPenalty(e5Transaction *models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap,
 	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string, closedAt *time.Time,
 	e5Transactions []models.AccountPenaltiesDataDao) (models.TransactionListItem, error) {
-	etag, err := utils.GenerateEtag()
+	etag, err := etagGenerator()
 	if err != nil {
 		err = fmt.Errorf("error generating etag: [%v]", err)
 		log.Error(err)

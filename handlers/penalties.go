@@ -51,7 +51,6 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 				m := models.NewMessageResponse("failed to read finance transactions")
 				utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 				return
-			case services.Error:
 			default:
 				m := models.NewMessageResponse("there was a problem communicating with the finance backend")
 				utils.WriteJSONWithStatus(w, req, m, http.StatusInternalServerError)

@@ -19,6 +19,7 @@ import (
 )
 
 var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
+var payablePenalty = api.PayablePenalty
 
 // CreatePayableResourceHandler takes a http requests and creates a new payable resource
 func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
@@ -40,7 +41,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		// Ensure that the transactions in the request are valid payable penalties that exist in E5
 		var payablePenalties []models.TransactionItem
 		for _, transaction := range request.Transactions {
-			payablePenalty, err := api.PayablePenalty(penaltyRefType, request.CustomerCode, companyCode,
+			payablePenalty, err := payablePenalty(penaltyRefType, request.CustomerCode, companyCode,
 				transaction, penaltyDetailsMap, allowedTransactionMap, apDaoSvc)
 			if err != nil {
 				log.ErrorR(r, fmt.Errorf("invalid request - failed matching against e5"))

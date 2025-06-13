@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,22 @@ import (
 )
 
 func TestUnitPayableResourceRequestToDB(t *testing.T) {
+	Convey("error when etag generator fails", t, func() {
+		mockedEtagGenerator := func() (string, error) {
+			return "", errors.New("error generating etag")
+		}
+		etagGenerator = mockedEtagGenerator
+
+		req := &models.PayableRequest{
+			Transactions: []models.TransactionItem{
+				{PenaltyRef: "123"},
+			},
+		}
+		dao := PayableResourceRequestToDB(req)
+
+		So(dao.PayableRef, ShouldHaveLength, 10)
+	})
+
 	Convey("reference number is generated", t, func() {
 		req := &models.PayableRequest{
 			Transactions: []models.TransactionItem{

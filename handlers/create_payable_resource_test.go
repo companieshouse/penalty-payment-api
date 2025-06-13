@@ -415,6 +415,51 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 	})
 }
 
+func TestUnitCreatePayableResourceHandler_MockedPayablePenalty(t *testing.T) {
+	err := os.Chdir("..")
+	if err != nil {
+		return
+	}
+	cfg, _ := config.Get()
+	cfg.E5APIURL = "https://e5"
+	cfg.E5Username = "SYSTEM"
+
+	url := "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" + utils.LateFilingPenaltyCompanyCode + "&fromDate=1990-01-01"
+
+	Convey("Error getting account penalties", t, func() {
+		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenaltyCompanyCode)
+
+		httpmock.Activate()
+		mockCtrl := gomock.NewController(t)
+		defer httpmock.DeactivateAndReset()
+		defer mockCtrl.Finish()
+
+		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseMultipleTx))
+		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
+
+		mockedPayablePenalty := func(penaltyRefType, customerCode, companyCode string, transaction models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
+			allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionItem, error) {
+			return nil, errors.New("error")
+		}
+
+		payablePenalty = mockedPayablePenalty
+
+		body, _ := json.Marshal(&models.PayableRequest{
+			CustomerCode: "10000024",
+			CreatedBy:    authentication.AuthUserDetails{},
+			Transactions: []models.TransactionItem{
+				{PenaltyRef: "A1234567", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
+				{PenaltyRef: "A0378421", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
+			},
+		})
+
+		res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true)
+
+		So(res.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
 func setGetCompanyCodeFromTransactionMock(companyCode string) {
 	mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
 		return companyCode, nil

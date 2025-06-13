@@ -86,6 +86,22 @@ var validLFPTransaction = models.AccountPenaltiesDataDao{
 	AccountStatus:        CHSAccountStatus,
 	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 }
+var validLFPUnpaidCostsTransaction = models.AccountPenaltiesDataDao{
+	CompanyCode:          utils.LateFilingPenaltyCompanyCode,
+	LedgerCode:           "EW",
+	CustomerCode:         "12345678",
+	TransactionReference: "F1",
+	TransactionDate:      "2025-02-25",
+	MadeUpDate:           "2025-02-12",
+	Amount:               250,
+	OutstandingAmount:    250,
+	IsPaid:               false,
+	TransactionType:      "2",
+	TransactionSubType:   "EU",
+	DueDate:              "2025-03-26",
+	AccountStatus:        CHSAccountStatus,
+	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
+}
 var e5TransactionsResponseValidSanctions = models.AccountPenaltiesDao{
 	CustomerCode: "12345678",
 	CompanyCode:  utils.SanctionsCompanyCode,
@@ -102,18 +118,110 @@ var e5TransactionsResponseValidLFPTransaction = models.AccountPenaltiesDao{
 		validLFPTransaction,
 	},
 }
+var e5TransactionsResponseValidLFPWithUnpaidCostsTransaction = models.AccountPenaltiesDao{
+	CustomerCode: "12345678",
+	CompanyCode:  utils.LateFilingPenaltyCompanyCode,
+	CreatedAt:    &now,
+	AccountPenalties: []models.AccountPenaltiesDataDao{
+		validLFPTransaction,
+		validLFPUnpaidCostsTransaction,
+	},
+}
 
 func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
-	Convey("error when etag generator fails", t, func() {
-		errorGeneratingEtag := errors.New("error generating etag")
-		etagGenerator = func() (string, error) {
-			return "", errorGeneratingEtag
+	Convey("error when first etag generator fails", t, func() {
+		mockedEtagGenerator := func() (string, error) {
+			return "", errors.New("error generating etag")
 		}
+		etagGenerator = mockedEtagGenerator
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
 			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap)
-		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
+	})
+
+	Convey("error when first etag generator succeeds but second etag generator fails", t, func() {
+		callCount := 0
+		mockedEtagGenerator := func() (string, error) {
+			callCount++
+			if callCount == 2 {
+				return "", errors.New("error generating etag")
+			}
+			return "ABCDE", nil
+		}
+
+		etagGenerator = mockedEtagGenerator
+
+		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
+		transactionList, err := GenerateTransactionListFromAccountPenalties(
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap)
+		So(err.Error(), ShouldStartWith, "error generating etag")
+		So(transactionList, ShouldBeNil)
+	})
+
+	Convey("penalty list successfully generated from E5 response - unpaid costs", t, func() {
+		mockedEtagGenerator := func() (string, error) {
+			return "ABCDE", nil
+		}
+		etagGenerator = mockedEtagGenerator
+
+		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
+		transactionList, err := GenerateTransactionListFromAccountPenalties(
+			&e5TransactionsResponseValidLFPWithUnpaidCostsTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap)
+		So(err, ShouldBeNil)
+		So(transactionList, ShouldNotBeNil)
+		transactionListItems := transactionList.Items
+		So(len(transactionListItems), ShouldEqual, 2)
+		transactionListItem := transactionListItems[0]
+		expected := models.TransactionListItem{
+			ID:              "A1234567",
+			Etag:            transactionListItem.Etag,
+			Kind:            "late-filing-penalty#late-filing-penalty",
+			IsPaid:          false,
+			IsDCA:           false,
+			DueDate:         "2025-03-26",
+			MadeUpDate:      "2025-02-12",
+			TransactionDate: "2025-02-25",
+			OriginalAmount:  250,
+			Outstanding:     250,
+			Type:            "penalty",
+			Reason:          LateFilingPenaltyReason,
+			PayableStatus:   ClosedPayableStatus,
+		}
+		So(transactionListItem, ShouldResemble, expected)
+	})
+
+	Convey("penalty list successfully generated from E5 response - penalty type EU", t, func() {
+		mockedEtagGenerator := func() (string, error) {
+			return "ABCDE", nil
+		}
+		etagGenerator = mockedEtagGenerator
+
+		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
+		transactionList, err := GenerateTransactionListFromAccountPenalties(
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap)
+		So(err, ShouldBeNil)
+		So(transactionList, ShouldNotBeNil)
+		transactionListItems := transactionList.Items
+		So(len(transactionListItems), ShouldEqual, 1)
+		transactionListItem := transactionListItems[0]
+		expected := models.TransactionListItem{
+			ID:              "A1234567",
+			Etag:            transactionListItem.Etag,
+			Kind:            "late-filing-penalty#late-filing-penalty",
+			IsPaid:          false,
+			IsDCA:           false,
+			DueDate:         "2025-03-26",
+			MadeUpDate:      "2025-02-12",
+			TransactionDate: "2025-02-25",
+			OriginalAmount:  250,
+			Outstanding:     250,
+			Type:            "penalty",
+			Reason:          LateFilingPenaltyReason,
+			PayableStatus:   OpenPayableStatus,
+		}
+		So(transactionListItem, ShouldResemble, expected)
 	})
 
 	Convey("penalty list successfully generated from E5 response - penalty type EU", t, func() {
