@@ -30,7 +30,7 @@ var sanctionsPenaltyDetailsMap = &config.PenaltyDetailsMap{
 		},
 	},
 }
-var roePenaltyDetailsMap = &config.PenaltyDetailsMap{
+var sanctionsRoePenaltyDetailsMap = &config.PenaltyDetailsMap{
 	Name: "penalty details",
 	Details: map[string]config.PenaltyDetails{
 		utils.SanctionsCompanyCode: {
@@ -39,8 +39,8 @@ var roePenaltyDetailsMap = &config.PenaltyDetailsMap{
 			ClassOfPayment:     "penalty-sanctions",
 			ResourceKind:       "penalty#sanctions",
 			ProductType:        "penalty-sanctions",
-			EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
-			EmailMsgType:       "penalty_payment_received_email",
+			EmailReceivedAppId: "penalty-payment-api.sanctions_roe_penalty_payment_received_email",
+			EmailMsgType:       "sanctions_roe_penalty_payment_received_email",
 		},
 	},
 }
@@ -85,7 +85,7 @@ var validSanctionsTransaction = models.AccountPenaltiesDataDao{
 	AccountStatus:        CHSAccountStatus,
 	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
 }
-var validRoeTransaction = models.AccountPenaltiesDataDao{
+var validSanctionsRoeFailureToUpdateTransaction = models.AccountPenaltiesDataDao{
 	CompanyCode:          utils.SanctionsCompanyCode,
 	LedgerCode:           "FU",
 	CustomerCode:         "OE123456",
@@ -96,7 +96,7 @@ var validRoeTransaction = models.AccountPenaltiesDataDao{
 	OutstandingAmount:    250,
 	IsPaid:               false,
 	TransactionType:      SanctionsTransactionType,
-	TransactionSubType:   RoeTransactionSubType,
+	TransactionSubType:   SanctionsRoeFailureToUpdateTransactionSubType,
 	TypeDescription:      "Penalty - Failure to Update             ",
 	DueDate:              "2025-03-26",
 	AccountStatus:        CHSAccountStatus,
@@ -131,7 +131,7 @@ var e5TransactionsResponseValidRoe = models.AccountPenaltiesDao{
 	CompanyCode:  utils.SanctionsCompanyCode,
 	CreatedAt:    &now,
 	AccountPenalties: []models.AccountPenaltiesDataDao{
-		validRoeTransaction,
+		validSanctionsRoeFailureToUpdateTransaction,
 	},
 }
 var e5TransactionsResponseValidLFPTransaction = models.AccountPenaltiesDao{
@@ -291,7 +291,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, roePenaltyDetailsMap, allowedTransactionMap)
+			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -309,7 +309,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			OriginalAmount:  250,
 			Outstanding:     250,
 			Type:            "penalty",
-			Reason:          RoeReason,
+			Reason:          SanctionsRoeFailureToUpdateReason,
 			PayableStatus:   OpenPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
@@ -355,7 +355,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 
 		e5TransactionsResponseValidRoe.AccountPenalties[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, roePenaltyDetailsMap, allowedTransactionMap)
+			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -373,7 +373,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			OriginalAmount:  250,
 			Outstanding:     250,
 			Type:            "penalty",
-			Reason:          RoeReason,
+			Reason:          SanctionsRoeFailureToUpdateReason,
 			PayableStatus:   ClosedPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
@@ -414,9 +414,9 @@ func TestUnit_getReason(t *testing.T) {
 				args: args{penalty: &models.AccountPenaltiesDataDao{
 					CompanyCode:        utils.SanctionsCompanyCode,
 					TransactionType:    SanctionsTransactionType,
-					TransactionSubType: RoeTransactionSubType,
+					TransactionSubType: SanctionsRoeFailureToUpdateTransactionSubType,
 				}},
-				want: RoeReason,
+				want: SanctionsRoeFailureToUpdateReason,
 			},
 			{
 				name: "Penalty",
@@ -1037,7 +1037,7 @@ func createRoePenalty(isPaid bool, outstandingAmount float64, accountStatus, dun
 		OutstandingAmount:    outstandingAmount,
 		IsPaid:               isPaid,
 		TransactionType:      SanctionsTransactionType,
-		TransactionSubType:   RoeTransactionSubType,
+		TransactionSubType:   SanctionsRoeFailureToUpdateTransactionSubType,
 		TypeDescription:      "Penalty - Failure to Update             ",
 		DueDate:              "2025-03-26",
 		AccountStatus:        accountStatus,
