@@ -30,6 +30,20 @@ var sanctionsPenaltyDetailsMap = &config.PenaltyDetailsMap{
 		},
 	},
 }
+var sanctionsRoePenaltyDetailsMap = &config.PenaltyDetailsMap{
+	Name: "penalty details",
+	Details: map[string]config.PenaltyDetails{
+		utils.SanctionsCompanyCode: {
+			Description:        "Overseas Entity Penalty Payment",
+			DescriptionId:      "penalty-sanctions",
+			ClassOfPayment:     "penalty-sanctions",
+			ResourceKind:       "penalty#sanctions",
+			ProductType:        "penalty-sanctions",
+			EmailReceivedAppId: "penalty-payment-api.sanctions_roe_penalty_payment_received_email",
+			EmailMsgType:       "sanctions_roe_penalty_payment_received_email",
+		},
+	},
+}
 var lfpPenaltyDetailsMap = &config.PenaltyDetailsMap{
 	Name: "penalty details",
 	Details: map[string]config.PenaltyDetails{
@@ -50,6 +64,7 @@ var allowedTransactionMap = &models.AllowedTransactionMap{
 			"EJ": true,
 			"EU": true,
 			"S1": true,
+			"A2": true,
 		},
 	},
 }
@@ -66,6 +81,23 @@ var validSanctionsTransaction = models.AccountPenaltiesDataDao{
 	TransactionType:      SanctionsTransactionType,
 	TransactionSubType:   SanctionsTransactionSubType,
 	TypeDescription:      "CS01                                    ",
+	DueDate:              "2025-03-26",
+	AccountStatus:        CHSAccountStatus,
+	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
+}
+var validSanctionsRoeFailureToUpdateTransaction = models.AccountPenaltiesDataDao{
+	CompanyCode:          utils.SanctionsCompanyCode,
+	LedgerCode:           "FU",
+	CustomerCode:         "OE123456",
+	TransactionReference: "U1234567",
+	TransactionDate:      "2025-02-25",
+	MadeUpDate:           "2025-02-12",
+	Amount:               250,
+	OutstandingAmount:    250,
+	IsPaid:               false,
+	TransactionType:      SanctionsTransactionType,
+	TransactionSubType:   SanctionsRoeFailureToUpdateTransactionSubType,
+	TypeDescription:      "PENU                                    ",
 	DueDate:              "2025-03-26",
 	AccountStatus:        CHSAccountStatus,
 	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
@@ -108,6 +140,14 @@ var e5TransactionsResponseValidSanctions = models.AccountPenaltiesDao{
 	CreatedAt:    &now,
 	AccountPenalties: []models.AccountPenaltiesDataDao{
 		validSanctionsTransaction,
+	},
+}
+var e5TransactionsResponseValidRoe = models.AccountPenaltiesDao{
+	CustomerCode: "OE123456",
+	CompanyCode:  utils.SanctionsCompanyCode,
+	CreatedAt:    &now,
+	AccountPenalties: []models.AccountPenaltiesDataDao{
+		validSanctionsRoeFailureToUpdateTransaction,
 	},
 }
 var e5TransactionsResponseValidLFPTransaction = models.AccountPenaltiesDao{
@@ -352,6 +392,37 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		So(transactionListItem, ShouldResemble, expected)
 	})
 
+	Convey("penalty list successfully generated from E5 response - valid sanctions ROE", t, func() {
+		etag := "ABCDE"
+		etagGenerator = func() (string, error) {
+			return etag, nil
+		}
+
+		transactionList, err := GenerateTransactionListFromAccountPenalties(
+			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap)
+		So(err, ShouldBeNil)
+		So(transactionList, ShouldNotBeNil)
+		transactionListItems := transactionList.Items
+		So(len(transactionListItems), ShouldEqual, 1)
+		transactionListItem := transactionListItems[0]
+		expected := models.TransactionListItem{
+			ID:              "U1234567",
+			Etag:            transactionListItem.Etag,
+			Kind:            "penalty#sanctions",
+			IsPaid:          false,
+			IsDCA:           false,
+			DueDate:         "2025-03-26",
+			MadeUpDate:      "2025-02-12",
+			TransactionDate: "2025-02-25",
+			OriginalAmount:  250,
+			Outstanding:     250,
+			Type:            "penalty",
+			Reason:          SanctionsRoeFailureToUpdateReason,
+			PayableStatus:   OpenPayableStatus,
+		}
+		So(transactionListItem, ShouldResemble, expected)
+	})
+
 	Convey("penalty list successfully generated from E5 response - valid sanctions with dunning status is dca", t, func() {
 		etag := "ABCDE"
 		etagGenerator = func() (string, error) {
@@ -379,6 +450,38 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			Outstanding:     250,
 			Type:            "penalty",
 			Reason:          ConfirmationStatementReason,
+			PayableStatus:   ClosedPayableStatus,
+		}
+		So(transactionListItem, ShouldResemble, expected)
+	})
+
+	Convey("penalty list successfully generated from E5 response - valid sanctions ROE with dunning status is dca", t, func() {
+		etag := "ABCDE"
+		etagGenerator = func() (string, error) {
+			return etag, nil
+		}
+
+		e5TransactionsResponseValidRoe.AccountPenalties[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
+		transactionList, err := GenerateTransactionListFromAccountPenalties(
+			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap)
+		So(err, ShouldBeNil)
+		So(transactionList, ShouldNotBeNil)
+		transactionListItems := transactionList.Items
+		So(len(transactionListItems), ShouldEqual, 1)
+		transactionListItem := transactionListItems[0]
+		expected := models.TransactionListItem{
+			ID:              "U1234567",
+			Etag:            transactionListItem.Etag,
+			Kind:            "penalty#sanctions",
+			IsPaid:          false,
+			IsDCA:           true,
+			DueDate:         "2025-03-26",
+			MadeUpDate:      "2025-02-12",
+			TransactionDate: "2025-02-25",
+			OriginalAmount:  250,
+			Outstanding:     250,
+			Type:            "penalty",
+			Reason:          SanctionsRoeFailureToUpdateReason,
 			PayableStatus:   ClosedPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
@@ -413,6 +516,15 @@ func TestUnit_getReason(t *testing.T) {
 					TypeDescription:    "CS01                                    ",
 				}},
 				want: ConfirmationStatementReason,
+			},
+			{
+				name: "Failure to update the Register of Overseas Entities",
+				args: args{penalty: &models.AccountPenaltiesDataDao{
+					CompanyCode:        utils.SanctionsCompanyCode,
+					TransactionType:    SanctionsTransactionType,
+					TransactionSubType: SanctionsRoeFailureToUpdateTransactionSubType,
+				}},
+				want: SanctionsRoeFailureToUpdateReason,
 			},
 			{
 				name: "Penalty",
@@ -789,6 +901,162 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			})
 		}
 	})
+
+	Convey("Get open payable status for sanctions ROE", t, func() {
+		type args struct {
+			penalty *models.AccountPenaltiesDataDao
+		}
+		testCases := []struct {
+			name string
+			args args
+			want string
+		}{
+			{
+				name: "Sanctions ROE (valid)",
+				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount and not paid",
+				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid and account on hold",
+				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is dca, dunning status is pen1",
+				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is dca, dunning status is pen2",
+				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is chs, dunning status is pen1",
+				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is chs, dunning status is pen2",
+				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is hld, dunning status is pen1",
+				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+				want: OpenPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is hld, dunning status is pen2",
+				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
+				want: OpenPayableStatus,
+			},
+		}
+		for _, tc := range testCases {
+			Convey(tc.name, func() {
+				penalty := tc.args.penalty
+				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap)
+
+				So(got, ShouldEqual, tc.want)
+			})
+		}
+	})
+
+	Convey("Get closed payable status for sanctions ROE", t, func() {
+		type args struct {
+			penalty *models.AccountPenaltiesDataDao
+		}
+		testCases := []struct {
+			name string
+			args args
+			want string
+		}{
+			{
+				name: "Sanctions ROE with outstanding amount is 0 and is paid (valid)",
+				args: args{penalty: createRoePenalty(true, 0, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount less than 0 and is paid",
+				args: args{penalty: createRoePenalty(true, -250, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status and dunning status is dca",
+				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+					addTrailingSpacesToDunningStatus(DCADunningStatus))},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account not dca and dunning status is dca",
+				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus(DCADunningStatus))},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is dca, dunning status is pen3",
+				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is chs, dunning status is pen3",
+				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is hld, dunning status is pen3",
+				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is wdr, dunning status is pen1",
+				args: args{penalty: createRoePenalty(false, 250, WDRAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is wdr, dunning status is pen2",
+				args: args{penalty: createRoePenalty(false, 250, WDRAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is wdr, dunning status is pen3",
+				args: args{penalty: createRoePenalty(false, 250, WDRAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
+				want: ClosedPayableStatus,
+			},
+		}
+		for _, tc := range testCases {
+			Convey(tc.name, func() {
+				penalty := tc.args.penalty
+				closedAt := &yesterday
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap)
+
+				So(got, ShouldEqual, tc.want)
+			})
+		}
+	})
+
 	Convey("Get closed pending allocation payable status for penalty", t, func() {
 		type args struct {
 			penalty *models.AccountPenaltiesDataDao
@@ -805,6 +1073,11 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			{
 				name: "Sanctions penalty paid today",
 				args: args{penalty: createSanctionsPenalty(true, 250, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+			},
+			{
+				name: "Sanctions ROE penalty paid today",
+				args: args{penalty: createRoePenalty(true, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 			},
 		}
@@ -854,6 +1127,26 @@ func createSanctionsPenalty(isPaid bool, outstandingAmount float64, accountStatu
 		TransactionType:      SanctionsTransactionType,
 		TransactionSubType:   SanctionsTransactionSubType,
 		TypeDescription:      "CS01                                    ",
+		DueDate:              "2025-03-26",
+		AccountStatus:        accountStatus,
+		DunningStatus:        dunningStatus,
+	}
+}
+
+func createRoePenalty(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
+	return &models.AccountPenaltiesDataDao{
+		CompanyCode:          utils.SanctionsCompanyCode,
+		LedgerCode:           "FU",
+		CustomerCode:         "OE123456",
+		TransactionReference: "U1234567",
+		TransactionDate:      "2025-02-25",
+		MadeUpDate:           "2025-02-12",
+		Amount:               250,
+		OutstandingAmount:    outstandingAmount,
+		IsPaid:               isPaid,
+		TransactionType:      SanctionsTransactionType,
+		TransactionSubType:   SanctionsRoeFailureToUpdateTransactionSubType,
+		TypeDescription:      "PENU                                    ",
 		DueDate:              "2025-03-26",
 		AccountStatus:        accountStatus,
 		DunningStatus:        dunningStatus,
