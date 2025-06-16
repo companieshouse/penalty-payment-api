@@ -125,10 +125,13 @@ const (
 	HLDAccountStatus = "HLD"
 	WDRAccountStatus = "WDR"
 
-	DCADunningStatus  = "DCA"
-	PEN1DunningStatus = "PEN1"
-	PEN2DunningStatus = "PEN2"
-	PEN3DunningStatus = "PEN3"
+	DCADunningStatus   = "DCA"
+	PEN1DunningStatus  = "PEN1"
+	PEN2DunningStatus  = "PEN2"
+	PEN3DunningStatus  = "PEN3"
+	IPEN1DunningStatus = "IPEN1"
+	IPEN2DunningStatus = "IPEN2"
+	IPEN3DunningStatus = "IPEN3"
 )
 
 func getPayableStatus(transactionType string, e5Transaction *models.AccountPenaltiesDataDao, closedAt *time.Time,
