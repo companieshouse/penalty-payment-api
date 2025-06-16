@@ -723,18 +723,19 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is IPEN1",
 				args: args{penalty: createLateFilingPenalty(false, 150, CHSAccountStatus,
-					addTrailingSpacesToDunningStatus(IPEN1DunningStatus))},
+					addTrailingSpacesToDunningStatus("IPEN1"))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is HLD, dunning status is IPEN2",
 				args: args{penalty: createLateFilingPenalty(false, 150, HLDAccountStatus,
-					addTrailingSpacesToDunningStatus(IPEN2DunningStatus))},
+					addTrailingSpacesToDunningStatus("IPEN2"))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is CAN",
-				args: args{penalty: createLateFilingPenalty(false, 150, CHSAccountStatus, "CAN")},
+				args: args{penalty: createLateFilingPenalty(false, 150, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus("CAN"))},
 				want: ClosedPayableStatus,
 			},
 		}
@@ -1050,19 +1051,19 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is dca, dunning status is ipen1",
 				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
-					addTrailingSpacesToDunningStatus(IPEN1DunningStatus))},
+					addTrailingSpacesToDunningStatus("IPEN1"))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is chs, dunning status is ipen2",
 				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
-					addTrailingSpacesToDunningStatus(IPEN2DunningStatus))},
+					addTrailingSpacesToDunningStatus("IPEN2"))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is hld, dunning status is ipen3",
 				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
-					addTrailingSpacesToDunningStatus(IPEN3DunningStatus))},
+					addTrailingSpacesToDunningStatus("IPEN3"))},
 				want: ClosedPayableStatus,
 			},
 		}
