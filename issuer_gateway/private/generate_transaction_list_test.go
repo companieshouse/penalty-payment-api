@@ -1045,6 +1045,24 @@ func TestUnit_getPayableStatus(t *testing.T) {
 					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: ClosedPayableStatus,
 			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is dca, dunning status is ipen1",
+				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+					"IPEN1")},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is chs, dunning status is ipen2",
+				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+					"IPEN2")},
+				want: ClosedPayableStatus,
+			},
+			{
+				name: "Sanctions ROE with outstanding amount, not paid, account status is hld, dunning status is ipen3",
+				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+					"IPEN3")},
+				want: ClosedPayableStatus,
+			},
 		}
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
