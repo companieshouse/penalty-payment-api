@@ -133,7 +133,7 @@ func PayableResourceToPaymentDetails(payable *models.PayableResource,
 		PaidAt:           payable.Payment.PaidAt,
 		PaymentReference: payable.Payment.Reference,
 		Status:           payable.Payment.Status,
-		CustomerCode:     payable.CustomerCode,
+		CompanyNumber:    payable.CustomerCode,
 		Items:            costs,
 	}
 	return &payment

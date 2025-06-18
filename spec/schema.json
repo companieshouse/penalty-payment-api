@@ -543,7 +543,8 @@
         "kind",
         "links",
         "items",
-        "status"
+        "status",
+        "company_number"
       ],
       "title": "PaymentDetails",
       "properties": {
@@ -596,6 +597,11 @@
             "failed",
             "pending"
           ]
+        },
+        "company_number": {
+          "type": "string",
+          "description": "The Company Number payment metadata.",
+          "readOnly": true
         }
       }
     },
