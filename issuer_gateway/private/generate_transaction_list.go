@@ -151,7 +151,8 @@ func getPayableStatus(transactionType string, e5Transaction *models.AccountPenal
 func checkClosedPayableStatus(penalty *models.AccountPenaltiesDataDao, closedAt *time.Time,
 	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap) (payableStatus string, isClosed bool) {
 	if (penalty.IsPaid && closedAt != nil) &&
-		penaltyPaidToday(closedAt) {
+		penaltyPaidToday(closedAt) &&
+		!penaltyPaymentAllocated(penalty) {
 		return ClosedPendingAllocationPayableStatus, true
 	}
 
@@ -196,4 +197,10 @@ func penaltyPaidToday(closedAt *time.Time) bool {
 
 func checkDunningStatus(transaction *models.AccountPenaltiesDataDao, dunningStatus string) bool {
 	return strings.TrimSpace(transaction.DunningStatus) == dunningStatus
+}
+
+func penaltyPaymentAllocated(penalty *models.AccountPenaltiesDataDao) bool {
+	// The value of outstanding amount is 0 after penalty payment is allocated in E5
+	// and AccountPenalties cache is updated with E5 data
+	return penalty.OutstandingAmount == 0
 }
