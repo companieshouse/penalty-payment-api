@@ -232,17 +232,10 @@ func TestUnitAccountPenalties(t *testing.T) {
 	})
 
 	Convey("penalties returned when valid transactions returned from cache (payableStatus = OPEN)", t, func() {
-		accountPenalties, transactionsResponse := createData(false, false)
+		accountPenalties, _ := createData(false, false)
 
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
-
-		mockedGetTransactions := func(customerCode string, companyCode string,
-			client *e5.Client) (*e5.GetTransactionsResponse, error) {
-			return &transactionsResponse, nil
-		}
-
-		getTransactions = mockedGetTransactions
 
 		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
 			penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
@@ -254,17 +247,11 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 	Convey("penalties returned when valid transactions returned from cache (payableStatus = CLOSED_PENDING_ALLOCATION)", t, func() {
 
-		accountPenalties, transactionsResponse := createData(true, false)
+		accountPenalties, _ := createData(true, false)
+		accountPenalties.AccountPenalties[0].OutstandingAmount = 250.0
 
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
-
-		mockedGetTransactions := func(customerCode string, companyCode string,
-			client *e5.Client) (*e5.GetTransactionsResponse, error) {
-			return &transactionsResponse, nil
-		}
-
-		getTransactions = mockedGetTransactions
 
 		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
 			penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
@@ -319,12 +306,12 @@ func TestUnitAccountPenalties(t *testing.T) {
 		// should default to 24h when unparsable value passed
 		cfg.AccountPenaltiesTTL = "24hhn"
 		accountPenalties, transactionsResponse := createData(true, true)
+		accountPenalties.AccountPenalties[0].OutstandingAmount = 250.0
 
 		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
 		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(nil)
 
-		e5TransactionsResponse.Transactions[0].IsPaid = true
 		getTransactions = func(customerCode string, companyCode string,
 			client *e5.Client) (*e5.GetTransactionsResponse, error) {
 			return &transactionsResponse, nil
