@@ -244,7 +244,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				So(response.Links.Self, ShouldEqual, payable.Links.Payment)
 				So(response.Links.Resource, ShouldEqual, payable.Links.Self)
 				So(response.Status, ShouldEqual, payable.Payment.Status)
-				So(response.CustomerCode, ShouldEqual, payable.CustomerCode)
+				So(response.CompanyNumber, ShouldEqual, payable.CustomerCode)
 				So(len(response.Items), ShouldEqual, 1)
 				So(response.Items[0].Amount, ShouldEqual, fmt.Sprintf("%g", payable.Transactions[0].Amount))
 				So(response.Items[0].AvailablePaymentMethods, ShouldResemble, []string{"credit-card"})
