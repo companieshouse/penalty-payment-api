@@ -1,0 +1,13 @@
+#!/bin/sh
+
+mkdir -m 0600 ~/.ssh
+ssh-keyscan github.com >> ~/.ssh/known_hosts
+echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+chmod 600 ~/.ssh/id_rsa
+ssh-keygen -p -f ~/.ssh/id_rsa -P "${SSH_PRIVATE_KEY_PASSPHRASE}" -N ""
+
+go mod download
+
+go fmt ./...
+
+go build -o /build/out/app

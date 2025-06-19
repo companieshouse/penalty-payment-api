@@ -18,14 +18,14 @@ type PaymentDetailsService struct {
 
 // GetPaymentDetailsFromPayableResource transforms a PayableResource into its corresponding Payment details resource
 func (service *PaymentDetailsService) GetPaymentDetailsFromPayableResource(req *http.Request,
-	payable *models.PayableResource, penaltyDetails config.PenaltyDetails) (*models.PaymentDetails, services.ResponseType, error) {
+	payable *models.PayableResource, penaltyDetails config.PenaltyDetails) (*models.PaymentDetails, error) {
 	paymentDetails := transformers.PayableResourceToPaymentDetails(payable, penaltyDetails)
 
 	if len(paymentDetails.Items) == 0 {
 		err := fmt.Errorf("no items in payment details transformed from payable resource [%s]", payable.PayableRef)
 		log.ErrorR(req, err, log.Data{"customer_code": payable.CustomerCode, "payable_ref": payable.PayableRef,
 			"payable_transactions": payable.Transactions})
-		return nil, services.InvalidData, err
+		return nil, err
 	}
-	return paymentDetails, services.Success, nil
+	return paymentDetails, nil
 }

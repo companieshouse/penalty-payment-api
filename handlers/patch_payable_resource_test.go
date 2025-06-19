@@ -49,6 +49,7 @@ var allowedTransactionsMap = &models.AllowedTransactionMap{
 			"EJ": true,
 			"EU": true,
 			"S1": true,
+			"A2": true,
 		},
 	},
 }
@@ -107,7 +108,7 @@ func mockSendEmailKafkaMessage(payableResource models.PayableResource, req *http
 }
 
 func mockedGetCompanyCodeFromTransaction(transactions []models.TransactionItem) (string, error) {
-	return utils.LateFilingPenalty, nil
+	return utils.LateFilingPenaltyCompanyCode, nil
 }
 
 func mockedGetCompanyCodeFromTransactionError(transactions []models.TransactionItem) (string, error) {
@@ -132,6 +133,32 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			So(res.Code, ShouldEqual, http.StatusBadRequest)
 			So(body.Message, ShouldEqual, "the request contained insufficient data and/or failed validation")
+		})
+
+		Convey("error decoding request body json", func() {
+			defer httpmock.Reset()
+
+			httpmock.RegisterResponder(
+				http.MethodGet,
+				"/payments/123",
+				httpmock.NewStringResponder(404, ""),
+			)
+
+			model := &models.PayableResource{PayableRef: "123"}
+			ctx := context.WithValue(context.Background(), config.PayableResource, model)
+
+			payableResourceService := &services.PayableResourceService{}
+
+			ctx = context.WithValue(ctx, httpsession.ContextKeySession, &session.Session{})
+
+			h := PayResourceHandler(payableResourceService, e5.NewClient("foo", "e5api"),
+				penaltyDetailsMap, allowedTransactionsMap, nil)
+			req := httptest.NewRequest(http.MethodPost, "/", nil).WithContext(ctx)
+			res := httptest.NewRecorder()
+
+			h.ServeHTTP(res, req.WithContext(ctx))
+
+			So(res.Code, ShouldEqual, http.StatusBadRequest)
 		})
 
 		Convey("bad responses from payment api", func() {
@@ -184,7 +211,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 		Convey("problem with sending confirmation email", func() {
 			mockedGetCompanyCode := func(penaltyReference string) (string, error) {
-				return utils.LateFilingPenalty, nil
+				return utils.LateFilingPenaltyCompanyCode, nil
 			}
 
 			getCompanyCode = mockedGetCompanyCode
@@ -238,7 +265,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 		Convey("Penalty has already been paid", func() {
 			mockedGetCompanyCode := func(penaltyReference string) (string, error) {
-				return utils.LateFilingPenalty, nil
+				return utils.LateFilingPenaltyCompanyCode, nil
 			}
 
 			getCompanyCode = mockedGetCompanyCode

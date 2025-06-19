@@ -45,7 +45,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 func buildTransactionListItemFromAccountPenalty(e5Transaction *models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap,
 	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string, closedAt *time.Time,
 	e5Transactions []models.AccountPenaltiesDataDao) (models.TransactionListItem, error) {
-	etag, err := utils.GenerateEtag()
+	etag, err := etagGenerator()
 	if err != nil {
 		err = fmt.Errorf("error generating etag: [%v]", err)
 		log.Error(err)
@@ -84,27 +84,37 @@ func getTransactionType(e5Transaction *models.AccountPenaltiesDataDao, allowedTr
 }
 
 func getReason(transaction *models.AccountPenaltiesDataDao) string {
-	if transaction.CompanyCode == utils.LateFilingPenalty {
+	switch transaction.CompanyCode {
+	case utils.LateFilingPenaltyCompanyCode:
 		return LateFilingPenaltyReason
-	} else if transaction.CompanyCode == utils.Sanctions && checkSanctionsTypeDescription(transaction, CS01TypeDescription) {
-		return ConfirmationStatementReason
+	case utils.SanctionsCompanyCode:
+		return getSanctionsReason(transaction)
+	default:
+		return PenaltyReason
 	}
-	return PenaltyReason
 }
 
-func checkSanctionsTypeDescription(transaction *models.AccountPenaltiesDataDao, typeDescription string) bool {
-	return (transaction.TransactionType == SanctionsTransactionType && transaction.TransactionSubType == SanctionsTransactionSubType) &&
-		strings.TrimSpace(transaction.TypeDescription) == typeDescription
+func getSanctionsReason(transaction *models.AccountPenaltiesDataDao) string {
+	if transaction.TransactionSubType == SanctionsTransactionSubType &&
+		strings.TrimSpace(transaction.TypeDescription) == CS01TypeDescription {
+		return ConfirmationStatementReason
+	} else if transaction.TransactionSubType == SanctionsRoeFailureToUpdateTransactionSubType {
+		return SanctionsRoeFailureToUpdateReason
+	} else {
+		return PenaltyReason
+	}
 }
 
 const (
-	SanctionsTransactionType    = "1"
-	SanctionsTransactionSubType = "S1"
-	CS01TypeDescription         = "CS01"
+	SanctionsTransactionType                      = "1"
+	SanctionsTransactionSubType                   = "S1"
+	SanctionsRoeFailureToUpdateTransactionSubType = "A2"
+	CS01TypeDescription                           = "CS01"
 
-	LateFilingPenaltyReason     = "Late filing of accounts"
-	ConfirmationStatementReason = "Failure to file a confirmation statement"
-	PenaltyReason               = "Penalty"
+	LateFilingPenaltyReason           = "Late filing of accounts"
+	ConfirmationStatementReason       = "Failure to file a confirmation statement"
+	SanctionsRoeFailureToUpdateReason = "Failure to update the Register of Overseas Entities"
+	PenaltyReason                     = "Penalty"
 
 	OpenPayableStatus                    = "OPEN"
 	ClosedPayableStatus                  = "CLOSED"
@@ -141,7 +151,8 @@ func getPayableStatus(transactionType string, e5Transaction *models.AccountPenal
 func checkClosedPayableStatus(penalty *models.AccountPenaltiesDataDao, closedAt *time.Time,
 	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap) (payableStatus string, isClosed bool) {
 	if (penalty.IsPaid && closedAt != nil) &&
-		penaltyPaidToday(closedAt) {
+		penaltyPaidToday(closedAt) &&
+		!penaltyPaymentAllocated(penalty) {
 		return ClosedPendingAllocationPayableStatus, true
 	}
 
@@ -165,11 +176,11 @@ func getUnpaidCosts(penalty *models.AccountPenaltiesDataDao, e5Transactions []mo
 }
 
 func checkOpenPayableStatus(penalty *models.AccountPenaltiesDataDao) (payableStatus string, isOpen bool) {
-	if penalty.CompanyCode == utils.LateFilingPenalty &&
+	if penalty.CompanyCode == utils.LateFilingPenaltyCompanyCode &&
 		(checkDunningStatus(penalty, PEN1DunningStatus) || checkDunningStatus(penalty, PEN2DunningStatus) || checkDunningStatus(penalty, PEN3DunningStatus)) &&
 		(penalty.AccountStatus == CHSAccountStatus || penalty.AccountStatus == DCAAccountStatus || penalty.AccountStatus == HLDAccountStatus || penalty.AccountStatus == WDRAccountStatus) {
 		return OpenPayableStatus, true
-	} else if penalty.CompanyCode == utils.Sanctions &&
+	} else if penalty.CompanyCode == utils.SanctionsCompanyCode &&
 		(checkDunningStatus(penalty, PEN1DunningStatus) || checkDunningStatus(penalty, PEN2DunningStatus)) &&
 		(penalty.AccountStatus == CHSAccountStatus || penalty.AccountStatus == DCAAccountStatus || penalty.AccountStatus == HLDAccountStatus) {
 		return OpenPayableStatus, true
@@ -186,4 +197,10 @@ func penaltyPaidToday(closedAt *time.Time) bool {
 
 func checkDunningStatus(transaction *models.AccountPenaltiesDataDao, dunningStatus string) bool {
 	return strings.TrimSpace(transaction.DunningStatus) == dunningStatus
+}
+
+func penaltyPaymentAllocated(penalty *models.AccountPenaltiesDataDao) bool {
+	// The value of outstanding amount is 0 after penalty payment is allocated in E5
+	// and AccountPenalties cache is updated with E5 data
+	return penalty.OutstandingAmount == 0
 }

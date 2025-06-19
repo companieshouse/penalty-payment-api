@@ -20,7 +20,7 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 	allowedTransactionsMap := &models.AllowedTransactionMap{}
 
 	Convey("Given a request to get penalties", t, func() {
-		mockedAccountPenalties := func(companyNumber string, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
+		mockedAccountPenalties := func(penaltyRefType, companyNumber, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
 			allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
 			if companyNumber == "INVALID_COMPANY" {
 				return nil, services.Error, errors.New("error getting penalties")
@@ -34,8 +34,8 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 			return nil, services.Success, nil
 		}
 
-		mockedGetCompanyCode := func(penaltyReferenceType string) (string, error) {
-			return utils.LateFilingPenalty, nil
+		mockedGetCompanyCode := func(penaltyRefType string) (string, error) {
+			return utils.LateFilingPenaltyCompanyCode, nil
 		}
 
 		testCases := []struct {
@@ -66,7 +66,7 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 		}
 	})
 	Convey("Given a request to get penalties when company code cannot be determined", t, func() {
-		mockedGetCompanyCode := func(penaltyReferenceType string) (string, error) {
+		mockedGetCompanyCode := func(penaltyRefType string) (string, error) {
 			return "", errors.New("cannot determine company code")
 		}
 
@@ -82,5 +82,45 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 		handler.ServeHTTP(rr, req.WithContext(ctx))
 
 		So(rr.Code, ShouldEqual, http.StatusBadRequest)
+	})
+}
+
+func TestUnitHandleGetPenaltyRefType(t *testing.T) {
+	Convey("Get penalty reference type", t, func() {
+		testCases := []struct {
+			name                   string
+			input                  string
+			expectedPenaltyRefType string
+		}{
+			{
+				name:                   "Empty",
+				input:                  "",
+				expectedPenaltyRefType: utils.LateFilingPenRef,
+			},
+			{
+				name:                   "Late Filing",
+				input:                  utils.LateFilingPenRef,
+				expectedPenaltyRefType: utils.LateFilingPenRef,
+			},
+			{
+				name:                   "Sanctions",
+				input:                  utils.SanctionsPenRef,
+				expectedPenaltyRefType: utils.SanctionsPenRef,
+			},
+			{
+				name:                   "Sanctions ROE",
+				input:                  utils.SanctionsRoePenRef,
+				expectedPenaltyRefType: utils.SanctionsRoePenRef,
+			},
+		}
+
+		for _, tc := range testCases {
+			Convey(tc.name, func() {
+				penaltyRefType := GetPenaltyRefType(tc.input)
+				Convey(tc.expectedPenaltyRefType, func() {
+					So(penaltyRefType, ShouldEqual, tc.expectedPenaltyRefType)
+				})
+			})
+		}
 	})
 }

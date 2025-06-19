@@ -20,10 +20,12 @@ type PayableResourceDaoService interface {
 	Shutdown()
 }
 
+var getMongoDB = getMongoDatabase
+
 // NewPayableResourcesDaoService will create a new instance of the PayableResourceDaoService interface. All details about its implementation and the
 // database driver will be hidden from outside of this package
 func NewPayableResourcesDaoService(cfg *config.Config) PayableResourceDaoService {
-	database := getMongoDatabase(cfg.MongoDBURL, cfg.Database)
+	database := getMongoDB(cfg.MongoDBURL, cfg.Database)
 	return &MongoPayableResourceService{
 		db:             database,
 		CollectionName: cfg.PayableResourcesCollection,
@@ -46,7 +48,7 @@ type AccountPenaltiesDaoService interface {
 // NewAccountPenaltiesDaoService will create a new instance of the AccountPenaltiesDaoService interface.
 // All details about its implementation and the  database driver will be hidden from outside of this package
 func NewAccountPenaltiesDaoService(cfg *config.Config) AccountPenaltiesDaoService {
-	database := getMongoDatabase(cfg.MongoDBURL, cfg.Database)
+	database := getMongoDB(cfg.MongoDBURL, cfg.Database)
 	return &MongoAccountPenaltiesService{
 		db:             database,
 		CollectionName: cfg.AccountPenaltiesCollection,

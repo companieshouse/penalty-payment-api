@@ -17,15 +17,13 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	"github.com/jarcoal/httpmock"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func GetTestHandler() http.HandlerFunc {
-	fn := func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
-	return http.HandlerFunc(fn)
 }
 
 func createMockPayableResourceService(mockDAO *mocks.MockPayableResourceDaoService, cfg *config.Config) services.PayableResourceService {
@@ -61,7 +59,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req.Header.Set("Eric-Identity", "authorised_identity")
-		req.Header.Set("Eric-Identity-Type", "oauth2")
+		req.Header.Set("Eric-Identity-Type", authentication.Oauth2IdentityType)
 		req.Header.Set("ERIC-Authorised-User", "test@test.com;test;user")
 		req.Header.Set("ERIC-Authorised-Roles", "noroles")
 
@@ -79,7 +77,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"customer_code": "12345678", "payable_ref": "1234"})
 		req.Header.Set("Eric-Identity", "authorised_identity")
-		req.Header.Set("Eric-Identity-Type", "oauth2")
+		req.Header.Set("Eric-Identity-Type", authentication.Oauth2IdentityType)
 		req.Header.Set("ERIC-Authorised-User", "test@test.com;test;user")
 		req.Header.Set("ERIC-Authorised-Roles", "noroles")
 		// The details have to be in a authUserDetails struct, so pass a different struct to fail
@@ -96,13 +94,36 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		So(w.Code, ShouldEqual, http.StatusInternalServerError)
 	})
 
+	Convey("Payable ref empty", t, func() {
+		path := fmt.Sprintf("/company/12345678/penalties/payable/%s", "1234")
+		req, err := http.NewRequest("GET", path, nil)
+		So(err, ShouldBeNil)
+		req = mux.SetURLVars(req, map[string]string{"customer_code": "12345678", "payable_ref": ""})
+		req.Header.Set("Eric-Identity", "authorised_identity")
+		req.Header.Set("Eric-Identity-Type", authentication.Oauth2IdentityType)
+		req.Header.Set("ERIC-Authorised-User", "test@test.com;test;user")
+		req.Header.Set("ERIC-Authorised-Roles", "noroles")
+		// The details have to be in a authUserDetails struct, so pass a different struct to fail
+		authUserDetails := models.PayableResource{
+			PayableRef: "test",
+		}
+		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
+
+		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockDAOAndService(mockCtrl, cfg)
+
+		w := httptest.NewRecorder()
+		test := payableAuthenticationInterceptor.PayableAuthenticationIntercept(GetTestHandler())
+		test.ServeHTTP(w, req.WithContext(ctx))
+		So(w.Code, ShouldEqual, http.StatusBadRequest)
+	})
+
 	Convey("No authorised identity", t, func() {
 		path := fmt.Sprintf("/company/12345678/penalties/payable/%s", "1234")
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"customer_code": "12345678", "payable_ref": "1234"})
 		req.Header.Set("Eric-Identity", "authorised_identity")
-		req.Header.Set("Eric-Identity-Type", "oauth2")
+		req.Header.Set("Eric-Identity-Type", authentication.Oauth2IdentityType)
 		req.Header.Set("ERIC-Authorised-User", "test@test.com;test;user")
 		req.Header.Set("ERIC-Authorised-Roles", "noroles")
 		// Pass no ID (identity)
@@ -117,13 +138,40 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		So(w.Code, ShouldEqual, http.StatusUnauthorized)
 	})
 
+	Convey("Invalid identity header passed", t, func() {
+		path := fmt.Sprintf("/company/12345678/penalties/payable/%s", "1234")
+		req, _ := http.NewRequest("GET", path, nil)
+		req = mux.SetURLVars(req, map[string]string{"customer_code": "12345678", "payable_ref": "1234"})
+		authUserDetails := authentication.AuthUserDetails{
+			ID: "INVALID",
+		}
+		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
+
+		mockedGetAuthorisedIdentityType := func(r *http.Request) string {
+			return "INVALID"
+		}
+		getAuthorisedIdentityType = mockedGetAuthorisedIdentityType
+
+		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
+		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
+
+		w := httptest.NewRecorder()
+		httpmock.Activate()
+		defer httpmock.DeactivateAndReset()
+
+		test := payableAuthenticationInterceptor.PayableAuthenticationIntercept(GetTestHandler())
+		test.ServeHTTP(w, req.WithContext(ctx))
+		So(w.Code, ShouldEqual, http.StatusUnauthorized)
+	})
+
 	Convey("Payment not found in DB", t, func() {
 		path := fmt.Sprintf("/company/12345678/penalties/payable/%s", "1234")
 		req, err := http.NewRequest("GET", path, nil)
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"customer_code": "12345678", "payable_ref": "1234"})
 		req.Header.Set("Eric-Identity", "identity")
-		req.Header.Set("Eric-Identity-Type", "oauth2")
+		req.Header.Set("Eric-Identity-Type", authentication.Oauth2IdentityType)
 		req.Header.Set("ERIC-Authorised-User", "test@test.com;test;user")
 		req.Header.Set("ERIC-Authorised-Roles", "/admin/payment-lookup")
 		authUserDetails := authentication.AuthUserDetails{
@@ -131,6 +179,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
+		setMockedIdentityHeaderAsValid(authentication.Oauth2IdentityType)
 		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
@@ -152,7 +201,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"customer_code": "12345678", "payable_ref": "1234"})
 		req.Header.Set("Eric-Identity", "identity")
-		req.Header.Set("Eric-Identity-Type", "oauth2")
+		req.Header.Set("Eric-Identity-Type", authentication.Oauth2IdentityType)
 		req.Header.Set("ERIC-Authorised-User", "test@test.com;test;user")
 		req.Header.Set("ERIC-Authorised-Roles", "/admin/payment-lookup")
 		authUserDetails := authentication.AuthUserDetails{
@@ -181,7 +230,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"customer_code": "12345678", "payable_ref": "1234"})
 		req.Header.Set("Eric-Identity", "identity")
-		req.Header.Set("Eric-Identity-Type", "oauth2")
+		req.Header.Set("Eric-Identity-Type", authentication.Oauth2IdentityType)
 		req.Header.Set("ERIC-Authorised-User", "test@test.com;test;user")
 		req.Header.Set("ERIC-Authorised-Roles", "noroles")
 		authUserDetails := authentication.AuthUserDetails{
@@ -189,6 +238,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
+		setMockedIdentityHeaderAsValid(authentication.Oauth2IdentityType)
 		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
@@ -235,7 +285,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"customer_code": "12345678", "payable_ref": "1234"})
 		req.Header.Set("Eric-Identity", "admin")
-		req.Header.Set("Eric-Identity-Type", "oauth2")
+		req.Header.Set("Eric-Identity-Type", authentication.Oauth2IdentityType)
 		req.Header.Set("ERIC-Authorised-User", "test@test.com;test;user")
 		req.Header.Set("ERIC-Authorised-Roles", "/admin/penalty-lookup")
 		authUserDetails := authentication.AuthUserDetails{
@@ -243,6 +293,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
+		setMockedIdentityHeaderAsValid(authentication.Oauth2IdentityType)
 		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
@@ -289,7 +340,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"customer_code": "12345678", "payable_ref": "1234"})
 		req.Header.Set("Eric-Identity", "admin")
-		req.Header.Set("Eric-Identity-Type", "oauth2")
+		req.Header.Set("Eric-Identity-Type", authentication.Oauth2IdentityType)
 		req.Header.Set("ERIC-Authorised-User", "test@test.com;test;user")
 		req.Header.Set("ERIC-Authorised-Roles", "/admin/payment-lookup")
 		authUserDetails := authentication.AuthUserDetails{
@@ -297,6 +348,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		}
 		ctx := context.WithValue(req.Context(), authentication.ContextKeyUserDetails, authUserDetails)
 
+		setMockedIdentityHeaderAsValid(authentication.Oauth2IdentityType)
 		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
@@ -343,9 +395,10 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"customer_code": "12345678", "payable_ref": "1234"})
 		req.Header.Set("Eric-Identity", "api_key")
-		req.Header.Set("Eric-Identity-Type", "key")
+		req.Header.Set("Eric-Identity-Type", authentication.APIKeyIdentityType)
 		req.Header.Set("ERIC-Authorised-Key-Roles", "*")
 
+		setMockedIdentityHeaderAsValid(authentication.APIKeyIdentityType)
 		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
@@ -392,9 +445,10 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		So(err, ShouldBeNil)
 		req = mux.SetURLVars(req, map[string]string{"customer_code": "oc444555", "payable_ref": "1234"})
 		req.Header.Set("Eric-Identity", "api_key")
-		req.Header.Set("Eric-Identity-Type", "key")
+		req.Header.Set("Eric-Identity-Type", authentication.APIKeyIdentityType)
 		req.Header.Set("ERIC-Authorised-Key-Roles", "*")
 
+		setMockedIdentityHeaderAsValid(authentication.APIKeyIdentityType)
 		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
@@ -434,4 +488,11 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		test.ServeHTTP(w, req)
 		So(w.Code, ShouldEqual, http.StatusOK)
 	})
+}
+
+func setMockedIdentityHeaderAsValid(identityType string) {
+	mockedGetAuthorisedIdentityType := func(r *http.Request) string {
+		return identityType
+	}
+	getAuthorisedIdentityType = mockedGetAuthorisedIdentityType
 }

@@ -71,6 +71,7 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 }
 
 var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
+var getPenaltyRefTypeFromTransaction = utils.GetPenaltyRefTypeFromTransaction
 var getCompanyName = GetCompanyName
 var getPayablePenalty = api.PayablePenalty
 
@@ -89,18 +90,24 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
+	// Ensure payableResource contains at least one transaction
+	if payableResource.Transactions == nil || len(payableResource.Transactions) == 0 {
+		err = fmt.Errorf("empty transactions list in payable resource: %v", payableResource.PayableRef)
+		return nil, err
+	}
+
 	companyCode, err := getCompanyCodeFromTransaction(payableResource.Transactions)
 	if err != nil {
 		return nil, err
 	}
 
-	// Ensure payableResource contains at least one transaction
-	if payableResource.Transactions == nil || len(payableResource.Transactions) == 0 {
-		err = fmt.Errorf("empty transactions list in payable resource: %v", payableResource.PayableRef)
+	penaltyRefType, err := getPenaltyRefTypeFromTransaction(payableResource.Transactions)
+	if err != nil {
+		return nil, err
 	}
 
 	transaction := payableResource.Transactions[0]
-	payablePenalty, err := getPayablePenalty(payableResource.CustomerCode, companyCode, transaction,
+	payablePenalty, err := getPayablePenalty(penaltyRefType, payableResource.CustomerCode, companyCode, transaction,
 		penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 	if err != nil {
 		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)
@@ -136,9 +143,9 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	messageID := "<" + payableResource.PayableRef + "." + strconv.Itoa(util.Random(0, 100000)) + "@companieshouse.gov.uk>"
 
 	emailSendMessage := models.EmailSend{
-		AppID:        penaltyDetailsMap.Details[companyCode].EmailReceivedAppId,
+		AppID:        penaltyDetailsMap.Details[penaltyRefType].EmailReceivedAppId,
 		MessageID:    messageID,
-		MessageType:  penaltyDetailsMap.Details[companyCode].EmailMsgType,
+		MessageType:  penaltyDetailsMap.Details[penaltyRefType].EmailMsgType,
 		Data:         string(dataBytes),
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),
