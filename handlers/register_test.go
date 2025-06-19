@@ -19,10 +19,8 @@ func TestUnitRegisterRoutes(t *testing.T) {
 		router := mux.NewRouter()
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
-
-		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
-		Register(router, &config.Config{}, mockPrDaoSvc, mockApDaoSvc, penaltyDetailsMap, allowedTransactionsMap)
+		mockService := mocks.NewMockService(mockCtrl)
+		Register(router, &config.Config{}, mockService, penaltyDetailsMap, allowedTransactionsMap)
 
 		healthCheckPath, _ := router.GetRoute("healthcheck").GetPathTemplate()
 		healthFinanceCheckPath, _ := router.GetRoute("healthcheck-finance-system").GetPathTemplate()
