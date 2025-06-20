@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,22 @@ import (
 )
 
 func TestUnitPayableResourceRequestToDB(t *testing.T) {
+	Convey("error when etag generator fails", t, func() {
+		mockedEtagGenerator := func() (string, error) {
+			return "", errors.New("error generating etag")
+		}
+		etagGenerator = mockedEtagGenerator
+
+		req := &models.PayableRequest{
+			Transactions: []models.TransactionItem{
+				{PenaltyRef: "123"},
+			},
+		}
+		dao := PayableResourceRequestToDB(req)
+
+		So(dao.PayableRef, ShouldHaveLength, 10)
+	})
+
 	Convey("reference number is generated", t, func() {
 		req := &models.PayableRequest{
 			Transactions: []models.TransactionItem{
@@ -136,6 +153,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 			resourceKind          string
 			productType           string
 			companyCode           string
+			penaltyRefType        string
 		}{
 			{
 				description:           "Late Filing Penalty",
@@ -144,7 +162,8 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				descriptionIdentifier: "late-filing-penalty",
 				resourceKind:          "late-filing-penalty#late-filing-penalty",
 				productType:           "late-filing-penalty",
-				companyCode:           utils.LateFilingPenalty,
+				companyCode:           utils.LateFilingPenaltyCompanyCode,
+				penaltyRefType:        utils.LateFilingPenRef,
 			},
 			{
 				description:           "Sanctions Penalty Payment",
@@ -153,11 +172,22 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				descriptionIdentifier: "penalty-sanctions",
 				resourceKind:          "penalty#sanctions",
 				productType:           "penalty-sanctions",
-				companyCode:           utils.Sanctions,
+				companyCode:           utils.SanctionsCompanyCode,
+				penaltyRefType:        utils.SanctionsPenRef,
+			},
+			{
+				description:           "Overseas Entity Penalty Payment",
+				kind:                  "payment-details#payment-details",
+				classOfPayment:        "penalty-sanctions",
+				descriptionIdentifier: "penalty-sanctions",
+				resourceKind:          "penalty#sanctions",
+				productType:           "penalty-sanctions",
+				companyCode:           utils.SanctionsCompanyCode,
+				penaltyRefType:        utils.SanctionsRoePenRef,
 			},
 		}
 		for _, tc := range testCases {
-			Convey(tc.description, func() {
+			Convey(tc.penaltyRefType, func() {
 				t := time.Now().Truncate(time.Millisecond)
 				payable := &models.PayableResource{
 					CustomerCode: "12345678",
@@ -193,7 +223,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				if err != nil {
 					log.Fatal(err)
 				}
-				penaltyDetails := penaltyDetailsMap.Details[tc.companyCode]
+				penaltyDetails := penaltyDetailsMap.Details[tc.penaltyRefType]
 
 				response := PayableResourceToPaymentDetails(payable, penaltyDetails)
 

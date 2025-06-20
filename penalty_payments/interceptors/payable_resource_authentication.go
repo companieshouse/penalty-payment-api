@@ -6,12 +6,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/companieshouse/penalty-payment-api/common/utils"
-
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/gorilla/mux"
 )
@@ -83,6 +82,8 @@ func (payableAuthInterceptor *PayableAuthenticationInterceptor) PayableAuthentic
 	})
 }
 
+var getAuthorisedIdentityType = authentication.GetAuthorisedIdentityType
+
 func preCheckRequest(w http.ResponseWriter, r *http.Request) (string, string, string, bool) {
 	// Check for a customer_code and payable_ref in request
 	vars := mux.Vars(r)
@@ -100,7 +101,7 @@ func preCheckRequest(w http.ResponseWriter, r *http.Request) (string, string, st
 	}
 
 	// Get identity type from request
-	identityType := authentication.GetAuthorisedIdentityType(r)
+	identityType := getAuthorisedIdentityType(r)
 	if isUnauthorizedIdentityType(identityType) {
 		log.InfoR(r, "PayableAuthenticationInterceptor unauthorised: not oauth2 or API key identity type")
 		w.WriteHeader(http.StatusUnauthorized)
