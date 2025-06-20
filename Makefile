@@ -47,10 +47,8 @@ endif
 	$(info Packaging version: $(version))
 	$(eval tmpdir := $(shell mktemp -d build-XXXXXXXXXX))
 	cp ./$(bin) $(tmpdir)
-	cp ./routes.yaml $(tmpdir)
-	cp ./start.sh $(tmpdir)
 	cp -r ./assets  $(tmpdir)/assets
-	cd $(tmpdir) && zip -r ../$(bin)-$(version).zip $(bin) start.sh routes.yaml assets
+	cd $(tmpdir) && zip -r ../$(bin)-$(version).zip $(bin) assets
 	rm -rf $(tmpdir)
 
 .PHONY: dist

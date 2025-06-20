@@ -5,13 +5,15 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/companieshouse/penalty-payment-api/common/utils"
-
 	"github.com/companieshouse/chs.go/avro"
 	"github.com/companieshouse/chs.go/avro/schema"
 	"github.com/companieshouse/chs.go/kafka/producer"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/dao"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/mocks"
+	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -28,6 +30,9 @@ var payableResource = models.PayableResource{
 }
 
 func TestUnitSendEmailKafkaMessage(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	Convey("Given the SendEmailKafkaMessage is called", t, func() {
 		Convey("When config is called with invalid config", func() {
 			errMsg := "config is invalid"
@@ -38,7 +43,7 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 			getConfig = mockedConfigGet
 
 			Convey("Then an error should be returned", func() {
-				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 				So(err, ShouldResemble, errors.New("error getting config for kafka message production: ["+errMsg+"]"))
 			})
@@ -51,7 +56,7 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 			getConfig = mockedConfigGet
 
 			Convey("Then an error should be returned", func() {
-				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 				So(err, ShouldResemble, errors.New("error creating kafka producer: [kafka: invalid configuration (You must provide at least one broker address)]"))
 			})
@@ -68,7 +73,7 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 			getProducer = mockedGetProducer
 
 			Convey("Then an error should be returned", func() {
-				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 				So(err, ShouldResemble, errors.New("error getting schema from schema registry: [Get \"/subjects/email-send/versions/latest\": unsupported protocol scheme \"\"]"))
 			})
@@ -89,7 +94,7 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 			getSchema = mockedGetSchema
 
 			Convey("Then an error should be returned", func() {
-				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 				So(err.Error(), ShouldStartWith, "error preparing kafka message with schema: [error getting company name: [")
 			})
@@ -104,7 +109,17 @@ func setGetCompanyCodeFromTransactionMock(companyCode string) {
 	getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 }
 
+func setGetPenaltyRefTypeFromTransactionMock(penaltyRefType string) {
+	mockedGetPenaltyRefTypeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+		return penaltyRefType, nil
+	}
+	getPenaltyRefTypeFromTransaction = mockedGetPenaltyRefTypeFromTransaction
+}
+
 func TestUnitPrepareKafkaMessage(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	Convey("Given the PrepareKafkaMessage is called", t, func() {
 		emailSendSchema, _ := schema.Get("chs.gov.uk", ProducerSchemaName)
 		producerSchema := avro.Schema{
@@ -118,22 +133,31 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
 		testCases := []struct {
-			name        string
-			companyCode string
+			name           string
+			companyCode    string
+			penaltyRefType string
 		}{
 			{
-				name:        "Late Filing",
-				companyCode: utils.LateFilingPenalty,
+				name:           "Late Filing",
+				companyCode:    utils.LateFilingPenaltyCompanyCode,
+				penaltyRefType: utils.LateFilingPenRef,
 			},
 			{
-				name:        "Sanctions",
-				companyCode: utils.Sanctions,
+				name:           "Sanctions",
+				companyCode:    utils.SanctionsCompanyCode,
+				penaltyRefType: utils.SanctionsPenRef,
+			},
+			{
+				name:           "Sanctions ROE",
+				companyCode:    utils.SanctionsCompanyCode,
+				penaltyRefType: utils.SanctionsRoePenRef,
 			},
 		}
 
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				setGetCompanyCodeFromTransactionMock(tc.companyCode)
+				setGetPenaltyRefTypeFromTransactionMock(tc.penaltyRefType)
 
 				Convey("When config is called with invalid config", func() {
 					errMsg := "config is invalid"
@@ -145,7 +169,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 
 					Convey("Then an error should be returned", func() {
 						_, err := prepareKafkaMessage(
-							producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+							producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 						So(err, ShouldResemble, errors.New("error getting config: ["+errMsg+"]"))
 					})
@@ -154,18 +178,89 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			})
 		}
 
-		Convey("When config is called with valid config and invalid company number", func() {
+		Convey("When config is called with invalid config", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
-
 			getConfig = mockedConfigGet
 
 			Convey("Then an error should be returned", func() {
 				_, err := prepareKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 				So(err.Error(), ShouldStartWith, "error getting company name: [")
+			})
+		})
+		Convey("When config is called with valid config and invalid company code", func() {
+			mockedConfigGet := func() (*config.Config, error) {
+				return &config.Config{}, nil
+			}
+			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
+				return "Brewery", nil
+			}
+
+			mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+				return "", errors.New("error getting company code")
+			}
+			getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
+
+			getConfig = mockedConfigGet
+			getCompanyName = mockedGetCompanyName
+
+			Convey("Then an error should be returned", func() {
+				_, err := prepareKafkaMessage(
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+
+				So(err.Error(), ShouldEqual, "error getting company code")
+			})
+		})
+		Convey("When config is called with valid config and valid company number but invalid penalty ref", func() {
+			mockedConfigGet := func() (*config.Config, error) {
+				return &config.Config{}, nil
+			}
+			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
+				return "Brewery", nil
+			}
+
+			mockedGetPenaltyRefTypeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+				return "", errors.New("error getting penalty ref type")
+			}
+
+			getConfig = mockedConfigGet
+			getCompanyName = mockedGetCompanyName
+			getPenaltyRefTypeFromTransaction = mockedGetPenaltyRefTypeFromTransaction
+
+			Convey("Then an error should be returned", func() {
+				_, err := prepareKafkaMessage(
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+
+				So(err, ShouldResemble, errors.New("error getting penalty ref type"))
+			})
+		})
+		Convey("When config is called with valid config and valid company number but no transaction items", func() {
+			mockedConfigGet := func() (*config.Config, error) {
+				return &config.Config{}, nil
+			}
+			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
+				return "Brewery", nil
+			}
+
+			getConfig = mockedConfigGet
+			getCompanyName = mockedGetCompanyName
+			setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenRef)
+
+			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+
+			Convey("Then an error should be returned", func() {
+				payableResourceNoItems := models.PayableResource{
+					CustomerCode: customerCode,
+					Transactions: []models.TransactionItem{},
+				}
+
+				_, err := prepareKafkaMessage(
+					producerSchema, payableResourceNoItems, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc)
+
+				So(err.Error(), ShouldStartWith, "empty transactions list in payable resource:")
 			})
 		})
 		Convey("When config is called with valid config and valid company number but invalid transaction", func() {
@@ -178,10 +273,15 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 
 			getConfig = mockedConfigGet
 			getCompanyName = mockedGetCompanyName
+			setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenRef)
+
+			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 
 			Convey("Then an error should be returned", func() {
+				mockApDaoSvc.EXPECT().GetAccountPenalties(gomock.Any(), gomock.Any()).Return(nil, nil)
+
 				_, err := prepareKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc)
 
 				So(err.Error(), ShouldStartWith, "error getting transaction for penalty: [")
 			})
@@ -193,8 +293,8 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetPayablePenalty := func(customerCode string, companyCode string, t models.TransactionItem,
-				penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionItem, error) {
+			mockedGetPayablePenalty := func(penaltyRefType, customerCode, companyCode string, t models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
+				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionItem, error) {
 
 				return &models.TransactionItem{PenaltyRef: "A1234567", Reason: "Late filing of accounts"}, nil
 			}
@@ -205,7 +305,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				_, err := prepareKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 				So(err, ShouldResemble, errors.New("error parsing made up date: [parsing time \"\" as \"2006-01-02\": cannot parse \"\" as \"2006\"]"))
 			})
@@ -217,8 +317,8 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetPayablePenalty := func(customerCode string, companyCode string, t models.TransactionItem,
-				penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionItem, error) {
+			mockedGetPayablePenalty := func(penaltyRefType, customerCode, companyCode string, t models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
+				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionItem, error) {
 
 				return &models.TransactionItem{
 					PenaltyRef: "A123567",
@@ -231,7 +331,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			getPayablePenalty = mockedGetPayablePenalty
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
+				_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 				So(err, ShouldResemble, errors.New("error marshalling email send message: [Unknown type name: ]"))
 			})

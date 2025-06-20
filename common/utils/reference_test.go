@@ -24,7 +24,7 @@ func TestUnitGenerateReferenceNumber(t *testing.T) {
 			generated[i] = ref
 		}
 
-		// check for dups by creating a map of string->int and counting the the entry values whilst
+		// check for dups by creating a map of string->int and counting the entry values whilst
 		// iterating through the generated map
 		generatedCheck := make(map[string]int)
 		for _, reference := range generated {
@@ -98,26 +98,25 @@ func TestUnitGetCompanyCode(t *testing.T) {
 		}{
 			{
 				name:          "Late Filing",
-				input:         "LATE_FILING",
-				expectedCode:  LateFilingPenalty,
+				input:         LateFilingPenRef,
+				expectedCode:  LateFilingPenaltyCompanyCode,
 				expectedError: false,
 			},
 			{
 				name:         "Sanctions",
-				input:        "SANCTIONS",
-				expectedCode: Sanctions,
+				input:        SanctionsPenRef,
+				expectedCode: SanctionsCompanyCode,
+			},
+			{
+				name:         "Sanctions ROE",
+				input:        SanctionsRoePenRef,
+				expectedCode: SanctionsCompanyCode,
 			},
 			{
 				name:          "Error invalid penalty reference",
 				input:         "R1234567",
 				expectedCode:  "",
 				expectedError: true,
-			},
-			{
-				name:          "No penalty reference - default to LFP",
-				input:         "",
-				expectedCode:  LateFilingPenalty,
-				expectedError: false,
 			},
 		}
 
@@ -154,7 +153,7 @@ func TestUnitGetCompanyCodeFromTransaction(t *testing.T) {
 						PenaltyRef: "A1000007",
 					},
 				},
-				expectedCode:  LateFilingPenalty,
+				expectedCode:  LateFilingPenaltyCompanyCode,
 				expectedError: false,
 			},
 			{
@@ -164,6 +163,17 @@ func TestUnitGetCompanyCodeFromTransaction(t *testing.T) {
 						Amount:     5,
 						Type:       "penalty",
 						PenaltyRef: "P1000007",
+					},
+				},
+				expectedCode: "C1",
+			},
+			{
+				name: "Sanctions ROE",
+				input: []models.TransactionItem{
+					{
+						Amount:     5,
+						Type:       "penalty",
+						PenaltyRef: "U1000007",
 					},
 				},
 				expectedCode: "C1",
@@ -206,6 +216,91 @@ func TestUnitGetCompanyCodeFromTransaction(t *testing.T) {
 						So(err, ShouldBeNil)
 					}
 					So(companyCode, ShouldEqual, tc.expectedCode)
+				})
+			})
+		}
+	})
+}
+
+func TestUnitGetPenaltyRefTypeFromTransaction(t *testing.T) {
+	Convey("Get Company Code from penalty ref", t, func() {
+		testCases := []struct {
+			name                   string
+			input                  []models.TransactionItem
+			expectedPenaltyRefType string
+			expectedError          bool
+		}{
+			{
+				name: "Late Filing",
+				input: []models.TransactionItem{
+					{
+						Amount:     5,
+						Type:       "penalty",
+						PenaltyRef: "A1000007",
+					},
+				},
+				expectedPenaltyRefType: LateFilingPenRef,
+			},
+			{
+				name: "Sanctions",
+				input: []models.TransactionItem{
+					{
+						Amount:     5,
+						Type:       "penalty",
+						PenaltyRef: "P1000007",
+					},
+				},
+				expectedPenaltyRefType: SanctionsPenRef,
+			},
+			{
+				name: "Sanctions ROE",
+				input: []models.TransactionItem{
+					{
+						Amount:     5,
+						Type:       "penalty",
+						PenaltyRef: "U1000007",
+					},
+				},
+				expectedPenaltyRefType: SanctionsRoePenRef,
+			},
+			{
+				name: "Error unknown penalty reference",
+				input: []models.TransactionItem{
+					{
+						Amount:     5,
+						Type:       "penalty",
+						PenaltyRef: "Q1000007",
+					},
+				},
+				expectedPenaltyRefType: "",
+				expectedError:          true,
+			},
+			{
+				name: "Error no penalty reference",
+				input: []models.TransactionItem{
+					{},
+				},
+				expectedPenaltyRefType: "",
+				expectedError:          true,
+			},
+			{
+				name:                   "Error no transaction present",
+				input:                  []models.TransactionItem{},
+				expectedPenaltyRefType: "",
+				expectedError:          true,
+			},
+		}
+
+		for _, tc := range testCases {
+			Convey(tc.name, func() {
+				penaltyRefType, err := GetPenaltyRefTypeFromTransaction(tc.input)
+				Convey(tc.expectedPenaltyRefType, func() {
+					if tc.expectedError {
+						So(err, ShouldNotBeNil)
+					} else {
+						So(err, ShouldBeNil)
+					}
+					So(penaltyRefType, ShouldEqual, tc.expectedPenaltyRefType)
 				})
 			})
 		}

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	. "github.com/smartystreets/goconvey/convey"
@@ -20,7 +19,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	penaltyDetails := penaltyDetailsMap.Details[utils.LateFilingPenalty]
+	penaltyDetails := penaltyDetailsMap.Details[utils.LateFilingPenaltyCompanyCode]
 
 	Convey("Get payment details no transactions - invalid data", t, func() {
 
@@ -51,10 +50,9 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 		service := &PaymentDetailsService{}
 
-		paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
+		paymentDetails, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 		So(paymentDetails, ShouldBeNil)
-		So(responseType, ShouldEqual, services.InvalidData)
 		So(err, ShouldNotBeNil)
 
 	})
@@ -69,6 +67,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 			resourceKind          string
 			productType           string
 			companyCode           string
+			penaltyRefType        string
 		}{
 			{
 				description:           "Late Filing Penalty",
@@ -77,7 +76,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				descriptionIdentifier: "late-filing-penalty",
 				resourceKind:          "late-filing-penalty#late-filing-penalty",
 				productType:           "late-filing-penalty",
-				companyCode:           utils.LateFilingPenalty,
+				companyCode:           utils.LateFilingPenaltyCompanyCode,
+				penaltyRefType:        utils.LateFilingPenRef,
 			},
 			{
 				description:           "Sanctions Penalty Payment",
@@ -86,11 +86,22 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				descriptionIdentifier: "penalty-sanctions",
 				resourceKind:          "penalty#sanctions",
 				productType:           "penalty-sanctions",
-				companyCode:           utils.Sanctions,
+				companyCode:           utils.SanctionsCompanyCode,
+				penaltyRefType:        utils.SanctionsPenRef,
+			},
+			{
+				description:           "Overseas Entity Penalty Payment",
+				kind:                  "payment-details#payment-details",
+				classOfPayment:        "penalty-sanctions",
+				descriptionIdentifier: "penalty-sanctions",
+				resourceKind:          "penalty#sanctions",
+				productType:           "penalty-sanctions",
+				companyCode:           utils.SanctionsCompanyCode,
+				penaltyRefType:        utils.SanctionsRoePenRef,
 			},
 		}
 		for _, tc := range testCases {
-			Convey(tc.description, func() {
+			Convey(tc.penaltyRefType, func() {
 				path := "/company/12345678/penalties/abcdef/payment"
 				req := httptest.NewRequest(http.MethodGet, path, nil)
 
@@ -124,8 +135,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				service := &PaymentDetailsService{}
 
-				penaltyDetails := penaltyDetailsMap.Details[tc.companyCode]
-				paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
+				penaltyDetails := penaltyDetailsMap.Details[tc.penaltyRefType]
+				paymentDetails, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 				expectedCost := models.Cost{
 					Description:             tc.description,
@@ -147,7 +158,6 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				So(paymentDetails.Status, ShouldEqual, "pending")
 				So(paymentDetails.CompanyNumber, ShouldEqual, "12345678")
 				So(paymentDetails.Items[0], ShouldResemble, expectedCost)
-				So(responseType, ShouldEqual, services.Success)
 				So(err, ShouldBeNil)
 			})
 		}
@@ -164,6 +174,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 			resourceKind          string
 			productType           string
 			companyCode           string
+			penaltyRefType        string
 		}{
 			{
 				description:           "Late Filing Penalty",
@@ -172,7 +183,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				descriptionIdentifier: "late-filing-penalty",
 				resourceKind:          "late-filing-penalty#late-filing-penalty",
 				productType:           "late-filing-penalty",
-				companyCode:           utils.LateFilingPenalty,
+				companyCode:           utils.LateFilingPenaltyCompanyCode,
+				penaltyRefType:        utils.LateFilingPenRef,
 			},
 			{
 				description:           "Sanctions Penalty Payment",
@@ -181,11 +193,22 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				descriptionIdentifier: "penalty-sanctions",
 				resourceKind:          "penalty#sanctions",
 				productType:           "penalty-sanctions",
-				companyCode:           utils.Sanctions,
+				companyCode:           utils.SanctionsCompanyCode,
+				penaltyRefType:        utils.SanctionsPenRef,
+			},
+			{
+				description:           "Overseas Entity Penalty Payment",
+				kind:                  "payment-details#payment-details",
+				classOfPayment:        "penalty-sanctions",
+				descriptionIdentifier: "penalty-sanctions",
+				resourceKind:          "penalty#sanctions",
+				productType:           "penalty-sanctions",
+				companyCode:           utils.SanctionsCompanyCode,
+				penaltyRefType:        utils.SanctionsRoePenRef,
 			},
 		}
 		for _, tc := range testCases {
-			Convey(tc.description, func() {
+			Convey(tc.penaltyRefType, func() {
 				path := "/company/12345678/penalties/abcdef/payment"
 				req := httptest.NewRequest(http.MethodGet, path, nil)
 
@@ -221,8 +244,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				service := &PaymentDetailsService{}
 
-				penaltyDetails := penaltyDetailsMap.Details[tc.companyCode]
-				paymentDetails, responseType, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
+				penaltyDetails := penaltyDetailsMap.Details[tc.penaltyRefType]
+				paymentDetails, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 				expectedCost := models.Cost{
 					Description:             tc.description,
@@ -245,7 +268,6 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				So(paymentDetails.Status, ShouldEqual, "paid")
 				So(paymentDetails.CompanyNumber, ShouldEqual, "12345678")
 				So(paymentDetails.Items[0], ShouldResemble, expectedCost)
-				So(responseType, ShouldEqual, services.Success)
 				So(err, ShouldBeNil)
 			})
 		}

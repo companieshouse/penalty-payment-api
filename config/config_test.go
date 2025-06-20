@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/companieshouse/penalty-payment-api/common/utils"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -43,7 +42,7 @@ func TestUnitLoadPenaltyDetails(t *testing.T) {
 			testYaml := []byte(`
 name: penalty details
 details:
-  LP:
+  LATE_FILING:
     EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email"
 `)
 			tmpFile, err := os.CreateTemp("", "config_*.yaml")
@@ -64,7 +63,7 @@ details:
 			Convey("Then the penalty details should be returned", func() {
 				So(err, ShouldBeNil)
 				So(penaltyDetailsMap.Name, ShouldEqual, "penalty details")
-				So(penaltyDetailsMap.Details[utils.LateFilingPenalty].EmailReceivedAppId, ShouldEqual, "penalty-payment-api.penalty_payment_received_email")
+				So(penaltyDetailsMap.Details[utils.LateFilingPenRef].EmailReceivedAppId, ShouldEqual, "penalty-payment-api.penalty_payment_received_email")
 			})
 		})
 	})
