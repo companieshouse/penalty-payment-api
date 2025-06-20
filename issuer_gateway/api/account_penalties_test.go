@@ -325,6 +325,37 @@ func TestUnitAccountPenalties(t *testing.T) {
 		So(responseType, ShouldEqual, services.Success)
 	})
 
+	Convey("AccountPenalties not cached when E5 returns emtpy transactions for a given company number", t, func() {
+
+		transactionsResponse := e5.GetTransactionsResponse{
+			Page: e5.Page{
+				Size:          0,
+				TotalElements: 0,
+				TotalPages:    0,
+				Number:        0,
+			},
+			Transactions: make([]e5.Transaction, 0),
+		}
+
+		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
+		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
+		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(nil).MaxTimes(0)
+		mockPenaltiesService.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil).MaxTimes(0)
+
+		e5TransactionsResponse.Transactions[0].IsPaid = true
+		getTransactions = func(customerCode string, companyCode string,
+			client *e5.Client) (*e5.GetTransactionsResponse, error) {
+			return &transactionsResponse, nil
+		}
+
+		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
+			penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
+		So(err, ShouldBeNil)
+		So(listResponse, ShouldNotBeNil)
+		So(len(listResponse.Items), ShouldEqual, 0)
+		So(responseType, ShouldEqual, services.Success)
+	})
+
 	Convey("error when transactions cannot be found", t, func() {
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)

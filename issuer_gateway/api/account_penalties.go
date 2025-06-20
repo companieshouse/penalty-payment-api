@@ -41,7 +41,14 @@ func AccountPenalties(penaltyRefType, customerCode, companyCode string,
 			return nil, services.Error, err
 		}
 
-		if accountPenalties == nil {
+		if len(e5Response.Transactions) == 0 {
+			// If company or transactions do not exist in E5, return account penalties with empty transaction list
+			accountPenalties = &models.AccountPenaltiesDao{
+				CustomerCode:     customerCode,
+				CompanyCode:      companyCode,
+				AccountPenalties: make([]models.AccountPenaltiesDataDao, 0),
+			}
+		} else if accountPenalties == nil {
 			accountPenalties = createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
 		} else {
 			accountPenalties = updateAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
