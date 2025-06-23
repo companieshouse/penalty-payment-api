@@ -3,16 +3,19 @@ package api
 import (
 	"strconv"
 
+	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
-	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/common/services"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 )
 
-var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
+var getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
+	return utils.GetCompanyCodeFromTransaction(transactions)
+}
 
 // UpdateIssuerAccountWithPenaltyPaid will update the transactions in E5 as paid.
 // resource - is the payable resource from the db representing the penalty(ies)

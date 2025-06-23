@@ -20,12 +20,10 @@ type PayableResourceDaoService interface {
 	Shutdown()
 }
 
-var getMongoDB = getMongoDatabase
-
 // NewPayableResourcesDaoService will create a new instance of the PayableResourceDaoService interface. All details about its implementation and the
 // database driver will be hidden from outside of this package
 func NewPayableResourcesDaoService(cfg *config.Config) PayableResourceDaoService {
-	database := getMongoDB(cfg.MongoDBURL, cfg.Database)
+	database := getMongoDatabase(cfg.MongoDBURL, cfg.Database)
 	return &MongoPayableResourceService{
 		db:             database,
 		CollectionName: cfg.PayableResourcesCollection,
@@ -41,14 +39,14 @@ type AccountPenaltiesDaoService interface {
 	GetAccountPenalties(customerCode string, companyCode string) (*models.AccountPenaltiesDao, error)
 	// UpdateAccountPenaltyAsPaid will update a transactions as paid for a given customerCode, companyCode and penaltyRef
 	UpdateAccountPenaltyAsPaid(customerCode string, companyCode string, penaltyRef string) error
-	// UpdateAccountPenalties will update the created_at, closed_at and data fields of an existing document
-	UpdateAccountPenalties(dao *models.AccountPenaltiesDao) error
+	// DeleteAccountPenalties will delete the entry for a given customerCode and companyCode
+	DeleteAccountPenalties(customerCode string, companyCode string) error
 }
 
 // NewAccountPenaltiesDaoService will create a new instance of the AccountPenaltiesDaoService interface.
 // All details about its implementation and the  database driver will be hidden from outside of this package
 func NewAccountPenaltiesDaoService(cfg *config.Config) AccountPenaltiesDaoService {
-	database := getMongoDB(cfg.MongoDBURL, cfg.Database)
+	database := getMongoDatabase(cfg.MongoDBURL, cfg.Database)
 	return &MongoAccountPenaltiesService{
 		db:             database,
 		CollectionName: cfg.AccountPenaltiesCollection,

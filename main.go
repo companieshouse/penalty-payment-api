@@ -10,8 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
+
+	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/handlers"
 	"github.com/gorilla/mux"
@@ -31,8 +32,7 @@ func main() {
 
 	// Create router
 	mainRouter := mux.NewRouter()
-	prDaoService := dao.NewPayableResourcesDaoService(cfg)
-	apDaoService := dao.NewAccountPenaltiesDaoService(cfg)
+	daoService := dao.NewPayableResourcesDaoService(cfg)
 
 	penaltyDetailsMap, err := config.LoadPenaltyDetails("assets/penalty_details.yml")
 	if err != nil {
@@ -46,7 +46,7 @@ func main() {
 		return
 	}
 
-	handlers.Register(mainRouter, cfg, prDaoService, apDaoService, penaltyDetailsMap, allowedTransactionsMap)
+	handlers.Register(mainRouter, cfg, daoService, penaltyDetailsMap, allowedTransactionsMap)
 
 	log.Info("Starting " + namespace)
 
@@ -65,7 +65,7 @@ func main() {
 		log.Info("server stopping...")
 		if err != nil && !errors.Is(http.ErrServerClosed, err) {
 			log.Error(err)
-			prDaoService.Shutdown()
+			daoService.Shutdown()
 			os.Exit(1)
 		}
 	}()
@@ -74,7 +74,7 @@ func main() {
 	<-stop
 
 	log.Info("shutting down server...")
-	prDaoService.Shutdown()
+	daoService.Shutdown()
 	timeout := time.Duration(5) * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

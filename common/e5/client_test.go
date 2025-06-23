@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/jarcoal/httpmock"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -29,7 +30,7 @@ func TestUnitClient_CreatePayment(t *testing.T) {
 
 	Convey("creating a payment", t, func() {
 		input := &CreatePaymentInput{
-			CompanyCode:  utils.LateFilingPenaltyCompanyCode,
+			CompanyCode:  utils.LateFilingPenalty,
 			CustomerCode: "1000024",
 			PaymentID:    "1234",
 			TotalValue:   100,

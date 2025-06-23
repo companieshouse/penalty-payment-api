@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/companieshouse/penalty-payment-api/common/utils"
+
 	"github.com/companieshouse/chs.go/avro"
 	"github.com/companieshouse/chs.go/avro/schema"
 	"github.com/companieshouse/chs.go/kafka/producer"
 	"github.com/companieshouse/filing-notification-sender/util"
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/common/dao"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 )
@@ -24,7 +24,9 @@ const ProducerTopic = "email-send"
 // ProducerSchemaName is the schema which will be used to send the email-send kafka message with
 const ProducerSchemaName = "email-send"
 
-var getConfig = config.Get
+var getConfig = func() (*config.Config, error) {
+	return config.Get()
+}
 var getProducer = func(config *config.Config) (*producer.Producer, error) {
 	return producer.New(&producer.Config{Acks: &producer.WaitForAll, BrokerAddrs: config.BrokerAddr})
 }
@@ -33,8 +35,8 @@ var getSchema = func(url string) (string, error) {
 }
 
 // SendEmailKafkaMessage sends a kafka message to the email-sender to send an email
-func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
+func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request,
+	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) error {
 	cfg, err := getConfig()
 	if err != nil {
 		err = fmt.Errorf("error getting config for kafka message production: [%v]", err)
@@ -56,7 +58,7 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 	}
 
 	message, err := prepareKafkaMessage(
-		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		err = fmt.Errorf("error preparing kafka message with schema: [%v]", err)
 		return err
@@ -71,13 +73,12 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 }
 
 var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
-var getPenaltyRefTypeFromTransaction = utils.GetPenaltyRefTypeFromTransaction
 var getCompanyName = GetCompanyName
 var getPayablePenalty = api.PayablePenalty
 
 // prepareKafkaMessage generates the kafka message that is to be sent
-func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*producer.Message, error) {
+func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request,
+	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*producer.Message, error) {
 	cfg, err := getConfig()
 	if err != nil {
 		err = fmt.Errorf("error getting config: [%v]", err)
@@ -90,25 +91,19 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
-	// Ensure payableResource contains at least one transaction
-	if payableResource.Transactions == nil || len(payableResource.Transactions) == 0 {
-		err = fmt.Errorf("empty transactions list in payable resource: %v", payableResource.PayableRef)
-		return nil, err
-	}
-
 	companyCode, err := getCompanyCodeFromTransaction(payableResource.Transactions)
 	if err != nil {
 		return nil, err
 	}
 
-	penaltyRefType, err := getPenaltyRefTypeFromTransaction(payableResource.Transactions)
-	if err != nil {
-		return nil, err
+	// Ensure payableResource contains at least one transaction
+	if payableResource.Transactions == nil || len(payableResource.Transactions) == 0 {
+		err = fmt.Errorf("empty transactions list in payable resource: %v", payableResource.PayableRef)
 	}
 
 	transaction := payableResource.Transactions[0]
-	payablePenalty, err := getPayablePenalty(penaltyRefType, payableResource.CustomerCode, companyCode, transaction,
-		penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+	payablePenalty, err := getPayablePenalty(payableResource.CustomerCode, companyCode, transaction,
+		penaltyDetailsMap, allowedTransactionsMap)
 	if err != nil {
 		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)
 		return nil, err
@@ -143,9 +138,9 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 	messageID := "<" + payableResource.PayableRef + "." + strconv.Itoa(util.Random(0, 100000)) + "@companieshouse.gov.uk>"
 
 	emailSendMessage := models.EmailSend{
-		AppID:        penaltyDetailsMap.Details[penaltyRefType].EmailReceivedAppId,
+		AppID:        penaltyDetailsMap.Details[companyCode].EmailReceivedAppId,
 		MessageID:    messageID,
-		MessageType:  penaltyDetailsMap.Details[penaltyRefType].EmailMsgType,
+		MessageType:  penaltyDetailsMap.Details[companyCode].EmailMsgType,
 		Data:         string(dataBytes),
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),
