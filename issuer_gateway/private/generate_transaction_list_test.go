@@ -1112,6 +1112,20 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			})
 		}
 	})
+
+	Convey("Get closed payable status for an existing paid penalty from E5 in the same account as a newly paid penalty", t, func() {
+		oldPaidPenalty := createRoePenalty(true, 0, CHSAccountStatus,
+			addTrailingSpacesToDunningStatus(PEN1DunningStatus))
+		newPaidPenalty := createRoePenalty(true, 250, CHSAccountStatus,
+			addTrailingSpacesToDunningStatus(PEN1DunningStatus))
+
+		closedAt := time.Now()
+		e5Transactions := []models.AccountPenaltiesDataDao{*oldPaidPenalty, *newPaidPenalty}
+
+		So(getPayableStatus(types.Penalty.String(), oldPaidPenalty, &closedAt, e5Transactions, allowedTransactionMap), ShouldEqual, ClosedPayableStatus)
+		So(getPayableStatus(types.Penalty.String(), newPaidPenalty, &closedAt, e5Transactions, allowedTransactionMap), ShouldEqual, ClosedPendingAllocationPayableStatus)
+
+	})
 }
 
 func createLateFilingPenalty(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
