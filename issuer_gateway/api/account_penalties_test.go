@@ -325,7 +325,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 		So(responseType, ShouldEqual, services.Success)
 	})
 
-	Convey("AccountPenalties not cached when E5 returns emtpy transactions for a given company number", t, func() {
+	Convey("AccountPenalties not cached when E5 returns empty transactions for a given customer code", t, func() {
 
 		transactionsResponse := e5.GetTransactionsResponse{
 			Page: e5.Page{
@@ -342,7 +342,6 @@ func TestUnitAccountPenalties(t *testing.T) {
 		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(nil).MaxTimes(0)
 		mockPenaltiesService.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil).MaxTimes(0)
 
-		e5TransactionsResponse.Transactions[0].IsPaid = true
 		getTransactions = func(customerCode string, companyCode string,
 			client *e5.Client) (*e5.GetTransactionsResponse, error) {
 			return &transactionsResponse, nil
