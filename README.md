@@ -10,7 +10,7 @@ In order to run this API locally you will need to install the following:
 
 ## Getting Started
 1. Clone this repository: `go get github.com/companieshouse/penalty-payment-api`
-1. Build the executable: `make build`
+2. Build the executable: `make build`
 
 ## Configuration
 | Variable                                        | Default | Description                                                                                       | Config Location                                                           |
@@ -56,3 +56,11 @@ Pull image from ch-shared-services registry by running `docker pull 416670754337
 
 1. `export SSH_PRIVATE_KEY_PASSPHRASE='[your SSH key passhprase goes here]'` (optional, set only if SSH key is passphrase protected)
 2. `DOCKER_BUILDKIT=0 docker build --build-arg SSH_PRIVATE_KEY="$(cat ~/.ssh/id_rsa)" --build-arg SSH_PRIVATE_KEY_PASSPHRASE -t 416670754337.dkr.ecr.eu-west-2.amazonaws.com/penalty-payment-api:latest .`
+
+## Vulnerability Checks
+
+1. Run the vulnerability scanner: `make security-check-summary`
+
+Optional:
+1. Install Nancy: `go install github.com/sonatype-nexus-community/nancy@latest` 
+2. To give more detail on any CVEs found run: `go list -json -m all | nancy sleuth`
