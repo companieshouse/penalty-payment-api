@@ -1120,9 +1120,11 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			addTrailingSpacesToDunningStatus(PEN1DunningStatus))
 
 		closedAt := time.Now()
-		got := getPayableStatus(types.Penalty.String(), oldPaidPenalty, &closedAt, []models.AccountPenaltiesDataDao{*oldPaidPenalty, *newPaidPenalty}, allowedTransactionMap)
+		e5Transactions := []models.AccountPenaltiesDataDao{*oldPaidPenalty, *newPaidPenalty}
 
-		So(got, ShouldEqual, ClosedPayableStatus)
+		So(getPayableStatus(types.Penalty.String(), oldPaidPenalty, &closedAt, e5Transactions, allowedTransactionMap), ShouldEqual, ClosedPayableStatus)
+		So(getPayableStatus(types.Penalty.String(), newPaidPenalty, &closedAt, e5Transactions, allowedTransactionMap), ShouldEqual, ClosedPendingAllocationPayableStatus)
+
 	})
 }
 
