@@ -66,3 +66,11 @@ lint:
 	go get -u github.com/alecthomas/gometalinter
 	gometalinter --install
 	gometalinter ./... > $(lint_output); true
+
+.PHONY: security-check-summary
+security-check-summary:
+	@go get golang.org/x/vuln/cmd/govulncheck
+	@go get github.com/sonatype-nexus-community/nancy@latest
+	@LOW=0 MED=0 HIGH=0 CRIT=0 res=`go list -json -deps ./... | nancy sleuth -o json | jq -c '.vulnerable[].Vulnerabilities[].CvssScore'`; for score in $$res; do if [ $${score:1:1} -ge 9 ]; then CRIT=$$(($$CRIT+1)); elif [ $${score:1:1} -ge 7 ]; then HIGH=$$(($$HIGH+1)); elif [ $${score:1:1} -ge 4 ]; then MED=$$(($$MED+1)); else LOW=$$(($$LOW+1)); fi; done; echo -e "CRITICAL=$$CRIT\nHigh=$$HIGH\nMedium=$$MED\nLow=$$LOW";
+	@go build -o ${GOBIN} golang.org/x/vuln/cmd/govulncheck
+	@OTHER=`govulncheck ./... | grep "More info:" | wc -l | tr -d ' '`; echo -e "\nOther=$$OTHER"
