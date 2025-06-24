@@ -16,7 +16,7 @@ import (
 
 // GenerateReferenceNumber produces a random reference number in the format of [A-Z]{2}[0-9]{8}
 func GenerateReferenceNumber() string {
-	rand.Seed(time.Now().UTC().UnixNano())
+	rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, 2)
 	for i := 0; i < 2; i++ {
@@ -30,7 +30,7 @@ func GenerateReferenceNumber() string {
 func GenerateEtag() (string, error) {
 	// Get a random number and the time in seconds and milliseconds
 	timeNow := time.Now()
-	rand.Seed(timeNow.UTC().UnixNano())
+	rand.New(rand.NewSource(timeNow.UTC().UnixNano()))
 	randomNumber := fmt.Sprintf("%07d", rand.Intn(9999999))
 	timeInMillis := strconv.FormatInt(timeNow.UnixNano()/int64(time.Millisecond), 10)
 	timeInSeconds := strconv.FormatInt(timeNow.UnixNano()/int64(time.Second), 10)
