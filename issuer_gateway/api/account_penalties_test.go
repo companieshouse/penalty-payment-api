@@ -401,7 +401,6 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 	Convey("error when getConfig fails", t, func() {
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
 
 		errGettingConfig := errors.New("error getting config")
 		mockedGetConfig := func() (*config.Config, error) {

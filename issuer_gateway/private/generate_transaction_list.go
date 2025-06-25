@@ -42,7 +42,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 	return &payableTransactionList, nil
 }
 
-func buildTransactionListItemFromAccountPenalty(e5Transaction *models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap,
+func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap,
 	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string, closedAt *time.Time,
 	e5Transactions []models.AccountPenaltiesDataDao) (models.TransactionListItem, error) {
 	etag, err := etagGenerator()
@@ -52,22 +52,22 @@ func buildTransactionListItemFromAccountPenalty(e5Transaction *models.AccountPen
 		return models.TransactionListItem{}, err
 	}
 
-	transactionType := getTransactionType(e5Transaction, allowedTransactionsMap)
+	transactionType := getTransactionType(dao, allowedTransactionsMap)
 
 	transactionListItem := models.TransactionListItem{}
 	transactionListItem.Etag = etag
-	transactionListItem.ID = e5Transaction.TransactionReference
-	transactionListItem.IsPaid = e5Transaction.IsPaid
+	transactionListItem.ID = dao.TransactionReference
+	transactionListItem.IsPaid = dao.IsPaid
 	transactionListItem.Kind = penaltyDetailsMap.Details[companyCode].ResourceKind
-	transactionListItem.IsDCA = checkDunningStatus(e5Transaction, DCADunningStatus)
-	transactionListItem.DueDate = e5Transaction.DueDate
-	transactionListItem.MadeUpDate = e5Transaction.MadeUpDate
-	transactionListItem.TransactionDate = e5Transaction.TransactionDate
-	transactionListItem.OriginalAmount = e5Transaction.Amount
-	transactionListItem.Outstanding = e5Transaction.OutstandingAmount
+	transactionListItem.IsDCA = checkDunningStatus(dao, DCADunningStatus)
+	transactionListItem.DueDate = dao.DueDate
+	transactionListItem.MadeUpDate = dao.MadeUpDate
+	transactionListItem.TransactionDate = dao.TransactionDate
+	transactionListItem.OriginalAmount = dao.Amount
+	transactionListItem.Outstanding = dao.OutstandingAmount
 	transactionListItem.Type = transactionType
-	transactionListItem.Reason = getReason(e5Transaction)
-	transactionListItem.PayableStatus = getPayableStatus(transactionType, e5Transaction, closedAt, e5Transactions, allowedTransactionsMap)
+	transactionListItem.Reason = getReason(dao)
+	transactionListItem.PayableStatus = getPayableStatus(transactionType, dao, closedAt, e5Transactions, allowedTransactionsMap)
 
 	return transactionListItem, nil
 }
