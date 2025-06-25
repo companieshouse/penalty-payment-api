@@ -67,6 +67,14 @@ lint:
 	gometalinter --install
 	gometalinter ./... > $(lint_output); true
 
+.PHONY: security-check
+security-check dependency-check:
+	@go get golang.org/x/vuln/cmd/govulncheck
+	@go get github.com/sonatype-nexus-community/nancy@latest
+	@go list -json -deps ./... | nancy sleuth -o json | jq
+	@go build -o ${GOBIN} golang.org/x/vuln/cmd/govulncheck
+	@govulncheck ./...
+
 .PHONY: security-check-summary
 security-check-summary:
 	@go get golang.org/x/vuln/cmd/govulncheck

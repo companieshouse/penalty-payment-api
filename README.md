@@ -60,7 +60,4 @@ Pull image from ch-shared-services registry by running `docker pull 416670754337
 ## Vulnerability Checks
 
 1. Run the vulnerability scanner: `make security-check-summary`
-
-Optional:
-1. Install Nancy: `go install github.com/sonatype-nexus-community/nancy@latest` 
-2. To give more detail on any CVEs found run: `go list -json -m all | nancy sleuth`
+2. To see detail of any CVEs found, run `make security-check`
