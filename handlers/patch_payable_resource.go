@@ -90,6 +90,13 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		wg.Wait()
 
+		err = service.PaymentProcessingKafkaMessage(*resource, payment)
+		if err != nil {
+			m := models.NewMessageResponse(err.Error())
+			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
+			return
+		}
+
 		// need to wait to mark the penalty as paid until the go routines above execute as the email
 		// sender relies on the state of the penalty in the DB i.e. not paid yet
 		updateAccountPenaltyAsPaid(resource, apDaoSvc)
