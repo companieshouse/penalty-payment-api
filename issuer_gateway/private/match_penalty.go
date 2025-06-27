@@ -28,6 +28,8 @@ func MatchPenalty(referenceTransactions []models.TransactionListItem,
 		"customer_code": customerCode,
 	}
 
+	log.Debug("checking if penalty is payable", log.Data{"transaction_info": transactionInfo})
+
 	matched, ok := referenceTransactionsMap[transactionToMatch.PenaltyRef]
 	if !ok {
 		log.Info("disallowing paying for a penalty that does not exist in E5", transactionInfo)
@@ -45,6 +47,7 @@ func MatchPenalty(referenceTransactions []models.TransactionListItem,
 			IsPaid:     matched.IsPaid,
 			Reason:     matched.Reason,
 		}
+		log.Debug("penalty is payable", log.Data{"penalty": matchedPenalty})
 		return &matchedPenalty, nil
 	} else {
 		return nil, err[0]
@@ -60,7 +63,7 @@ func validate(
 	valid := true
 
 	if refTransaction.IsPartPaid() {
-		log.Info("the penalty that is trying to be paid is already part paid", data)
+		log.Info("attempting to pay a penalty that is already part paid", data)
 		valid = false
 		errs = append(errs, ErrPenaltyIsPartPaid)
 	}
@@ -70,19 +73,19 @@ func validate(
 		errs = append(errs, ErrPenaltyIsPaid)
 	}
 	if refTransaction.Type != types.Penalty.String() {
-		log.Info("disallowing paying for a penalty that is not a penalty", data)
+		log.Info("disallowing paying for a transaction that is not a penalty", data)
 		valid = false
 		errs = append(errs, ErrPenaltyNotPayable)
 	}
 	if refTransaction.Outstanding != transactionToMatch.Amount {
 		data["attempted_amount"] = fmt.Sprintf("%f", transactionToMatch.Amount)
 		data["outstanding_amount"] = fmt.Sprintf("%f", refTransaction.Outstanding)
-		log.Info("disallowing paying for penalty as attempting to pay off partial balance", data)
+		log.Info("attempting to pay off partial balance of a penalty", data)
 		valid = false
 		errs = append(errs, ErrPenaltyAmountMismatch)
 	}
 	if refTransaction.IsDCA {
-		log.Info("the penalty that is trying to be paid is with a debt collecting agency", data)
+		log.Info("attempting to pay a penalty that is with a debt collecting agency", data)
 		valid = false
 		errs = append(errs, ErrPenaltyDCA)
 	}

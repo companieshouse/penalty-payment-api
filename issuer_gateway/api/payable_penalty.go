@@ -22,13 +22,11 @@ func PayablePenalty(penaltyRefType, customerCode, companyCode string, transactio
 	}
 
 	unpaidPenaltyCount := getUnpaidPenaltyCount(response.Items)
-	if unpaidPenaltyCount > 1 {
-		log.Info("customer has more than one outstanding penalty", log.Data{
-			"customer_code": customerCode,
-			"company_code":  companyCode,
-			"penalty_count": unpaidPenaltyCount,
-		})
-	}
+	log.Info("unpaid penalties", log.Data{
+		"unpaid_penalties_count": unpaidPenaltyCount,
+		"customer_code":          customerCode,
+		"company_code":           companyCode,
+	})
 
 	return getMatchingPenalty(response.Items, transaction, customerCode)
 }
