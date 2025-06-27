@@ -4,25 +4,24 @@ go 1.24
 
 require (
 	github.com/companieshouse/api-sdk-go v0.1.62
-	github.com/companieshouse/chs.go v1.2.8
+	github.com/companieshouse/chs.go v1.2.14-rbull
 	github.com/companieshouse/filing-notification-sender v2.0.0-rc3+incompatible
 	github.com/companieshouse/go-sdk-manager v0.1.12
 	github.com/companieshouse/go-session-handler v0.1.5
 	github.com/companieshouse/gofigure v0.1.4
 	github.com/companieshouse/penalty-payment-api-core v1.11.3
 	github.com/golang/mock v1.6.0
-	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/mux v1.8.1
 	github.com/jarcoal/httpmock v1.0.5
 	github.com/pkg/errors v0.9.1
-	github.com/smartystreets/goconvey v1.7.2
+	github.com/smartystreets/goconvey v1.8.1
 	go.mongodb.org/mongo-driver v1.10.2
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	github.com/DataDog/zstd v1.3.6-0.20190409195224-796139022798 // indirect
-	github.com/Shopify/sarama v1.23.1 // indirect
+	github.com/Shopify/sarama v1.24.0 // indirect
 	github.com/companieshouse/envconf v0.1.4 // indirect
 	github.com/companieshouse/private-api-sdk-go v0.1.13 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -34,8 +33,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
+	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
@@ -48,11 +46,12 @@ require (
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/montanaflynn/stats v0.6.6 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
-	github.com/pierrec/lz4 v0.0.0-20190327172049-315a67e90e41 // indirect
+	github.com/nxadm/tail v1.4.11 // indirect
+	github.com/pierrec/lz4 v2.2.6+incompatible // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/smartystreets/assertions v1.2.0 // indirect
-	github.com/stretchr/objx v0.4.0 // indirect
-	github.com/stretchr/testify v1.7.1 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
@@ -69,7 +68,6 @@ require (
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/jcmturner/aescts.v1 v1.0.1 // indirect
 	gopkg.in/jcmturner/dnsutils.v1 v1.0.1 // indirect
-	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
 	gopkg.in/jcmturner/gokrb5.v7 v7.2.3 // indirect
 	gopkg.in/jcmturner/rpc.v1 v1.1.0 // indirect
 	gopkg.in/redis.v5 v5.2.9 // indirect
