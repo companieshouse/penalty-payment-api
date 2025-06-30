@@ -3,13 +3,14 @@ module github.com/companieshouse/penalty-payment-api
 go 1.24
 
 require (
+	github.com/Shopify/sarama v1.24.0
 	github.com/companieshouse/api-sdk-go v0.1.62
-	github.com/companieshouse/chs.go v1.2.14-rbull
+	github.com/companieshouse/chs.go v1.2.14-rbull3
 	github.com/companieshouse/filing-notification-sender v2.0.0-rc3+incompatible
 	github.com/companieshouse/go-sdk-manager v0.1.12
 	github.com/companieshouse/go-session-handler v0.1.5
 	github.com/companieshouse/gofigure v0.1.4
-	github.com/companieshouse/penalty-payment-api-core v1.11.3
+	github.com/companieshouse/penalty-payment-api-core v1.12.0
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jarcoal/httpmock v1.0.5
@@ -21,7 +22,6 @@ require (
 )
 
 require (
-	github.com/Shopify/sarama v1.24.0 // indirect
 	github.com/companieshouse/envconf v0.1.4 // indirect
 	github.com/companieshouse/private-api-sdk-go v0.1.13 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -49,9 +49,7 @@ require (
 	github.com/nxadm/tail v1.4.11 // indirect
 	github.com/pierrec/lz4 v2.2.6+incompatible // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/smartystreets/assertions v1.2.0 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/smarty/assertions v1.15.0 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
@@ -65,6 +63,7 @@ require (
 	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.35.2 // indirect
+	gopkg.in/bsm/sarama-cluster.v2 v2.1.15 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/jcmturner/aescts.v1 v1.0.1 // indirect
 	gopkg.in/jcmturner/dnsutils.v1 v1.0.1 // indirect
