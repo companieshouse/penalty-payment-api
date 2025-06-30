@@ -26,7 +26,9 @@ type Config struct {
 	AccountPenaltiesCollection           string       `env:"PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION"     flag:"mongodb-account-penalties-collection"     flagDesc:"The name of the mongodb account penalties collection"`
 	AccountPenaltiesTTL                  string       `env:"PPS_ACCOUNT_PENALTIES_TTL"                    flag:"account-penalties-ttl"                    flagDesc:"The time to live for account penalties cache entry"`
 	BrokerAddr                           []string     `env:"KAFKA_BROKER_ADDR"                            flag:"broker-addr"                              flagDesc:"Kafka broker address"`
+	ZookeeperURL                         string       `env:"KAFKA_ZOOKEEPER_ADDR"                         flag:"zookeeper-addr"                           flagDesc:"Main CH Zookeeper address"`
 	SchemaRegistryURL                    string       `env:"SCHEMA_REGISTRY_URL"                          flag:"schema-registry-url"                      flagDesc:"Schema registry url"`
+	PenaltyPaymentsProcessingTopic       string       `env:"PENALTY_PAYMENTS_PROCESSING_TOPIC"            flag:"penalty-payments-processing-topic"        flagDesc:"Penalty payments processing topic"`
 	FeatureFlagPaymentsProcessingEnabled bool         `env:"FEATURE_FLAG_PAYMENTS_PROCESSING_ENABLED"     flag:"feature-flag-payments-processing-enabled" flagDesc:"If the payments processing Kafka implementation is enabled"`
 	CHSURL                               string       `env:"CHS_URL"                                      flag:"chs-url"                                  flagDesc:"CHS URL"`
 	WeeklyMaintenanceStartTime           string       `env:"WEEKLY_MAINTENANCE_START_TIME"                flag:"weekly-maintenance-start-time"            flagDesc:"The time of the day when Weekly E5 maintenance starts"`
