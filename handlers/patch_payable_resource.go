@@ -20,9 +20,9 @@ import (
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/service"
 )
 
-// handleEmailKafkaMessage allows us to mock the call to sendEmailKafkaMessage for unit tests
 var (
 	handleEmailKafkaMessage = service.SendEmailKafkaMessage
+    handlePaymentProcessingKafkaMessage = service.PaymentProcessingKafkaMessage
 	wg                      sync.WaitGroup
 	getConfig               = config.Get
 )
@@ -84,15 +84,13 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			return
 		}
 
-		wg.Add(3)
+		wg.Add(4)
 
 		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
 		go updateAsPaidInDatabase(resource, payment, payableResourceService, r, w)
 
 		if paymentsProcessingEnabled() {
-			log.Info("entered new flag code, this will be updated when the kafka tickets are implemented")
-			// this will be replaced with the new producer code
-			go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
+			go addPaymentsProcessingMsgToTopic(resource, payment, r, w)
 		} else {
 			go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
 		}
@@ -118,35 +116,17 @@ func paymentsProcessingEnabled() bool {
 	return cfg.FeatureFlagPaymentsProcessingEnabled
 }
 
-func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.AccountPenaltiesDaoService) {
-	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
-	if err != nil {
-		log.Error(fmt.Errorf("error updating account penalties collection as paid because company code cannot be resolved: [%v]", err),
-			log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
-		return
-	}
-	penalty := resource.Transactions[0]
-
-	err = svc.UpdateAccountPenaltyAsPaid(resource.CustomerCode, companyCode, penalty.PenaltyRef)
-	if err != nil {
-		log.Error(fmt.Errorf("error updating account penalties collection as paid: [%v]", err),
-			log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
-				"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
-		return
-	}
-
-	log.Info("account penalties collection has been updated as paid",
-		log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
-			"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
-}
-
 func sendConfirmationEmail(resource *models.PayableResource, payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter,
 	penaltyPaymentDetails *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) {
 	// Send confirmation email
 	defer wg.Done()
 	err := handleEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
 	if err != nil {
-		log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef, "payment_reference": payment.Reference})
+		log.ErrorR(r, err, log.Data{
+			"payable_ref":       resource.PayableRef,
+			"payment_reference": payment.Reference,
+			"customer_code":     resource.CustomerCode,
+			"email_address":     resource.CreatedBy.Email})
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -188,4 +168,38 @@ func updateIssuer(payableResourceService *services.PayableResourceService, e5Cli
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+}
+
+func addPaymentsProcessingMsgToTopic(payableResource *models.PayableResource,
+	payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter) {
+	defer wg.Done()
+	// send the kafka message to the producer
+	err := handlePaymentProcessingKafkaMessage(*payableResource, payment)
+	if err != nil {
+		log.ErrorR(r, err, log.Data{"payable_ref": payableResource.PayableRef, "payment_reference": payment.Reference})
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.AccountPenaltiesDaoService) {
+	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
+	if err != nil {
+		log.Error(fmt.Errorf("error updating account penalties collection as paid because company code cannot be resolved: [%v]", err),
+			log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
+		return
+	}
+	penalty := resource.Transactions[0]
+
+	err = svc.UpdateAccountPenaltyAsPaid(resource.CustomerCode, companyCode, penalty.PenaltyRef)
+	if err != nil {
+		log.Error(fmt.Errorf("error updating account penalties collection as paid: [%v]", err),
+			log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
+				"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
+		return
+	}
+
+	log.Info("account penalties collection has been updated as paid",
+		log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
+			"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
 }

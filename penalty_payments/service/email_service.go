@@ -8,29 +8,13 @@ import (
 	"time"
 
 	"github.com/companieshouse/chs.go/avro"
-	"github.com/companieshouse/chs.go/avro/schema"
 	"github.com/companieshouse/chs.go/kafka/producer"
+	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/filing-notification-sender/util"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
-	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 )
-
-// ProducerTopic is the topic to which the email-send kafka message is sent
-const ProducerTopic = "email-send"
-
-// ProducerSchemaName is the schema which will be used to send the email-send kafka message with
-const ProducerSchemaName = "email-send"
-
-var getConfig = config.Get
-var getProducer = func(config *config.Config) (*producer.Producer, error) {
-	return producer.New(&producer.Config{Acks: &producer.WaitForAll, BrokerAddrs: config.BrokerAddr})
-}
-var getSchema = func(url string) (string, error) {
-	return schema.Get(url, ProducerSchemaName)
-}
 
 // SendEmailKafkaMessage sends a kafka message to the email-sender to send an email
 func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
@@ -41,12 +25,15 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 		return err
 	}
 
+	topic := cfg.EmailSendTopic
+
 	kafkaProducer, err := getProducer(cfg)
 	if err != nil {
 		err = fmt.Errorf("error creating kafka producer: [%v]", err)
 		return err
 	}
-	emailSendSchema, err := getSchema(cfg.SchemaRegistryURL)
+
+	emailSendSchema, err := getSchema(cfg.SchemaRegistryURL, topic)
 	if err != nil {
 		err = fmt.Errorf("error getting schema from schema registry: [%v]", err)
 		return err
@@ -55,12 +42,19 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 		Definition: emailSendSchema,
 	}
 
-	message, err := prepareKafkaMessage(
-		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+	message, err := prepareEmailKafkaMessage(
+		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc, topic)
 	if err != nil {
 		err = fmt.Errorf("error preparing kafka message with schema: [%v]", err)
 		return err
 	}
+
+	log.Debug("email message prepared successfully", log.Data{
+		"message.Value":     message.Value,
+		"message.Topic":     message.Topic,
+		"message.Partition": message.Partition,
+		"message.Key":       message.Key,
+	})
 
 	partition, offset, err := kafkaProducer.Send(message)
 	if err != nil {
@@ -70,14 +64,9 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 	return nil
 }
 
-var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
-var getPenaltyRefTypeFromTransaction = utils.GetPenaltyRefTypeFromTransaction
-var getCompanyName = GetCompanyName
-var getPayablePenalty = api.PayablePenalty
-
-// prepareKafkaMessage generates the kafka message that is to be sent
-func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*producer.Message, error) {
+// prepareEmailKafkaMessage generates the kafka message that is to be sent
+func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService, topic string) (*producer.Message, error) {
 	cfg, err := getConfig()
 	if err != nil {
 		err = fmt.Errorf("error getting config: [%v]", err)
@@ -157,5 +146,5 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		return nil, err
 	}
 
-	return &producer.Message{Value: messageBytes, Topic: ProducerTopic}, nil
+	return &producer.Message{Value: messageBytes, Topic: topic}, nil
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/companieshouse/go-session-handler/session"
 	"github.com/companieshouse/penalty-payment-api-core/constants"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/common/services"
@@ -104,6 +105,16 @@ func mockSendEmailKafkaMessageError(payableResource models.PayableResource, req 
 // Mock function for successful preparing and sending of kafka message
 func mockSendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request,
 	detailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
+	return nil
+}
+
+// Mock function for erroring when preparing and sending kafka message
+func mockPaymentsProcessingKafkaMessageError(payableResource models.PayableResource, payment *validators.PaymentInformation) error {
+	return errors.New("error")
+}
+
+// Mock function for successful preparing and sending of kafka message
+func mockPaymentsProcessingKafkaMessage(payableResource models.PayableResource, payment *validators.PaymentInformation) error {
 	return nil
 }
 
@@ -252,8 +263,64 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
-			// stub kafka message
+			// stub kafka messages
 			handleEmailKafkaMessage = mockSendEmailKafkaMessageError
+			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
+
+			reqBody := &models.PatchResourceRequest{Reference: "123"}
+			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockPrDaoSvc, mockApDaoSvc)
+
+			So(dataModel.IsPaid(), ShouldBeTrue)
+			So(res.Code, ShouldEqual, http.StatusInternalServerError)
+			So(body, ShouldBeNil)
+		})
+
+		Convey("problem with adding payments message to topic", func() {
+			mockedGetCompanyCode := func(penaltyReference string) (string, error) {
+				return utils.LateFilingPenaltyCompanyCode, nil
+			}
+
+			getCompanyCode = mockedGetCompanyCode
+
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			// stub the response from the payments api
+			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "financial_penalty_123"}
+			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
+			httpmock.RegisterResponder(
+				http.MethodGet,
+				companieshouseapi.PaymentsBasePath+"/payments/123",
+				responder,
+			)
+
+			httpmock.RegisterResponder(
+				http.MethodGet,
+				companieshouseapi.PaymentsBasePath+"/private/payments/123/payment-details",
+				httpmock.NewStringResponder(http.StatusOK, "{}"),
+			)
+
+			// stub the mongo lookup
+			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
+			dataModel := &models.PayableResourceDao{}
+			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
+			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
+			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+			// the payable resource in the request context
+			model := &models.PayableResource{
+				PayableRef: "123",
+				Transactions: []models.TransactionItem{
+					{PenaltyRef: "A1234567"},
+				},
+			}
+			ctx := context.WithValue(context.Background(), config.PayableResource, model)
+
+			// stub kafka messages
+			handleEmailKafkaMessage = mockSendEmailKafkaMessage
+			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessageError
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
 			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockPrDaoSvc, mockApDaoSvc)
@@ -312,8 +379,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
-			// stub kafka message
+			// stub kafka messages
 			handleEmailKafkaMessage = mockSendEmailKafkaMessage
+			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
 			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockPrDaoSvc, mockApDaoSvc)
@@ -364,8 +432,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
-			// stub kafka message
+			// stub kafka messages
 			handleEmailKafkaMessage = mockSendEmailKafkaMessage
+			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
 			res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockPrDaoSvc, mockApDaoSvc)
@@ -425,8 +494,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			}
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
-			// stub kafka message
+			// stub kafka messages
 			handleEmailKafkaMessage = mockSendEmailKafkaMessage
+			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
 			getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransactionError
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
@@ -489,6 +559,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// stub kafka message
 			handleEmailKafkaMessage = mockSendEmailKafkaMessage
+			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
 			getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
@@ -551,6 +622,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			// stub kafka message
 			handleEmailKafkaMessage = mockSendEmailKafkaMessage
+			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
 			getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
