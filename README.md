@@ -12,27 +12,28 @@ In order to run this API locally you will need to install the following:
 1. Clone this repository: `go get github.com/companieshouse/penalty-payment-api`
 2. Build the executable: `make build`
 
-## Configuration
-| Variable                                        | Default | Description                                                                                       | Config Location                                                           |
-|:------------------------------------------------|:-------:|:--------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
-| `API_KEY`                                       |   `-`   | API Key to call payments API                                                                      | Terraform Vault - To update, please create platform request               |
-| `E5_USERNAME`                                   |   `-`   | E5 API Username                                                                                   | Terraform Vault - To update, please create platform request               |
-| `MONGODB_URL`                                   |   `-`   | The mongo db connection string                                                                    | Terraform Vault - To update, please create platform request               |
-| `E5_API_URL`                                    |   `-`   | E5 API Address                                                                                    | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `PPS_MONGODB_DATABASE`                          |   `-`   | The database name to connect to e.g. `financial_penalties`                                        | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `PPS_MONGODB_PAYABLE_RESOURCES_COLLECTION`      |   `-`   | The collection name e.g. `payable_resources`                                                      | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION`      |   `-`   | The collection name e.g. `account_penalties`                                                      | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `PPS_ACCOUNT_PENALTIES_TTL`                     |   `-`   | Account penalties cache time to live  e.g. `24h`                                                  | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `KAFKA_BROKER_ADDR`                             |   `_`   | Kafka Broker Address                                                                              | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `SCHEMA_REGISTRY_URL`                           |   `_`   | Schema Registry URL                                                                               | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `API_URL`                                       |   `_`   | The application endpoint for the API, for go-sdk-manager integration                              | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `PAYMENTS_API_URL`                              |   `_`   | The base path for the payments API, for go-sdk-manager integration                                | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `CHS_URL`                                       |   `_`   | CHS URL                                                                                           | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `WEEKLY_MAINTENANCE_START_TIME`                 |   `_`   | Start time of weekly maintenance e.g. `0700`                                                      | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `WEEKLY_MAINTENANCE_END_TIME`                   |   `_`   | End time of weekly maintenance e.g. `0730`                                                        | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `WEEKLY_MAINTENANCE_DAY`                        |   `_`   | Day of weekly maintenance e.g. `0` (zero for Sunday)                                              | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `PLANNED_MAINTENANCE_START_TIME`                |   `_`   | Start time and date of planned maintenance e.g. `01 Jan 19 15:04 BST`                             | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
-| `PLANNED_MAINTENANCE_END_TIME`                  |   `_`   | End time and date of planned maintenance e.g. `31 Jan 19 16:59 BST`                               | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+## Configuration 
+| Variable                                   | Default | Description                                                           | Config Location                                                           |
+|:-------------------------------------------|:-------:|:----------------------------------------------------------------------|---------------------------------------------------------------------------|
+| `API_KEY`                                  |   `-`   | API Key to call payments API                                          | Terraform Vault - To update, please create platform request               |
+| `E5_USERNAME`                              |   `-`   | E5 API Username                                                       | Terraform Vault - To update, please create platform request               |
+| `MONGODB_URL`                              |   `-`   | The mongo db connection string                                        | Terraform Vault - To update, please create platform request               |
+| `E5_API_URL`                               |   `-`   | E5 API Address                                                        | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `PPS_MONGODB_DATABASE`                     |   `-`   | The database name to connect to e.g. `financial_penalties`            | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `PPS_MONGODB_PAYABLE_RESOURCES_COLLECTION` |   `-`   | The collection name e.g. `payable_resources`                          | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION` |   `-`   | The collection name e.g. `account_penalties`                          | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `PPS_ACCOUNT_PENALTIES_TTL`                |   `-`   | Account penalties cache time to live  e.g. `24h`                      | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `KAFKA_BROKER_ADDR`                        |   `_`   | Kafka Broker Address                                                  | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `SCHEMA_REGISTRY_URL`                      |   `_`   | Schema Registry URL                                                   | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `FEATURE_FLAG_PAYMENTS_PROCESSING_ENABLED` |   `_`   | If the payments processing Kafka implementation is enabled            | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `API_URL`                                  |   `_`   | The application endpoint for the API, for go-sdk-manager integration  | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `PAYMENTS_API_URL`                         |   `_`   | The base path for the payments API, for go-sdk-manager integration    | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `CHS_URL`                                  |   `_`   | CHS URL                                                               | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `WEEKLY_MAINTENANCE_START_TIME`            |   `_`   | Start time of weekly maintenance e.g. `0700`                          | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `WEEKLY_MAINTENANCE_END_TIME`              |   `_`   | End time of weekly maintenance e.g. `0730`                            | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `WEEKLY_MAINTENANCE_DAY`                   |   `_`   | Day of weekly maintenance e.g. `0` (zero for Sunday)                  | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `PLANNED_MAINTENANCE_START_TIME`           |   `_`   | Start time and date of planned maintenance e.g. `01 Jan 19 15:04 BST` | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `PLANNED_MAINTENANCE_END_TIME`             |   `_`   | End time and date of planned maintenance e.g. `31 Jan 19 16:59 BST`   | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
 
 ## Endpoints
 
