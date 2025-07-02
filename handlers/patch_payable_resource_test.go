@@ -560,4 +560,113 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			So(body, ShouldBeNil)
 		})
 	})
+
+	Convey("penalty payments processing feature flag tests", t, func() {
+		httpmock.Activate()
+		defer httpmock.DeactivateAndReset()
+
+		Convey("success when payment is valid", func() {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			// stub the response from the payments api
+			p := &companieshouseapi.PaymentResource{
+				Status:    "paid",
+				Amount:    "150",
+				Reference: "financial_penalty_123",
+				CreatedBy: companieshouseapi.CreatedBy{
+					Email: "test@example.com",
+				},
+			}
+
+			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
+			httpmock.RegisterResponder(
+				http.MethodGet,
+				companieshouseapi.PaymentsBasePath+"/payments/123",
+				responder,
+			)
+
+			httpmock.RegisterResponder(
+				http.MethodGet,
+				companieshouseapi.PaymentsBasePath+"/private/payments/123/payment-details",
+				httpmock.NewStringResponder(http.StatusOK, "{}"),
+			)
+
+			// stub the response from the e5 api
+			e5Responder := httpmock.NewBytesResponder(http.StatusOK, nil)
+			httpmock.RegisterResponder(http.MethodPost, "e5api/arTransactions/payment", e5Responder)
+			httpmock.RegisterResponder(http.MethodPost, "e5api/arTransactions/payment/authorise", e5Responder)
+			httpmock.RegisterResponder(http.MethodPost, "e5api/arTransactions/payment/confirm", e5Responder)
+
+			// stub the mongo lookup
+			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
+			dataModel := &models.PayableResourceDao{}
+			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
+			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+			// the payable resource in the request context
+			model := &models.PayableResource{
+				PayableRef:   "123",
+				CustomerCode: "10000024",
+				Transactions: []models.TransactionItem{
+					{PenaltyRef: "A1234567", Amount: 150},
+				},
+			}
+			ctx := context.WithValue(context.Background(), config.PayableResource, model)
+
+			// stub kafka message
+			handleEmailKafkaMessage = mockSendEmailKafkaMessage
+			getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
+
+			reqBody := &models.PatchResourceRequest{Reference: "123"}
+
+			Convey("no config", func() {
+				mockedGetConfig := func() (*config.Config, error) {
+					return nil, errors.New("error getting config")
+				}
+				getConfig = mockedGetConfig
+
+				res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockPrDaoSvc, mockApDaoSvc)
+
+				So(res.Code, ShouldEqual, http.StatusNoContent)
+				So(body, ShouldBeNil)
+			})
+
+			testCases := []struct {
+				name          string
+				input         bool
+				expectedError bool
+			}{
+				{
+					name:          "feature flag enabled",
+					input:         true,
+					expectedError: false,
+				},
+				{
+					name:          "feature flag disabled",
+					input:         false,
+					expectedError: false,
+				},
+			}
+
+			for _, tc := range testCases {
+				Convey(tc.name, func() {
+					mockedGetConfig := func() (*config.Config, error) {
+						return &config.Config{FeatureFlagPaymentsProcessingEnabled: tc.input}, nil
+					}
+					getConfig = mockedGetConfig
+
+					res, body := dispatchPayResourceHandler(ctx, t, reqBody, mockPrDaoSvc, mockApDaoSvc)
+					Convey(tc.name, func() {
+
+						So(res.Code, ShouldEqual, http.StatusNoContent)
+						So(body, ShouldBeNil)
+					})
+				})
+			}
+
+		})
+	})
 }

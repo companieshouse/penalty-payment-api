@@ -21,9 +21,11 @@ import (
 )
 
 // handleEmailKafkaMessage allows us to mock the call to sendEmailKafkaMessage for unit tests
-var handleEmailKafkaMessage = service.SendEmailKafkaMessage
-
-var wg sync.WaitGroup
+var (
+	handleEmailKafkaMessage = service.SendEmailKafkaMessage
+	wg                      sync.WaitGroup
+	getConfig               = config.Get
+)
 
 // PayResourceHandler will update the resource to mark it as paid and also tell the finance system that the
 // transaction(s) associated with it are paid.
@@ -86,7 +88,14 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
 		go updateAsPaidInDatabase(resource, payment, payableResourceService, r, w)
-		go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
+
+		if paymentsProcessingEnabled() {
+			log.Info("entered new flag code, this will be updated when the kafka tickets are implemented")
+			// this will be replaced with the new producer code
+			go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
+		} else {
+			go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
+		}
 
 		wg.Wait()
 
@@ -97,6 +106,16 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNoContent) // This will not be set if status has already been set
 	})
+}
+
+func paymentsProcessingEnabled() bool {
+	cfg, err := getConfig()
+	if err != nil {
+		err = fmt.Errorf("error getting config for feature flag payments processing enabled: [%v]", err)
+		return false
+	}
+	log.Info("feature flag payments processing enabled", log.Data{"cfg.FeatureFlagPaymentsProcessingEnabled": cfg.FeatureFlagPaymentsProcessingEnabled})
+	return cfg.FeatureFlagPaymentsProcessingEnabled
 }
 
 func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.AccountPenaltiesDaoService) {
