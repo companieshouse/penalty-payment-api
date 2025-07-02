@@ -73,7 +73,12 @@ func (c *Client) GetTransactions(input *GetTransactionsInput) (*GetTransactionsR
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Error(err, logContext)
+		}
+	}(resp.Body)
 
 	// determine if there are 4xx/5xx errors. an error here relates to a response parsing issue
 	err = c.checkResponseForError(resp)
@@ -133,7 +138,12 @@ func (c *Client) CreatePayment(input *CreatePaymentInput) error {
 		return err
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Error(err, logContext)
+		}
+	}(resp.Body)
 
 	log.Info("response received after creating a new payment in E5", log.Data{
 		"customer_code": input.CustomerCode,
@@ -175,7 +185,12 @@ func (c *Client) AuthorisePayment(input *AuthorisePaymentInput) error {
 		return err
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Error(err, logContext)
+		}
+	}(resp.Body)
 
 	log.Info("response received after authorising a payment", log.Data{
 		"payment_id": input.PaymentID,
@@ -232,7 +247,12 @@ func (c *Client) doPaymentAction(action Action, input *PaymentActionInput) error
 
 	log.Info("response received from E5", logContext)
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Error(err, logContext)
+		}
+	}(resp.Body)
 
 	return c.checkResponseForError(resp)
 }
