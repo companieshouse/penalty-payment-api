@@ -25,11 +25,15 @@ var payablePenalty = api.PayablePenalty
 func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
 	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.InfoR(r, "start POST payable resource request")
+
 		var request models.PayableRequest
+		log.Debug("extracting request data")
 		err := json.NewDecoder(r.Body).Decode(&request)
 
 		userDetails, companyCode, penaltyRefType, failedValidation := extractRequestData(w, r, err, request)
 		if failedValidation {
+			log.Error(fmt.Errorf("error extracting request data: %v", err))
 			return
 		}
 
@@ -37,8 +41,10 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 
 		request.CustomerCode = strings.ToUpper(customerCode)
 		request.CreatedBy = userDetails.(authentication.AuthUserDetails)
+		log.Debug("successfully extracted request data", log.Data{"request": request})
 
 		// Ensure that the transactions in the request are valid payable penalties that exist in E5
+		log.Debug("validating request transactions")
 		var payablePenalties []models.TransactionItem
 		for _, transaction := range request.Transactions {
 			payablePenalty, err := payablePenalty(penaltyRefType, request.CustomerCode, companyCode,
@@ -64,6 +70,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
+		log.Debug("request transactions validated, creating payable resource", log.Data{"request": request})
 
 		model := transformers.PayableResourceRequestToDB(&request)
 
@@ -75,7 +82,12 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 			return
 		}
 
-		utils.WriteJSONWithStatus(w, r, transformers.PayableResourceDaoToCreatedResponse(model), http.StatusCreated)
+		payableResource := transformers.PayableResourceDaoToCreatedResponse(model)
+		log.Debug("successfully created payable resource", log.Data{"payable_resource": payableResource})
+
+		utils.WriteJSONWithStatus(w, r, payableResource, http.StatusCreated)
+
+		log.InfoR(r, "POST payable resource request completed successfully")
 	})
 }
 
