@@ -28,7 +28,6 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 		}
 		log.Debug("got payable resource", log.Data{"payableResource": payableResource})
 
-		log.Debug("getting penalty reference type from transaction", log.Data{"transaction": payableResource.Transactions[0]})
 		penaltyRefType, err := getPenaltyRefTypeFromTransaction(payableResource.Transactions)
 		if err != nil {
 			log.ErrorR(req, err)
@@ -36,7 +35,6 @@ func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.H
 			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 			return
 		}
-		log.Debug("got penalty reference type", log.Data{"penaltyRefType": penaltyRefType})
 
 		penaltyDetails := penaltyDetailsMap.Details[penaltyRefType]
 		log.Debug("penalty details", log.Data{"penaltyDetails": penaltyDetails})

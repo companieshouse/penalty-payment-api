@@ -43,9 +43,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
-
 		resource := i.(*models.PayableResource)
-
 		log.Debug("got payable resource from context", log.Data{"payable_resource": resource})
 
 		// 2. validate the request and check the payment reference against the payment api to validate that it has
@@ -79,7 +77,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			return
 		}
 
-		log.Info("validate payment", log.Data{"payment_ref": resource.PayableRef})
+		log.Info("validating payment", log.Data{"payment_ref": resource.PayableRef})
 		err = validators.New().ValidateForPayment(*resource, *payment)
 		if err != nil {
 			m := models.NewMessageResponse("there was a problem validating this payment")
