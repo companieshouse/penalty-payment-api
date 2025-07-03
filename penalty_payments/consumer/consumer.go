@@ -12,6 +12,7 @@ import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/handlers"
 )
 
 func Consume(cfg *config.Config) {
@@ -27,6 +28,15 @@ func Consume(cfg *config.Config) {
 		"topics":             kafkaConsumerConfig.Topics,
 		"processing_timeout": kafkaConsumerConfig.ProcessingTimeout,
 	})
+	kafkaSchema, err := schema.Get(cfg.SchemaRegistryURL, cfg.PenaltyPaymentsProcessingTopic)
+	if err != nil {
+		kafkaSchemaError := fmt.Errorf("error getting penalty-payments-processing schema from schema registry: [%v]", err)
+		panic(kafkaSchemaError)
+	}
+	avroSchema := &avro.Schema{
+		Definition: kafkaSchema,
+	}
+
 	partitionConsumer := consumer.NewPartitionConsumer(kafkaConsumerConfig)
 
 	if err := partitionConsumer.ConsumePartition(0, consumer.OffsetOldest); err != nil {
@@ -51,44 +61,35 @@ func Consume(cfg *config.Config) {
 			return
 		case message := <-messages:
 			if message != nil {
-				handleMessage(cfg, message)
+				err := handleMessage(avroSchema, message)
+				if err != nil {
+					log.Error(err)
+				}
 			}
 		}
 	}
 
 }
 
-func handleMessage(cfg *config.Config, message *sarama.ConsumerMessage) {
-
-	kafkaSchema, err := schema.Get(cfg.SchemaRegistryURL, cfg.PenaltyPaymentsProcessingTopic)
-	if err != nil {
-		err = fmt.Errorf("error getting schema from schema registry: [%v]", err)
-	}
-	avroSchema := &avro.Schema{
-		Definition: kafkaSchema,
-	}
+func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage) error {
 
 	var penaltyPayment models.PenaltyPaymentsProcessing
-	err = avroSchema.Unmarshal(message.Value, &penaltyPayment)
+	var err = avroSchema.Unmarshal(message.Value, &penaltyPayment)
 	if err != nil {
-		return
+		return fmt.Errorf("error parsing the penalty-payments-processing avro encoded data: [%v]", err)
 	}
 
-	log.Info("Processing penalty payment", log.Data{
-		"attempt":               penaltyPayment.Attempt,
-		"company_code":          penaltyPayment.CompanyCode,
-		"customer_code":         penaltyPayment.CustomerCode,
-		"payment_id":            penaltyPayment.PaymentId,
-		"payment_external_id":   penaltyPayment.PaymentExternalId,
-		"payment_reference":     penaltyPayment.PaymentReference,
-		"payment_amount":        penaltyPayment.PaymentAmount,
-		"total_value":           penaltyPayment.TotalValue,
-		"transaction_reference": penaltyPayment.TransactionPayments[0].TransactionReference,
-		"value":                 penaltyPayment.TransactionPayments[0].Value,
-		"card_reference":        penaltyPayment.CardReference,
-		"card_type":             penaltyPayment.CardType,
-		"email":                 penaltyPayment.Email,
-		"payable_ref":           penaltyPayment.PayableRef,
-	})
+	// this will be used for the PUON value in E5. it is referred to as paymentId in their spec. X is prefixed to it
+	// so that it doesn't clash with other PUON's from different sources when finance produce their reports - namely
+	// ones that begin with 'LP' which signify penalties that have been paid outside the digital service.
+	e5PaymentID := "X" + penaltyPayment.PaymentID
 
+	err = handlers.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID)
+	if err != nil {
+		err = fmt.Errorf("error processing financial penalty payment: [%v]", err)
+		log.Error(err, log.Data{"e5_payment_id": e5PaymentID, "customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payable_ref": penaltyPayment.PayableRef})
+		return err
+	}
+
+	return nil
 }
