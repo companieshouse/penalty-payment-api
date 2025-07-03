@@ -28,7 +28,6 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		log.InfoR(r, "start POST payable resource request")
 
 		var request models.PayableRequest
-		log.Debug("extracting request data")
 		err := json.NewDecoder(r.Body).Decode(&request)
 
 		userDetails, companyCode, penaltyRefType, failedValidation := extractRequestData(w, r, err, request)
@@ -44,7 +43,6 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		log.Debug("successfully extracted request data", log.Data{"request": request})
 
 		// Ensure that the transactions in the request are valid payable penalties that exist in E5
-		log.Debug("validating request transactions")
 		var payablePenalties []models.TransactionItem
 		for _, transaction := range request.Transactions {
 			payablePenalty, err := payablePenalty(penaltyRefType, request.CustomerCode, companyCode,

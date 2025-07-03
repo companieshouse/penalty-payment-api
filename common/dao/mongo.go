@@ -153,7 +153,7 @@ func (m *MongoAccountPenaltiesService) CreateAccountPenalties(dao *models.Accoun
 
 // GetAccountPenalties gets the account penalties from the account_penalties database collection
 func (m *MongoAccountPenaltiesService) GetAccountPenalties(customerCode string, companyCode string) (*models.AccountPenaltiesDao, error) {
-	log.Debug("retrieving document in account_penalties collection", log.Data{
+	log.Info("retrieving document in account_penalties collection", log.Data{
 		"customer_code": customerCode,
 		"company_code":  companyCode,
 	})
@@ -253,7 +253,7 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode s
 
 // UpdateAccountPenalties updates the created_at, closed_at and data fields of an existing document
 func (m *MongoAccountPenaltiesService) UpdateAccountPenalties(dao *models.AccountPenaltiesDao) error {
-	log.Debug("updating existing document in account_penalties collection", log.Data{
+	log.Info("updating existing document in account_penalties collection", log.Data{
 		"customer_code": dao.CustomerCode,
 		"company_code":  dao.CompanyCode,
 	})
@@ -311,8 +311,8 @@ func (m *MongoPayableResourceService) SaveE5Error(customerCode, payableRef strin
 	update := bson.D{
 		{
 			Key: "$set", Value: bson.D{
-			{Key: "e5_command_error", Value: string(action)},
-		},
+				{Key: "e5_command_error", Value: string(action)},
+			},
 		},
 	}
 
@@ -378,11 +378,11 @@ func (m *MongoPayableResourceService) UpdatePaymentDetails(dao *models.PayableRe
 	update := bson.D{
 		{
 			Key: "$set", Value: bson.D{
-			{Key: "data.payment.status", Value: dao.Data.Payment.Status},
-			{Key: "data.payment.reference", Value: dao.Data.Payment.Reference},
-			{Key: "data.payment.paid_at", Value: dao.Data.Payment.PaidAt},
-			{Key: "data.payment.amount", Value: dao.Data.Payment.Amount},
-		},
+				{Key: "data.payment.status", Value: dao.Data.Payment.Status},
+				{Key: "data.payment.reference", Value: dao.Data.Payment.Reference},
+				{Key: "data.payment.paid_at", Value: dao.Data.Payment.PaidAt},
+				{Key: "data.payment.amount", Value: dao.Data.Payment.Amount},
+			},
 		},
 	}
 

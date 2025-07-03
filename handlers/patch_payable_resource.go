@@ -34,7 +34,6 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.InfoR(r, "start PATCH payable resource request")
 		// 1. get the payable resource out of the context. authorisation is already handled in the interceptor
-		log.Info("getting payable resource from context")
 		i := r.Context().Value(config.PayableResource)
 		if i == nil {
 			err := fmt.Errorf("no payable resource in context. check PayableAuthenticationInterceptor is installed")
@@ -77,7 +76,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			return
 		}
 
-		log.Info("validating payment", log.Data{"payment_ref": resource.PayableRef})
+		log.Info("validating payment", log.Data{"payable_ref": resource.PayableRef, "external_payment_id": payment.ExternalPaymentID})
 		err = validators.New().ValidateForPayment(*resource, *payment)
 		if err != nil {
 			m := models.NewMessageResponse("there was a problem validating this payment")

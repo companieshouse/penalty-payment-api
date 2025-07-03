@@ -15,7 +15,6 @@ func HandleGetPayableResource(w http.ResponseWriter, req *http.Request) {
 	log.InfoR(req, "start GET payable resource request")
 
 	// get payable resource from context, put there by PayableResourceAuthenticationInterceptor
-	log.InfoR(req, "getting payable resource from context")
 	payableResource, ok := req.Context().Value(config.PayableResource).(*models.PayableResource)
 
 	if !ok {

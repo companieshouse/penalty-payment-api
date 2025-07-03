@@ -56,7 +56,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	logData := log.Data{
 		"company_code":  companyCode,
 		"customer_code": resource.CustomerCode,
-		"penaltyRef":    transactions[0].TransactionReference,
+		"penalty_ref":   transactions[0].TransactionReference,
 		"payable_ref":   resource.PayableRef,
 		"payment_id":    payment.PaymentID,
 		"e5_puon":       paymentID,
