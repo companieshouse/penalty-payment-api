@@ -51,9 +51,11 @@ func main() {
 
 	handlers.Register(mainRouter, cfg, prDaoService, apDaoService, penaltyDetailsMap, allowedTransactionsMap)
 
-	// Push the Sarama logs into our custom writer
-	sarama.Logger = gologger.New(&log.Writer{}, "[Sarama] ", gologger.LstdFlags)
-	go consumer.Consume(cfg)
+	if cfg.FeatureFlagPaymentsProcessingEnabled {
+		// Push the Sarama logs into our custom writer
+		sarama.Logger = gologger.New(&log.Writer{}, "[Sarama] ", gologger.LstdFlags)
+		go consumer.Consume(cfg)
+	}
 
 	log.Info("Starting " + namespace)
 
