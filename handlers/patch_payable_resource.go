@@ -112,7 +112,6 @@ func paymentsProcessingEnabled() bool {
 		err = fmt.Errorf("error getting config for feature flag payments processing enabled: [%v]", err)
 		return false
 	}
-	log.Info("feature flag payments processing enabled", log.Data{"cfg.FeatureFlagPaymentsProcessingEnabled": cfg.FeatureFlagPaymentsProcessingEnabled})
 	return cfg.FeatureFlagPaymentsProcessingEnabled
 }
 

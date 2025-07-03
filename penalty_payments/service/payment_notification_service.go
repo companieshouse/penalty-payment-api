@@ -99,13 +99,15 @@ func constructMessage(payableResource models.PayableResource, companyCode string
 	transactionPayments := transformToTransactionPayments(payableResource)
 
 	penaltyPaymentProcessing := models.PenaltyPaymentsProcessing{
-		Attempt:             1,
-		CompanyCode:         companyCode,
-		CustomerCode:        payableResource.CustomerCode,
-		PaymentID:           payment.PaymentID,
-		ExternalPaymentID:   payment.ExternalPaymentID,
-		PaymentReference:    payment.Reference,
-		PaymentAmount:       payment.Amount,
+		Attempt:           1,
+		CompanyCode:       companyCode,
+		CustomerCode:      payableResource.CustomerCode,
+		PaymentID:         payment.PaymentID,
+		ExternalPaymentID: payment.ExternalPaymentID,
+		PaymentReference:  payment.Reference,
+		PaymentAmount:     payment.Amount,
+		// set to the only transaction in the array until multiple payments functionality comes
+		TotalValue:          transactionPayments[0].Value,
 		TransactionPayments: transactionPayments,
 		CardType:            payment.CardType,
 		Email:               payment.CreatedBy,
