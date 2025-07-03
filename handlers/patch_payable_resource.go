@@ -21,10 +21,10 @@ import (
 )
 
 var (
-	handleEmailKafkaMessage = service.SendEmailKafkaMessage
-    handlePaymentProcessingKafkaMessage = service.PaymentProcessingKafkaMessage
-	wg                      sync.WaitGroup
-	getConfig               = config.Get
+	handleSendEmailKafkaMessage         = service.SendEmailKafkaMessage
+	handlePaymentProcessingKafkaMessage = service.PaymentProcessingKafkaMessage
+	wg                                  sync.WaitGroup
+	getConfig                           = config.Get
 )
 
 // PayResourceHandler will update the resource to mark it as paid and also tell the finance system that the
@@ -84,7 +84,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			return
 		}
 
-		wg.Add(4)
+		wg.Add(3)
 
 		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
 		go updateAsPaidInDatabase(resource, payment, payableResourceService, r, w)
@@ -120,7 +120,7 @@ func sendConfirmationEmail(resource *models.PayableResource, payment *validators
 	penaltyPaymentDetails *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) {
 	// Send confirmation email
 	defer wg.Done()
-	err := handleEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
+	err := handleSendEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
 	if err != nil {
 		log.ErrorR(r, err, log.Data{
 			"payable_ref":       resource.PayableRef,
@@ -132,9 +132,10 @@ func sendConfirmationEmail(resource *models.PayableResource, payment *validators
 	}
 
 	log.Info("confirmation email sent to customer", log.Data{
-		"payable_ref":   resource.PayableRef,
-		"customer_code": resource.CustomerCode,
-		"email_address": resource.CreatedBy.Email,
+		"payable_ref":       resource.PayableRef,
+		"payment_reference": payment.Reference,
+		"customer_code":     resource.CustomerCode,
+		"email_address":     resource.CreatedBy.Email,
 	})
 }
 
