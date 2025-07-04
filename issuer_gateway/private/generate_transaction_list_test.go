@@ -50,7 +50,7 @@ var lfpPenaltyDetailsMap = &config.PenaltyDetailsMap{
 		utils.LateFilingPenaltyCompanyCode: {
 			Description:        "Late Filing Penalty",
 			DescriptionId:      "late-filing-penalty",
-			ClassOfPayment:     "penalty",
+			ClassOfPayment:     "penalty-lfp",
 			ResourceKind:       "late-filing-penalty#late-filing-penalty",
 			ProductType:        "late-filing-penalty",
 			EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",

@@ -4,7 +4,7 @@ details:
   LATE_FILING:
     Description: "Late Filing Penalty"
     DescriptionId: "late-filing-penalty"
-    ClassOfPayment: "penalty"
+    ClassOfPayment: "penalty-lfp"
     ResourceKind: "late-filing-penalty#late-filing-penalty"
     ProductType: "late-filing-penalty"
     EmailMsgType: "penalty_payment_received_email"

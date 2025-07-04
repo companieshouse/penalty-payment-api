@@ -158,7 +158,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 			{
 				description:           "Late Filing Penalty",
 				kind:                  "payment-details#payment-details",
-				classOfPayment:        "penalty",
+				classOfPayment:        "penalty-lfp",
 				descriptionIdentifier: "late-filing-penalty",
 				resourceKind:          "late-filing-penalty#late-filing-penalty",
 				productType:           "late-filing-penalty",
