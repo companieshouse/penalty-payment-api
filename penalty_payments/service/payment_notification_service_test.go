@@ -23,7 +23,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	Convey("Given the SendEmailKafkaMessage is called", t, func() {
+	Convey("Given the PaymentProcessingKafkaMessage is called", t, func() {
 		Convey("When config is called with invalid config", func() {
 			errMsg := "config is invalid"
 			mockedConfigGet := func() (*config.Config, error) {
@@ -107,9 +107,9 @@ func TestUnitPreparePaymentProcessingKafkaMessage(t *testing.T) {
 	topic := "penalty-payments-processing"
 
 	Convey("Given the PrepareKafkaMessage is called", t, func() {
-		emailSendSchema, _ := schema.Get("chs.gov.uk", "email-send")
+		paymentsProcessingSchema, _ := schema.Get("chs.gov.uk", "penalty-payments-processing")
 		producerSchema := avro.Schema{
-			Definition: emailSendSchema,
+			Definition: paymentsProcessingSchema,
 		}
 
 		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {

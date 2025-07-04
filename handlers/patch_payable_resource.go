@@ -109,7 +109,8 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 func paymentsProcessingEnabled() bool {
 	cfg, err := getConfig()
 	if err != nil {
-		err = fmt.Errorf("error getting config for feature flag payments processing enabled: [%v]", err)
+		err = fmt.Errorf("error getting config for feature flag payments processing enabled, defaulting to false: [%v]", err)
+		log.Error(err)
 		return false
 	}
 	return cfg.FeatureFlagPaymentsProcessingEnabled

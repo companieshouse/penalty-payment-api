@@ -55,7 +55,7 @@ func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payme
 	return nil
 }
 
-// prepareEmailKafkaMessage generates the kafka message that is to be sent
+// preparePaymentProcessingKafkaMessage generates the kafka message that is to be sent
 func preparePaymentProcessingKafkaMessage(penaltyPaymentProcessingSchema avro.Schema,
 	payableResource models.PayableResource, payment *validators.PaymentInformation, topic string) (*producer.Message, error) {
 	// Ensure payableResource contains at least one transaction
