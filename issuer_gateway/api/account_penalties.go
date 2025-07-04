@@ -26,33 +26,27 @@ var generateTransactionList = private.GenerateTransactionListFromAccountPenaltie
 func AccountPenalties(penaltyRefType, customerCode, companyCode string,
 	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap,
 	apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
-	accountPenalties, err := apDaoSvc.GetAccountPenalties(customerCode, companyCode)
-
 	cfg, err := getConfig()
 	if err != nil {
 		log.Error(fmt.Errorf("error getting config: %v", err))
 		return nil, services.Error, nil
 	}
+	log.Debug(fmt.Sprintf("config data: %+v", cfg))
 
-	if accountPenalties == nil || isStale(accountPenalties, cfg) {
-		e5Response, err := getTransactionListFromE5(customerCode, companyCode, cfg)
-		if err != nil {
-			log.Error(fmt.Errorf("error getting transaction list: [%v]", err))
-			return nil, services.Error, err
-		}
+	companyInfoLogData := log.Data{"customer_code": customerCode, "company_code": companyCode}
 
-		if len(e5Response.Transactions) == 0 {
-			// If company or transactions do not exist in E5, return account penalties with empty transaction list
-			accountPenalties = &models.AccountPenaltiesDao{
-				CustomerCode:     customerCode,
-				CompanyCode:      companyCode,
-				AccountPenalties: make([]models.AccountPenaltiesDataDao, 0),
-			}
-		} else if accountPenalties == nil {
-			accountPenalties = createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
-		} else {
-			accountPenalties = updateAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc)
-		}
+	log.Info("getting account penalties from cache", companyInfoLogData)
+	accountPenalties, err := apDaoSvc.GetAccountPenalties(customerCode, companyCode)
+
+	if accountPenalties == nil {
+		log.Info("account penalties not found in cache, getting account penalties from E5 transactions", companyInfoLogData)
+		accountPenalties, err = getAccountPenaltiesFromE5Transactions(customerCode, companyCode, cfg, apDaoSvc, false)
+	} else if isStale(accountPenalties, cfg) {
+		log.Info("account penalties cache record is stale, getting account penalties from E5 transactions", companyInfoLogData)
+		accountPenalties, err = getAccountPenaltiesFromE5Transactions(customerCode, companyCode, cfg, apDaoSvc, true)
+	}
+	if err != nil {
+		return nil, services.Error, err
 	}
 
 	// Generate the CH preferred format of the results i.e. classify the transactions into
@@ -65,8 +59,7 @@ func AccountPenalties(penaltyRefType, customerCode, companyCode string,
 		return nil, services.Error, err
 	}
 
-	log.Info("Completed AccountPenalties request and mapped to CH penalty transactions",
-		log.Data{"customer_code": customerCode, "company_code": companyCode})
+	log.Info("Completed AccountPenalties request and mapped to CH penalty transactions", companyInfoLogData)
 	return generatedTransactionListFromAccountPenalties, services.Success, nil
 }
 
@@ -96,6 +89,33 @@ func getTransactionListFromE5(customerCode string, companyCode string, cfg *conf
 	client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
 	e5Response, err := getTransactions(customerCode, companyCode, client)
 	return e5Response, err
+}
+
+func getAccountPenaltiesFromE5Transactions(
+	customerCode string, companyCode string, cfg *config.Config, apDaoSvc dao.AccountPenaltiesDaoService, cacheRecordExists bool) (*models.AccountPenaltiesDao, error) {
+	e5Response, err := getTransactionListFromE5(customerCode, companyCode, cfg)
+	logData := log.Data{"customer_code": customerCode, "company_code": companyCode}
+	if err != nil {
+		log.Error(fmt.Errorf("error getting transaction list: [%v]", err))
+		return nil, err
+	}
+	log.Debug("E5 transactions", log.Data{"transactions": e5Response.Transactions})
+
+	if len(e5Response.Transactions) == 0 {
+		log.Info("E5 transactions empty, account penalties not cached", logData)
+		// If company or transactions do not exist in E5, return account penalties with empty transaction list
+		return &models.AccountPenaltiesDao{
+			CustomerCode:     customerCode,
+			CompanyCode:      companyCode,
+			AccountPenalties: make([]models.AccountPenaltiesDataDao, 0),
+		}, nil
+	} else if cacheRecordExists {
+		log.Info("updating account penalties cache from E5 transactions", logData)
+		return updateAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc), nil
+	} else {
+		log.Info("creating account penalties cache from E5 transactions", logData)
+		return createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc), nil
+	}
 }
 
 func convertE5Response(customerCode, companyCode string, response *e5.GetTransactionsResponse) models.AccountPenaltiesDao {

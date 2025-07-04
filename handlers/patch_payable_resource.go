@@ -32,7 +32,8 @@ var (
 func PayResourceHandler(payableResourceService *services.PayableResourceService, e5Client *e5.Client, penaltyPaymentDetails *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 1. get the payable resource our of the context. authorisation is already handled in the interceptor
+		log.InfoR(r, "start PATCH payable resource request")
+		// 1. get the payable resource out of the context. authorisation is already handled in the interceptor
 		i := r.Context().Value(config.PayableResource)
 		if i == nil {
 			err := fmt.Errorf("no payable resource in context. check PayableAuthenticationInterceptor is installed")
@@ -41,16 +42,12 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
-
 		resource := i.(*models.PayableResource)
-
-		log.Info("processing penalty payment", log.Data{
-			"payable_ref":   resource.PayableRef,
-			"customer_code": resource.CustomerCode,
-		})
+		log.Debug("got payable resource from context", log.Data{"payable_resource": resource})
 
 		// 2. validate the request and check the payment reference against the payment api to validate that it has
 		// actually been paid
+		log.Info("validating request", log.Data{"payable_resource": resource})
 		var request models.PatchResourceRequest
 		err := json.NewDecoder(r.Body).Decode(&request)
 		if err != nil {
@@ -68,7 +65,9 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
+		log.Debug("request is valid", log.Data{"request": request})
 
+		log.Info("getting payment information", log.Data{"payment_ref": request.Reference, "payable_ref": resource.PayableRef})
 		payment, err := service.GetPaymentInformation(request.Reference, r)
 		if err != nil {
 			log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef})
@@ -77,16 +76,20 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			return
 		}
 
+		log.Info("validating payment", log.Data{"payable_ref": resource.PayableRef, "external_payment_id": payment.ExternalPaymentID})
 		err = validators.New().ValidateForPayment(*resource, *payment)
 		if err != nil {
 			m := models.NewMessageResponse("there was a problem validating this payment")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
+		log.Debug("payment is valid", log.Data{"payment": payment})
 
 		wg.Add(3)
 
+		log.Info("sending confirmation email", log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
 		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
+		log.Info("updating payable resource as paid", log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
 		go updateAsPaidInDatabase(resource, payment, payableResourceService, r, w)
 
 		if paymentsProcessingEnabled() {
@@ -94,6 +97,8 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			// this will be replaced with the new producer code
 			go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
 		} else {
+			log.Info("payments processing feature disabled")
+			log.Info("updating penalty as paid in E5", log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
 			go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
 		}
 
@@ -101,8 +106,10 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		// need to wait to mark the penalty as paid until the go routines above execute as the email
 		// sender relies on the state of the penalty in the DB i.e. not paid yet
+		log.Info("updating account penalty cache record as paid", log.Data{"customer_code": resource.CustomerCode, "penalty_ref": resource.PayableRef})
 		updateAccountPenaltyAsPaid(resource, apDaoSvc)
 
+		log.InfoR(r, "PATCH payable resource request completed successfully", log.Data{"customer_code": resource.CustomerCode})
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNoContent) // This will not be set if status has already been set
 	})
@@ -188,4 +195,9 @@ func updateIssuer(payableResourceService *services.PayableResourceService, e5Cli
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	log.Info("successfully initiated process to update payment in E5", log.Data{
+		"payable_ref":   resource.PayableRef,
+		"customer_code": resource.CustomerCode,
+	})
 }

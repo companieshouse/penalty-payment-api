@@ -24,6 +24,7 @@ var customerCode = "NI123456"
 var transactionItem = models.TransactionItem{
 	PenaltyRef: "A1234567",
 }
+var chsUrl = "chs_url"
 var payableResource = models.PayableResource{
 	CustomerCode: customerCode,
 	Transactions: []models.TransactionItem{transactionItem},
@@ -102,13 +103,6 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 	})
 }
 
-func setGetCompanyCodeFromTransactionMock(companyCode string) {
-	mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
-		return companyCode, nil
-	}
-	getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
-}
-
 func setGetPenaltyRefTypeFromTransactionMock(penaltyRefType string) {
 	mockedGetPenaltyRefTypeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
 		return penaltyRefType, nil
@@ -132,53 +126,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 
 		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
-		testCases := []struct {
-			name           string
-			companyCode    string
-			penaltyRefType string
-		}{
-			{
-				name:           "Late Filing",
-				companyCode:    utils.LateFilingPenaltyCompanyCode,
-				penaltyRefType: utils.LateFilingPenRef,
-			},
-			{
-				name:           "Sanctions",
-				companyCode:    utils.SanctionsCompanyCode,
-				penaltyRefType: utils.SanctionsPenRef,
-			},
-			{
-				name:           "Sanctions ROE",
-				companyCode:    utils.SanctionsCompanyCode,
-				penaltyRefType: utils.SanctionsRoePenRef,
-			},
-		}
-
-		for _, tc := range testCases {
-			Convey(tc.name, func() {
-				setGetCompanyCodeFromTransactionMock(tc.companyCode)
-				setGetPenaltyRefTypeFromTransactionMock(tc.penaltyRefType)
-
-				Convey("When config is called with invalid config", func() {
-					errMsg := "config is invalid"
-					mockedConfigGet := func() (*config.Config, error) {
-						return &config.Config{}, errors.New(errMsg)
-					}
-
-					getConfig = mockedConfigGet
-
-					Convey("Then an error should be returned", func() {
-						_, err := prepareKafkaMessage(
-							producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
-
-						So(err, ShouldResemble, errors.New("error getting config: ["+errMsg+"]"))
-					})
-				})
-
-			})
-		}
-
-		Convey("When config is called with invalid config", func() {
+		Convey("When getting company name fails config", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
@@ -186,12 +134,12 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				_, err := prepareKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, chsUrl)
 
 				So(err.Error(), ShouldStartWith, "error getting company name: [")
 			})
 		})
-		Convey("When config is called with valid config and invalid company code", func() {
+		Convey("When getting company code fails", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
@@ -209,12 +157,12 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				_, err := prepareKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, chsUrl)
 
 				So(err.Error(), ShouldEqual, "error getting company code")
 			})
 		})
-		Convey("When config is called with valid config and valid company number but invalid penalty ref", func() {
+		Convey("When getting penalty ref fails", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
@@ -232,12 +180,12 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				_, err := prepareKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, chsUrl)
 
 				So(err, ShouldResemble, errors.New("error getting penalty ref type"))
 			})
 		})
-		Convey("When config is called with valid config and valid company number but no transaction items", func() {
+		Convey("When payable resource has no transaction items", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
@@ -258,12 +206,12 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 				}
 
 				_, err := prepareKafkaMessage(
-					producerSchema, payableResourceNoItems, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc)
+					producerSchema, payableResourceNoItems, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc, chsUrl)
 
 				So(err.Error(), ShouldStartWith, "empty transactions list in payable resource:")
 			})
 		})
-		Convey("When config is called with valid config and valid company number but invalid transaction", func() {
+		Convey("When getting transaction for provided penalty ref fails", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
@@ -281,12 +229,12 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 				mockApDaoSvc.EXPECT().GetAccountPenalties(gomock.Any(), gomock.Any()).Return(nil, nil)
 
 				_, err := prepareKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc)
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc, chsUrl)
 
 				So(err.Error(), ShouldStartWith, "error getting transaction for penalty: [")
 			})
 		})
-		Convey("When config is called with valid config and valid company number and valid transaction but invalid madeUpDate", func() {
+		Convey("When transaction's madeUpDate is invalid", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
@@ -305,12 +253,12 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				_, err := prepareKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, chsUrl)
 
 				So(err, ShouldResemble, errors.New("error parsing made up date: [parsing time \"\" as \"2006-01-02\": cannot parse \"\" as \"2006\"]"))
 			})
 		})
-		Convey("When config is called with valid config and valid company number and valid transaction and valid penalty date but unknown type", func() {
+		Convey("When penalty type is unknown type", func() {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
@@ -331,7 +279,7 @@ func TestUnitPrepareKafkaMessage(t *testing.T) {
 			getPayablePenalty = mockedGetPayablePenalty
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+				_, err := prepareKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, chsUrl)
 
 				So(err, ShouldResemble, errors.New("error marshalling email send message: [Unknown type name: ]"))
 			})

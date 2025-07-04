@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/companieshouse/chs.go/log"
@@ -19,6 +20,7 @@ var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
 // payment - is the information about the payment session
 func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.PayableResourceService,
 	client *e5.Client, resource models.PayableResource, payment validators.PaymentInformation) error {
+	log.Debug("converting payment amount from string to float", log.Data{"amount": payment.Amount})
 	amountPaid, err := strconv.ParseFloat(payment.Amount, 32)
 	if err != nil {
 		log.Error(err, log.Data{"payment_reference": payment.Reference, "amount": payment.Amount})
@@ -39,10 +41,11 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	// ones that begin with 'LP' which signify penalties that have been paid outside the digital service.
 	paymentID := "X" + payment.PaymentID
 
+	log.Debug("getting company code from transaction", log.Data{"transaction": transactions[0]})
 	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
 
 	if err != nil {
-		log.Error(err)
+		log.Error(fmt.Errorf("error getting company code from transaction: %v", err))
 		return err
 	}
 
@@ -50,6 +53,16 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	// the payments and finally 3) confirm the payment. if anyone of these fails, the company account will be locked in
 	// E5. Finance have confirmed that it is better to keep these locked as a cleanup process will happen naturally in
 	// the working day.
+	logData := log.Data{
+		"company_code":  companyCode,
+		"customer_code": resource.CustomerCode,
+		"penalty_ref":   transactions[0].TransactionReference,
+		"payable_ref":   resource.PayableRef,
+		"payment_id":    payment.PaymentID,
+		"e5_puon":       paymentID,
+		"total_value":   amountPaid,
+	}
+	log.Debug("creating payment in E5", logData)
 	err = client.CreatePayment(&e5.CreatePaymentInput{
 		CompanyCode:  companyCode,
 		CustomerCode: resource.CustomerCode,
@@ -67,6 +80,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 		return err
 	}
 
+	log.Debug("authorising payment in E5", logData)
 	err = client.AuthorisePayment(&e5.AuthorisePaymentInput{
 		CompanyCode:   companyCode,
 		PaymentID:     paymentID,
@@ -84,6 +98,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 		return err
 	}
 
+	log.Debug("confirming payment in E5", logData)
 	err = client.ConfirmPayment(&e5.PaymentActionInput{
 		CompanyCode: companyCode,
 		PaymentID:   paymentID,
@@ -98,11 +113,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 		return err
 	}
 
-	log.Info("marked penalty transaction(s) as paid in E5", log.Data{
-		"payable_ref": resource.PayableRef,
-		"payment_id":  payment.PaymentID,
-		"e5_puon":     payment.PaymentID,
-	})
+	log.Info("marked penalty transaction(s) as paid in E5", logData)
 
 	return nil
 }

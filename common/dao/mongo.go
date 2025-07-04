@@ -192,6 +192,8 @@ func (m *MongoAccountPenaltiesService) GetAccountPenalties(customerCode string, 
 		return nil, err
 	}
 
+	log.Debug("accountPenalties", log.Data{"accountPenalties": resource})
+
 	return &resource, nil
 }
 
@@ -281,7 +283,7 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenalties(dao *models.Accoun
 	}
 
 	if result.ModifiedCount == 1 {
-		log.Info("updated a document in account_penalties collection", log.Data{
+		log.Debug("updated a document in account_penalties collection", log.Data{
 			"customer_code": dao.CustomerCode,
 			"company_code":  dao.CompanyCode,
 		})

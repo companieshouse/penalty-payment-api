@@ -10,6 +10,7 @@ import (
 	"github.com/companieshouse/chs.go/avro"
 	"github.com/companieshouse/chs.go/avro/schema"
 	"github.com/companieshouse/chs.go/kafka/producer"
+	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/filing-notification-sender/util"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
@@ -40,12 +41,17 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 		err = fmt.Errorf("error getting config for kafka message production: [%v]", err)
 		return err
 	}
+	log.Debug(fmt.Sprintf("config data: %+v", cfg))
 
+	log.Info("getting kafka producer", log.Data{"customer_code": payableResource.CustomerCode})
 	kafkaProducer, err := getProducer(cfg)
 	if err != nil {
 		err = fmt.Errorf("error creating kafka producer: [%v]", err)
 		return err
 	}
+	log.Debug("kafka producer", log.Data{"customer_code": payableResource.CustomerCode, "producer": kafkaProducer})
+
+	log.Debug("getting avro schema", log.Data{"customer_code": payableResource.CustomerCode})
 	emailSendSchema, err := getSchema(cfg.SchemaRegistryURL)
 	if err != nil {
 		err = fmt.Errorf("error getting schema from schema registry: [%v]", err)
@@ -54,19 +60,29 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 	producerSchema := &avro.Schema{
 		Definition: emailSendSchema,
 	}
+	log.Debug("avro schema", log.Data{"customer_code": payableResource.CustomerCode, "schema": producerSchema})
 
+	log.Info("preparing message", log.Data{"customer_code": payableResource.CustomerCode})
 	message, err := prepareKafkaMessage(
-		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc, cfg.CHSURL)
 	if err != nil {
 		err = fmt.Errorf("error preparing kafka message with schema: [%v]", err)
 		return err
 	}
 
+	log.Info("sending email message", log.Data{"customer_code": payableResource.CustomerCode})
 	partition, offset, err := kafkaProducer.Send(message)
 	if err != nil {
 		err = fmt.Errorf("failed to send message in partition: %d at offset %d", partition, offset)
 		return err
 	}
+	log.Info("successfully published email message", log.Data{
+		"customer_code":   payableResource.CustomerCode,
+		"kafka_topic":     ProducerTopic,
+		"kafka_partition": partition,
+		"kafka_offset":    offset,
+	})
+
 	return nil
 }
 
@@ -77,13 +93,7 @@ var getPayablePenalty = api.PayablePenalty
 
 // prepareKafkaMessage generates the kafka message that is to be sent
 func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*producer.Message, error) {
-	cfg, err := getConfig()
-	if err != nil {
-		err = fmt.Errorf("error getting config: [%v]", err)
-		return nil, err
-	}
-
+	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService, chsUrl string) (*producer.Message, error) {
 	companyName, err := getCompanyName(payableResource.CustomerCode, req)
 	if err != nil {
 		err = fmt.Errorf("error getting company name: [%v]", err)
@@ -131,8 +141,10 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		FilingDescription: payablePenalty.Reason,
 		To:                payableResource.CreatedBy.Email,
 		Subject:           fmt.Sprintf("Confirmation of your Companies House penalty payment"),
-		CHSURL:            cfg.CHSURL,
+		CHSURL:            chsUrl,
 	}
+
+	log.Debug("message data field", log.Data{"customer_code": payableResource.CustomerCode, "data_field": dataFieldMessage})
 
 	dataBytes, err := json.Marshal(dataFieldMessage)
 	if err != nil {
@@ -150,6 +162,8 @@ func prepareKafkaMessage(emailSendSchema avro.Schema, payableResource models.Pay
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),
 	}
+
+	log.Debug("email message", log.Data{"customer_code": payableResource.CustomerCode, "message": emailSendMessage})
 
 	messageBytes, err := emailSendSchema.Marshal(emailSendMessage)
 	if err != nil {
