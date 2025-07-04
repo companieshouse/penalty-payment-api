@@ -16,7 +16,6 @@ import (
 )
 
 func Consume(cfg *config.Config) {
-
 	kafkaConsumerConfig := &consumer.Config{
 		BrokerAddr:   cfg.BrokerAddr,
 		ZookeeperURL: cfg.ZookeeperURL,
@@ -54,6 +53,8 @@ func Consume(cfg *config.Config) {
 	signal.Notify(c, os.Interrupt)
 
 	messages := partitionConsumer.Messages()
+	penaltyFinancePayment := &handlers.PenaltyFinancePayment{}
+
 	for {
 		select {
 		case <-c:
@@ -61,7 +62,7 @@ func Consume(cfg *config.Config) {
 			return
 		case message := <-messages:
 			if message != nil {
-				err := handleMessage(avroSchema, message)
+				err := handleMessage(avroSchema, message, penaltyFinancePayment)
 				if err != nil {
 					log.Error(err)
 				}
@@ -71,8 +72,7 @@ func Consume(cfg *config.Config) {
 
 }
 
-func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage) error {
-
+func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage, financePayment handlers.FinancePayment) error {
 	var penaltyPayment models.PenaltyPaymentsProcessing
 	var err = avroSchema.Unmarshal(message.Value, &penaltyPayment)
 	if err != nil {
@@ -84,7 +84,7 @@ func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage) err
 	// ones that begin with 'LP' which signify penalties that have been paid outside the digital service.
 	e5PaymentID := "X" + penaltyPayment.PaymentID
 
-	err = handlers.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID)
+	err = financePayment.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID)
 	if err != nil {
 		err = fmt.Errorf("error processing financial penalty payment: [%v]", err)
 		log.Error(err, log.Data{"e5_payment_id": e5PaymentID, "customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payable_ref": penaltyPayment.PayableRef})
