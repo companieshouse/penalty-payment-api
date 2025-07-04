@@ -7,13 +7,18 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/services"
 )
 
+type FinancePayment interface {
+	ProcessFinancialPenaltyPayment(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string) error
+}
+
+type PenaltyFinancePayment struct{}
+
 // ProcessFinancialPenaltyPayment will update the transactions in E5 as paid.
 // Three http requests are needed to mark a transactions as paid. The process is 1) create the payment, 2) authorise
 // the payments and finally 3) confirm the payment. If any one of these fails, the company account will be locked in
 // E5. Finance have confirmed that it is better to keep these locked as a cleanup process will happen naturally in
 // the working day.
-func ProcessFinancialPenaltyPayment(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string) error {
-
+func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string) error {
 	log.Info("Financial penalty payment processing started", log.Data{
 		"e5_payment_id":         e5PaymentID,
 		"attempt":               penaltyPayment.Attempt,
