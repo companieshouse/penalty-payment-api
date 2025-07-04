@@ -18,6 +18,7 @@ import (
 
 var payableResourceService *services.PayableResourceService
 var paymentDetailsService *service.PaymentDetailsService
+var e5Client *e5.Client
 
 // Register defines the route mappings for the main router and it's subrouters
 func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.PayableResourceDaoService,
@@ -44,7 +45,7 @@ func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.Payab
 		},
 	}
 
-	e5Client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
+	e5Client = e5.NewClient(cfg.E5Username, cfg.E5APIURL)
 
 	userAuthInterceptor := &authentication.UserAuthenticationInterceptor{
 		AllowAPIKeyUser:                true,
