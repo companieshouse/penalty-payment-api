@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/Shopify/sarama"
@@ -8,6 +9,27 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/mock"
+)
+
+var (
+	penaltyPayment = models.PenaltyPaymentsProcessing{
+		Attempt:           1,
+		CompanyCode:       "C1",
+		CustomerCode:      "OE123456",
+		PaymentID:         "KIYLUq1pRVuiLNA",
+		ExternalPaymentID: "a8n3vp4uo1o7mf7pp2mtab7ne9",
+		PaymentReference:  "financial_penalty_SQ33133143",
+		PaymentAmount:     "350.00",
+		TotalValue:        350.0,
+		TransactionPayments: []models.TransactionPayment{{
+			TransactionReference: "U1234567",
+			Value:                350.0,
+		}},
+		CardType:   "Visa",
+		Email:      "test@example.com",
+		PayableRef: "SQ33133143",
+	}
+	e5PaymentID = "XKIYLUq1pRVuiLNA"
 )
 
 type mockPenaltyFinancePayment struct {
@@ -19,21 +41,53 @@ func (m *mockPenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPaymen
 	return args.Error(0)
 }
 
-func TestUnit_handleMessage(t *testing.T) {
-	Convey("Process financial penalty payment", t, func() {
+func TestUnitHandleMessage_Success(t *testing.T) {
+	Convey("Handle message penalty payments processing Success", t, func() {
 		// Given
-		penaltyPayment := getPenaltyPayment()
 		avroSchema := getAvroSchema()
 		message := getConsumerMessage(avroSchema, penaltyPayment)
 		mockFinancePayment := new(mockPenaltyFinancePayment)
-		mockFinancePayment.On("ProcessFinancialPenaltyPayment", mock.Anything, mock.Anything).Return(nil)
+		mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID).Return(nil)
 
 		// When
 		err := handleMessage(avroSchema, message, mockFinancePayment)
 
 		// Then
 		So(err, ShouldBeNil)
-		mockFinancePayment.AssertCalled(t, "ProcessFinancialPenaltyPayment", penaltyPayment, "XKIYLUq1pRVuiLNA")
+		mockFinancePayment.AssertExpectations(t)
+	})
+}
+
+func TestUnitHandleMessage_UnmarshalFails(t *testing.T) {
+	Convey("Handle message penalty payments processing Unmarshal fails", t, func() {
+		// Given
+		kafkaSchema := `{"type":"record","name":"PenaltyPaymentsProcessing","fields":[{"name":"email","type":"string"},{"name":"payable_ref","type":"string"}]}`
+		avroSchema := &avro.Schema{Definition: kafkaSchema}
+		message := getConsumerMessage(avroSchema, penaltyPayment)
+		mockFinancePayment := new(mockPenaltyFinancePayment)
+
+		// When
+		err := handleMessage(avroSchema, message, mockFinancePayment)
+
+		// Then
+		So(err, ShouldBeError, errors.New("error parsing the penalty-payments-processing avro encoded data: [End of file reached]"))
+		mockFinancePayment.AssertNotCalled(t, "ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID)
+	})
+}
+
+func TestUnitHandleMessage_ProcessFinancialPenaltyPaymentFails(t *testing.T) {
+	Convey("Handle message penalty payments processing fails", t, func() {
+		// Given
+		avroSchema := getAvroSchema()
+		message := getConsumerMessage(avroSchema, penaltyPayment)
+		mockFinancePayment := new(mockPenaltyFinancePayment)
+		mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID).Return(errors.New("failed to create payment in E5"))
+
+		// When
+		err := handleMessage(avroSchema, message, mockFinancePayment)
+
+		// Then
+		So(err, ShouldBeError, errors.New("error processing financial penalty payment: [failed to create payment in E5]"))
 		mockFinancePayment.AssertExpectations(t)
 	})
 }
@@ -52,25 +106,4 @@ func getConsumerMessage(avroSchema *avro.Schema, penaltyPayment models.PenaltyPa
 		Partition: 0,
 		Offset:    0,
 	}
-}
-
-func getPenaltyPayment() models.PenaltyPaymentsProcessing {
-	penaltyPayment := models.PenaltyPaymentsProcessing{
-		Attempt:           1,
-		CompanyCode:       "C1",
-		CustomerCode:      "OE123456",
-		PaymentID:         "KIYLUq1pRVuiLNA",
-		ExternalPaymentID: "a8n3vp4uo1o7mf7pp2mtab7ne9",
-		PaymentReference:  "financial_penalty_SQ33133143",
-		PaymentAmount:     "350.00",
-		TotalValue:        350.0,
-		TransactionPayments: []models.TransactionPayment{{
-			TransactionReference: "U1234567",
-			Value:                350.0,
-		}},
-		CardType:   "Visa",
-		Email:      "test@example.com",
-		PayableRef: "SQ33133143",
-	}
-	return penaltyPayment
 }
