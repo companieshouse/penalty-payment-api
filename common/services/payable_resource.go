@@ -20,10 +20,20 @@ var (
 	ErrPenaltyNotFound = errors.New("the Penalty does not exist")
 )
 
+// PayableResourceServiceInterface interface declares the DAO for db access
+type PayableResourceServiceInterface interface {
+	GetDAO() dao.PayableResourceDaoService
+}
+
 // PayableResourceService contains the DAO for db access
 type PayableResourceService struct {
 	DAO    dao.PayableResourceDaoService
 	Config *config.Config
+}
+
+// GetDAO returns the DAO for db access
+func (s *PayableResourceService) GetDAO() dao.PayableResourceDaoService {
+	return s.DAO
 }
 
 // GetPayableResource retrieves the payable resource with the given customer code and payable ref from the database

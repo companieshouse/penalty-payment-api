@@ -13,7 +13,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 )
 
-var getTransactions = func(customerCode string, companyCode string, client *e5.Client) (*e5.GetTransactionsResponse, error) {
+var getTransactions = func(customerCode string, companyCode string, client e5.ClientInterface) (*e5.GetTransactionsResponse, error) {
 	return client.GetTransactions(&e5.GetTransactionsInput{CustomerCode: customerCode, CompanyCode: companyCode})
 }
 var getConfig = config.Get

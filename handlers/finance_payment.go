@@ -7,11 +7,16 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/services"
 )
 
+// FinancePayment interface declares the processing handler for the consumer
 type FinancePayment interface {
 	ProcessFinancialPenaltyPayment(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string) error
 }
 
-type PenaltyFinancePayment struct{}
+// PenaltyFinancePayment is the processing handler for the consumer
+type PenaltyFinancePayment struct {
+	E5Client               e5.ClientInterface
+	PayableResourceService services.PayableResourceServiceInterface
+}
 
 // ProcessFinancialPenaltyPayment will update the transactions in E5 as paid.
 // Three http requests are needed to mark a transactions as paid. The process is 1) create the payment, 2) authorise
@@ -36,17 +41,17 @@ func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment mod
 		"payable_ref":           penaltyPayment.PayableRef,
 	})
 
-	createPaymentError, createPaymentSuccess := createPayment(penaltyPayment, payableResourceService, e5Client, e5PaymentID)
+	createPaymentError, createPaymentSuccess := createPayment(penaltyPayment, p.PayableResourceService, p.E5Client, e5PaymentID)
 	if !createPaymentSuccess {
 		return createPaymentError
 	}
 
-	authorisePaymentError, authorisePaymentSuccess := authorisePayment(penaltyPayment, payableResourceService, e5Client, e5PaymentID)
+	authorisePaymentError, authorisePaymentSuccess := authorisePayment(penaltyPayment, p.PayableResourceService, p.E5Client, e5PaymentID)
 	if !authorisePaymentSuccess {
 		return authorisePaymentError
 	}
 
-	confirmPaymentError, confirmPaymentSuccess := confirmPayment(penaltyPayment, payableResourceService, e5Client, e5PaymentID)
+	confirmPaymentError, confirmPaymentSuccess := confirmPayment(penaltyPayment, p.PayableResourceService, p.E5Client, e5PaymentID)
 	if !confirmPaymentSuccess {
 		return confirmPaymentError
 	}
@@ -55,7 +60,7 @@ func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment mod
 	return nil
 }
 
-func createPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService *services.PayableResourceService, client *e5.Client, e5PaymentID string) (createPaymentError error, createPaymentSuccess bool) {
+func createPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService services.PayableResourceServiceInterface, client e5.ClientInterface, e5PaymentID string) (createPaymentError error, createPaymentSuccess bool) {
 	var e5Transactions []*e5.CreatePaymentTransaction
 
 	for _, t := range penaltyPayment.TransactionPayments {
@@ -77,7 +82,8 @@ func createPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResou
 	}
 	return nil, true
 }
-func authorisePayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService *services.PayableResourceService, client *e5.Client, e5PaymentID string) (authorisePaymentError error, authorisePaymentSuccess bool) {
+
+func authorisePayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService services.PayableResourceServiceInterface, client e5.ClientInterface, e5PaymentID string) (authorisePaymentError error, authorisePaymentSuccess bool) {
 	authorisePaymentError = client.AuthorisePayment(&e5.AuthorisePaymentInput{
 		CompanyCode:   penaltyPayment.CompanyCode,
 		PaymentID:     e5PaymentID,
@@ -92,7 +98,7 @@ func authorisePayment(penaltyPayment models.PenaltyPaymentsProcessing, payableRe
 	return nil, true
 }
 
-func confirmPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService *services.PayableResourceService, client *e5.Client, e5PaymentID string) (confirmPaymentError error, confirmPaymentSuccess bool) {
+func confirmPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService services.PayableResourceServiceInterface, client e5.ClientInterface, e5PaymentID string) (confirmPaymentError error, confirmPaymentSuccess bool) {
 	confirmPaymentError = client.ConfirmPayment(&e5.PaymentActionInput{
 		CompanyCode: penaltyPayment.CompanyCode,
 		PaymentID:   e5PaymentID,
@@ -104,9 +110,9 @@ func confirmPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableReso
 	return nil, false
 }
 
-func saveE5Error(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService *services.PayableResourceService, e5PaymentError error, e5PaymentID string, e5Action e5.Action) {
+func saveE5Error(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService services.PayableResourceServiceInterface, e5PaymentError error, e5PaymentID string, e5Action e5.Action) {
 	log.Error(e5PaymentError, log.Data{"customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payment_id": e5PaymentID, "payable_ref": penaltyPayment.PayableRef, "e5_action": e5Action})
-	if svcErr := payableResourceService.DAO.SaveE5Error(penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5Action); svcErr != nil {
+	if svcErr := payableResourceService.GetDAO().SaveE5Error(penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5Action); svcErr != nil {
 		log.Error(svcErr, log.Data{"customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payment_id": e5PaymentID, "payable_ref": penaltyPayment.PayableRef})
 	}
 }

@@ -19,7 +19,7 @@ var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
 // resource - is the payable resource from the db representing the penalty(ies)
 // payment - is the information about the payment session
 func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.PayableResourceService,
-	client *e5.Client, resource models.PayableResource, payment validators.PaymentInformation) error {
+	client e5.ClientInterface, resource models.PayableResource, payment validators.PaymentInformation) error {
 	log.Debug("converting payment amount from string to float", log.Data{"amount": payment.Amount})
 	amountPaid, err := strconv.ParseFloat(payment.Amount, 32)
 	if err != nil {

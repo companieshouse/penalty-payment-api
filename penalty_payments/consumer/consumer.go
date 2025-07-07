@@ -53,7 +53,10 @@ func Consume(cfg *config.Config) {
 	signal.Notify(c, os.Interrupt)
 
 	messages := partitionConsumer.Messages()
-	penaltyFinancePayment := &handlers.PenaltyFinancePayment{}
+	penaltyFinancePayment := &handlers.PenaltyFinancePayment{
+		E5Client:               handlers.E5Client,
+		PayableResourceService: handlers.PayableResourceService,
+	}
 
 	for {
 		select {
