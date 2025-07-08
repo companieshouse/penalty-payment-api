@@ -17,6 +17,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/stretchr/testify v1.10.0
+	github.com/testcontainers/testcontainers-go v0.37.0
 	github.com/testcontainers/testcontainers-go/modules/kafka v0.37.0
 	go.mongodb.org/mongo-driver v1.10.2
 	gopkg.in/go-playground/validator.v9 v9.31.0
@@ -33,6 +34,7 @@ require (
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/docker v28.0.1+incompatible // indirect
@@ -56,6 +58,7 @@ require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
+	github.com/hexira/go-ignore-cov v0.3.0 // indirect
 	github.com/jcmturner/gofork v1.7.6 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/justinas/alice v1.2.0 // indirect
@@ -81,17 +84,19 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shirou/gopsutil/v4 v4.25.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/smarty/assertions v1.15.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/testcontainers/testcontainers-go v0.37.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
+	github.com/urfave/cli/v2 v2.10.3 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect
 	github.com/xdg-go/stringprep v1.0.3 // indirect
+	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
@@ -107,6 +112,7 @@ require (
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
+	golang.org/x/tools v0.33.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
