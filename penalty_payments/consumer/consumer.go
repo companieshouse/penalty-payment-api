@@ -15,17 +15,18 @@ import (
 	"github.com/companieshouse/penalty-payment-api/handlers"
 )
 
-func Consume(cfg *config.Config) {
+func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment) {
 	kafkaConsumerConfig := &consumer.Config{
 		BrokerAddr:   cfg.BrokerAddr,
 		ZookeeperURL: cfg.ZookeeperURL,
 		Topics:       []string{cfg.PenaltyPaymentsProcessingTopic},
 	}
 	log.Info("Starting kafka consumer", log.Data{
-		"broker_addr":        kafkaConsumerConfig.BrokerAddr,
-		"zookeeper_url":      kafkaConsumerConfig.ZookeeperURL,
-		"topics":             kafkaConsumerConfig.Topics,
-		"processing_timeout": kafkaConsumerConfig.ProcessingTimeout,
+		"broker_addr":         kafkaConsumerConfig.BrokerAddr,
+		"zookeeper_url":       kafkaConsumerConfig.ZookeeperURL,
+		"topics":              kafkaConsumerConfig.Topics,
+		"processing_timeout":  kafkaConsumerConfig.ProcessingTimeout,
+		"schema_registry_url": cfg.SchemaRegistryURL,
 	})
 	kafkaSchema, err := schema.Get(cfg.SchemaRegistryURL, cfg.PenaltyPaymentsProcessingTopic)
 	if err != nil {
@@ -53,10 +54,6 @@ func Consume(cfg *config.Config) {
 	signal.Notify(c, os.Interrupt)
 
 	messages := partitionConsumer.Messages()
-	penaltyFinancePayment := &handlers.PenaltyFinancePayment{
-		E5Client:               handlers.E5Client,
-		PayableResourceService: handlers.PayableResourceService,
-	}
 
 	for {
 		select {

@@ -16,8 +16,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var E5Client e5.ClientInterface
-var PayableResourceService *services.PayableResourceService
+var payableResourceService *services.PayableResourceService
 var paymentDetailsService *service.PaymentDetailsService
 
 // Register defines the route mappings for the main router and it's subrouters
@@ -25,17 +24,17 @@ func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.Payab
 	apDaoService dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap) {
 
-	PayableResourceService = &services.PayableResourceService{
+	payableResourceService = &services.PayableResourceService{
 		Config: cfg,
 		DAO:    prDaoService,
 	}
 
 	paymentDetailsService = &service.PaymentDetailsService{
-		PayableResourceService: PayableResourceService,
+		PayableResourceService: payableResourceService,
 	}
 
 	payableAuthInterceptor := interceptors.PayableAuthenticationInterceptor{
-		Service: *PayableResourceService,
+		Service: *payableResourceService,
 	}
 
 	// only oauth2 users can create payable resources
@@ -45,7 +44,7 @@ func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.Payab
 		},
 	}
 
-	E5Client = e5.NewClient(cfg.E5Username, cfg.E5APIURL)
+	e5Client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
 
 	userAuthInterceptor := &authentication.UserAuthenticationInterceptor{
 		AllowAPIKeyUser:                true,
@@ -76,7 +75,7 @@ func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.Payab
 	// other routes
 	payResourceRouter := appRouter.PathPrefix("/penalties/payable/{payable_ref}/payment").Methods(http.MethodPatch).Subrouter()
 	payResourceRouter.Use(payableAuthInterceptor.PayableAuthenticationIntercept, authentication.ElevatedPrivilegesInterceptor)
-	payResourceRouter.Handle("", PayResourceHandler(PayableResourceService, E5Client, penaltyDetailsMap, allowedTransactionsMap, apDaoService)).Name("mark-as-paid")
+	payResourceRouter.Handle("", PayResourceHandler(payableResourceService, e5Client, penaltyDetailsMap, allowedTransactionsMap, apDaoService)).Name("mark-as-paid")
 
 	// Set middleware across all routers and sub routers
 	mainRouter.Use(log.Handler)
