@@ -25,15 +25,15 @@ $(bin):
 	CGO_ENABLED=0 go build -o ./$(bin)
 
 .PHONY: test
-test: test-unit test-integration test-with-coverage
+test: test-unit test-integration
 
 .PHONY: test-unit
 test-unit:
-	@go test $(TESTS) -run 'Unit'
+	go test $(TESTS) -run 'Unit' -coverprofile=$(COVERAGE_OUT)
 
 .PHONY: test-integration
 test-integration:
-	@go test $(TESTS) -run 'Integration'
+	$(source_env); go test $(TESTS) -run 'Integration'
 
 .PHONY: test-with-coverage
 test-with-coverage:
