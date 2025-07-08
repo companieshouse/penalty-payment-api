@@ -3,8 +3,8 @@ package handlers
 import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/e5"
-	"github.com/companieshouse/penalty-payment-api/common/services"
 )
 
 // FinancePayment interface declares the processing handler for the consumer
@@ -14,8 +14,8 @@ type FinancePayment interface {
 
 // PenaltyFinancePayment is the processing handler for the consumer
 type PenaltyFinancePayment struct {
-	E5Client               e5.ClientInterface
-	PayableResourceService services.PayableResourceServiceInterface
+	E5Client                  e5.ClientInterface
+	PayableResourceDaoService dao.PayableResourceDaoService
 }
 
 // ProcessFinancialPenaltyPayment will update the transactions in E5 as paid.
@@ -41,17 +41,17 @@ func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment mod
 		"payable_ref":           penaltyPayment.PayableRef,
 	})
 
-	createPaymentError, createPaymentSuccess := createPayment(penaltyPayment, p.PayableResourceService, p.E5Client, e5PaymentID)
+	createPaymentError, createPaymentSuccess := createPayment(penaltyPayment, p.PayableResourceDaoService, p.E5Client, e5PaymentID)
 	if !createPaymentSuccess {
 		return createPaymentError
 	}
 
-	authorisePaymentError, authorisePaymentSuccess := authorisePayment(penaltyPayment, p.PayableResourceService, p.E5Client, e5PaymentID)
+	authorisePaymentError, authorisePaymentSuccess := authorisePayment(penaltyPayment, p.PayableResourceDaoService, p.E5Client, e5PaymentID)
 	if !authorisePaymentSuccess {
 		return authorisePaymentError
 	}
 
-	confirmPaymentError, confirmPaymentSuccess := confirmPayment(penaltyPayment, p.PayableResourceService, p.E5Client, e5PaymentID)
+	confirmPaymentError, confirmPaymentSuccess := confirmPayment(penaltyPayment, p.PayableResourceDaoService, p.E5Client, e5PaymentID)
 	if !confirmPaymentSuccess {
 		return confirmPaymentError
 	}
@@ -60,7 +60,7 @@ func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment mod
 	return nil
 }
 
-func createPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService services.PayableResourceServiceInterface, client e5.ClientInterface, e5PaymentID string) (createPaymentError error, createPaymentSuccess bool) {
+func createPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceDaoService dao.PayableResourceDaoService, client e5.ClientInterface, e5PaymentID string) (createPaymentError error, createPaymentSuccess bool) {
 	var e5Transactions []*e5.CreatePaymentTransaction
 
 	for _, t := range penaltyPayment.TransactionPayments {
@@ -77,13 +77,13 @@ func createPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResou
 		Transactions: e5Transactions,
 	})
 	if createPaymentError != nil {
-		saveE5Error(penaltyPayment, payableResourceService, createPaymentError, e5PaymentID, e5.CreateAction)
+		saveE5Error(penaltyPayment, payableResourceDaoService, createPaymentError, e5PaymentID, e5.CreateAction)
 		return createPaymentError, false
 	}
 	return nil, true
 }
 
-func authorisePayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService services.PayableResourceServiceInterface, client e5.ClientInterface, e5PaymentID string) (authorisePaymentError error, authorisePaymentSuccess bool) {
+func authorisePayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceDaoService dao.PayableResourceDaoService, client e5.ClientInterface, e5PaymentID string) (authorisePaymentError error, authorisePaymentSuccess bool) {
 	authorisePaymentError = client.AuthorisePayment(&e5.AuthorisePaymentInput{
 		CompanyCode:   penaltyPayment.CompanyCode,
 		PaymentID:     e5PaymentID,
@@ -92,27 +92,27 @@ func authorisePayment(penaltyPayment models.PenaltyPaymentsProcessing, payableRe
 		Email:         penaltyPayment.Email,
 	})
 	if authorisePaymentError != nil {
-		saveE5Error(penaltyPayment, payableResourceService, authorisePaymentError, e5PaymentID, e5.AuthoriseAction)
+		saveE5Error(penaltyPayment, payableResourceDaoService, authorisePaymentError, e5PaymentID, e5.AuthoriseAction)
 		return authorisePaymentError, false
 	}
 	return nil, true
 }
 
-func confirmPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService services.PayableResourceServiceInterface, client e5.ClientInterface, e5PaymentID string) (confirmPaymentError error, confirmPaymentSuccess bool) {
+func confirmPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceDaoService dao.PayableResourceDaoService, client e5.ClientInterface, e5PaymentID string) (confirmPaymentError error, confirmPaymentSuccess bool) {
 	confirmPaymentError = client.ConfirmPayment(&e5.PaymentActionInput{
 		CompanyCode: penaltyPayment.CompanyCode,
 		PaymentID:   e5PaymentID,
 	})
 	if confirmPaymentError != nil {
-		saveE5Error(penaltyPayment, payableResourceService, confirmPaymentError, e5PaymentID, e5.ConfirmAction)
+		saveE5Error(penaltyPayment, payableResourceDaoService, confirmPaymentError, e5PaymentID, e5.ConfirmAction)
 		return confirmPaymentError, false
 	}
 	return nil, false
 }
 
-func saveE5Error(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceService services.PayableResourceServiceInterface, e5PaymentError error, e5PaymentID string, e5Action e5.Action) {
+func saveE5Error(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceDaoService dao.PayableResourceDaoService, e5PaymentError error, e5PaymentID string, e5Action e5.Action) {
 	log.Error(e5PaymentError, log.Data{"customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payment_id": e5PaymentID, "payable_ref": penaltyPayment.PayableRef, "e5_action": e5Action})
-	if svcErr := payableResourceService.GetDAO().SaveE5Error(penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5Action); svcErr != nil {
+	if svcErr := payableResourceDaoService.SaveE5Error(penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5Action); svcErr != nil {
 		log.Error(svcErr, log.Data{"customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payment_id": e5PaymentID, "payable_ref": penaltyPayment.PayableRef})
 	}
 }

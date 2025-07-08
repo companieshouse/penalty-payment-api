@@ -15,7 +15,6 @@ import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/e5"
-	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/handlers"
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/consumer"
@@ -57,11 +56,8 @@ func main() {
 		// Push the Sarama logs into our custom writer
 		sarama.Logger = gologger.New(&log.Writer{}, "[Sarama] ", gologger.LstdFlags)
 		penaltyFinancePayment := &handlers.PenaltyFinancePayment{
-			E5Client: e5.NewClient(cfg.E5Username, cfg.E5APIURL),
-			PayableResourceService: &services.PayableResourceService{
-				Config: cfg,
-				DAO:    prDaoService,
-			},
+			E5Client:                  e5.NewClient(cfg.E5Username, cfg.E5APIURL),
+			PayableResourceDaoService: prDaoService,
 		}
 		go consumer.Consume(cfg, penaltyFinancePayment)
 	}
