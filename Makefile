@@ -1,5 +1,6 @@
 CHS_ENV_HOME ?= $(HOME)/.chs_env
 TESTS        ?= ./...
+COVERAGE_OUT = coverage.out
 
 bin          := penalty-payment-api
 chs_envs     := $(CHS_ENV_HOME)/global_env $(CHS_ENV_HOME)/penalty-payment-api/env
@@ -28,14 +29,31 @@ test: test-unit test-integration
 
 .PHONY: test-unit
 test-unit:
-	go test $(TESTS) -run 'Unit' -coverprofile=coverage.out
+	go test $(TESTS) -run 'Unit' -coverprofile=$(COVERAGE_OUT)
 
 .PHONY: test-integration
 test-integration:
 	$(source_env); go test $(TESTS) -run 'Integration'
 
+.PHONY: test-with-coverage
+test-with-coverage:
+	@go get github.com/hexira/go-ignore-cov
+	@go build -o ${GOBIN} github.com/hexira/go-ignore-cov
+	@go test -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS)
+	@go-ignore-cov --file $(COVERAGE_OUT)
+	@go tool cover -func $(COVERAGE_OUT)
+	@make coverage-html
+
+.PHONY: clean-coverage
+clean-coverage:
+	@rm -f $(COVERAGE_OUT) coverage.html
+
+.PHONY: coverage-html
+coverage-html:
+	@go tool cover -html=$(COVERAGE_OUT) -o coverage.html
+
 .PHONY: clean
-clean:
+clean: clean-coverage
 	go mod tidy
 	rm -f ./$(bin) ./$(bin)-*.zip $(test_path) build.log
 

@@ -43,6 +43,16 @@ const (
 	RejectAction Action = "reject"
 )
 
+// ClientInterface interface declares the Client finance system operations for AR Transactions and Payments
+type ClientInterface interface {
+	GetTransactions(input *GetTransactionsInput) (*GetTransactionsResponse, error)
+	CreatePayment(input *CreatePaymentInput) error
+	AuthorisePayment(input *AuthorisePaymentInput) error
+	ConfirmPayment(input *PaymentActionInput) error
+	TimeoutPayment(input *PaymentActionInput) error
+	RejectPayment(input *PaymentActionInput) error
+}
+
 // Client interacts with the Client finance system
 type Client struct {
 	E5Username string
@@ -325,7 +335,7 @@ func (c *Client) sendRequest(method, path string, body io.Reader, queryParameter
 }
 
 // NewClient will construct a new E5 client service struct that can be used to interact with the Client finance system
-func NewClient(username, baseURL string) *Client {
+func NewClient(username, baseURL string) ClientInterface {
 	return &Client{
 		E5Username: username,
 		E5BaseURL:  baseURL,

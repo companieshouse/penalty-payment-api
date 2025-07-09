@@ -4,16 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	gologger "log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/Shopify/sarama"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
+	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/handlers"
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/consumer"
 	"github.com/gorilla/mux"
 )
 
@@ -48,6 +52,16 @@ func main() {
 
 	handlers.Register(mainRouter, cfg, prDaoService, apDaoService, penaltyDetailsMap, allowedTransactionsMap)
 
+	if cfg.FeatureFlagPaymentsProcessingEnabled {
+		// Push the Sarama logs into our custom writer
+		sarama.Logger = gologger.New(&log.Writer{}, "[Sarama] ", gologger.LstdFlags)
+		penaltyFinancePayment := &handlers.PenaltyFinancePayment{
+			E5Client:                  e5.NewClient(cfg.E5Username, cfg.E5APIURL),
+			PayableResourceDaoService: prDaoService,
+		}
+		go consumer.Consume(cfg, penaltyFinancePayment)
+	}
+
 	log.Info("Starting " + namespace)
 
 	h := &http.Server{
@@ -62,6 +76,7 @@ func main() {
 	go func() {
 		log.Info("starting server...", log.Data{"port": cfg.BindAddr})
 		err = h.ListenAndServe()
+
 		log.Info("server stopping...")
 		if err != nil && !errors.Is(http.ErrServerClosed, err) {
 			log.Error(err)

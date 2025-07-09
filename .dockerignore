@@ -12,6 +12,7 @@
 !middleware
 !mocks
 !models
+!penalty_payments/consumer
 !penalty_payments/service
 !spec
 !penalty_payments/transformers

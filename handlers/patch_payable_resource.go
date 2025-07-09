@@ -29,7 +29,7 @@ var (
 
 // PayResourceHandler will update the resource to mark it as paid and also tell the finance system that the
 // transaction(s) associated with it are paid.
-func PayResourceHandler(payableResourceService *services.PayableResourceService, e5Client *e5.Client, penaltyPaymentDetails *config.PenaltyDetailsMap,
+func PayResourceHandler(payableResourceService *services.PayableResourceService, e5Client e5.ClientInterface, penaltyPaymentDetails *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.InfoR(r, "start PATCH payable resource request")
@@ -182,7 +182,7 @@ func updateAsPaidInDatabase(resource *models.PayableResource, payment *validator
 	})
 }
 
-func updateIssuer(payableResourceService *services.PayableResourceService, e5Client *e5.Client, resource *models.PayableResource,
+func updateIssuer(payableResourceService *services.PayableResourceService, e5Client e5.ClientInterface, resource *models.PayableResource,
 	payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter) {
 	// Mark the resource as paid in e5
 	defer wg.Done()
