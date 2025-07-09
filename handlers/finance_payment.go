@@ -111,8 +111,9 @@ func confirmPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableReso
 }
 
 func saveE5Error(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceDaoService dao.PayableResourceDaoService, e5PaymentError error, e5PaymentID string, e5Action e5.Action) {
-	log.Error(e5PaymentError, log.Data{"customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payment_id": e5PaymentID, "payable_ref": penaltyPayment.PayableRef, "e5_action": e5Action})
+	logContext := log.Data{"customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payable_ref": penaltyPayment.PayableRef, "e5_payment_id": e5PaymentID, "e5_action": e5Action}
+	log.Error(e5PaymentError, logContext)
 	if svcErr := payableResourceDaoService.SaveE5Error(penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5Action); svcErr != nil {
-		log.Error(svcErr, log.Data{"customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payment_id": e5PaymentID, "payable_ref": penaltyPayment.PayableRef})
+		log.Error(svcErr, logContext)
 	}
 }
