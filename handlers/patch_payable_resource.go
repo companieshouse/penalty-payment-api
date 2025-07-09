@@ -20,11 +20,11 @@ import (
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/service"
 )
 
-// handleEmailKafkaMessage allows us to mock the call to sendEmailKafkaMessage for unit tests
 var (
-	handleEmailKafkaMessage = service.SendEmailKafkaMessage
-	wg                      sync.WaitGroup
-	getConfig               = config.Get
+	handleSendEmailKafkaMessage         = service.SendEmailKafkaMessage
+	handlePaymentProcessingKafkaMessage = service.PaymentProcessingKafkaMessage
+	wg                                  sync.WaitGroup
+	getConfig                           = config.Get
 )
 
 // PayResourceHandler will update the resource to mark it as paid and also tell the finance system that the
@@ -93,9 +93,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		go updateAsPaidInDatabase(resource, payment, payableResourceService, r, w)
 
 		if paymentsProcessingEnabled() {
-			log.Info("entered new flag code, this will be updated when the kafka tickets are implemented")
-			// this will be replaced with the new producer code
-			go updateIssuer(payableResourceService, e5Client, resource, payment, r, w)
+			go addPaymentsProcessingMsgToTopic(resource, payment, r, w)
 		} else {
 			log.Info("payments processing feature disabled")
 			log.Info("updating penalty as paid in E5", log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
@@ -118,50 +116,33 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 func paymentsProcessingEnabled() bool {
 	cfg, err := getConfig()
 	if err != nil {
-		err = fmt.Errorf("error getting config for feature flag payments processing enabled: [%v]", err)
+		err = fmt.Errorf("error getting config for feature flag payments processing enabled, defaulting to false: [%v]", err)
+		log.Error(err)
 		return false
 	}
-	log.Info("feature flag payments processing enabled", log.Data{"cfg.FeatureFlagPaymentsProcessingEnabled": cfg.FeatureFlagPaymentsProcessingEnabled})
 	return cfg.FeatureFlagPaymentsProcessingEnabled
-}
-
-func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.AccountPenaltiesDaoService) {
-	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
-	if err != nil {
-		log.Error(fmt.Errorf("error updating account penalties collection as paid because company code cannot be resolved: [%v]", err),
-			log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
-		return
-	}
-	penalty := resource.Transactions[0]
-
-	err = svc.UpdateAccountPenaltyAsPaid(resource.CustomerCode, companyCode, penalty.PenaltyRef)
-	if err != nil {
-		log.Error(fmt.Errorf("error updating account penalties collection as paid: [%v]", err),
-			log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
-				"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
-		return
-	}
-
-	log.Info("account penalties collection has been updated as paid",
-		log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
-			"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
 }
 
 func sendConfirmationEmail(resource *models.PayableResource, payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter,
 	penaltyPaymentDetails *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) {
 	// Send confirmation email
 	defer wg.Done()
-	err := handleEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
+	err := handleSendEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
 	if err != nil {
-		log.ErrorR(r, err, log.Data{"payable_ref": resource.PayableRef, "payment_reference": payment.Reference})
+		log.ErrorR(r, err, log.Data{
+			"payable_ref":       resource.PayableRef,
+			"payment_reference": payment.Reference,
+			"customer_code":     resource.CustomerCode,
+			"email_address":     resource.CreatedBy.Email})
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	log.Info("confirmation email sent to customer", log.Data{
-		"payable_ref":   resource.PayableRef,
-		"customer_code": resource.CustomerCode,
-		"email_address": resource.CreatedBy.Email,
+		"payable_ref":       resource.PayableRef,
+		"payment_reference": payment.Reference,
+		"customer_code":     resource.CustomerCode,
+		"email_address":     resource.CreatedBy.Email,
 	})
 }
 
@@ -200,4 +181,38 @@ func updateIssuer(payableResourceService *services.PayableResourceService, e5Cli
 		"payable_ref":   resource.PayableRef,
 		"customer_code": resource.CustomerCode,
 	})
+}
+
+func addPaymentsProcessingMsgToTopic(payableResource *models.PayableResource,
+	payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter) {
+	defer wg.Done()
+	// send the kafka message to the producer
+	err := handlePaymentProcessingKafkaMessage(*payableResource, payment)
+	if err != nil {
+		log.ErrorR(r, err, log.Data{"payable_ref": payableResource.PayableRef, "payment_reference": payment.Reference})
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.AccountPenaltiesDaoService) {
+	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
+	if err != nil {
+		log.Error(fmt.Errorf("error updating account penalties collection as paid because company code cannot be resolved: [%v]", err),
+			log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
+		return
+	}
+	penalty := resource.Transactions[0]
+
+	err = svc.UpdateAccountPenaltyAsPaid(resource.CustomerCode, companyCode, penalty.PenaltyRef)
+	if err != nil {
+		log.Error(fmt.Errorf("error updating account penalties collection as paid: [%v]", err),
+			log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
+				"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
+		return
+	}
+
+	log.Info("account penalties collection has been updated as paid",
+		log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
+			"penalty_ref": penalty.PenaltyRef, "payable_ref": resource.PayableRef})
 }

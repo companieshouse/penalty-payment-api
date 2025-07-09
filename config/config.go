@@ -28,6 +28,7 @@ type Config struct {
 	BrokerAddr                           []string     `env:"KAFKA_BROKER_ADDR"                            flag:"broker-addr"                              flagDesc:"Kafka broker address"`
 	ZookeeperURL                         string       `env:"KAFKA_ZOOKEEPER_ADDR"                         flag:"zookeeper-addr"                           flagDesc:"Main CH Zookeeper address"`
 	SchemaRegistryURL                    string       `env:"SCHEMA_REGISTRY_URL"                          flag:"schema-registry-url"                      flagDesc:"Schema registry url"`
+	EmailSendTopic                       string       `env:"EMAIL_SEND_TOPIC"                             flag:"email-send-topic"                         flagDesc:"Kafka topic to send emails"`
 	PenaltyPaymentsProcessingTopic       string       `env:"PENALTY_PAYMENTS_PROCESSING_TOPIC"            flag:"penalty-payments-processing-topic"        flagDesc:"Penalty payments processing topic"`
 	FeatureFlagPaymentsProcessingEnabled bool         `env:"FEATURE_FLAG_PAYMENTS_PROCESSING_ENABLED"     flag:"feature-flag-payments-processing-enabled" flagDesc:"If the payments processing Kafka implementation is enabled"`
 	CHSURL                               string       `env:"CHS_URL"                                      flag:"chs-url"                                  flagDesc:"CHS URL"`
