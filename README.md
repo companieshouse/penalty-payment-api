@@ -26,6 +26,7 @@ In order to run this API locally you will need to install the following:
 | `KAFKA_BROKER_ADDR`                        |   `_`   | Kafka Broker Address                                                        | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
 | `KAFKA_ZOOKEEPER_ADDR`                     |   `_`   | Kafka Zookeeper Address                                                     | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
 | `SCHEMA_REGISTRY_URL`                      |   `_`   | Schema Registry URL                                                         | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `EMAIL_SEND_TOPIC`                         |   `_`   | Kafka topic to send emails e.g. email-send                                  | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
 | `PENALTY_PAYMENTS_PROCESSING_TOPIC`        |   `_`   | Kafka topic to process penalty payments to e.g. penalty-payments-processing | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
 | `FEATURE_FLAG_PAYMENTS_PROCESSING_ENABLED` |   `_`   | If the payments processing Kafka implementation is enabled                  | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
 | `API_URL`                                  |   `_`   | The application endpoint for the API, for go-sdk-manager integration        | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |

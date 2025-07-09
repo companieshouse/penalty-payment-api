@@ -165,8 +165,7 @@ func (c *Client) AuthorisePayment(input *AuthorisePaymentInput) error {
 	}
 
 	logContext := log.Data{
-		"payment_id":           input.PaymentID,
-		"authorisation_number": input.AuthorisationNumber,
+		"payment_id": input.PaymentID,
 	}
 
 	body, err := json.Marshal(input)
