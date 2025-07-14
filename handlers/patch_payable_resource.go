@@ -93,6 +93,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		go updateAsPaidInDatabase(resource, payment, payableResourceService, r, w)
 
 		if paymentsProcessingEnabled() {
+			log.Info("payments processing feature enabled")
 			go addPaymentsProcessingMsgToTopic(resource, payment, r, w)
 		} else {
 			log.Info("payments processing feature disabled")
@@ -186,6 +187,9 @@ func updateIssuer(payableResourceService *services.PayableResourceService, e5Cli
 func addPaymentsProcessingMsgToTopic(payableResource *models.PayableResource,
 	payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter) {
 	defer wg.Done()
+
+	log.Info("adding payments processing message to topic", log.Data{
+		"payable_ref": payableResource.PayableRef, "payment_reference": payment.Reference})
 	// send the kafka message to the producer
 	err := handlePaymentProcessingKafkaMessage(*payableResource, payment)
 	if err != nil {
