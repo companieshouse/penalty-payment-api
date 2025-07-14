@@ -28,7 +28,7 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 
 	topic := cfg.EmailSendTopic
 
-	log.Info("getting kafka producer", log.Data{"customer_code": payableResource.CustomerCode})
+	log.Info("getting email kafka producer", log.Data{"customer_code": payableResource.CustomerCode})
 	kafkaProducer, err := getProducer(cfg)
 	if err != nil {
 		err = fmt.Errorf("error creating kafka producer: [%v]", err)

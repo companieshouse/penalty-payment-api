@@ -17,8 +17,10 @@ func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payme
 		return err
 	}
 
+	log.Debug(fmt.Sprintf("config data: %+v", cfg))
 	topic := cfg.PenaltyPaymentsProcessingTopic
 
+	log.Info("getting penalty payments processing kafka producer", log.Data{"customer_code": payableResource.CustomerCode})
 	kafkaProducer, err := getProducer(cfg)
 	if err != nil {
 		err = fmt.Errorf("error creating kafka producer: [%v]", err)
@@ -39,7 +41,7 @@ func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payme
 		err = fmt.Errorf("error preparing kafka message with schema: [%v]", err)
 		return err
 	}
-	log.Debug("payment processing message prepared successfully", log.Data{
+	log.Info("payment processing message prepared successfully", log.Data{
 		"message.Value":     message.Value,
 		"message.Topic":     message.Topic,
 		"message.Partition": message.Partition,
