@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
@@ -24,31 +26,92 @@ type PenaltyFinancePayment struct {
 // E5. Finance have confirmed that it is better to keep these locked as a cleanup process will happen naturally in
 // the working day.
 func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string) error {
+	payableResourceDaoService := p.PayableResourceDaoService
+	e5Client := p.E5Client
+
+	customerCode := penaltyPayment.CustomerCode
+	payableRef := penaltyPayment.PayableRef
+	payableResource, err := payableResourceDaoService.GetPayableResource(customerCode, payableRef)
+	if err != nil {
+		return err
+	}
+
+	createdAt := payableResource.Data.CreatedAt
+	e5CommandError := e5.Action(payableResource.E5CommandError)
 	logContext := log.Data{
-		"customer_code":           penaltyPayment.CustomerCode,
+		"customer_code":           customerCode,
 		"company_code":            penaltyPayment.CompanyCode,
-		"payable_ref":             penaltyPayment.PayableRef,
+		"payable_ref":             payableRef,
 		"penalty_payment_message": penaltyPayment,
 		"e5_payment_id":           e5PaymentID,
+		"created_at":              createdAt,
+		"e5_command_error":        e5CommandError,
 	}
+	if isAfterNextDayMidnight(createdAt) {
+		log.Info("Skipping financial penalty payment processing as current time is after next day midnight of created_at", logContext)
+		return nil
+	}
+
 	log.Info("Financial penalty payment processing started", logContext)
 
-	createPaymentError, createPaymentSuccess := createPayment(penaltyPayment, p.PayableResourceDaoService, p.E5Client, e5PaymentID)
-	if !createPaymentSuccess {
-		return createPaymentError
+	if e5CommandError == "" || e5.CreateAction == e5CommandError {
+		retryCreatePaymentError := retryCreatePayment(penaltyPayment, e5PaymentID, payableResourceDaoService, e5Client)
+		if retryCreatePaymentError != nil {
+			return retryCreatePaymentError
+		}
+		e5CommandError = ""
 	}
 
-	authorisePaymentError, authorisePaymentSuccess := authorisePayment(penaltyPayment, p.PayableResourceDaoService, p.E5Client, e5PaymentID)
-	if !authorisePaymentSuccess {
-		return authorisePaymentError
+	if e5CommandError == "" || e5.AuthoriseAction == e5CommandError {
+		retryAuthorisePaymentError := retryAuthorisePayment(penaltyPayment, e5PaymentID, payableResourceDaoService, e5Client)
+		if retryAuthorisePaymentError != nil {
+			return retryAuthorisePaymentError
+		}
+		e5CommandError = ""
 	}
 
-	confirmPaymentError, confirmPaymentSuccess := confirmPayment(penaltyPayment, p.PayableResourceDaoService, p.E5Client, e5PaymentID)
-	if !confirmPaymentSuccess {
-		return confirmPaymentError
+	if e5CommandError == "" || e5.ConfirmAction == e5CommandError {
+		retryConfirmPaymentError := retryConfirmPayment(penaltyPayment, e5PaymentID, payableResourceDaoService, e5Client)
+		if retryConfirmPaymentError != nil {
+			return retryConfirmPaymentError
+		}
+		e5CommandError = ""
+		// Need to ensure that any previous E5 payment errors are cleared following the last successful attempt to confirm payment
+		logContext["e5_command_error"] = e5CommandError
+		saveE5Success(logContext, payableResourceDaoService, customerCode, payableRef)
 	}
 
 	log.Info("Financial penalty payment processing successful", logContext)
+	return nil
+}
+
+func retryCreatePayment(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string, payableResourceDaoService dao.PayableResourceDaoService, client e5.ClientInterface) (createPaymentError error) {
+	createPaymentError, createPaymentSuccess := retry(3, time.Second, func() (error, bool) {
+		return createPayment(penaltyPayment, payableResourceDaoService, client, e5PaymentID)
+	})
+	if !createPaymentSuccess {
+		return createPaymentError
+	}
+	return nil
+}
+
+func retryAuthorisePayment(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string, payableResourceDaoService dao.PayableResourceDaoService, client e5.ClientInterface) (authorisePaymentError error) {
+	authorisePaymentError, authorisePaymentSuccess := retry(3, time.Second, func() (error, bool) {
+		return authorisePayment(penaltyPayment, payableResourceDaoService, client, e5PaymentID)
+	})
+	if !authorisePaymentSuccess {
+		return authorisePaymentError
+	}
+	return nil
+}
+
+func retryConfirmPayment(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string, payableResourceDaoService dao.PayableResourceDaoService, client e5.ClientInterface) (confirmPaymentError error) {
+	confirmPaymentError, confirmPaymentSuccess := retry(3, time.Second, func() (error, bool) {
+		return confirmPayment(penaltyPayment, payableResourceDaoService, client, e5PaymentID)
+	})
+	if !confirmPaymentSuccess {
+		return confirmPaymentError
+	}
 	return nil
 }
 
@@ -114,4 +177,29 @@ func saveE5Error(penaltyPayment models.PenaltyPaymentsProcessing, payableResourc
 	if svcErr := payableResourceDaoService.SaveE5Error(penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5Action); svcErr != nil {
 		log.Error(svcErr, logContext)
 	}
+}
+
+// Need to ensure that any previous E5 payment errors are cleared following the last successful attempt to confirm payment
+func saveE5Success(logContext log.Data, payableResourceDaoService dao.PayableResourceDaoService, customerCode string, payableRef string) {
+	if svcErr := payableResourceDaoService.SaveE5Error(customerCode, payableRef, ""); svcErr != nil {
+		log.Error(svcErr, logContext)
+	}
+}
+
+func isAfterNextDayMidnight(createdAt *time.Time) bool {
+	nextDayMidnight := time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day()+1, 0, 0, 0, 0, createdAt.Location())
+	return time.Now().After(nextDayMidnight)
+}
+
+func retry(attempts int, sleep time.Duration, f func() (error, bool)) (error, bool) {
+	var err error
+	var success bool
+	for i := 0; i < attempts; i++ {
+		err, success = f()
+		if success {
+			return nil, true
+		}
+		time.Sleep(sleep)
+	}
+	return err, false
 }
