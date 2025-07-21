@@ -24,22 +24,14 @@ type PenaltyFinancePayment struct {
 // E5. Finance have confirmed that it is better to keep these locked as a cleanup process will happen naturally in
 // the working day.
 func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string) error {
-	log.Info("Financial penalty payment processing started", log.Data{
-		"e5_payment_id":         e5PaymentID,
-		"attempt":               penaltyPayment.Attempt,
-		"company_code":          penaltyPayment.CompanyCode,
-		"customer_code":         penaltyPayment.CustomerCode,
-		"payment_id":            penaltyPayment.PaymentID,
-		"external_payment_id":   penaltyPayment.ExternalPaymentID,
-		"payment_reference":     penaltyPayment.PaymentReference,
-		"payment_amount":        penaltyPayment.PaymentAmount,
-		"total_value":           penaltyPayment.TotalValue,
-		"transaction_reference": penaltyPayment.TransactionPayments[0].TransactionReference,
-		"value":                 penaltyPayment.TransactionPayments[0].Value,
-		"card_type":             penaltyPayment.CardType,
-		"email":                 penaltyPayment.Email,
-		"payable_ref":           penaltyPayment.PayableRef,
-	})
+	logContext := log.Data{
+		"customer_code":           penaltyPayment.CustomerCode,
+		"company_code":            penaltyPayment.CompanyCode,
+		"payable_ref":             penaltyPayment.PayableRef,
+		"penalty_payment_message": penaltyPayment,
+		"e5_payment_id":           e5PaymentID,
+	}
+	log.Info("Financial penalty payment processing started", logContext)
 
 	createPaymentError, createPaymentSuccess := createPayment(penaltyPayment, p.PayableResourceDaoService, p.E5Client, e5PaymentID)
 	if !createPaymentSuccess {
@@ -56,7 +48,7 @@ func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment mod
 		return confirmPaymentError
 	}
 
-	log.Info("Financial penalty payment processing successful", log.Data{"e5_payment_id": e5PaymentID, "customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payable_ref": penaltyPayment.PayableRef})
+	log.Info("Financial penalty payment processing successful", logContext)
 	return nil
 }
 
@@ -107,11 +99,17 @@ func confirmPayment(penaltyPayment models.PenaltyPaymentsProcessing, payableReso
 		saveE5Error(penaltyPayment, payableResourceDaoService, confirmPaymentError, e5PaymentID, e5.ConfirmAction)
 		return confirmPaymentError, false
 	}
-	return nil, false
+	return nil, true
 }
 
 func saveE5Error(penaltyPayment models.PenaltyPaymentsProcessing, payableResourceDaoService dao.PayableResourceDaoService, e5PaymentError error, e5PaymentID string, e5Action e5.Action) {
-	logContext := log.Data{"customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payable_ref": penaltyPayment.PayableRef, "e5_payment_id": e5PaymentID, "e5_action": e5Action}
+	logContext := log.Data{
+		"customer_code": penaltyPayment.CustomerCode,
+		"company_code":  penaltyPayment.CompanyCode,
+		"payable_ref":   penaltyPayment.PayableRef,
+		"e5_payment_id": e5PaymentID,
+		"e5_action":     e5Action,
+	}
 	log.Error(e5PaymentError, logContext)
 	if svcErr := payableResourceDaoService.SaveE5Error(penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5Action); svcErr != nil {
 		log.Error(svcErr, logContext)
