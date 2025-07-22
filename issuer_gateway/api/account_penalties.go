@@ -52,7 +52,7 @@ func AccountPenalties(penaltyRefType, customerCode, companyCode string,
 	// Generate the CH preferred format of the results i.e. classify the transactions into
 	// payable "penalty" types or non-payable "other" types
 	generatedTransactionListFromAccountPenalties, err :=
-		generateTransactionList(accountPenalties, penaltyRefType, penaltyDetailsMap, allowedTransactionsMap)
+		generateTransactionList(accountPenalties, penaltyRefType, penaltyDetailsMap, allowedTransactionsMap, cfg)
 	if err != nil {
 		err = fmt.Errorf("error generating transaction list from account penalties: [%v]", err)
 		log.Error(err)
