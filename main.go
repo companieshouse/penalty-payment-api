@@ -19,6 +19,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/handlers"
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/consumer"
 	"github.com/gorilla/mux"
+	_ "golang.org/x/oauth2"
 )
 
 func main() {
