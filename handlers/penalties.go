@@ -15,7 +15,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var getCompanyCode = utils.GetCompanyCode
 var accountPenalties = api.AccountPenalties
 
 // HandleGetPenalties retrieves the penalty details for the supplied customer code from e5

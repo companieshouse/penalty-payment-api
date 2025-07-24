@@ -17,7 +17,6 @@ import (
 )
 
 var payableResourceService *services.PayableResourceService
-var paymentDetailsService *service.PaymentDetailsService
 
 // Register defines the route mappings for the main router and it's subrouters
 func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.PayableResourceDaoService,

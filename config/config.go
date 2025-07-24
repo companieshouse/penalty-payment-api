@@ -17,26 +17,29 @@ var mtx sync.Mutex
 
 // Config defines the configuration options for this service.
 type Config struct {
-	BindAddr                             string       `env:"BIND_ADDR"                                    flag:"bind-addr"                                flagDesc:"Bind address"`
-	E5APIURL                             string       `env:"E5_API_URL"                                   flag:"e5-api-url"                               flagDesc:"Base URL for the E5 API"`
-	E5Username                           string       `env:"E5_USERNAME"                                  flag:"e5-username"                              flagDesc:"Username for the E5 API"`
-	MongoDBURL                           string       `env:"MONGODB_URL"                                  flag:"mongodb-url"                              flagDesc:"MongoDB server URL"`
-	Database                             string       `env:"PPS_MONGODB_DATABASE"                         flag:"mongodb-database"                         flagDesc:"MongoDB database for data"`
-	PayableResourcesCollection           string       `env:"PPS_MONGODB_PAYABLE_RESOURCES_COLLECTION"     flag:"mongodb-payable-resources-collection"     flagDesc:"The name of the mongodb payable resources collection"`
-	AccountPenaltiesCollection           string       `env:"PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION"     flag:"mongodb-account-penalties-collection"     flagDesc:"The name of the mongodb account penalties collection"`
-	AccountPenaltiesTTL                  string       `env:"PPS_ACCOUNT_PENALTIES_TTL"                    flag:"account-penalties-ttl"                    flagDesc:"The time to live for account penalties cache entry"`
-	BrokerAddr                           []string     `env:"KAFKA_BROKER_ADDR"                            flag:"broker-addr"                              flagDesc:"Kafka broker address"`
-	ZookeeperURL                         string       `env:"KAFKA_ZOOKEEPER_ADDR"                         flag:"zookeeper-addr"                           flagDesc:"Main CH Zookeeper address"`
-	SchemaRegistryURL                    string       `env:"SCHEMA_REGISTRY_URL"                          flag:"schema-registry-url"                      flagDesc:"Schema registry url"`
-	EmailSendTopic                       string       `env:"EMAIL_SEND_TOPIC"                             flag:"email-send-topic"                         flagDesc:"Kafka topic to send emails"`
-	PenaltyPaymentsProcessingTopic       string       `env:"PENALTY_PAYMENTS_PROCESSING_TOPIC"            flag:"penalty-payments-processing-topic"        flagDesc:"Penalty payments processing topic"`
-	FeatureFlagPaymentsProcessingEnabled bool         `env:"FEATURE_FLAG_PAYMENTS_PROCESSING_ENABLED"     flag:"feature-flag-payments-processing-enabled" flagDesc:"If the payments processing Kafka implementation is enabled"`
-	CHSURL                               string       `env:"CHS_URL"                                      flag:"chs-url"                                  flagDesc:"CHS URL"`
-	WeeklyMaintenanceStartTime           string       `env:"WEEKLY_MAINTENANCE_START_TIME"                flag:"weekly-maintenance-start-time"            flagDesc:"The time of the day when Weekly E5 maintenance starts"`
-	WeeklyMaintenanceEndTime             string       `env:"WEEKLY_MAINTENANCE_END_TIME"                  flag:"weekly-maintenance-end-time"              flagDesc:"The time of the day when Weekly E5 maintenance ends"`
-	WeeklyMaintenanceDay                 time.Weekday `env:"WEEKLY_MAINTENANCE_DAY"                       flag:"weekly-maintenance-day"                   flagDesc:"The day on which Weekly E5 maintenance takes place"`
-	PlannedMaintenanceStart              string       `env:"PLANNED_MAINTENANCE_START_TIME"               flag:"planned-maintenance-start-time"           flagDesc:"The time of the day at which Planned E5 maintenance starts"`
-	PlannedMaintenanceEnd                string       `env:"PLANNED_MAINTENANCE_END_TIME"                 flag:"planned-maintenance-end-time"             flagDesc:"The time of the day at which Planned E5 maintenance ends"`
+	BindAddr                               string       `env:"BIND_ADDR"                                    flag:"bind-addr"                                flagDesc:"Bind address"`
+	E5APIURL                               string       `env:"E5_API_URL"                                   flag:"e5-api-url"                               flagDesc:"Base URL for the E5 API"`
+	E5Username                             string       `env:"E5_USERNAME"                                  flag:"e5-username"                              flagDesc:"Username for the E5 API"`
+	MongoDBURL                             string       `env:"MONGODB_URL"                                  flag:"mongodb-url"                              flagDesc:"MongoDB server URL"`
+	Database                               string       `env:"PPS_MONGODB_DATABASE"                         flag:"mongodb-database"                         flagDesc:"MongoDB database for data"`
+	PayableResourcesCollection             string       `env:"PPS_MONGODB_PAYABLE_RESOURCES_COLLECTION"     flag:"mongodb-payable-resources-collection"     flagDesc:"The name of the mongodb payable resources collection"`
+	AccountPenaltiesCollection             string       `env:"PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION"     flag:"mongodb-account-penalties-collection"     flagDesc:"The name of the mongodb account penalties collection"`
+	AccountPenaltiesTTL                    string       `env:"PPS_ACCOUNT_PENALTIES_TTL"                    flag:"account-penalties-ttl"                    flagDesc:"The time to live for account penalties cache entry"`
+	BrokerAddr                             []string     `env:"KAFKA_BROKER_ADDR"                            flag:"broker-addr"                              flagDesc:"Kafka broker address"`
+	ZookeeperURL                           string       `env:"KAFKA_ZOOKEEPER_ADDR"                         flag:"zookeeper-addr"                           flagDesc:"Main CH Zookeeper address"`
+	SchemaRegistryURL                      string       `env:"SCHEMA_REGISTRY_URL"                          flag:"schema-registry-url"                      flagDesc:"Schema registry url"`
+	EmailSendTopic                         string       `env:"EMAIL_SEND_TOPIC"                             flag:"email-send-topic"                         flagDesc:"Kafka topic to send emails"`
+	PenaltyPaymentsProcessingTopic         string       `env:"PENALTY_PAYMENTS_PROCESSING_TOPIC"            flag:"penalty-payments-processing-topic"        flagDesc:"Penalty payments processing topic"`
+	PenaltyPaymentsProcessingMaxRetries    string       `env:"PENALTY_PAYMENTS_PROCESSING_MAX_RETRIES"      flag:"penalty-payments-processing-max-retries"  flagDesc:"Penalty payments processing max retry attempts for transient errors"`
+	PenaltyPaymentsProcessingRetryDelay    string       `env:"PENALTY_PAYMENTS_PROCESSING_RETRY_DELAY"      flag:"penalty-payments-processing-retry-delay"  flagDesc:"Penalty payments processing retry delay for transient errors"`
+	PenaltyPaymentsProcessingRetryMaxDelay string       `env:"PENALTY_PAYMENTS_PROCESSING_RETRY_MAX_DELAY"  flag:"penalty-payments-processing-max-delay"    flagDesc:"Penalty payments processing max delay for a retry attempt for transient errors"`
+	FeatureFlagPaymentsProcessingEnabled   bool         `env:"FEATURE_FLAG_PAYMENTS_PROCESSING_ENABLED"     flag:"feature-flag-payments-processing-enabled" flagDesc:"If the payments processing Kafka implementation is enabled"`
+	CHSURL                                 string       `env:"CHS_URL"                                      flag:"chs-url"                                  flagDesc:"CHS URL"`
+	WeeklyMaintenanceStartTime             string       `env:"WEEKLY_MAINTENANCE_START_TIME"                flag:"weekly-maintenance-start-time"            flagDesc:"The time of the day when Weekly E5 maintenance starts"`
+	WeeklyMaintenanceEndTime               string       `env:"WEEKLY_MAINTENANCE_END_TIME"                  flag:"weekly-maintenance-end-time"              flagDesc:"The time of the day when Weekly E5 maintenance ends"`
+	WeeklyMaintenanceDay                   time.Weekday `env:"WEEKLY_MAINTENANCE_DAY"                       flag:"weekly-maintenance-day"                   flagDesc:"The day on which Weekly E5 maintenance takes place"`
+	PlannedMaintenanceStart                string       `env:"PLANNED_MAINTENANCE_START_TIME"               flag:"planned-maintenance-start-time"           flagDesc:"The time of the day at which Planned E5 maintenance starts"`
+	PlannedMaintenanceEnd                  string       `env:"PLANNED_MAINTENANCE_END_TIME"                 flag:"planned-maintenance-end-time"             flagDesc:"The time of the day at which Planned E5 maintenance ends"`
 }
 
 // PenaltyDetailsMap defines the struct to hold the map of penalty details.

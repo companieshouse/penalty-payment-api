@@ -3,9 +3,11 @@ package handlers
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/config"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/mock"
 )
@@ -13,6 +15,7 @@ import (
 var (
 	penaltyPayment = models.PenaltyPaymentsProcessing{
 		Attempt:           1,
+		CreatedAt:         time.Now().UTC().Format(time.RFC3339),
 		CompanyCode:       "C1",
 		CustomerCode:      "OE123456",
 		PaymentID:         "KIYLUq1pRVuiLNA",
@@ -29,6 +32,7 @@ var (
 		PayableRef: "SQ33133143",
 	}
 	e5PaymentID = "XKIYLUq1pRVuiLNA"
+	cfg         = &config.Config{}
 )
 
 type mockE5Client struct {
@@ -105,7 +109,7 @@ func TestUnitProcessFinancialPenaltyPayment_Success(t *testing.T) {
 		e5Client.On("ConfirmPayment", mock.Anything).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg)
 
 		// Then
 		So(err, ShouldBeNil)
@@ -126,10 +130,10 @@ func TestUnitProcessFinancialPenaltyPayment_CreatePaymentFails(t *testing.T) {
 		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.CreateAction).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg)
 
 		// Then
-		So(err, ShouldBeError, errors.New("create payment in E5 failed"))
+		So(err, ShouldBeError, errors.New("All attempts fail:\n#1: create payment in E5 failed\n#2: create payment in E5 failed\n#3: create payment in E5 failed"))
 		e5Client.AssertExpectations(t)
 		DAO.AssertExpectations(t)
 	})
@@ -149,10 +153,10 @@ func TestUnitProcessFinancialPenaltyPayment_AuthorisePaymentFails(t *testing.T) 
 		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.AuthoriseAction).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg)
 
 		// Then
-		So(err, ShouldBeError, errors.New("authorise payment in E5 failed"))
+		So(err, ShouldBeError, errors.New("All attempts fail:\n#1: authorise payment in E5 failed\n#2: authorise payment in E5 failed\n#3: authorise payment in E5 failed"))
 		e5Client.AssertExpectations(t)
 		DAO.AssertExpectations(t)
 	})
@@ -173,10 +177,101 @@ func TestUnitProcessFinancialPenaltyPayment_ConfirmPaymentFails(t *testing.T) {
 		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.ConfirmAction).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg)
 
 		// Then
-		So(err, ShouldBeError, errors.New("confirm payment in E5 failed"))
+		So(err, ShouldBeError, errors.New("All attempts fail:\n#1: confirm payment in E5 failed\n#2: confirm payment in E5 failed\n#3: confirm payment in E5 failed"))
+		e5Client.AssertExpectations(t)
+		DAO.AssertExpectations(t)
+	})
+}
+
+// retry
+func TestUnitProcessFinancialPenaltyPaymentRetryTopic_Success(t *testing.T) {
+	Convey("Process financial penalty payment success", t, func() {
+		// Given
+		e5Client, DAO := setupMocks()
+		handler := &PenaltyFinancePayment{
+			E5Client:                  e5Client,
+			PayableResourceDaoService: DAO,
+		}
+
+		e5Client.On("CreatePayment", mock.Anything).Return(nil)
+		e5Client.On("AuthorisePayment", mock.Anything).Return(nil)
+		e5Client.On("ConfirmPayment", mock.Anything).Return(nil)
+
+		// When
+		err := handler.ProcessFinancialPenaltyPaymentRetryTopic(penaltyPayment, e5PaymentID)
+
+		// Then
+		So(err, ShouldBeNil)
+		e5Client.AssertExpectations(t)
+	})
+}
+
+func TestUnitProcessFinancialPenaltyPaymentRetryTopic_CreatePaymentFails(t *testing.T) {
+	Convey("Process financial penalty payment create payment fails", t, func() {
+		// Given
+		e5Client, DAO := setupMocks()
+		handler := &PenaltyFinancePayment{
+			E5Client:                  e5Client,
+			PayableResourceDaoService: DAO,
+		}
+
+		e5Client.On("CreatePayment", mock.Anything).Return(errors.New("create payment in E5 failed"))
+
+		// When
+		err := handler.ProcessFinancialPenaltyPaymentRetryTopic(penaltyPayment, e5PaymentID)
+
+		// Then
+		So(err, ShouldBeError, errors.New("create payment in E5 failed"))
+		e5Client.AssertExpectations(t)
+		DAO.AssertExpectations(t)
+	})
+}
+
+func TestUnitProcessFinancialPenaltyPaymentRetryTopic_AuthorisePaymentFails(t *testing.T) {
+	Convey("Process financial penalty payment authorise payment fails", t, func() {
+		// Given
+		e5Client, DAO := setupMocks()
+		handler := &PenaltyFinancePayment{
+			E5Client:                  e5Client,
+			PayableResourceDaoService: DAO,
+		}
+
+		e5Client.On("CreatePayment", mock.Anything).Return(nil)
+		e5Client.On("AuthorisePayment", mock.Anything).Return(errors.New("authorise payment in E5 failed"))
+		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.AuthoriseAction).Return(nil)
+
+		// When
+		err := handler.ProcessFinancialPenaltyPaymentRetryTopic(penaltyPayment, e5PaymentID)
+
+		// Then
+		So(err, ShouldBeNil)
+		e5Client.AssertExpectations(t)
+		DAO.AssertExpectations(t)
+	})
+}
+
+func TestUnitProcessFinancialPenaltyPaymentRetryTopic_ConfirmPaymentFails(t *testing.T) {
+	Convey("Process financial penalty payment confirm payment fails", t, func() {
+		// Given
+		e5Client, DAO := setupMocks()
+		handler := &PenaltyFinancePayment{
+			E5Client:                  e5Client,
+			PayableResourceDaoService: DAO,
+		}
+
+		e5Client.On("CreatePayment", mock.Anything).Return(nil)
+		e5Client.On("AuthorisePayment", mock.Anything).Return(nil)
+		e5Client.On("ConfirmPayment", mock.Anything).Return(errors.New("confirm payment in E5 failed"))
+		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.ConfirmAction).Return(nil)
+
+		// When
+		err := handler.ProcessFinancialPenaltyPaymentRetryTopic(penaltyPayment, e5PaymentID)
+
+		// Then
+		So(err, ShouldBeNil)
 		e5Client.AssertExpectations(t)
 		DAO.AssertExpectations(t)
 	})

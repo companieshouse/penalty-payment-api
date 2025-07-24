@@ -10,8 +10,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api/config"
 )
 
-var getPenaltyRefTypeFromTransaction = utils.GetPenaltyRefTypeFromTransaction
-
 // HandleGetPaymentDetails retrieves costs for a supplied company number and reference.
 func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {

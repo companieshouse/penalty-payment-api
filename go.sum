@@ -15,6 +15,8 @@ github.com/Shopify/sarama v1.24.0 h1:99vo5VAgQybHwZwiOy/RX/S3i0somjGxur3pLeheqzI
 github.com/Shopify/sarama v1.24.0/go.mod h1:fGP8eQ6PugKEI0iUETYYtnP6d1pH/bdDMTel1X5ajsU=
 github.com/Shopify/toxiproxy v2.1.4+incompatible h1:TKdv8HiTLgE5wdJuEML90aBgNWsokNbMijUGhmcoBJc=
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
+github.com/avast/retry-go v3.0.0+incompatible h1:4SOWQ7Qs+oroOTQOYnAHqelpCO0biHSxpiH9JdtuBj0=
+github.com/avast/retry-go v3.0.0+incompatible/go.mod h1:XtSnn+n/sHqQIpZ10K1qAevBhOOCWBLXXy3hyiqqBrY=
 github.com/bsm/sarama-cluster v2.1.15+incompatible h1:RkV6WiNRnqEEbp81druK8zYhmnIgdOjqSVi0+9Cnl2A=
 github.com/bsm/sarama-cluster v2.1.15+incompatible/go.mod h1:r7ao+4tTNXvWm+VRpRJchr2kQhqxgmAp2iEX5W96gMM=
 github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqylYbM=
@@ -43,6 +45,8 @@ github.com/companieshouse/gofigure v0.1.4/go.mod h1:lBAsI13q21rMce+pO7x4xUYAXzO0
 github.com/companieshouse/htmlform v0.1.0/go.mod h1:fWScPVYjGyeBhYwppGaGRDtCQ5hMd3t3Q+0I6HaUZT4=
 github.com/companieshouse/penalty-payment-api-core v1.12.1 h1:fVZ5kdhz3bKcIPx9bfdDN8ITSEM7BY8o+dtyMfgEoSk=
 github.com/companieshouse/penalty-payment-api-core v1.12.1/go.mod h1:4sT6uUinDGvzFz+yIJQ+8PW/E5twgK3VM5mFVplgENQ=
+github.com/companieshouse/penalty-payment-api-core v1.12.2 h1:j2BMh4GpHCqOcNa+iHOwg153iUIO/0S0zNGZHFXDsM4=
+github.com/companieshouse/penalty-payment-api-core v1.12.2/go.mod h1:4sT6uUinDGvzFz+yIJQ+8PW/E5twgK3VM5mFVplgENQ=
 github.com/companieshouse/private-api-sdk-go v0.1.11/go.mod h1:EaRgxVpcHv6IZ1LKp2xqE4rdEsQwgYqVz3g/BIHQVD4=
 github.com/companieshouse/private-api-sdk-go v0.1.13 h1:o9PD1aSVu3+tbf/WUZT/wX1e0DNx+9xcJugbqo7rbxE=
 github.com/companieshouse/private-api-sdk-go v0.1.13/go.mod h1:g1zvBCn8Tyc45x+5BmlHsq+BYwuekd5FLRaFOqTUu+A=

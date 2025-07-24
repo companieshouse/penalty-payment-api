@@ -62,7 +62,7 @@ func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment) 
 			return
 		case message := <-messages:
 			if message != nil {
-				err := handleMessage(avroSchema, message, penaltyFinancePayment)
+				err := handleMessage(avroSchema, message, penaltyFinancePayment, cfg)
 				if err != nil {
 					log.Error(err)
 				}
@@ -72,7 +72,8 @@ func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment) 
 
 }
 
-func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage, financePayment handlers.FinancePayment) error {
+func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage, financePayment handlers.FinancePayment,
+	cfg *config.Config) error {
 	var penaltyPayment models.PenaltyPaymentsProcessing
 	var err = avroSchema.Unmarshal(message.Value, &penaltyPayment)
 	if err != nil {
@@ -84,7 +85,7 @@ func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage, fin
 	// ones that begin with 'LP' which signify penalties that have been paid outside the digital service.
 	e5PaymentID := "X" + penaltyPayment.PaymentID
 
-	err = financePayment.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID)
+	err = financePayment.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg)
 	if err != nil {
 		err = fmt.Errorf("error processing financial penalty payment: [%v]", err)
 		log.Error(err, log.Data{"e5_payment_id": e5PaymentID, "customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payable_ref": penaltyPayment.PayableRef})
