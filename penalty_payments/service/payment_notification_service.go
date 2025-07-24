@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/companieshouse/chs.go/avro"
 	"github.com/companieshouse/chs.go/kafka/producer"
@@ -75,6 +76,7 @@ func preparePaymentProcessingKafkaMessage(penaltyPaymentProcessingSchema avro.Sc
 
 	log.Debug("penalty payment processing message", log.Data{
 		"attempt":             penaltyPaymentProcessing.Attempt,
+		"created_at":          penaltyPaymentProcessing.CreatedAt,
 		"company_code":        penaltyPaymentProcessing.CompanyCode,
 		"customer_code":       penaltyPaymentProcessing.CustomerCode,
 		"payment_id":          penaltyPaymentProcessing.PaymentID,
@@ -102,6 +104,7 @@ func constructMessage(payableResource models.PayableResource, companyCode string
 
 	penaltyPaymentProcessing := models.PenaltyPaymentsProcessing{
 		Attempt:           1,
+		CreatedAt:         time.Now().UTC().Format(time.RFC3339),
 		CompanyCode:       companyCode,
 		CustomerCode:      payableResource.CustomerCode,
 		PaymentID:         payment.PaymentID,

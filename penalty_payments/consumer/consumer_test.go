@@ -7,6 +7,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/companieshouse/chs.go/avro"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/config"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/mock"
 )
@@ -30,14 +31,16 @@ var (
 		PayableRef: "SQ33133143",
 	}
 	e5PaymentID = "XKIYLUq1pRVuiLNA"
+	cfg         = &config.Config{}
 )
 
 type mockPenaltyFinancePayment struct {
 	mock.Mock
 }
 
-func (m *mockPenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string) error {
-	args := m.Called(penaltyPayment, e5PaymentID)
+func (m *mockPenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment models.PenaltyPaymentsProcessing,
+	e5PaymentID string, cfg *config.Config) error {
+	args := m.Called(penaltyPayment, e5PaymentID, cfg)
 	return args.Error(0)
 }
 
@@ -47,10 +50,10 @@ func TestUnitHandleMessage_Success(t *testing.T) {
 		avroSchema := getAvroSchema()
 		message := getConsumerMessage(avroSchema, penaltyPayment)
 		mockFinancePayment := new(mockPenaltyFinancePayment)
-		mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID).Return(nil)
+		mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID, cfg).Return(nil)
 
 		// When
-		err := handleMessage(avroSchema, message, mockFinancePayment)
+		err := handleMessage(avroSchema, message, mockFinancePayment, cfg)
 
 		// Then
 		So(err, ShouldBeNil)
@@ -67,11 +70,11 @@ func TestUnitHandleMessage_UnmarshalFails(t *testing.T) {
 		mockFinancePayment := new(mockPenaltyFinancePayment)
 
 		// When
-		err := handleMessage(avroSchema, message, mockFinancePayment)
+		err := handleMessage(avroSchema, message, mockFinancePayment, cfg)
 
 		// Then
 		So(err, ShouldBeError, errors.New("error parsing the penalty-payments-processing avro encoded data: [End of file reached]"))
-		mockFinancePayment.AssertNotCalled(t, "ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID)
+		mockFinancePayment.AssertNotCalled(t, "ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID, cfg)
 	})
 }
 
@@ -81,10 +84,11 @@ func TestUnitHandleMessage_ProcessFinancialPenaltyPaymentFails(t *testing.T) {
 		avroSchema := getAvroSchema()
 		message := getConsumerMessage(avroSchema, penaltyPayment)
 		mockFinancePayment := new(mockPenaltyFinancePayment)
-		mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID).Return(errors.New("failed to create payment in E5"))
+		mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID, cfg).
+			Return(errors.New("failed to create payment in E5"))
 
 		// When
-		err := handleMessage(avroSchema, message, mockFinancePayment)
+		err := handleMessage(avroSchema, message, mockFinancePayment, cfg)
 
 		// Then
 		So(err, ShouldBeError, errors.New("error processing financial penalty payment: [failed to create payment in E5]"))

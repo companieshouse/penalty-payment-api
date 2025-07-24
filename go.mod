@@ -4,13 +4,14 @@ go 1.24
 
 require (
 	github.com/Shopify/sarama v1.24.0
+	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/companieshouse/api-sdk-go v0.1.62
 	github.com/companieshouse/chs.go v1.2.14-rbull3
 	github.com/companieshouse/filing-notification-sender v2.0.0-rc3+incompatible
 	github.com/companieshouse/go-sdk-manager v0.1.12
 	github.com/companieshouse/go-session-handler v0.1.5
 	github.com/companieshouse/gofigure v0.1.4
-	github.com/companieshouse/penalty-payment-api-core v1.12.1
+	github.com/companieshouse/penalty-payment-api-core v1.12.2
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jarcoal/httpmock v1.0.5

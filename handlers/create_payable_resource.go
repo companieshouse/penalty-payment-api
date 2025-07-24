@@ -18,7 +18,6 @@ import (
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/transformers"
 )
 
-var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
 var payablePenalty = api.PayablePenalty
 
 // CreatePayableResourceHandler takes a http requests and creates a new payable resource
