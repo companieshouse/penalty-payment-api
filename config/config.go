@@ -19,8 +19,8 @@ var mtx sync.Mutex
 type Config struct {
 	BindAddr                               string       `env:"BIND_ADDR"                                    flag:"bind-addr"                                flagDesc:"Bind address"`
 	E5APIURL                               string       `env:"E5_API_URL"                                   flag:"e5-api-url"                               flagDesc:"Base URL for the E5 API"`
-	E5Username                             string       `env:"E5_USERNAME"                                  flag:"e5-username"                              flagDesc:"Username for the E5 API"`
-	MongoDBURL                             string       `env:"MONGODB_URL"                                  flag:"mongodb-url"                              flagDesc:"MongoDB server URL"`
+	E5Username                             string       `env:"E5_USERNAME"                                  flag:"e5-username"                              flagDesc:"Username for the E5 API" json:"-"`
+	MongoDBURL                             string       `env:"MONGODB_URL"                                  flag:"mongodb-url"                              flagDesc:"MongoDB server URL" json:"-"`
 	Database                               string       `env:"PPS_MONGODB_DATABASE"                         flag:"mongodb-database"                         flagDesc:"MongoDB database for data"`
 	PayableResourcesCollection             string       `env:"PPS_MONGODB_PAYABLE_RESOURCES_COLLECTION"     flag:"mongodb-payable-resources-collection"     flagDesc:"The name of the mongodb payable resources collection"`
 	AccountPenaltiesCollection             string       `env:"PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION"     flag:"mongodb-account-penalties-collection"     flagDesc:"The name of the mongodb account penalties collection"`
