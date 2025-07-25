@@ -318,7 +318,7 @@ func (m *MongoPayableResourceService) SaveE5Error(customerCode, payableRef strin
 
 	collection := m.db.Collection(m.CollectionName)
 
-	log.Debug("updating e5 command error in mongo document", log.Data{"_id": dao.ID})
+	log.Debug("updating e5 command error in mongo document", log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef, "e5_command_error": action})
 
 	_, err = collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {

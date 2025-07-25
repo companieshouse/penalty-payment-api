@@ -135,6 +135,10 @@ func (c *Client) CreatePayment(input *CreatePaymentInput) error {
 
 	path := "/arTransactions/payment"
 
+	log.Debug("sending request to E5 Create Payment", log.Data{
+		"input": input,
+		"path":  path,
+	})
 	resp, err := c.sendRequest(http.MethodPost, path, bytes.NewReader(body), nil)
 
 	// err here will be a http transport error rather than 4xx or 5xx responses
@@ -145,12 +149,14 @@ func (c *Client) CreatePayment(input *CreatePaymentInput) error {
 
 	defer CloseResponseBody(resp, logContext)
 
-	log.Info("response received after creating a new payment in E5", log.Data{
-		"customer_code": input.CustomerCode,
-		"payment_id":    input.PaymentID,
-		"payment_value": input.TotalValue,
-		"transactions":  input.Transactions,
-		"status":        resp.StatusCode,
+	log.Info("response received from E5 after creating a new payment", log.Data{
+		"customer_code":  input.CustomerCode,
+		"company_code":   input.CompanyCode,
+		"payment_action": CreateAction,
+		"payment_id":     input.PaymentID,
+		"payment_value":  input.TotalValue,
+		"transactions":   input.Transactions,
+		"status":         resp.StatusCode,
 	})
 
 	return c.checkResponseForError(resp)
@@ -176,6 +182,10 @@ func (c *Client) AuthorisePayment(input *AuthorisePaymentInput) error {
 
 	path := "/arTransactions/payment/authorise"
 
+	log.Debug("sending request to E5 Authorise Payment", log.Data{
+		"input": input,
+		"path":  path,
+	})
 	resp, err := c.sendRequest(http.MethodPost, path, bytes.NewReader(body), nil)
 
 	// err here will be a http transport error rather than 4xx or 5xx responses
@@ -186,9 +196,11 @@ func (c *Client) AuthorisePayment(input *AuthorisePaymentInput) error {
 
 	defer CloseResponseBody(resp, logContext)
 
-	log.Info("response received after authorising a payment", log.Data{
-		"payment_id": input.PaymentID,
-		"status":     resp.StatusCode,
+	log.Info("response received from E5 after authorising a payment", log.Data{
+		"company_code":   input.CompanyCode,
+		"payment_action": AuthoriseAction,
+		"payment_id":     input.PaymentID,
+		"status":         resp.StatusCode,
 	})
 
 	return c.checkResponseForError(resp)
@@ -217,6 +229,7 @@ func (c *Client) doPaymentAction(action Action, input *PaymentActionInput) error
 	}
 
 	logContext := log.Data{
+		"company_code":   input.CompanyCode,
 		"payment_action": action,
 		"payment_id":     input.PaymentID,
 	}
@@ -231,6 +244,11 @@ func (c *Client) doPaymentAction(action Action, input *PaymentActionInput) error
 
 	path := fmt.Sprintf("/arTransactions/payment/%s", action)
 
+	log.Debug("sending request to E5", log.Data{
+		"action": action,
+		"input":  input,
+		"path":   path,
+	})
 	resp, err := c.sendRequest(http.MethodPost, path, bytes.NewReader(body), nil)
 
 	// err here will be a http transport error rather than 4xx or 5xx responses
