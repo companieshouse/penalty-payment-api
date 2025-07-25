@@ -115,63 +115,53 @@ func (c *Client) GetTransactions(input *GetTransactionsInput) (*GetTransactionsR
 // CreatePayment will create a new payment session in Client. This will lock the account in Client so no other modifications can
 // happen until it is released by a confirm call or manually released in the Client portal.
 func (c *Client) CreatePayment(input *CreatePaymentInput) error {
-	err := c.validateInput(input)
-	if err != nil {
-		return err
-	}
-
 	logContext := log.Data{
-		"customer_code": input.CustomerCode,
-		"payment_id":    input.PaymentID,
-		"value":         input.TotalValue,
-		"transactions":  input.Transactions,
-	}
-
-	body, err := json.Marshal(input)
-	if err != nil {
-		log.Error(err, logContext)
-		return err
-	}
-
-	path := "/arTransactions/payment"
-
-	log.Debug("sending request to E5 Create Payment", log.Data{
-		"input": input,
-		"path":  path,
-	})
-	resp, err := c.sendRequest(http.MethodPost, path, bytes.NewReader(body), nil)
-
-	// err here will be a http transport error rather than 4xx or 5xx responses
-	if err != nil {
-		log.Error(err, logContext)
-		return err
-	}
-
-	defer CloseResponseBody(resp, logContext)
-
-	log.Info("response received from E5 after creating a new payment", log.Data{
 		"customer_code":  input.CustomerCode,
 		"company_code":   input.CompanyCode,
 		"payment_action": CreateAction,
 		"payment_id":     input.PaymentID,
 		"payment_value":  input.TotalValue,
 		"transactions":   input.Transactions,
-		"status":         resp.StatusCode,
-	})
+	}
 
-	return c.checkResponseForError(resp)
+	return c.doPaymentRequest(
+		input,
+		"/arTransactions/payment",
+		logContext,
+		"sending request to E5 Create Payment",
+		"response received from E5 after creating a new payment",
+	)
 }
 
 // AuthorisePayment will mark the payment as been authorised by the payment provider, but the money has not yet reached
 // use yet. The customer account will remain locked.
 func (c *Client) AuthorisePayment(input *AuthorisePaymentInput) error {
+	logContext := log.Data{
+		"company_code":   input.CompanyCode,
+		"payment_action": AuthoriseAction,
+		"payment_id":     input.PaymentID,
+	}
+
+	return c.doPaymentRequest(
+		input,
+		"/arTransactions/payment/authorise",
+		logContext,
+		"sending request to E5 Authorise Payment",
+		"response received from E5 after authorising a payment",
+	)
+}
+
+// doPaymentRequest is a wrapper for the create and authorise endpoints
+func (c *Client) doPaymentRequest(
+	input interface{},
+	path string,
+	logContext log.Data,
+	debugMsg string,
+	infoMsg string,
+) error {
 	err := c.validateInput(input)
 	if err != nil {
 		return err
-	}
-
-	logContext := log.Data{
-		"payment_id": input.PaymentID,
 	}
 
 	body, err := json.Marshal(input)
@@ -180,15 +170,13 @@ func (c *Client) AuthorisePayment(input *AuthorisePaymentInput) error {
 		return err
 	}
 
-	path := "/arTransactions/payment/authorise"
-
-	log.Debug("sending request to E5 Authorise Payment", log.Data{
+	log.Debug(debugMsg, logContext, log.Data{
 		"input": input,
 		"path":  path,
 	})
 	resp, err := c.sendRequest(http.MethodPost, path, bytes.NewReader(body), nil)
 
-	// err here will be a http transport error rather than 4xx or 5xx responses
+	// err here will be an http transport error rather than 4xx or 5xx responses
 	if err != nil {
 		log.Error(err, logContext)
 		return err
@@ -196,11 +184,8 @@ func (c *Client) AuthorisePayment(input *AuthorisePaymentInput) error {
 
 	defer CloseResponseBody(resp, logContext)
 
-	log.Info("response received from E5 after authorising a payment", log.Data{
-		"company_code":   input.CompanyCode,
-		"payment_action": AuthoriseAction,
-		"payment_id":     input.PaymentID,
-		"status":         resp.StatusCode,
+	log.Info(infoMsg, logContext, log.Data{
+		"status": resp.StatusCode,
 	})
 
 	return c.checkResponseForError(resp)
@@ -244,10 +229,9 @@ func (c *Client) doPaymentAction(action Action, input *PaymentActionInput) error
 
 	path := fmt.Sprintf("/arTransactions/payment/%s", action)
 
-	log.Debug("sending request to E5", log.Data{
-		"action": action,
-		"input":  input,
-		"path":   path,
+	log.Debug("sending request to E5", logContext, log.Data{
+		"input": input,
+		"path":  path,
 	})
 	resp, err := c.sendRequest(http.MethodPost, path, bytes.NewReader(body), nil)
 
