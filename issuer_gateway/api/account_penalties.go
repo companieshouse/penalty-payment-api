@@ -31,7 +31,7 @@ func AccountPenalties(penaltyRefType, customerCode, companyCode string,
 		log.Error(fmt.Errorf("error getting config: %v", err))
 		return nil, services.Error, nil
 	}
-	log.Debug(fmt.Sprintf("config data: %+v", cfg))
+	log.Debug("Config", log.Data{"Config": cfg})
 
 	companyInfoLogData := log.Data{"customer_code": customerCode, "company_code": companyCode}
 
