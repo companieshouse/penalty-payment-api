@@ -188,12 +188,17 @@ func addPaymentsProcessingMsgToTopic(payableResource *models.PayableResource,
 	payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter) {
 	defer wg.Done()
 
-	log.Info("adding payments processing message to topic", log.Data{
-		"payable_ref": payableResource.PayableRef, "payment_reference": payment.Reference})
+	logContext := log.Data{
+		"created_at":        payableResource.CreatedAt,
+		"customer_code":     payableResource.CustomerCode,
+		"payable_ref":       payableResource.PayableRef,
+		"payment_reference": payment.Reference,
+	}
+	log.Info("adding payments processing message to topic", logContext)
 	// send the kafka message to the producer
 	err := handlePaymentProcessingKafkaMessage(*payableResource, payment)
 	if err != nil {
-		log.ErrorR(r, err, log.Data{"payable_ref": payableResource.PayableRef, "payment_reference": payment.Reference})
+		log.ErrorR(r, err, logContext)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

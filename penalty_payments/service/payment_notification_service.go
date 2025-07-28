@@ -14,35 +14,41 @@ import (
 func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payment *validators.PaymentInformation) error {
 	cfg, err := getConfig()
 	if err != nil {
-		err = fmt.Errorf("error getting config for kafka message production: [%v]", err)
+		err = fmt.Errorf("error getting config for penalty payments processing kafka message production: [%v]", err)
 		return err
 	}
 
 	log.Debug("Config", log.Data{"Config": cfg})
 	topic := cfg.PenaltyPaymentsProcessingTopic
 
-	log.Info("getting penalty payments processing kafka producer", log.Data{"customer_code": payableResource.CustomerCode})
+	logContext := log.Data{
+		"customer_code": payableResource.CustomerCode,
+		"payable_ref":   payableResource.PayableRef,
+	}
+
+	log.Info("getting penalty payments processing kafka producer", logContext)
 	kafkaProducer, err := getProducer(cfg)
 	if err != nil {
-		err = fmt.Errorf("error creating kafka producer: [%v]", err)
+		err = fmt.Errorf("error creating penalty payments processing kafka producer: [%v]", err)
 		return err
 	}
 
-	paymentProcessingSendSchema, err := getSchema(cfg.SchemaRegistryURL, topic)
+	penaltyPaymentsProcessingSchema, err := getSchema(cfg.SchemaRegistryURL, topic)
 	if err != nil {
-		err = fmt.Errorf("error getting schema from schema registry: [%v]", err)
+		err = fmt.Errorf("error getting penalty payments processing schema from schema registry: [%v]", err)
 		return err
 	}
 	producerSchema := &avro.Schema{
-		Definition: paymentProcessingSendSchema,
+		Definition: penaltyPaymentsProcessingSchema,
 	}
+	log.Debug("penalty payments processing avro schema", logContext, log.Data{"schema": producerSchema})
 
 	message, err := preparePaymentProcessingKafkaMessage(*producerSchema, payableResource, payment, topic)
 	if err != nil {
-		err = fmt.Errorf("error preparing kafka message with schema: [%v]", err)
+		err = fmt.Errorf("error preparing penalty payments processing kafka message with schema: [%v]", err)
 		return err
 	}
-	log.Info("payment processing message prepared successfully", log.Data{
+	log.Debug("penalty payment processing message prepared successfully", logContext, log.Data{
 		"message.Value":     message.Value,
 		"message.Topic":     message.Topic,
 		"message.Partition": message.Partition,
@@ -51,9 +57,14 @@ func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payme
 
 	partition, offset, err := kafkaProducer.Send(message)
 	if err != nil {
-		err = fmt.Errorf("failed to send message in partition: %d at offset %d", partition, offset)
+		err = fmt.Errorf("failed to send penalty payments processing message in partition: %d at offset %d", partition, offset)
 		return err
 	}
+	log.Info("successfully published penalty payments processing message", logContext, log.Data{
+		"kafka_topic":     topic,
+		"kafka_partition": partition,
+		"kafka_offset":    offset,
+	})
 
 	return nil
 }
@@ -74,20 +85,12 @@ func preparePaymentProcessingKafkaMessage(penaltyPaymentProcessingSchema avro.Sc
 
 	penaltyPaymentProcessing := constructMessage(payableResource, companyCode, payment)
 
-	log.Debug("penalty payment processing message", log.Data{
-		"attempt":             penaltyPaymentProcessing.Attempt,
-		"created_at":          penaltyPaymentProcessing.CreatedAt,
-		"company_code":        penaltyPaymentProcessing.CompanyCode,
-		"customer_code":       penaltyPaymentProcessing.CustomerCode,
-		"payment_id":          penaltyPaymentProcessing.PaymentID,
-		"external_payment_id": penaltyPaymentProcessing.ExternalPaymentID,
-		"payment_reference":   penaltyPaymentProcessing.PaymentReference,
-		"payment_amount":      penaltyPaymentProcessing.PaymentAmount,
-		"transactionPayments[0] - transaction_reference": penaltyPaymentProcessing.TransactionPayments[0].TransactionReference,
-		"transaction_payments[0] - value":                penaltyPaymentProcessing.TransactionPayments[0].Value,
-		"card_type":                                      penaltyPaymentProcessing.CardType,
-		"email":                                          penaltyPaymentProcessing.Email,
-		"payable_ref":                                    penaltyPaymentProcessing.PayableRef,
+	logContext := log.Data{
+		"customer_code": payableResource.CustomerCode,
+		"payable_ref":   payableResource.PayableRef,
+	}
+	log.Debug("penalty payment processing message constructed", logContext, log.Data{
+		"penalty_payments_processing": penaltyPaymentProcessing,
 	})
 
 	messageBytes, err := penaltyPaymentProcessingSchema.Marshal(penaltyPaymentProcessing)

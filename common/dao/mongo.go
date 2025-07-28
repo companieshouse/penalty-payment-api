@@ -388,7 +388,7 @@ func (m *MongoPayableResourceService) UpdatePaymentDetails(dao *models.PayableRe
 
 	collection := m.db.Collection(m.CollectionName)
 
-	log.Debug("updating payment details in mongo document", log.Data{"_id": dao.ID})
+	log.Debug("updating payment details in mongo document", log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
 
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
@@ -396,7 +396,7 @@ func (m *MongoPayableResourceService) UpdatePaymentDetails(dao *models.PayableRe
 		return err
 	}
 
-	log.Debug("updated payment details in mongo document", log.Data{"_id": dao.ID})
+	log.Debug("updated payment details in mongo document", log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
 
 	return nil
 }

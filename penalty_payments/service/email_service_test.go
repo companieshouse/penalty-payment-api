@@ -48,7 +48,7 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 			Convey("Then an error should be returned", func() {
 				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
-				So(err, ShouldResemble, errors.New("error creating kafka producer: [kafka: invalid configuration (You must provide at least one broker address)]"))
+				So(err, ShouldResemble, errors.New("error creating email send kafka producer: [kafka: invalid configuration (You must provide at least one broker address)]"))
 			})
 		})
 		Convey("When config is called with valid config and valid broker config but invalid schema", func() {
@@ -67,7 +67,7 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 			Convey("Then an error should be returned", func() {
 				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
-				So(err, ShouldResemble, errors.New("error getting schema from schema registry: [Get \"/subjects/email-send/versions/latest\": unsupported protocol scheme \"\"]"))
+				So(err, ShouldResemble, errors.New("error getting email send schema from schema registry: [Get \"/subjects/email-send/versions/latest\": unsupported protocol scheme \"\"]"))
 			})
 		})
 		Convey("When config is called with valid config and valid broker config and valid schema", func() {
@@ -88,7 +88,7 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 			Convey("Then an error should be returned", func() {
 				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
-				So(err.Error(), ShouldStartWith, "error preparing kafka message with schema: [error getting company name: [")
+				So(err.Error(), ShouldStartWith, "error preparing email send kafka message with schema: [error getting company name: [")
 			})
 		})
 	})

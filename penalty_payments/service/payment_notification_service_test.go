@@ -35,7 +35,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 			Convey("Then an error should be returned", func() {
 				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo)
 
-				So(err, ShouldResemble, errors.New("error getting config for kafka message production: ["+errMsg+"]"))
+				So(err, ShouldResemble, errors.New("error getting config for penalty payments processing kafka message production: ["+errMsg+"]"))
 			})
 		})
 		Convey("When config is called with valid config and invalid broker address", func() {
@@ -52,7 +52,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 			Convey("Then an error should be returned", func() {
 				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo)
 
-				So(err, ShouldResemble, errors.New("error creating kafka producer: [kafka: invalid configuration (You must provide at least one broker address)]"))
+				So(err, ShouldResemble, errors.New("error creating penalty payments processing kafka producer: [kafka: invalid configuration (You must provide at least one broker address)]"))
 			})
 		})
 		Convey("When config is called with valid config and valid broker config but invalid schema", func() {
@@ -73,7 +73,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 			Convey("Then an error should be returned", func() {
 				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo)
 
-				So(err, ShouldResemble, errors.New("error getting schema from schema registry: [get \"/subjects/penalty-payments-processing/versions/latest\": unsupported protocol scheme \"\"]"))
+				So(err, ShouldResemble, errors.New("error getting penalty payments processing schema from schema registry: [get \"/subjects/penalty-payments-processing/versions/latest\": unsupported protocol scheme \"\"]"))
 			})
 		})
 		Convey("When config is called with valid config and valid broker config and valid schema", func() {
@@ -94,7 +94,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 			Convey("Then an error should be returned", func() {
 				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo)
 
-				So(err.Error(), ShouldStartWith, "error preparing kafka message with schema:")
+				So(err.Error(), ShouldStartWith, "error preparing penalty payments processing kafka message with schema:")
 			})
 		})
 	})
