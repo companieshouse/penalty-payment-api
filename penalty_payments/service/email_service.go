@@ -28,35 +28,41 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 
 	topic := cfg.EmailSendTopic
 
-	log.Info("getting email kafka producer", log.Data{"customer_code": payableResource.CustomerCode})
+	logContext := log.Data{
+		"customer_code": payableResource.CustomerCode,
+		"payable_ref":   payableResource.PayableRef,
+		"topic":         topic,
+	}
+
+	log.Info("getting email send kafka producer", logContext)
 	kafkaProducer, err := getProducer(cfg)
 	if err != nil {
-		err = fmt.Errorf("error creating kafka producer: [%v]", err)
+		err = fmt.Errorf("error creating email send kafka producer: [%v]", err)
 		return err
 	}
 
-	log.Debug("kafka producer", log.Data{"customer_code": payableResource.CustomerCode, "producer": kafkaProducer})
+	log.Debug("email send kafka producer", logContext, log.Data{"producer": kafkaProducer})
 
-	log.Debug("getting avro schema", log.Data{"customer_code": payableResource.CustomerCode})
+	log.Debug("getting email send avro schema", logContext)
 	emailSendSchema, err := getSchema(cfg.SchemaRegistryURL, topic)
 	if err != nil {
-		err = fmt.Errorf("error getting schema from schema registry: [%v]", err)
+		err = fmt.Errorf("error getting email send schema from schema registry: [%v]", err)
 		return err
 	}
 	producerSchema := &avro.Schema{
 		Definition: emailSendSchema,
 	}
-	log.Debug("avro schema", log.Data{"customer_code": payableResource.CustomerCode, "schema": producerSchema})
+	log.Debug("email send avro schema", logContext, log.Data{"schema": producerSchema})
 
-	log.Info("preparing message", log.Data{"customer_code": payableResource.CustomerCode})
+	log.Info("preparing email send message", logContext)
 	message, err := prepareEmailKafkaMessage(
 		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc, topic)
 	if err != nil {
-		err = fmt.Errorf("error preparing kafka message with schema: [%v]", err)
+		err = fmt.Errorf("error preparing email send kafka message with schema: [%v]", err)
 		return err
 	}
 
-	log.Debug("email message prepared successfully", log.Data{
+	log.Debug("email send message prepared successfully", log.Data{
 		"message.Value":     message.Value,
 		"message.Topic":     message.Topic,
 		"message.Partition": message.Partition,
@@ -65,11 +71,10 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 
 	partition, offset, err := kafkaProducer.Send(message)
 	if err != nil {
-		err = fmt.Errorf("failed to send message in partition: %d at offset %d", partition, offset)
+		err = fmt.Errorf("failed to send email send message in partition: %d at offset %d", partition, offset)
 		return err
 	}
-	log.Info("successfully published email message", log.Data{
-		"customer_code":   payableResource.CustomerCode,
+	log.Info("successfully published email send message", logContext, log.Data{
 		"kafka_topic":     topic,
 		"kafka_partition": partition,
 		"kafka_offset":    offset,
@@ -137,7 +142,11 @@ func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource model
 		CHSURL:            cfg.CHSURL,
 	}
 
-	log.Debug("message data field", log.Data{"customer_code": payableResource.CustomerCode, "data_field": dataFieldMessage})
+	logContext := log.Data{
+		"customer_code": payableResource.CustomerCode,
+		"payable_ref":   payableResource.PayableRef,
+	}
+	log.Debug("email send message data field", logContext, log.Data{"data_field": dataFieldMessage})
 
 	dataBytes, err := json.Marshal(dataFieldMessage)
 	if err != nil {
@@ -156,7 +165,7 @@ func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource model
 		CreatedAt:    time.Now().String(),
 	}
 
-	log.Debug("email message", log.Data{"customer_code": payableResource.CustomerCode, "message": emailSendMessage})
+	log.Debug("email send message", logContext, log.Data{"email_send": emailSendMessage})
 
 	messageBytes, err := emailSendSchema.Marshal(emailSendMessage)
 	if err != nil {
