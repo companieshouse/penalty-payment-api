@@ -134,7 +134,7 @@ const (
 
 func getPayableStatus(transactionType string, e5Transaction *models.AccountPenaltiesDataDao, closedAt *time.Time,
 	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config) string {
-	if penaltyTypeDisabled(e5Transaction.TransactionSubType, cfg) {
+	if penaltyTypeDisabled(e5Transaction, cfg) {
 		return DisabledPayableStatus
 	}
 	if types.Penalty.String() == transactionType {
@@ -209,13 +209,18 @@ func penaltyPaymentAllocated(penalty *models.AccountPenaltiesDataDao) bool {
 	return penalty.OutstandingAmount == 0
 }
 
-func penaltyTypeDisabled(transactionSubType string, cfg *config.Config) bool {
-	switch transactionSubType {
-	case SanctionsTransactionSubType:
-		return cfg.FeatureFlagSanctionsCSDisabled
-	case SanctionsRoeFailureToUpdateTransactionSubType:
-		return cfg.FeatureFlagSanctionsROEDisabled
-	default:
-		return false
+func penaltyTypeDisabled(penalty *models.AccountPenaltiesDataDao, cfg *config.Config) bool {
+	if penalty.CompanyCode == utils.LateFilingPenaltyCompanyCode {
+		return cfg.FeatureFlagLFPDisabled
+	} else if penalty.CompanyCode == utils.SanctionsCompanyCode {
+		switch penalty.TransactionSubType {
+		case SanctionsTransactionSubType:
+			return cfg.FeatureFlagSanctionsCSDisabled
+		case SanctionsRoeFailureToUpdateTransactionSubType:
+			return cfg.FeatureFlagSanctionsROEDisabled
+		default:
+			return false
+		}
 	}
+	return false
 }
