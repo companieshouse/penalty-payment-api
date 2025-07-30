@@ -169,6 +169,7 @@ var e5TransactionsResponseValidLFPWithUnpaidCostsTransaction = models.AccountPen
 }
 
 var cfg = config.Config{}
+var SanctionsMultipleTransactionSubType = "S1,A2"
 
 func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 	Convey("error when first etag generator fails", t, func() {
@@ -1193,7 +1194,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 				want: DisabledPayableStatus,
 			},
 		}
-		cfg.DisabledPenaltyTransactionSubtypes = "S1"
+		cfg.DisabledPenaltyTransactionSubtypes = SanctionsTransactionSubType
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
@@ -1268,7 +1269,40 @@ func TestUnit_getPayableStatus(t *testing.T) {
 				want: DisabledPayableStatus,
 			},
 		}
-		cfg.DisabledPenaltyTransactionSubtypes = "A2"
+		cfg.DisabledPenaltyTransactionSubtypes = SanctionsRoeFailureToUpdateTransactionSubType
+		for _, tc := range testCases {
+			Convey(tc.name, func() {
+				penalty := tc.args.penalty
+				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+
+				So(got, ShouldEqual, tc.want)
+			})
+		}
+	})
+
+	Convey("Get disabled payable status for sanctions - Multiple Subtypes", t, func() {
+		type args struct {
+			penalty *models.AccountPenaltiesDataDao
+		}
+		testCases := []struct {
+			name string
+			args args
+			want string
+		}{
+			{
+				name: "Sanctions (valid)",
+				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+				want: DisabledPayableStatus,
+			},
+			{
+				name: "Sanctions ROE (valid)",
+				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
+				want: DisabledPayableStatus,
+			},
+		}
+		cfg.DisabledPenaltyTransactionSubtypes = SanctionsMultipleTransactionSubType
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
