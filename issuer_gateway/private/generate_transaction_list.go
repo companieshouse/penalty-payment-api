@@ -134,7 +134,7 @@ const (
 
 func getPayableStatus(transactionType string, e5Transaction *models.AccountPenaltiesDataDao, closedAt *time.Time,
 	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config) string {
-	if penaltyTypeDisabled(e5Transaction, cfg) {
+	if penaltyTransactionSubTypeDisabled(e5Transaction, cfg) {
 		return DisabledPayableStatus
 	}
 	if types.Penalty.String() == transactionType {
@@ -209,7 +209,7 @@ func penaltyPaymentAllocated(penalty *models.AccountPenaltiesDataDao) bool {
 	return penalty.OutstandingAmount == 0
 }
 
-func penaltyTypeDisabled(penalty *models.AccountPenaltiesDataDao, cfg *config.Config) bool {
+func penaltyTransactionSubTypeDisabled(penalty *models.AccountPenaltiesDataDao, cfg *config.Config) bool {
 	trimDisabledSubtypes := strings.ReplaceAll(cfg.DisabledPenaltyTransactionSubtypes, " ", "")
 	disabledSubtypes := strings.Split(trimDisabledSubtypes, ",")
 	penaltySubType := penalty.TransactionSubType
