@@ -135,6 +135,9 @@ const (
 func getPayableStatus(transactionType string, e5Transaction *models.AccountPenaltiesDataDao, closedAt *time.Time,
 	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config) string {
 	if types.Penalty.String() == transactionType {
+		if penaltyTransactionSubTypeDisabled(e5Transaction, cfg) {
+			return DisabledPayableStatus
+		}
 		closedPayableStatus, isClosed := checkClosedPayableStatus(e5Transaction, closedAt, e5Transactions, allowedTransactionsMap)
 		if isClosed {
 			return closedPayableStatus
@@ -144,9 +147,6 @@ func getPayableStatus(transactionType string, e5Transaction *models.AccountPenal
 		if isOpen {
 			return openPayableStatus
 		}
-	}
-	if penaltyTransactionSubTypeDisabled(e5Transaction, cfg) {
-		return DisabledPayableStatus
 	}
 
 	return ClosedPayableStatus
