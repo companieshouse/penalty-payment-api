@@ -210,16 +210,12 @@ func penaltyPaymentAllocated(penalty *models.AccountPenaltiesDataDao) bool {
 }
 
 func penaltyTypeDisabled(penalty *models.AccountPenaltiesDataDao, cfg *config.Config) bool {
-	if penalty.CompanyCode == utils.LateFilingPenaltyCompanyCode {
-		return cfg.FeatureFlagLFPDisabled
-	} else if penalty.CompanyCode == utils.SanctionsCompanyCode {
-		switch penalty.TransactionSubType {
-		case SanctionsTransactionSubType:
-			return cfg.FeatureFlagSanctionsCSDisabled
-		case SanctionsRoeFailureToUpdateTransactionSubType:
-			return cfg.FeatureFlagSanctionsROEDisabled
-		default:
-			return false
+	trimDisabledSubtypes := strings.ReplaceAll(cfg.DisabledPenaltyTransactionSubtypes, " ", "")
+	disabledSubtypes := strings.Split(trimDisabledSubtypes, ",")
+	penaltySubType := penalty.TransactionSubType
+	for _, subType := range disabledSubtypes {
+		if penaltySubType == subType {
+			return true
 		}
 	}
 	return false

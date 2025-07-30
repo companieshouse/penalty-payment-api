@@ -1129,81 +1129,6 @@ func TestUnit_getPayableStatus(t *testing.T) {
 
 	})
 
-	Convey("Get disabled payable status for late filing penalty", t, func() {
-		type args struct {
-			penalty *models.AccountPenaltiesDataDao
-		}
-		testCases := []struct {
-			name string
-			args args
-			want string
-		}{
-			{
-				name: "Late Filing Penalty (valid)",
-				args: args{penalty: createLateFilingPenalty(false, 250, CHSAccountStatus,
-					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
-				want: DisabledPayableStatus,
-			},
-			{
-				name: "Late Filing Penalty with outstanding amount and not paid",
-				args: args{penalty: createLateFilingPenalty(false, 250, CHSAccountStatus,
-					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
-				want: DisabledPayableStatus,
-			},
-			{
-				name: "Late Filing Penalty with outstanding amount, not paid and account on hold",
-				args: args{penalty: createLateFilingPenalty(false, 250, HLDAccountStatus,
-					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
-				want: DisabledPayableStatus,
-			},
-			{
-				name: "Late Filing Penalty with outstanding amount, not paid, account status is dca, dunning status is pen1",
-				args: args{penalty: createLateFilingPenalty(false, 250, DCAAccountStatus,
-					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
-				want: DisabledPayableStatus,
-			},
-			{
-				name: "Late Filing Penalty with outstanding amount, not paid, account status is dca, dunning status is pen2",
-				args: args{penalty: createLateFilingPenalty(false, 250, DCAAccountStatus,
-					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
-				want: DisabledPayableStatus,
-			},
-			{
-				name: "Late Filing Penalty with outstanding amount, not paid, account status is chs, dunning status is pen1",
-				args: args{penalty: createLateFilingPenalty(false, 250, CHSAccountStatus,
-					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
-				want: DisabledPayableStatus,
-			},
-			{
-				name: "Late Filing Penalty with outstanding amount, not paid, account status is chs, dunning status is pen2",
-				args: args{penalty: createLateFilingPenalty(false, 250, CHSAccountStatus,
-					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
-				want: DisabledPayableStatus,
-			},
-			{
-				name: "Late Filing Penalty with outstanding amount, not paid, account status is hld, dunning status is pen1",
-				args: args{penalty: createLateFilingPenalty(false, 250, HLDAccountStatus,
-					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
-				want: DisabledPayableStatus,
-			},
-			{
-				name: "Late Filing Penalty with outstanding amount, not paid, account status is hld, dunning status is pen2",
-				args: args{penalty: createLateFilingPenalty(false, 250, HLDAccountStatus,
-					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
-				want: DisabledPayableStatus,
-			},
-		}
-		cfg.FeatureFlagLFPDisabled = true
-		for _, tc := range testCases {
-			Convey(tc.name, func() {
-				penalty := tc.args.penalty
-				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
-
-				So(got, ShouldEqual, tc.want)
-			})
-		}
-	})
-
 	Convey("Get disabled payable status for sanctions - Confirmation Statement", t, func() {
 		type args struct {
 			penalty *models.AccountPenaltiesDataDao
@@ -1268,7 +1193,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 				want: DisabledPayableStatus,
 			},
 		}
-		cfg.FeatureFlagSanctionsCSDisabled = true
+		cfg.DisabledPenaltyTransactionSubtypes = "S1"
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
@@ -1343,7 +1268,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 				want: DisabledPayableStatus,
 			},
 		}
-		cfg.FeatureFlagSanctionsROEDisabled = true
+		cfg.DisabledPenaltyTransactionSubtypes = "A2"
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
