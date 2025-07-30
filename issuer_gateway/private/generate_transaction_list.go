@@ -14,8 +14,8 @@ import (
 
 var etagGenerator = utils.GenerateEtag
 
-func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao, companyCode string,
-	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap) (*models.TransactionListResponse, error) {
+func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config) (*models.TransactionListResponse, error) {
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := etagGenerator()
 	if err != nil {
@@ -31,7 +31,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
 		transactionListItem, err := buildTransactionListItemFromAccountPenalty(
 			&accountPenalty, allowedTransactionsMap, penaltyDetailsMap, companyCode, accountPenalties.ClosedAt,
-			accountPenalties.AccountPenalties)
+			accountPenalties.AccountPenalties, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -44,7 +44,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 
 func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap,
 	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string, closedAt *time.Time,
-	e5Transactions []models.AccountPenaltiesDataDao) (models.TransactionListItem, error) {
+	e5Transactions []models.AccountPenaltiesDataDao, cfg *config.Config) (models.TransactionListItem, error) {
 	etag, err := etagGenerator()
 	if err != nil {
 		err = fmt.Errorf("error generating etag: [%v]", err)
@@ -67,7 +67,7 @@ func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesData
 	transactionListItem.Outstanding = dao.OutstandingAmount
 	transactionListItem.Type = transactionType
 	transactionListItem.Reason = getReason(dao)
-	transactionListItem.PayableStatus = getPayableStatus(transactionType, dao, closedAt, e5Transactions, allowedTransactionsMap)
+	transactionListItem.PayableStatus = getPayableStatus(transactionType, dao, closedAt, e5Transactions, allowedTransactionsMap, cfg)
 
 	return transactionListItem, nil
 }
@@ -117,6 +117,7 @@ const (
 	PenaltyReason                     = "Penalty"
 
 	OpenPayableStatus                    = "OPEN"
+	DisabledPayableStatus                = "DISABLED"
 	ClosedPayableStatus                  = "CLOSED"
 	ClosedPendingAllocationPayableStatus = "CLOSED_PENDING_ALLOCATION"
 
@@ -132,8 +133,11 @@ const (
 )
 
 func getPayableStatus(transactionType string, e5Transaction *models.AccountPenaltiesDataDao, closedAt *time.Time,
-	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap) string {
+	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config) string {
 	if types.Penalty.String() == transactionType {
+		if penaltyTransactionSubTypeDisabled(e5Transaction, cfg) {
+			return DisabledPayableStatus
+		}
 		closedPayableStatus, isClosed := checkClosedPayableStatus(e5Transaction, closedAt, e5Transactions, allowedTransactionsMap)
 		if isClosed {
 			return closedPayableStatus
@@ -203,4 +207,16 @@ func penaltyPaymentAllocated(penalty *models.AccountPenaltiesDataDao) bool {
 	// The value of outstanding amount is 0 after penalty payment is allocated in E5
 	// and AccountPenalties cache is updated with E5 data
 	return penalty.OutstandingAmount == 0
+}
+
+func penaltyTransactionSubTypeDisabled(penalty *models.AccountPenaltiesDataDao, cfg *config.Config) bool {
+	trimDisabledSubtypes := strings.ReplaceAll(cfg.DisabledPenaltyTransactionSubtypes, " ", "")
+	disabledSubtypes := strings.Split(trimDisabledSubtypes, ",")
+	penaltySubType := penalty.TransactionSubType
+	for _, subType := range disabledSubtypes {
+		if penaltySubType == subType {
+			return true
+		}
+	}
+	return false
 }

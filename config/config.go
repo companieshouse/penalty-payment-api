@@ -34,6 +34,7 @@ type Config struct {
 	PenaltyPaymentsProcessingRetryDelay    string       `env:"PENALTY_PAYMENTS_PROCESSING_RETRY_DELAY"      flag:"penalty-payments-processing-retry-delay"  flagDesc:"Penalty payments processing retry delay for transient errors"`
 	PenaltyPaymentsProcessingRetryMaxDelay string       `env:"PENALTY_PAYMENTS_PROCESSING_RETRY_MAX_DELAY"  flag:"penalty-payments-processing-max-delay"    flagDesc:"Penalty payments processing max delay for a retry attempt for transient errors"`
 	FeatureFlagPaymentsProcessingEnabled   bool         `env:"FEATURE_FLAG_PAYMENTS_PROCESSING_ENABLED"     flag:"feature-flag-payments-processing-enabled" flagDesc:"If the payments processing Kafka implementation is enabled"`
+	DisabledPenaltyTransactionSubtypes     string       `env:"DISABLED_PENALTY_TRANSACTION_SUBTYPES"        flag:"disabled-penalty-transaction-subtypes"    flagDesc:"Penalty transaction subtypes to be disabled"`
 	CHSURL                                 string       `env:"CHS_URL"                                      flag:"chs-url"                                  flagDesc:"CHS URL"`
 	WeeklyMaintenanceStartTime             string       `env:"WEEKLY_MAINTENANCE_START_TIME"                flag:"weekly-maintenance-start-time"            flagDesc:"The time of the day when Weekly E5 maintenance starts"`
 	WeeklyMaintenanceEndTime               string       `env:"WEEKLY_MAINTENANCE_END_TIME"                  flag:"weekly-maintenance-end-time"              flagDesc:"The time of the day when Weekly E5 maintenance ends"`

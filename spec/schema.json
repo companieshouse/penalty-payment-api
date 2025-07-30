@@ -533,7 +533,8 @@
           "enum": [
             "OPEN",
             "CLOSED",
-            "CLOSED_PENDING_ALLOCATION"
+            "CLOSED_PENDING_ALLOCATION",
+            "DISABLED"
           ]
         }
       }
