@@ -33,22 +33,31 @@ func TestIntegrationConsume(t *testing.T) {
 
 	schemaServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		_, err := w.Write([]byte(getSchemaResponse()))
+		_, err := w.Write([]byte(getTestSchemaResponse()))
 		require.NoError(t, err)
 	}))
 	defer schemaServer.Close()
 
 	cfg := &config.Config{
-		BrokerAddr:                     []string{brokers[0]},
-		SchemaRegistryURL:              schemaServer.URL,
-		PenaltyPaymentsProcessingTopic: "penalty-payments-processing",
+		BrokerAddr:                             []string{brokers[0]},
+		ZookeeperURL:                           "localhost:2181",
+		SchemaRegistryURL:                      schemaServer.URL,
+		PenaltyPaymentsProcessingTopic:         "penalty-payments-processing",
+		PenaltyPaymentsProcessingMaxRetries:    "3",
+		PenaltyPaymentsProcessingRetryDelay:    "1",
+		PenaltyPaymentsProcessingRetryMaxDelay: "5",
+		ConsumerGroupName:                      "penalty-payment-api-penalty-payments-processing",
+		ConsumerRetryGroupName:                 "penalty-payment-api-penalty-payments-processing-retry",
+		ConsumerRetryThrottleRate:              1,
+		ConsumerRetryMaxRetries:                3,
+		FeatureFlagPaymentsProcessingEnabled:   true,
 	}
 
 	// Start consumer in background
 	go func() {
 		mockFinancePayment := new(mockPenaltyFinancePayment)
-		mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID).Return(nil)
-		Consume(cfg, mockFinancePayment)
+		mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID, cfg, false).Return(nil)
+		Consume(cfg, mockFinancePayment, nil)
 		mockFinancePayment.AssertExpectations(t)
 	}()
 	// Give consumer time to start
@@ -60,7 +69,7 @@ func TestIntegrationConsume(t *testing.T) {
 	require.NoError(t, err)
 	defer producer.Close()
 
-	avroBytes := getConsumerMessage(getAvroSchema(), penaltyPayment).Value
+	avroBytes := getConsumerMessage(getTestAvroSchema(), penaltyPayment).Value
 	partition, offset, err := producer.SendMessage(&sarama.ProducerMessage{
 		Topic: cfg.PenaltyPaymentsProcessingTopic,
 		Value: sarama.ByteEncoder(avroBytes),
@@ -80,6 +89,6 @@ func TestIntegrationConsume(t *testing.T) {
 	assert.True(t, true)
 }
 
-func getSchemaResponse() string {
-	return `{"schema":"{\"namespace\":\"uk.gov.companieshouse.financialpenalties\",\"type\":\"record\",\"doc\":\"thedetailsofthepenaltypaymentsbeingprocessed\",\"name\":\"PenaltyPaymentsProcessing\",\"fields\":[{\"name\":\"attempt\",\"type\":\"int\",\"default\":0,\"doc\":\"NumberofattemptstoretrypublishingthemessagetoKafkaTopic\"},{\"name\":\"company_code\",\"type\":\"string\"},{\"name\":\"customer_code\",\"type\":\"string\"},{\"name\":\"payment_id\",\"type\":\"string\"},{\"name\":\"external_payment_id\",\"type\":\"string\"},{\"name\":\"payment_reference\",\"type\":\"string\"},{\"name\":\"payment_amount\",\"type\":\"string\"},{\"name\":\"total_value\",\"type\":\"double\"},{\"name\":\"transaction_payments\",\"type\":{\"type\":\"array\",\"items\":{\"name\":\"transaction_payment\",\"type\":\"record\",\"fields\":[{\"name\":\"transaction_reference\",\"type\":\"string\"},{\"name\":\"value\",\"type\":\"double\"}]}}},{\"name\":\"card_type\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"payable_ref\",\"type\":\"string\"}]}"}`
+func getTestSchemaResponse() string {
+	return `{"schema":"{\"namespace\":\"uk.gov.companieshouse.financialpenalties\",\"type\":\"record\",\"doc\":\"thedetailsofthepenaltypaymentsbeingprocessed\",\"name\":\"PenaltyPaymentsProcessing\",\"fields\":[{\"name\":\"attempt\",\"type\":\"int\",\"default\":0,\"doc\":\"NumberofattemptstoretrypublishingthemessagetoKafkaTopic\"},{\"name\":\"created_at\",\"type\":\"string\",\"doc\":\"thedateandtimethatarequesttoprocessthepenaltypaymentwascreated\"},{\"name\":\"company_code\",\"type\":\"string\"},{\"name\":\"customer_code\",\"type\":\"string\"},{\"name\":\"payment_id\",\"type\":\"string\"},{\"name\":\"external_payment_id\",\"type\":\"string\"},{\"name\":\"payment_reference\",\"type\":\"string\"},{\"name\":\"payment_amount\",\"type\":\"string\"},{\"name\":\"total_value\",\"type\":\"double\"},{\"name\":\"transaction_payments\",\"type\":{\"type\":\"array\",\"items\":{\"name\":\"transaction_payment\",\"type\":\"record\",\"fields\":[{\"name\":\"transaction_reference\",\"type\":\"string\"},{\"name\":\"value\",\"type\":\"double\"}]}}},{\"name\":\"card_type\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"payable_ref\",\"type\":\"string\"}]}"}`
 }

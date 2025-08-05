@@ -33,6 +33,10 @@ type Config struct {
 	PenaltyPaymentsProcessingMaxRetries    string       `env:"PENALTY_PAYMENTS_PROCESSING_MAX_RETRIES"      flag:"penalty-payments-processing-max-retries"  flagDesc:"Penalty payments processing max retry attempts for transient errors"`
 	PenaltyPaymentsProcessingRetryDelay    string       `env:"PENALTY_PAYMENTS_PROCESSING_RETRY_DELAY"      flag:"penalty-payments-processing-retry-delay"  flagDesc:"Penalty payments processing retry delay for transient errors"`
 	PenaltyPaymentsProcessingRetryMaxDelay string       `env:"PENALTY_PAYMENTS_PROCESSING_RETRY_MAX_DELAY"  flag:"penalty-payments-processing-max-delay"    flagDesc:"Penalty payments processing max delay for a retry attempt for transient errors"`
+	ConsumerGroupName                      string       `env:"CONSUMER_GROUP_NAME"                          flag:"consumer-group-name"                      flagDesc:"Consumer group name"`
+	ConsumerRetryGroupName                 string       `env:"CONSUMER_RETRY_GROUP_NAME"                    flag:"consumer-retry-group-name"                flagDesc:"Consumer retry group name"`
+	ConsumerRetryThrottleRate              int          `env:"CONSUMER_RETRY_THROTTLE_RATE"                 flag:"consumer-retry-throttle-rate"             flagDesc:"Consumer retry throttle rate in seconds for resilience"`
+	ConsumerRetryMaxRetries                int          `env:"CONSUMER_RETRY_MAX_RETRIES"                   flag:"consumer-retry-max-retries"               flagDesc:"Consumer retry max retries for resilience"`
 	FeatureFlagPaymentsProcessingEnabled   bool         `env:"FEATURE_FLAG_PAYMENTS_PROCESSING_ENABLED"     flag:"feature-flag-payments-processing-enabled" flagDesc:"If the payments processing Kafka implementation is enabled"`
 	DisabledPenaltyTransactionSubtypes     string       `env:"DISABLED_PENALTY_TRANSACTION_SUBTYPES"        flag:"disabled-penalty-transaction-subtypes"    flagDesc:"Penalty transaction subtypes to be disabled"`
 	CHSURL                                 string       `env:"CHS_URL"                                      flag:"chs-url"                                  flagDesc:"CHS URL"`
@@ -41,6 +45,11 @@ type Config struct {
 	WeeklyMaintenanceDay                   time.Weekday `env:"WEEKLY_MAINTENANCE_DAY"                       flag:"weekly-maintenance-day"                   flagDesc:"The day on which Weekly E5 maintenance takes place"`
 	PlannedMaintenanceStart                string       `env:"PLANNED_MAINTENANCE_START_TIME"               flag:"planned-maintenance-start-time"           flagDesc:"The time of the day at which Planned E5 maintenance starts"`
 	PlannedMaintenanceEnd                  string       `env:"PLANNED_MAINTENANCE_END_TIME"                 flag:"planned-maintenance-end-time"             flagDesc:"The time of the day at which Planned E5 maintenance ends"`
+}
+
+// Namespace implements service.Config Namespace.
+func (c *Config) Namespace() string {
+	return "penalty-payment-api"
 }
 
 // PenaltyDetailsMap defines the struct to hold the map of penalty details.

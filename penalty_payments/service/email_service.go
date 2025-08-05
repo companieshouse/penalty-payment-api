@@ -24,7 +24,6 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 		err = fmt.Errorf("error getting config for kafka message production: [%v]", err)
 		return err
 	}
-	log.Debug("Config", log.Data{"Config": cfg})
 
 	topic := cfg.EmailSendTopic
 

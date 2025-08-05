@@ -9,51 +9,58 @@ import (
 	"github.com/companieshouse/chs.go/avro"
 	"github.com/companieshouse/chs.go/avro/schema"
 	consumer "github.com/companieshouse/chs.go/kafka/consumer/cluster"
+	"github.com/companieshouse/chs.go/kafka/producer"
+	"github.com/companieshouse/chs.go/kafka/resilience"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/handlers"
 )
 
-func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment) {
-	kafkaConsumerConfig := &consumer.Config{
+func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment, retry *resilience.ServiceRetry) {
+	avroSchema := getAvroSchema(cfg)
+	topic := cfg.PenaltyPaymentsProcessingTopic
+	resilienceHandler := resilience.NewHandler(topic, cfg.Namespace(), retry, getProducer(cfg), avroSchema)
+
+	consumerGroupName := cfg.ConsumerGroupName
+	isRetry := retry != nil
+	if isRetry {
+		topic = resilienceHandler.GetRetryTopicName()
+		consumerGroupName = cfg.ConsumerRetryGroupName
+	}
+	consumerConfig := &consumer.Config{
 		BrokerAddr:   cfg.BrokerAddr,
 		ZookeeperURL: cfg.ZookeeperURL,
-		Topics:       []string{cfg.PenaltyPaymentsProcessingTopic},
+		Topics:       []string{topic},
 	}
-	log.Info("Starting kafka consumer", log.Data{
-		"broker_addr":         kafkaConsumerConfig.BrokerAddr,
-		"zookeeper_url":       kafkaConsumerConfig.ZookeeperURL,
-		"topics":              kafkaConsumerConfig.Topics,
-		"processing_timeout":  kafkaConsumerConfig.ProcessingTimeout,
-		"schema_registry_url": cfg.SchemaRegistryURL,
+	log.Info("Starting kafka consumer with resilience", log.Data{
+		"consumer_config": consumerConfig,
+		"retry":           retry,
 	})
-	kafkaSchema, err := schema.Get(cfg.SchemaRegistryURL, cfg.PenaltyPaymentsProcessingTopic)
-	if err != nil {
-		kafkaSchemaError := fmt.Errorf("error getting penalty-payments-processing schema from schema registry: [%v]", err)
-		panic(kafkaSchemaError)
-	}
-	avroSchema := &avro.Schema{
-		Definition: kafkaSchema,
+
+	consumerGroupConfig := &consumer.GroupConfig{
+		GroupName:   consumerGroupName,
+		ResetOffset: true,
+		Chroot:      "/kafka",
 	}
 
-	partitionConsumer := consumer.NewPartitionConsumer(kafkaConsumerConfig)
+	groupConsumer := consumer.NewConsumerGroup(consumerConfig)
 
-	if err := partitionConsumer.ConsumePartition(0, consumer.OffsetOldest); err != nil {
+	if err := groupConsumer.JoinGroup(consumerGroupConfig); err != nil {
 		log.Error(err)
 	}
 
-	defer func(partitionConsumer *consumer.PartitionConsumer) {
-		err := partitionConsumer.Close()
+	defer func(groupConsumer *consumer.GroupConsumer) {
+		err := groupConsumer.Close()
 		if err != nil {
 			log.Error(err)
 		}
-	}(partitionConsumer)
+	}(groupConsumer)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
-	messages := partitionConsumer.Messages()
+	messages := groupConsumer.Messages()
 
 	for {
 		select {
@@ -62,9 +69,11 @@ func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment) 
 			return
 		case message := <-messages:
 			if message != nil {
-				err := handleMessage(avroSchema, message, penaltyFinancePayment, cfg)
+				err := handleMessage(avroSchema, message, penaltyFinancePayment, cfg, resilienceHandler, isRetry)
 				if err != nil {
 					log.Error(err)
+				} else {
+					groupConsumer.MarkOffset(message, "")
 				}
 			}
 		}
@@ -73,7 +82,11 @@ func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment) 
 }
 
 func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage, financePayment handlers.FinancePayment,
-	cfg *config.Config) error {
+	cfg *config.Config, resilience *resilience.Resilience, isRetry bool) error {
+	log.Debug("Received message", log.Data{
+		"message":  message,
+		"is_retry": isRetry,
+	})
 	var penaltyPayment models.PenaltyPaymentsProcessing
 	var err = avroSchema.Unmarshal(message.Value, &penaltyPayment)
 	if err != nil {
@@ -85,12 +98,35 @@ func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage, fin
 	// ones that begin with 'LP' which signify penalties that have been paid outside the digital service.
 	e5PaymentID := "X" + penaltyPayment.PaymentID
 
-	err = financePayment.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg)
+	err = financePayment.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg, isRetry)
 	if err != nil {
 		err = fmt.Errorf("error processing financial penalty payment: [%v]", err)
 		log.Error(err, log.Data{"e5_payment_id": e5PaymentID, "customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payable_ref": penaltyPayment.PayableRef})
-		return err
+		return resilience.HandleError(err, message.Offset, &penaltyPayment)
 	}
 
 	return nil
+}
+
+func getAvroSchema(cfg *config.Config) *avro.Schema {
+	kafkaSchema, err := schema.Get(cfg.SchemaRegistryURL, cfg.PenaltyPaymentsProcessingTopic)
+	if err != nil {
+		kafkaSchemaError := fmt.Errorf("error getting penalty-payments-processing schema from schema registry: [%v]", err)
+		panic(kafkaSchemaError)
+	}
+	avroSchema := &avro.Schema{
+		Definition: kafkaSchema,
+	}
+	return avroSchema
+}
+
+func getProducer(cfg *config.Config) *producer.Producer {
+	kafkaProducerConfig := &producer.Config{Acks: &producer.WaitForAll, BrokerAddrs: cfg.BrokerAddr}
+	syncProducer, err := producer.New(kafkaProducerConfig)
+	if err != nil {
+		log.Error(fmt.Errorf("error initialising producer for resilience: %s", err), log.Data{
+			"producer_config": kafkaProducerConfig,
+		})
+	}
+	return syncProducer
 }

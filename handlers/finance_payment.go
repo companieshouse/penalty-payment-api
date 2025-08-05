@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"strconv"
 	"time"
 
@@ -16,7 +15,7 @@ import (
 // FinancePayment interface declares the processing handler for the consumer
 type FinancePayment interface {
 	ProcessFinancialPenaltyPayment(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string,
-		cfg *config.Config) error
+		cfg *config.Config, isRetry bool) error
 }
 
 // PenaltyFinancePayment is the processing handler for the consumer
@@ -31,13 +30,14 @@ type PenaltyFinancePayment struct {
 // E5. Finance have confirmed that it is better to keep these locked as a cleanup process will happen naturally in
 // the working day.
 func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment models.PenaltyPaymentsProcessing,
-	e5PaymentID string, cfg *config.Config) error {
+	e5PaymentID string, cfg *config.Config, isRetry bool) error {
 	logContext := log.Data{
 		"customer_code":           penaltyPayment.CustomerCode,
 		"company_code":            penaltyPayment.CompanyCode,
 		"payable_ref":             penaltyPayment.PayableRef,
 		"penalty_payment_message": penaltyPayment,
 		"e5_payment_id":           e5PaymentID,
+		"is_retry":                isRetry,
 	}
 	log.Info("Financial penalty payment processing started", logContext)
 
@@ -51,83 +51,29 @@ func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment mod
 	err = withRetry(cfg, e5.CreateAction, func() error {
 		return createPayment(penaltyPayment, p.E5Client, e5PaymentID)
 	})
-
 	if err != nil {
-		// currently jsut saving the error as it is in the transient block and the retry topic has
-		// not yet been developed. Once developed this saveE5Error should be removed, and a new message
-		// should be put onto the retry topic
 		saveE5Error(penaltyPayment, p.PayableResourceDaoService, err, e5PaymentID, e5.CreateAction)
-		// put it on the retry topic
-		return err
+		return err // put it on the retry topic
 	}
 
 	err = withRetry(cfg, e5.AuthoriseAction, func() error {
 		return authorisePayment(penaltyPayment, p.E5Client, e5PaymentID)
 	})
-
 	if err != nil {
 		saveE5Error(penaltyPayment, p.PayableResourceDaoService, err, e5PaymentID, e5.AuthoriseAction)
-		return err
+		return nil // don't put it on the retry topic
 	}
 
 	err = withRetry(cfg, e5.ConfirmAction, func() error {
 		return confirmPayment(penaltyPayment, p.E5Client, e5PaymentID)
 	})
-
 	if err != nil {
 		saveE5Error(penaltyPayment, p.PayableResourceDaoService, err, e5PaymentID, e5.ConfirmAction)
-		return err
+		return nil // don't put it on the retry topic
 	}
 
+	saveE5Success(logContext, p.PayableResourceDaoService, penaltyPayment.CustomerCode, penaltyPayment.PayableRef)
 	log.Info("Financial penalty payment processing successful", logContext)
-	return nil
-}
-
-// This method should be called by the retry topic - currently not being used
-func (p PenaltyFinancePayment) ProcessFinancialPenaltyPaymentRetryTopic(penaltyPayment models.PenaltyPaymentsProcessing, e5PaymentID string) error {
-	logContext := log.Data{
-		"customer_code":           penaltyPayment.CustomerCode,
-		"company_code":            penaltyPayment.CompanyCode,
-		"payable_ref":             penaltyPayment.PayableRef,
-		"penalty_payment_message": penaltyPayment,
-		"e5_payment_id":           e5PaymentID,
-	}
-	log.Info("Financial penalty payment processing started", logContext)
-
-	if isAfterNextDayMidnight(penaltyPayment.CreatedAt) {
-		err := errors.New("trying to process penalty payment on the day after it was paid")
-		// it should be ok to save it as a CreateAction failure as the create would have needed to fail initially to
-		// make it onto the retry queue
-		saveE5Error(penaltyPayment, p.PayableResourceDaoService, err, e5PaymentID, e5.CreateAction)
-		log.Info("Skipping financial penalty payment processing as current time is after next day midnight of created_at", logContext)
-		// this should now be marked as processed on the retry topic
-		return nil
-	}
-
-	var err error
-
-	err = createPayment(penaltyPayment, p.E5Client, e5PaymentID)
-	if err != nil {
-		// Should go back on the retry topic with the number of attempts updated
-		return err
-	}
-
-	err = authorisePayment(penaltyPayment, p.E5Client, e5PaymentID)
-	if err != nil {
-		saveE5Error(penaltyPayment, p.PayableResourceDaoService, err, e5PaymentID, e5.AuthoriseAction)
-		// this should now be marked as processed on the retry topic as the create succeeded - we are not tracking state
-		return nil
-	}
-
-	err = confirmPayment(penaltyPayment, p.E5Client, e5PaymentID)
-	if err != nil {
-		saveE5Error(penaltyPayment, p.PayableResourceDaoService, err, e5PaymentID, e5.ConfirmAction)
-		// this should now be marked as processed on the retry topic as the create succeeded - we are not tracking state
-		return nil
-	}
-
-	log.Info("Financial penalty payment processing successful", logContext)
-	// this should now be marked as processed on the retry topic
 	return nil
 }
 
@@ -241,6 +187,13 @@ func saveE5Error(penaltyPayment models.PenaltyPaymentsProcessing, payableResourc
 	}
 	log.Error(e5PaymentError, logContext)
 	if svcErr := payableResourceDaoService.SaveE5Error(penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5Action); svcErr != nil {
+		log.Error(svcErr, logContext)
+	}
+}
+
+// Ensure that any previous E5 payment errors are cleared following the last successful attempt to confirm payment
+func saveE5Success(logContext log.Data, payableResourceDaoService dao.PayableResourceDaoService, customerCode string, payableRef string) {
+	if svcErr := payableResourceDaoService.SaveE5Error(customerCode, payableRef, ""); svcErr != nil {
 		log.Error(svcErr, logContext)
 	}
 }

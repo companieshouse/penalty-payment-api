@@ -18,12 +18,12 @@ func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payme
 		return err
 	}
 
-	log.Debug("Config", log.Data{"Config": cfg})
 	topic := cfg.PenaltyPaymentsProcessingTopic
 
 	logContext := log.Data{
 		"customer_code": payableResource.CustomerCode,
 		"payable_ref":   payableResource.PayableRef,
+		"topic":         topic,
 	}
 
 	log.Info("getting penalty payments processing kafka producer", logContext)
