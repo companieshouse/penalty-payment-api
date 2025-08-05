@@ -53,7 +53,10 @@ func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment mod
 	})
 	if err != nil {
 		saveE5Error(penaltyPayment, p.PayableResourceDaoService, err, e5PaymentID, e5.CreateAction)
-		return err // put it on the retry topic
+		if penaltyPayment.Attempt < int32(cfg.ConsumerRetryMaxAttempts) {
+			return err // put it on the retry topic
+		}
+		return nil // don't put it on the retry topic
 	}
 
 	err = withRetry(cfg, e5.AuthoriseAction, func() error {

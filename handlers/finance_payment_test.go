@@ -32,7 +32,17 @@ var (
 		PayableRef: "SQ33133143",
 	}
 	e5PaymentID = "XKIYLUq1pRVuiLNA"
-	cfg         = &config.Config{}
+	cfg         = &config.Config{
+		PenaltyPaymentsProcessingTopic:         "penalty-payments-processing",
+		PenaltyPaymentsProcessingMaxRetries:    "3",
+		PenaltyPaymentsProcessingRetryDelay:    "1",
+		PenaltyPaymentsProcessingRetryMaxDelay: "5",
+		ConsumerGroupName:                      "penalty-payment-api-penalty-payments-processing",
+		ConsumerRetryGroupName:                 "penalty-payment-api-penalty-payments-processing-retry",
+		ConsumerRetryThrottleRate:              1,
+		ConsumerRetryMaxAttempts:               3,
+		FeatureFlagPaymentsProcessingEnabled:   true,
+	}
 )
 
 type mockE5Client struct {

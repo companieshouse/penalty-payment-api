@@ -49,7 +49,7 @@ func TestIntegrationConsume(t *testing.T) {
 		ConsumerGroupName:                      "penalty-payment-api-penalty-payments-processing",
 		ConsumerRetryGroupName:                 "penalty-payment-api-penalty-payments-processing-retry",
 		ConsumerRetryThrottleRate:              1,
-		ConsumerRetryMaxRetries:                3,
+		ConsumerRetryMaxAttempts:               3,
 		FeatureFlagPaymentsProcessingEnabled:   true,
 	}
 

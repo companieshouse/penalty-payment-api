@@ -140,7 +140,7 @@ func getConsumerMessage(avroSchema *avro.Schema, penaltyPayment models.PenaltyPa
 func getTestResilienceHandler(t *testing.T, avroSchema *avro.Schema) *resilience.Resilience {
 	retry := &resilience.ServiceRetry{
 		ThrottleRate: time.Duration(cfg.ConsumerRetryThrottleRate) * time.Second,
-		MaxRetries:   cfg.ConsumerRetryMaxRetries,
+		MaxRetries:   cfg.ConsumerRetryMaxAttempts,
 	}
 	syncProducerMock := mocks.NewSyncProducer(t, nil)
 	syncProducerMock.ExpectSendMessageAndSucceed()

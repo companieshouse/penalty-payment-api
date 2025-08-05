@@ -36,7 +36,7 @@ type Config struct {
 	ConsumerGroupName                      string       `env:"CONSUMER_GROUP_NAME"                          flag:"consumer-group-name"                      flagDesc:"Consumer group name"`
 	ConsumerRetryGroupName                 string       `env:"CONSUMER_RETRY_GROUP_NAME"                    flag:"consumer-retry-group-name"                flagDesc:"Consumer retry group name"`
 	ConsumerRetryThrottleRate              int          `env:"CONSUMER_RETRY_THROTTLE_RATE"                 flag:"consumer-retry-throttle-rate"             flagDesc:"Consumer retry throttle rate in seconds for resilience"`
-	ConsumerRetryMaxRetries                int          `env:"CONSUMER_RETRY_MAX_RETRIES"                   flag:"consumer-retry-max-retries"               flagDesc:"Consumer retry max retries for resilience"`
+	ConsumerRetryMaxAttempts               int          `env:"CONSUMER_RETRY_MAX_ATTEMPTS"                  flag:"consumer-retry-max-attempts"              flagDesc:"Consumer retry max attempts for resilience"`
 	FeatureFlagPaymentsProcessingEnabled   bool         `env:"FEATURE_FLAG_PAYMENTS_PROCESSING_ENABLED"     flag:"feature-flag-payments-processing-enabled" flagDesc:"If the payments processing Kafka implementation is enabled"`
 	DisabledPenaltyTransactionSubtypes     string       `env:"DISABLED_PENALTY_TRANSACTION_SUBTYPES"        flag:"disabled-penalty-transaction-subtypes"    flagDesc:"Penalty transaction subtypes to be disabled"`
 	CHSURL                                 string       `env:"CHS_URL"                                      flag:"chs-url"                                  flagDesc:"CHS URL"`

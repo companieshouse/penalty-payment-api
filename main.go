@@ -66,7 +66,7 @@ func main() {
 
 		retry := &resilience.ServiceRetry{
 			ThrottleRate: time.Duration(cfg.ConsumerRetryThrottleRate) * time.Second,
-			MaxRetries:   cfg.ConsumerRetryMaxRetries,
+			MaxRetries:   cfg.ConsumerRetryMaxAttempts,
 		}
 		go consumer.Consume(cfg, penaltyFinancePayment, retry)
 	}
