@@ -25,6 +25,7 @@ In order to run this API locally you will need to install the following:
 | `PPS_ACCOUNT_PENALTIES_TTL`                   |   `-`   | Account penalties cache time to live  e.g. `24h`                            | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
 | `KAFKA_BROKER_ADDR`                           |   `_`   | Kafka Broker Address                                                        | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
 | `KAFKA_ZOOKEEPER_ADDR`                        |   `_`   | Kafka Zookeeper Address                                                     | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
+| `KAFKA_ZOOKEEPER_CHROOT`                      |   `_`   | Kafka Zookeeper chroot                                                      | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
 | `SCHEMA_REGISTRY_URL`                         |   `_`   | Schema Registry URL                                                         | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
 | `EMAIL_SEND_TOPIC`                            |   `_`   | Kafka topic to send emails e.g. email-send                                  | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
 | `PENALTY_PAYMENTS_PROCESSING_TOPIC`           |   `_`   | Kafka topic to process penalty payments to e.g. penalty-payments-processing | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
@@ -36,7 +37,7 @@ In order to run this API locally you will need to install the following:
 | `CONSUMER_RETRY_THROTTLE_RATE`                |   `_`   | Consumer retry throttle rate in seconds for resilience                      | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
 | `CONSUMER_RETRY_MAX_ATTEMPTS`                 |   `_`   | Consumer retry max attempts for resilience                                  | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
 | `FEATURE_FLAG_PAYMENTS_PROCESSING_ENABLED`    |   `_`   | If the payments processing Kafka implementation is enabled                  | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
-| `DISABLED_PENALTY_TRANSACTION_SUBTYPES`       |   `_`   | Disable penalty subtype e.g `S1`                                            | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE)  |
+| `DISABLED_PENALTY_TRANSACTION_SUBTYPES`       |   `_`   | Disable penalty subtype e.g `S1`                                            | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
 | `API_URL`                                     |   `_`   | The application endpoint for the API, for go-sdk-manager integration        | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
 | `PAYMENTS_API_URL`                            |   `_`   | The base path for the payments API, for go-sdk-manager integration          | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |
 | `CHS_URL`                                     |   `_`   | CHS URL                                                                     | ecs-service-configs-dev(CIDEV) / ecs-service-configs-prod (STAGING/LIVE) |

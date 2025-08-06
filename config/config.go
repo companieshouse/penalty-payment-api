@@ -26,6 +26,7 @@ type Config struct {
 	AccountPenaltiesCollection             string       `env:"PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION"     flag:"mongodb-account-penalties-collection"     flagDesc:"The name of the mongodb account penalties collection"`
 	AccountPenaltiesTTL                    string       `env:"PPS_ACCOUNT_PENALTIES_TTL"                    flag:"account-penalties-ttl"                    flagDesc:"The time to live for account penalties cache entry"`
 	BrokerAddr                             []string     `env:"KAFKA_BROKER_ADDR"                            flag:"broker-addr"                              flagDesc:"Kafka broker address"`
+	ZookeeperChroot                        string       `env:"KAFKA_ZOOKEEPER_CHROOT"                       flag:"zookeeper-chroot"                         flagDesc:"Main CH Zookeeper chroot"`
 	ZookeeperURL                           string       `env:"KAFKA_ZOOKEEPER_ADDR"                         flag:"zookeeper-addr"                           flagDesc:"Main CH Zookeeper address"`
 	SchemaRegistryURL                      string       `env:"SCHEMA_REGISTRY_URL"                          flag:"schema-registry-url"                      flagDesc:"Schema registry url"`
 	EmailSendTopic                         string       `env:"EMAIL_SEND_TOPIC"                             flag:"email-send-topic"                         flagDesc:"Kafka topic to send emails"`

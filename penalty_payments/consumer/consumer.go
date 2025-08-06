@@ -38,10 +38,11 @@ func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment, 
 		"retry":           retry,
 	})
 
+	var resetOffset bool
 	consumerGroupConfig := &consumer.GroupConfig{
 		GroupName:   consumerGroupName,
-		ResetOffset: true,
-		Chroot:      "/kafka",
+		ResetOffset: resetOffset,
+		Chroot:      cfg.ZookeeperChroot,
 	}
 
 	groupConsumer := consumer.NewConsumerGroup(consumerConfig)

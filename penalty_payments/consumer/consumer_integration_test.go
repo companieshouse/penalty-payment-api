@@ -41,6 +41,7 @@ func TestIntegrationConsume(t *testing.T) {
 	cfg := &config.Config{
 		BrokerAddr:                             []string{brokers[0]},
 		ZookeeperURL:                           "localhost:2181",
+		ZookeeperChroot:                        "",
 		SchemaRegistryURL:                      schemaServer.URL,
 		PenaltyPaymentsProcessingTopic:         "penalty-payments-processing",
 		PenaltyPaymentsProcessingMaxRetries:    "3",
