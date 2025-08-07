@@ -105,7 +105,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 
 		// need to wait to mark the penalty as paid until the go routines above execute as the email
 		// sender relies on the state of the penalty in the DB i.e. not paid yet
-		log.Info("updating account penalty cache record as paid", log.Data{"customer_code": resource.CustomerCode, "penalty_ref": resource.PayableRef})
+		log.Info("updating account penalty cache record as paid", log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
 		updateAccountPenaltyAsPaid(resource, apDaoSvc)
 
 		log.InfoR(r, "PATCH payable resource request completed successfully", log.Data{"customer_code": resource.CustomerCode})
