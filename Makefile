@@ -3,8 +3,6 @@ TESTS        ?= ./...
 COVERAGE_OUT = coverage.out
 
 bin          := penalty-payment-api
-chs_envs     := $(CHS_ENV_HOME)/global_env $(CHS_ENV_HOME)/penalty-payment-api/env
-source_env   := for chs_env in $(chs_envs); do test -f $$chs_env && . $$chs_env; done
 xunit_output := test.xml
 lint_output  := lint.txt
 
@@ -33,7 +31,7 @@ test-unit:
 
 .PHONY: test-integration
 test-integration:
-	$(source_env); go test $(TESTS) -run 'Integration'
+	go test $(TESTS) -run 'Integration'
 
 .PHONY: test-with-coverage
 test-with-coverage:
