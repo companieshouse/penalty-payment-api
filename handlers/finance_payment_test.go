@@ -32,7 +32,17 @@ var (
 		PayableRef: "SQ33133143",
 	}
 	e5PaymentID = "XKIYLUq1pRVuiLNA"
-	cfg         = &config.Config{}
+	cfg         = &config.Config{
+		PenaltyPaymentsProcessingTopic:         "penalty-payments-processing",
+		PenaltyPaymentsProcessingMaxRetries:    "3",
+		PenaltyPaymentsProcessingRetryDelay:    "1",
+		PenaltyPaymentsProcessingRetryMaxDelay: "5",
+		ConsumerGroupName:                      "penalty-payment-api-penalty-payments-processing",
+		ConsumerRetryGroupName:                 "penalty-payment-api-penalty-payments-processing-retry",
+		ConsumerRetryThrottleRate:              1,
+		ConsumerRetryMaxAttempts:               3,
+		FeatureFlagPaymentsProcessingEnabled:   true,
+	}
 )
 
 type mockE5Client struct {
@@ -107,13 +117,15 @@ func TestUnitProcessFinancialPenaltyPayment_Success(t *testing.T) {
 		e5Client.On("CreatePayment", mock.Anything).Return(nil)
 		e5Client.On("AuthorisePayment", mock.Anything).Return(nil)
 		e5Client.On("ConfirmPayment", mock.Anything).Return(nil)
+		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.Action("")).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg, false)
 
 		// Then
 		So(err, ShouldBeNil)
 		e5Client.AssertExpectations(t)
+		DAO.AssertExpectations(t)
 	})
 }
 
@@ -130,7 +142,7 @@ func TestUnitProcessFinancialPenaltyPayment_CreatePaymentFails(t *testing.T) {
 		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.CreateAction).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg, false)
 
 		// Then
 		So(err, ShouldBeError, errors.New("All attempts fail:\n#1: create payment in E5 failed\n#2: create payment in E5 failed\n#3: create payment in E5 failed"))
@@ -153,10 +165,10 @@ func TestUnitProcessFinancialPenaltyPayment_AuthorisePaymentFails(t *testing.T) 
 		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.AuthoriseAction).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg, false)
 
 		// Then
-		So(err, ShouldBeError, errors.New("All attempts fail:\n#1: authorise payment in E5 failed\n#2: authorise payment in E5 failed\n#3: authorise payment in E5 failed"))
+		So(err, ShouldBeNil)
 		e5Client.AssertExpectations(t)
 		DAO.AssertExpectations(t)
 	})
@@ -177,16 +189,15 @@ func TestUnitProcessFinancialPenaltyPayment_ConfirmPaymentFails(t *testing.T) {
 		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.ConfirmAction).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg, false)
 
 		// Then
-		So(err, ShouldBeError, errors.New("All attempts fail:\n#1: confirm payment in E5 failed\n#2: confirm payment in E5 failed\n#3: confirm payment in E5 failed"))
+		So(err, ShouldBeNil)
 		e5Client.AssertExpectations(t)
 		DAO.AssertExpectations(t)
 	})
 }
 
-// retry
 func TestUnitProcessFinancialPenaltyPaymentRetryTopic_Success(t *testing.T) {
 	Convey("Process financial penalty payment success", t, func() {
 		// Given
@@ -199,13 +210,15 @@ func TestUnitProcessFinancialPenaltyPaymentRetryTopic_Success(t *testing.T) {
 		e5Client.On("CreatePayment", mock.Anything).Return(nil)
 		e5Client.On("AuthorisePayment", mock.Anything).Return(nil)
 		e5Client.On("ConfirmPayment", mock.Anything).Return(nil)
+		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.Action("")).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPaymentRetryTopic(penaltyPayment, e5PaymentID)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg, true)
 
 		// Then
 		So(err, ShouldBeNil)
 		e5Client.AssertExpectations(t)
+		DAO.AssertExpectations(t)
 	})
 }
 
@@ -219,12 +232,13 @@ func TestUnitProcessFinancialPenaltyPaymentRetryTopic_CreatePaymentFails(t *test
 		}
 
 		e5Client.On("CreatePayment", mock.Anything).Return(errors.New("create payment in E5 failed"))
+		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.CreateAction).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPaymentRetryTopic(penaltyPayment, e5PaymentID)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg, true)
 
 		// Then
-		So(err, ShouldBeError, errors.New("create payment in E5 failed"))
+		So(err, ShouldBeError, errors.New("All attempts fail:\n#1: create payment in E5 failed\n#2: create payment in E5 failed\n#3: create payment in E5 failed"))
 		e5Client.AssertExpectations(t)
 		DAO.AssertExpectations(t)
 	})
@@ -244,7 +258,7 @@ func TestUnitProcessFinancialPenaltyPaymentRetryTopic_AuthorisePaymentFails(t *t
 		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.AuthoriseAction).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPaymentRetryTopic(penaltyPayment, e5PaymentID)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg, true)
 
 		// Then
 		So(err, ShouldBeNil)
@@ -268,7 +282,7 @@ func TestUnitProcessFinancialPenaltyPaymentRetryTopic_ConfirmPaymentFails(t *tes
 		DAO.On("SaveE5Error", penaltyPayment.CustomerCode, penaltyPayment.PayableRef, e5.ConfirmAction).Return(nil)
 
 		// When
-		err := handler.ProcessFinancialPenaltyPaymentRetryTopic(penaltyPayment, e5PaymentID)
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg, true)
 
 		// Then
 		So(err, ShouldBeNil)

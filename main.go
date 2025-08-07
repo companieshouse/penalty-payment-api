@@ -1,3 +1,4 @@
+//coverage:ignore file
 package main
 
 import (
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/companieshouse/chs.go/kafka/resilience"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/e5"
@@ -23,9 +25,6 @@ import (
 )
 
 func main() {
-	namespace := "penalty-payment-api"
-	log.Namespace = namespace
-
 	const exitErrorFormat = "error configuring service: %s. Exiting"
 	cfg, err := config.Get()
 
@@ -33,6 +32,10 @@ func main() {
 		log.Error(fmt.Errorf(exitErrorFormat, err), nil)
 		return
 	}
+
+	namespace := cfg.Namespace()
+	log.Namespace = namespace
+	log.Debug("Config", log.Data{"Config": cfg})
 
 	// Create router
 	mainRouter := mux.NewRouter()
@@ -60,7 +63,13 @@ func main() {
 			E5Client:                  e5.NewClient(cfg.E5Username, cfg.E5APIURL),
 			PayableResourceDaoService: prDaoService,
 		}
-		go consumer.Consume(cfg, penaltyFinancePayment)
+		go consumer.Consume(cfg, penaltyFinancePayment, nil)
+
+		retry := &resilience.ServiceRetry{
+			ThrottleRate: time.Duration(cfg.ConsumerRetryThrottleRate) * time.Second,
+			MaxRetries:   cfg.ConsumerRetryMaxAttempts,
+		}
+		go consumer.Consume(cfg, penaltyFinancePayment, retry)
 	}
 
 	log.Info("Starting " + namespace)
