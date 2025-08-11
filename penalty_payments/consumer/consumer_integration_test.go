@@ -18,13 +18,19 @@ import (
 )
 
 func TestIntegrationConsume(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
 
-	kafkaContainer, err := kafka.Run(ctx, "confluentinc/cp-kafka:7.5.0", kafka.WithClusterID("test-cluster"), testcontainers.WithExposedPorts("9092"))
-	require.NoError(t, err)
+	kafkaContainer, err := kafka.Run(ctx, "confluentinc/cp-kafka:7.5.0",
+		kafka.WithClusterID("test-cluster"),
+		testcontainers.WithExposedPorts("9092"))
+	require.NoError(t, err, "Kafka container failed to start within timeout")
 
 	t.Cleanup(func() {
-		err := kafkaContainer.Terminate(ctx)
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		err := kafkaContainer.Terminate(cleanupCtx)
 		require.NoError(t, err)
 	})
 

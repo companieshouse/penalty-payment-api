@@ -19,7 +19,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/handlers"
-	"github.com/companieshouse/penalty-payment-api/penalty_payments/consumer"
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/supervisor"
 	"github.com/gorilla/mux"
 	_ "golang.org/x/oauth2"
 )
@@ -57,19 +57,22 @@ func main() {
 	handlers.Register(mainRouter, cfg, prDaoService, apDaoService, penaltyDetailsMap, allowedTransactionsMap)
 
 	if cfg.FeatureFlagPaymentsProcessingEnabled {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
 		// Push the Sarama logs into our custom writer
 		sarama.Logger = gologger.New(&log.Writer{}, "[Sarama] ", gologger.LstdFlags)
 		penaltyFinancePayment := &handlers.PenaltyFinancePayment{
 			E5Client:                  e5.NewClient(cfg.E5Username, cfg.E5APIURL),
 			PayableResourceDaoService: prDaoService,
 		}
-		go consumer.Consume(cfg, penaltyFinancePayment, nil)
+		go supervisor.SuperviseConsumer(ctx, cfg.ConsumerGroupName, cfg, penaltyFinancePayment, nil)
 
 		retry := &resilience.ServiceRetry{
 			ThrottleRate: time.Duration(cfg.ConsumerRetryThrottleRate) * time.Second,
 			MaxRetries:   cfg.ConsumerRetryMaxAttempts,
 		}
-		go consumer.Consume(cfg, penaltyFinancePayment, retry)
+		go supervisor.SuperviseConsumer(ctx, cfg.ConsumerRetryGroupName, cfg, penaltyFinancePayment, retry)
 	}
 
 	log.Info("Starting " + namespace)
@@ -101,10 +104,10 @@ func main() {
 	log.Info("shutting down server...")
 	prDaoService.Shutdown()
 	timeout := time.Duration(5) * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), timeout)
+	defer shutdownCancel()
 
-	err = h.Shutdown(ctx)
+	err = h.Shutdown(shutdownCtx)
 	if err != nil {
 		log.Error(fmt.Errorf("failed to shutdown server gracefully: [%v]", err))
 	} else {
