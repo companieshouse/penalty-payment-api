@@ -29,7 +29,7 @@ func SuperviseConsumer(ctx context.Context, name string, cfg *config.Config, pen
 						log.Error(fmt.Errorf("panic recovered in supervise consumer %s: %v", name, r))
 					}
 				}()
-				consumer.Consume(cfg, penaltyFinancePayment, retry)
+				consumerFunc(cfg, penaltyFinancePayment, retry)
 			}()
 
 			log.Info(fmt.Sprintf("supervise consumer %s exited; restarting after delay", name))
