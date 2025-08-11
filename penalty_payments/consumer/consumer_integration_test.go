@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/kafka"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 func TestIntegrationConsume(t *testing.T) {
@@ -23,7 +24,8 @@ func TestIntegrationConsume(t *testing.T) {
 
 	kafkaContainer, err := kafka.Run(ctx, "confluentinc/cp-kafka:7.5.0",
 		kafka.WithClusterID("test-cluster"),
-		testcontainers.WithExposedPorts("9093/tcp"))
+		testcontainers.WithExposedPorts("9093/tcp"),
+		testcontainers.WithWaitStrategy(wait.ForListeningPort("9093/tcp").WithStartupTimeout(time.Second*90)))
 	require.NoError(t, err, "Kafka container failed to start within timeout")
 
 	t.Cleanup(func() {
