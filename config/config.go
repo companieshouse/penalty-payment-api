@@ -28,6 +28,8 @@ type Config struct {
 	BrokerAddr                             []string     `env:"KAFKA_BROKER_ADDR"                            flag:"broker-addr"                              flagDesc:"Kafka broker address"`
 	ZookeeperChroot                        string       `env:"KAFKA_ZOOKEEPER_CHROOT"                       flag:"zookeeper-chroot"                         flagDesc:"Main CH Zookeeper chroot"`
 	ZookeeperURL                           string       `env:"KAFKA_ZOOKEEPER_ADDR"                         flag:"zookeeper-addr"                           flagDesc:"Main CH Zookeeper address"`
+	Kafka3BrokerAddr                       []string     `env:"KAFKA3_BROKER_ADDR"                           flag:"kafka3-broker-addr"                       flagDesc:"Kafka3 broker address"`
+	Kafka3ZookeeperURL                     string       `env:"KAFKA3_ZOOKEEPER_ADDR"                        flag:"kafka3-zookeeper-addr"                    flagDesc:"Kafka3 Zookeeper address"`
 	SchemaRegistryURL                      string       `env:"SCHEMA_REGISTRY_URL"                          flag:"schema-registry-url"                      flagDesc:"Schema registry url"`
 	EmailSendTopic                         string       `env:"EMAIL_SEND_TOPIC"                             flag:"email-send-topic"                         flagDesc:"Kafka topic to send emails"`
 	PenaltyPaymentsProcessingTopic         string       `env:"PENALTY_PAYMENTS_PROCESSING_TOPIC"            flag:"penalty-payments-processing-topic"        flagDesc:"Penalty payments processing topic"`

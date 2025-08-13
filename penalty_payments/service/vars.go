@@ -11,8 +11,8 @@ import (
 var (
 	getConfig = config.Get
 
-	getProducer = func(config *config.Config) (*producer.Producer, error) {
-		return producer.New(&producer.Config{Acks: &producer.WaitForAll, BrokerAddrs: config.BrokerAddr})
+	getProducer = func(brokerAddrs []string) (*producer.Producer, error) {
+		return producer.New(&producer.Config{Acks: &producer.WaitForAll, BrokerAddrs: brokerAddrs})
 	}
 	getSchema = func(url, schemaName string) (string, error) {
 		return schema.Get(url, schemaName)

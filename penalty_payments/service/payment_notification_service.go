@@ -18,16 +18,18 @@ func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payme
 		return err
 	}
 
+	brokerAddrs := cfg.Kafka3BrokerAddr
 	topic := cfg.PenaltyPaymentsProcessingTopic
 
 	logContext := log.Data{
 		"customer_code": payableResource.CustomerCode,
 		"payable_ref":   payableResource.PayableRef,
+		"broker_addrs":  brokerAddrs,
 		"topic":         topic,
 	}
 
 	log.Info("getting penalty payments processing kafka producer", logContext)
-	kafkaProducer, err := getProducer(cfg)
+	kafkaProducer, err := getProducer(brokerAddrs)
 	if err != nil {
 		err = fmt.Errorf("error creating penalty payments processing kafka producer: [%v]", err)
 		return err
