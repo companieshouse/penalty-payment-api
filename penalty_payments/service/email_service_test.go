@@ -57,7 +57,7 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 					EmailSendTopic: "email-send",
 				}, nil
 			}
-			mockedGetProducer := func(config *config.Config) (*producer.Producer, error) {
+			mockedGetProducer := func(brokerAddrs []string) (*producer.Producer, error) {
 				return &producer.Producer{}, nil
 			}
 
@@ -74,7 +74,7 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
-			mockedGetProducer := func(config *config.Config) (*producer.Producer, error) {
+			mockedGetProducer := func(brokerAddrs []string) (*producer.Producer, error) {
 				return &producer.Producer{}, nil
 			}
 			mockedGetSchema := func(url, schemaName string) (string, error) {

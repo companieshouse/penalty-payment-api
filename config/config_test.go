@@ -24,12 +24,18 @@ const (
 	AccountPenaltiesTTL                    = `PPS_ACCOUNT_PENALTIES_TTL`
 	BrokerAddr                             = `KAFKA_BROKER_ADDR`
 	ZookeeperURL                           = `KAFKA_ZOOKEEPER_ADDR`
+	Kafka3BrokerAddr                       = `KAFKA3_BROKER_ADDR`
+	Kafka3ZookeeperURL                     = `KAFKA3_ZOOKEEPER_ADDR`
 	SchemaRegistryURL                      = `SCHEMA_REGISTRY_URL`
 	EmailSendTopic                         = `EMAIL_SEND_TOPIC`
 	PenaltyPaymentsProcessingTopic         = `PENALTY_PAYMENTS_PROCESSING_TOPIC`
 	PenaltyPaymentsProcessingMaxRetries    = `PENALTY_PAYMENTS_PROCESSING_MAX_RETRIES`
 	PenaltyPaymentsProcessingRetryDelay    = `PENALTY_PAYMENTS_PROCESSING_RETRY_DELAY`
 	PenaltyPaymentsProcessingRetryMaxDelay = `PENALTY_PAYMENTS_PROCESSING_RETRY_MAX_DELAY`
+	ConsumerGroupName                      = `CONSUMER_GROUP_NAME`
+	ConsumerRetryGroupName                 = `CONSUMER_RETRY_GROUP_NAME`
+	ConsumerRetryThrottleRate              = `CONSUMER_RETRY_THROTTLE_RATE`
+	ConsumerRetryMaxAttempts               = `CONSUMER_RETRY_MAX_ATTEMPTS`
 	FeatureFlagPaymentsProcessingEnabled   = `FEATURE_FLAG_PAYMENTS_PROCESSING_ENABLED`
 	CHSURL                                 = `CHS_URL`
 	WeeklyMaintenanceStartTime             = `WEEKLY_MAINTENANCE_START_TIME`
@@ -49,14 +55,20 @@ const (
 	payableResourcesCollectionConst             = `payable-resources-collection`
 	accountPenaltiesCollectionConst             = `account-penalties-collection`
 	accountPenaltiesTTLConst                    = `24h`
-	brokerAddrConst                             = `localhost:29092`
-	ZookeeperURLConst                           = `localhost:2181`
+	brokerAddrConst                             = `kafka:9092`
+	zookeeperURLConst                           = `zookeeper:2181`
+	kafka3BrokerAddrConst                       = `kafka3:9092`
+	kafka3ZookeeperURLConst                     = `zookeeper-kafka3:2181`
 	SchemaRegistryURLConst                      = `http://schema.registry`
 	EmailSendTopicConst                         = `email-send-topic`
 	PenaltyPaymentsProcessingTopicConst         = `penalty-payments-processing-topic`
 	PenaltyPaymentsProcessingMaxRetriesConst    = `3`
 	PenaltyPaymentsProcessingRetryDelayConst    = `1`
 	PenaltyPaymentsProcessingRetryMaxDelayConst = `5`
+	ConsumerGroupNameConst                      = `penalty-payment-api-penalty-payments-processing`
+	ConsumerRetryGroupNameConst                 = `penalty-payment-api-penalty-payments-processing-retry`
+	ConsumerRetryThrottleRateConst              = `1`
+	ConsumerRetryMaxAttemptsConst               = `3`
 	FeatureFlagPaymentsProcessingEnabledConst   = `false`
 	CHSURLConst                                 = `http://localhost:8080`
 	WeeklyMaintenanceStartTimeConst             = `1900`
@@ -81,13 +93,19 @@ func TestUnitSensitiveConfig(t *testing.T) {
 			AccountPenaltiesCollection:             accountPenaltiesCollectionConst,
 			AccountPenaltiesTTL:                    accountPenaltiesTTLConst,
 			BrokerAddr:                             brokerAddrConst,
-			ZookeeperURL:                           ZookeeperURLConst,
+			ZookeeperURL:                           zookeeperURLConst,
+			Kafka3BrokerAddr:                       kafka3BrokerAddrConst,
+			Kafka3ZookeeperURL:                     kafka3ZookeeperURLConst,
 			SchemaRegistryURL:                      SchemaRegistryURLConst,
 			EmailSendTopic:                         EmailSendTopicConst,
 			PenaltyPaymentsProcessingTopic:         PenaltyPaymentsProcessingTopicConst,
 			PenaltyPaymentsProcessingMaxRetries:    PenaltyPaymentsProcessingMaxRetriesConst,
 			PenaltyPaymentsProcessingRetryDelay:    PenaltyPaymentsProcessingRetryDelayConst,
 			PenaltyPaymentsProcessingRetryMaxDelay: PenaltyPaymentsProcessingRetryMaxDelayConst,
+			ConsumerGroupName:                      ConsumerGroupNameConst,
+			ConsumerRetryGroupName:                 ConsumerRetryGroupNameConst,
+			ConsumerRetryThrottleRate:              ConsumerRetryThrottleRateConst,
+			ConsumerRetryMaxAttempts:               ConsumerRetryMaxAttemptsConst,
 			FeatureFlagPaymentsProcessingEnabled:   FeatureFlagPaymentsProcessingEnabledConst,
 			CHSURL:                                 CHSURLConst,
 			WeeklyMaintenanceStartTime:             WeeklyMaintenanceStartTimeConst,
@@ -106,13 +124,19 @@ func TestUnitSensitiveConfig(t *testing.T) {
 			AccountPenaltiesCollection:             accountPenaltiesCollectionConst,
 			AccountPenaltiesTTL:                    accountPenaltiesTTLConst,
 			BrokerAddr:                             []string{brokerAddrConst},
-			ZookeeperURL:                           ZookeeperURLConst,
+			ZookeeperURL:                           zookeeperURLConst,
+			Kafka3BrokerAddr:                       []string{kafka3BrokerAddrConst},
+			Kafka3ZookeeperURL:                     kafka3ZookeeperURLConst,
 			SchemaRegistryURL:                      SchemaRegistryURLConst,
 			EmailSendTopic:                         EmailSendTopicConst,
 			PenaltyPaymentsProcessingTopic:         PenaltyPaymentsProcessingTopicConst,
 			PenaltyPaymentsProcessingMaxRetries:    PenaltyPaymentsProcessingMaxRetriesConst,
 			PenaltyPaymentsProcessingRetryDelay:    PenaltyPaymentsProcessingRetryDelayConst,
 			PenaltyPaymentsProcessingRetryMaxDelay: PenaltyPaymentsProcessingRetryMaxDelayConst,
+			ConsumerGroupName:                      ConsumerGroupNameConst,
+			ConsumerRetryGroupName:                 ConsumerRetryGroupNameConst,
+			ConsumerRetryThrottleRate:              1,
+			ConsumerRetryMaxAttempts:               3,
 			FeatureFlagPaymentsProcessingEnabled:   false,
 			CHSURL:                                 CHSURLConst,
 			WeeklyMaintenanceStartTime:             WeeklyMaintenanceStartTimeConst,

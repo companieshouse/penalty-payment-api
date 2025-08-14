@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
+	"github.com/companieshouse/chs.go/kafka/resilience"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/stretchr/testify/assert"
@@ -19,17 +20,17 @@ import (
 )
 
 func TestIntegrationConsume(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	kafkaContainer, err := kafka.Run(ctx, "confluentinc/cp-kafka:7.5.0",
 		kafka.WithClusterID("test-cluster"),
 		testcontainers.WithExposedPorts("9093/tcp"),
-		testcontainers.WithWaitStrategy(wait.ForListeningPort("9093/tcp").WithStartupTimeout(time.Second*90)))
+		testcontainers.WithWaitStrategy(wait.ForListeningPort("9093/tcp").WithStartupTimeout(2*time.Minute)))
 	require.NoError(t, err, "Kafka container failed to start within timeout")
 
 	t.Cleanup(func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
 		err := kafkaContainer.Terminate(cleanupCtx)
@@ -46,10 +47,14 @@ func TestIntegrationConsume(t *testing.T) {
 	}))
 	defer schemaServer.Close()
 
+	brokerAddr := []string{brokers[0]}
+	zookeeperURL := "zookeeper:32181"
 	cfg := &config.Config{
-		BrokerAddr:                             []string{brokers[0]},
-		ZookeeperURL:                           "localhost:2181",
+		BrokerAddr:                             brokerAddr,
+		ZookeeperURL:                           zookeeperURL,
 		ZookeeperChroot:                        "",
+		Kafka3BrokerAddr:                       brokerAddr,
+		Kafka3ZookeeperURL:                     zookeeperURL,
 		SchemaRegistryURL:                      schemaServer.URL,
 		PenaltyPaymentsProcessingTopic:         "penalty-payments-processing",
 		PenaltyPaymentsProcessingMaxRetries:    "3",
@@ -65,8 +70,13 @@ func TestIntegrationConsume(t *testing.T) {
 	// Start consumer in background
 	go func() {
 		mockFinancePayment := new(mockPenaltyFinancePayment)
-		mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID, cfg, false).Return(nil)
-		Consume(cfg, mockFinancePayment, nil)
+		mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID, cfg, true).Return(nil)
+
+		retry := &resilience.ServiceRetry{
+			ThrottleRate: time.Duration(cfg.ConsumerRetryThrottleRate) * time.Second,
+			MaxRetries:   cfg.ConsumerRetryMaxAttempts,
+		}
+		Consume(cfg, mockFinancePayment, retry)
 		mockFinancePayment.AssertExpectations(t)
 	}()
 	// Give consumer time to start
@@ -80,7 +90,7 @@ func TestIntegrationConsume(t *testing.T) {
 
 	avroBytes := getConsumerMessage(getTestAvroSchema(), penaltyPayment).Value
 	partition, offset, err := producer.SendMessage(&sarama.ProducerMessage{
-		Topic: cfg.PenaltyPaymentsProcessingTopic,
+		Topic: cfg.PenaltyPaymentsProcessingTopic + `-penalty-payment-api-retry`,
 		Value: sarama.ByteEncoder(avroBytes),
 	})
 	log.Info("sent test penalty-payments-processing message", log.Data{"partition": partition, "offset": offset})

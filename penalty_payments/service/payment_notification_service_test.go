@@ -42,7 +42,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
-			mockedGetProducer := func(config *config.Config) (*producer.Producer, error) {
+			mockedGetProducer := func(brokerAddrs []string) (*producer.Producer, error) {
 				return nil, errors.New("kafka: invalid configuration (You must provide at least one broker address)")
 			}
 
@@ -59,7 +59,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
-			mockedGetProducer := func(config *config.Config) (*producer.Producer, error) {
+			mockedGetProducer := func(brokerAddrs []string) (*producer.Producer, error) {
 				return &producer.Producer{}, nil
 			}
 			mockedGetSchema := func(url, schemaName string) (string, error) {
@@ -80,7 +80,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 			mockedConfigGet := func() (*config.Config, error) {
 				return &config.Config{}, nil
 			}
-			mockedGetProducer := func(config *config.Config) (*producer.Producer, error) {
+			mockedGetProducer := func(brokerAddrs []string) (*producer.Producer, error) {
 				return &producer.Producer{}, nil
 			}
 			mockedGetSchema := func(url, schemaName string) (string, error) {

@@ -29,11 +29,11 @@ func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment, 
 		consumerGroupName = cfg.ConsumerRetryGroupName
 	}
 	consumerConfig := &consumer.Config{
-		BrokerAddr:   cfg.BrokerAddr,
-		ZookeeperURL: cfg.ZookeeperURL,
+		BrokerAddr:   cfg.Kafka3BrokerAddr,
+		ZookeeperURL: cfg.Kafka3ZookeeperURL,
 		Topics:       []string{topic},
 	}
-	log.Info("Starting kafka consumer with resilience", log.Data{
+	log.Info("Starting Kafka3 consumer with resilience", log.Data{
 		"consumer_config": consumerConfig,
 		"retry":           retry,
 	})
@@ -122,10 +122,10 @@ func getAvroSchema(cfg *config.Config) *avro.Schema {
 }
 
 func getProducer(cfg *config.Config) *producer.Producer {
-	kafkaProducerConfig := &producer.Config{Acks: &producer.WaitForAll, BrokerAddrs: cfg.BrokerAddr}
+	kafkaProducerConfig := &producer.Config{Acks: &producer.WaitForAll, BrokerAddrs: cfg.Kafka3BrokerAddr}
 	syncProducer, err := producer.New(kafkaProducerConfig)
 	if err != nil {
-		log.Error(fmt.Errorf("error initialising producer for resilience: %s", err), log.Data{
+		log.Error(fmt.Errorf("error initialising Kafka3 producer for resilience: %s", err), log.Data{
 			"producer_config": kafkaProducerConfig,
 		})
 	}
