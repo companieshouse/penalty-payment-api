@@ -30,11 +30,7 @@ test-unit:
 	@go get github.com/quantumcycle/go-ignore-cov@latest
 	@go build -o ./go-ignore-cov github.com/quantumcycle/go-ignore-cov
 	@go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS)
-	ls -l
-	cd ..
-	cd ..
-	cd ..
-	cd ..
+	go env
 	ls -l
 	pwd
 
