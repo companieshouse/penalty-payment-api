@@ -70,7 +70,8 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 
 	partition, offset, err := kafkaProducer.Send(message)
 	if err != nil {
-		err = fmt.Errorf("failed to send email send message in partition: %d at offset %d", partition, offset)
+		err = fmt.Errorf("failed to send email send message: [%v]", err)
+		log.Error(err, logContext)
 		return err
 	}
 	log.Info("successfully published email send message", logContext, log.Data{

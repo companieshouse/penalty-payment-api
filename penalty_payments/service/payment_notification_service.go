@@ -59,7 +59,8 @@ func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payme
 
 	partition, offset, err := kafkaProducer.Send(message)
 	if err != nil {
-		err = fmt.Errorf("failed to send penalty payments processing message in partition: %d at offset %d", partition, offset)
+		err = fmt.Errorf("failed to send penalty payments processing message: [%v]", err)
+		log.Error(err, logContext)
 		return err
 	}
 	log.Info("successfully published penalty payments processing message", logContext, log.Data{
