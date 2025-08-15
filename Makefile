@@ -30,6 +30,7 @@ test-unit:
 	@go get github.com/quantumcycle/go-ignore-cov
 	@go build -o ${GOBIN} github.com/quantumcycle/go-ignore-cov
 	@go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS)
+	ls -l
 	@go-ignore-cov --file $(COVERAGE_OUT)
 	@go tool cover -func $(COVERAGE_OUT)
 	@make coverage-html
