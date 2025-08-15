@@ -27,11 +27,8 @@ test: test-unit test-integration
 
 .PHONY: test-unit
 test-unit:
-	@go get github.com/quantumcycle/go-ignore-cov
-	@go build -o ${GOBIN} github.com/quantumcycle/go-ignore-cov
+	@go install github.com/quantumcycle/go-ignore-cov@latest
 	@go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS)
-	ls -l
-	cd github.com
 	ls -l
 	@go-ignore-cov --file $(COVERAGE_OUT)
 	@go tool cover -func $(COVERAGE_OUT)
