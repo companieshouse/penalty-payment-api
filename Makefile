@@ -31,10 +31,9 @@ test-unit:
 	@go build -o ./go-ignore-cov github.com/quantumcycle/go-ignore-cov
 	@go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS)
 	ls -l
-	go-ignore-cov --file $(COVERAGE_OUT)
-	@go tool cover -func $(COVERAGE_OUT)
-	@make coverage-html
-
+	cd ..
+	ls -l
+	pwd
 
 .PHONY: test-integration
 test-integration:
