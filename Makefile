@@ -8,6 +8,7 @@ lint_output  := lint.txt
 
 .EXPORT_ALL_VARIABLES:
 GO111MODULE = on
+GOBIN = './bin'
 
 .PHONY: all
 all: build
@@ -27,7 +28,14 @@ test: test-unit test-integration
 
 .PHONY: test-unit
 test-unit:
-	go test $(TESTS) -run 'Unit' -coverprofile=$(COVERAGE_OUT)
+	go env -w GOBIN=./bin
+	@go get github.com/quantumcycle/go-ignore-cov@latest
+	@go build -o ./go-ignore-cov github.com/quantumcycle/go-ignore-cov
+	@go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS)
+	go env
+	ls -l
+	pwd
+	@go-ignore-cov --file $(COVERAGE_OUT)
 
 .PHONY: test-integration
 test-integration:
