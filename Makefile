@@ -32,6 +32,9 @@ test-unit:
 	@go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS)
 	ls -l
 	cd ..
+	cd ..
+	cd ..
+	cd ..
 	ls -l
 	pwd
 
