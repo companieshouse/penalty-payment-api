@@ -26,7 +26,9 @@ func TestIntegrationConsume(t *testing.T) {
 	kafkaContainer, err := kafka.Run(ctx, "confluentinc/cp-kafka:7.5.0",
 		kafka.WithClusterID("test-cluster"),
 		testcontainers.WithExposedPorts("9093/tcp"),
-		testcontainers.WithWaitStrategy(wait.ForListeningPort("9093/tcp").WithStartupTimeout(2*time.Minute)))
+		testcontainers.WithWaitStrategy(
+			wait.ForListeningPort("9093/tcp"),
+			wait.ForLog("Kafka Server started (kafka.server.KafkaRaftServer)")))
 	require.NoError(t, err, "Kafka container failed to start within timeout")
 
 	t.Cleanup(func() {
@@ -47,14 +49,14 @@ func TestIntegrationConsume(t *testing.T) {
 	}))
 	defer schemaServer.Close()
 
-	brokerAddr := []string{brokers[0]}
-	zookeeperURL := "zookeeper:32181"
+	kafka3BrokerAddr := []string{brokers[0]}
+	kafka3ZookeeperURL := "dummy-zookeeper-kafka3:2181" // avoid ErrNoZookeeperURL (chs.go/kafka/consumer/cluster/consumer.go)
 	cfg := &config.Config{
-		BrokerAddr:                             brokerAddr,
-		ZookeeperURL:                           zookeeperURL,
+		BrokerAddr:                             []string{"dummy-kafka:9092"},
+		ZookeeperURL:                           "dummy-zookeeper:2181",
 		ZookeeperChroot:                        "",
-		Kafka3BrokerAddr:                       brokerAddr,
-		Kafka3ZookeeperURL:                     zookeeperURL,
+		Kafka3BrokerAddr:                       kafka3BrokerAddr,
+		Kafka3ZookeeperURL:                     kafka3ZookeeperURL,
 		SchemaRegistryURL:                      schemaServer.URL,
 		PenaltyPaymentsProcessingTopic:         "penalty-payments-processing",
 		PenaltyPaymentsProcessingMaxRetries:    "3",
@@ -84,7 +86,7 @@ func TestIntegrationConsume(t *testing.T) {
 
 	saramaConfig := sarama.NewConfig()
 	saramaConfig.Producer.Return.Successes = true
-	producer, err := sarama.NewSyncProducer(cfg.BrokerAddr, saramaConfig)
+	producer, err := sarama.NewSyncProducer(cfg.Kafka3BrokerAddr, saramaConfig)
 	require.NoError(t, err)
 	defer producer.Close()
 
