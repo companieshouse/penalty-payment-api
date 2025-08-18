@@ -32,6 +32,7 @@ test-unit:
 	go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS)
 	ls -l /usr/local/bin/
 	echo $(PATH)
+	go-ignore-cov --file $(COVERAGE_OUT)
 
 .PHONY: test-integration
 test-integration:
