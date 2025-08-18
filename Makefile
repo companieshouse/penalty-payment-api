@@ -29,6 +29,7 @@ test: test-unit test-integration
 test-unit:
 	go install -v -x -a github.com/quantumcycle/go-ignore-cov@latest
 	go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS)
+	ls -l /root/go/bin/
 
 .PHONY: test-integration
 test-integration:
