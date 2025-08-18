@@ -30,8 +30,10 @@ test-unit:
 	go env -w GOBIN=/root/go/bin
 	go install github.com/quantumcycle/go-ignore-cov@latest
 	go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS)
-	go-ignore-cov --file coverage.out
 	go env
+	cd /root/go/bin
+	ls -l
+	go-ignore-cov --file coverage.out
 	ls -l
 	pwd
 	@go-ignore-cov --file $(COVERAGE_OUT)
