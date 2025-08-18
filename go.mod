@@ -6,7 +6,7 @@ require (
 	github.com/Shopify/sarama v1.24.0
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/companieshouse/api-sdk-go v0.1.62
-	github.com/companieshouse/chs.go v1.2.15
+	github.com/companieshouse/chs.go v1.2.16
 	github.com/companieshouse/filing-notification-sender v2.0.0-rc3+incompatible
 	github.com/companieshouse/go-sdk-manager v0.1.12
 	github.com/companieshouse/go-session-handler v0.1.5

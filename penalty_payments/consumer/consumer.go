@@ -29,9 +29,8 @@ func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment, 
 		consumerGroupName = cfg.ConsumerRetryGroupName
 	}
 	consumerConfig := &consumer.Config{
-		BrokerAddr:   cfg.Kafka3BrokerAddr,
-		ZookeeperURL: cfg.Kafka3ZookeeperURL,
-		Topics:       []string{topic},
+		BrokerAddr: cfg.Kafka3BrokerAddr,
+		Topics:     []string{topic},
 	}
 	log.Info("Starting Kafka3 consumer with resilience", log.Data{
 		"consumer_config": consumerConfig,
@@ -42,7 +41,6 @@ func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment, 
 	consumerGroupConfig := &consumer.GroupConfig{
 		GroupName:   consumerGroupName,
 		ResetOffset: resetOffset,
-		Chroot:      cfg.ZookeeperChroot,
 	}
 
 	groupConsumer := consumer.NewConsumerGroup(consumerConfig)

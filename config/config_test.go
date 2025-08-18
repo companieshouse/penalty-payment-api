@@ -56,9 +56,7 @@ const (
 	accountPenaltiesCollectionConst             = `account-penalties-collection`
 	accountPenaltiesTTLConst                    = `24h`
 	brokerAddrConst                             = `kafka:9092`
-	zookeeperURLConst                           = `zookeeper:2181`
 	kafka3BrokerAddrConst                       = `kafka3:9092`
-	kafka3ZookeeperURLConst                     = `zookeeper-kafka3:2181`
 	SchemaRegistryURLConst                      = `http://schema.registry`
 	EmailSendTopicConst                         = `email-send-topic`
 	PenaltyPaymentsProcessingTopicConst         = `penalty-payments-processing-topic`
@@ -93,9 +91,7 @@ func TestUnitSensitiveConfig(t *testing.T) {
 			AccountPenaltiesCollection:             accountPenaltiesCollectionConst,
 			AccountPenaltiesTTL:                    accountPenaltiesTTLConst,
 			BrokerAddr:                             brokerAddrConst,
-			ZookeeperURL:                           zookeeperURLConst,
 			Kafka3BrokerAddr:                       kafka3BrokerAddrConst,
-			Kafka3ZookeeperURL:                     kafka3ZookeeperURLConst,
 			SchemaRegistryURL:                      SchemaRegistryURLConst,
 			EmailSendTopic:                         EmailSendTopicConst,
 			PenaltyPaymentsProcessingTopic:         PenaltyPaymentsProcessingTopicConst,
@@ -124,9 +120,7 @@ func TestUnitSensitiveConfig(t *testing.T) {
 			AccountPenaltiesCollection:             accountPenaltiesCollectionConst,
 			AccountPenaltiesTTL:                    accountPenaltiesTTLConst,
 			BrokerAddr:                             []string{brokerAddrConst},
-			ZookeeperURL:                           zookeeperURLConst,
 			Kafka3BrokerAddr:                       []string{kafka3BrokerAddrConst},
-			Kafka3ZookeeperURL:                     kafka3ZookeeperURLConst,
 			SchemaRegistryURL:                      SchemaRegistryURLConst,
 			EmailSendTopic:                         EmailSendTopicConst,
 			PenaltyPaymentsProcessingTopic:         PenaltyPaymentsProcessingTopicConst,
