@@ -29,7 +29,7 @@ test: test-unit test-integration
 test-unit:
 	go env -w GOBIN=/usr/local/bin
 	@go install github.com/quantumcycle/go-ignore-cov@latest
-	@go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS)
+	@go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS) -json > report.json
 	@go-ignore-cov --file $(COVERAGE_OUT)
 	@go tool cover -func $(COVERAGE_OUT)
 	@make coverage-html
