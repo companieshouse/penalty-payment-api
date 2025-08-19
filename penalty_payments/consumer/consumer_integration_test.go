@@ -50,13 +50,9 @@ func TestIntegrationConsume(t *testing.T) {
 	defer schemaServer.Close()
 
 	kafka3BrokerAddr := []string{brokers[0]}
-	kafka3ZookeeperURL := "dummy-zookeeper-kafka3:2181" // avoid ErrNoZookeeperURL (chs.go/kafka/consumer/cluster/consumer.go)
 	cfg := &config.Config{
 		BrokerAddr:                             []string{"dummy-kafka:9092"},
-		ZookeeperURL:                           "dummy-zookeeper:2181",
-		ZookeeperChroot:                        "",
 		Kafka3BrokerAddr:                       kafka3BrokerAddr,
-		Kafka3ZookeeperURL:                     kafka3ZookeeperURL,
 		SchemaRegistryURL:                      schemaServer.URL,
 		PenaltyPaymentsProcessingTopic:         "penalty-payments-processing",
 		PenaltyPaymentsProcessingMaxRetries:    "3",

@@ -27,8 +27,8 @@ github.com/companieshouse/api-sdk-go v0.1.62 h1:QSz4QqZCHsVzQKrjGAm9GL6v5x2HXuuI
 github.com/companieshouse/api-sdk-go v0.1.62/go.mod h1:EPQs0VpscYj7QFKYRlZk6T8a64py54/fqwt6QrCuYZY=
 github.com/companieshouse/chs.go v1.1.0/go.mod h1:LVtty6/5ttvNf12V/nPySaIFgfYPLeT0jymabuzmSDg=
 github.com/companieshouse/chs.go v1.2.2/go.mod h1:93vQ2qlzSbZenUOFet+pAJzxHdz+w6BF1IvJ56lvC7c=
-github.com/companieshouse/chs.go v1.2.15 h1:dOR610o1rdyZFrj6qBQ0hmDuWXIW7vqiCggRnu3zhG8=
-github.com/companieshouse/chs.go v1.2.15/go.mod h1:rMJSdf5YqkQwusXhcuCHtOmEvy6dw90uKwEhHbyxcLE=
+github.com/companieshouse/chs.go v1.2.16 h1:sdpyGwExXaiAhSw9dOFybOhOXnugx5xAcNp8JpP/ots=
+github.com/companieshouse/chs.go v1.2.16/go.mod h1:rMJSdf5YqkQwusXhcuCHtOmEvy6dw90uKwEhHbyxcLE=
 github.com/companieshouse/envconf v0.1.0/go.mod h1:/gP4p46vTAENnqc2vXW441VOjL91ReJv/uqnYBzlaFo=
 github.com/companieshouse/envconf v0.1.4 h1:lC9czh8gC62pjFigEptPNuPme8MZEB+nPeWTwJmEd+g=
 github.com/companieshouse/envconf v0.1.4/go.mod h1:GaS5aN8Ee2/Ri67qf3aiXmTUMPUYmgk63k0vssjemQo=
