@@ -41,8 +41,8 @@ func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment mod
 	}
 	log.Info("Financial penalty payment processing started", logContext)
 
-	if isAfterNextDayMidnight(penaltyPayment.CreatedAt) {
-		log.Info("Skipping financial penalty payment processing as current time is after next day midnight of created_at", logContext)
+	if isAfter24Hours(penaltyPayment.CreatedAt) {
+		log.Info("Skipping financial penalty payment processing as current time is after 24 hours of created_at", logContext)
 		return nil
 	}
 
@@ -80,10 +80,9 @@ func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment mod
 	return nil
 }
 
-func isAfterNextDayMidnight(createdAt string) bool {
+func isAfter24Hours(createdAt string) bool {
 	parsed, _ := time.Parse(time.RFC3339, createdAt)
-	nextDayMidnight := time.Date(parsed.Year(), parsed.Month(), parsed.Day()+1, 0, 0, 0, 0, parsed.Location())
-	return time.Now().After(nextDayMidnight)
+	return time.Now().After(parsed.Add(24 * time.Hour))
 }
 
 func withRetry(cfg *config.Config, action e5.Action, fn func() error) error {
