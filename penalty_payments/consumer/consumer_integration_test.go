@@ -15,7 +15,6 @@ import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/testutils"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -59,18 +58,23 @@ func startMockSchemaRegistry(t *testing.T) *httptest.Server {
 func TestIntegrationConsume(t *testing.T) {
 	t.Parallel()
 
+	// Start mock schema registry
 	mockSchemaRegistry := startMockSchemaRegistry(t)
 	defer mockSchemaRegistry.Close()
+
+	// Start Kafka container
 	kafkaContainer := testutils.NewKafkaContainer()
 	kafkaContainer.Start()
 	defer kafkaContainer.Stop()
 
 	kafka3BrokerAddr := fmt.Sprintf("%s:%s", kafkaContainer.GetHost(), kafkaContainer.GetPort())
 
+	// Load schema
 	latestSchema, err := schema.Get(mockSchemaRegistry.URL, "penalty-payments-processing")
 	require.NoError(t, err)
 	require.NotNil(t, latestSchema)
 
+	// Config setup
 	cfg := &config.Config{
 		BrokerAddr:                             []string{"dummy-kafka:9092"},
 		Kafka3BrokerAddr:                       []string{kafka3BrokerAddr},
@@ -86,21 +90,26 @@ func TestIntegrationConsume(t *testing.T) {
 		FeatureFlagPaymentsProcessingEnabled:   true,
 	}
 
-	// Start consumer in background
-	go func() {
-		mockFinancePayment := new(mockPenaltyFinancePayment)
-		mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID, cfg, true).Return(nil)
+	// Setup mock
+	mockFinancePayment := new(mockPenaltyFinancePayment)
+	mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID, cfg, true).Return(nil)
 
-		retry := &resilience.ServiceRetry{
-			ThrottleRate: time.Duration(cfg.ConsumerRetryThrottleRate) * time.Second,
-			MaxRetries:   cfg.ConsumerRetryMaxAttempts,
-		}
+	retry := &resilience.ServiceRetry{
+		ThrottleRate: time.Duration(cfg.ConsumerRetryThrottleRate) * time.Second,
+		MaxRetries:   cfg.ConsumerRetryMaxAttempts,
+	}
+
+	// Start consumer
+	done := make(chan struct{})
+	go func() {
 		Consume(cfg, mockFinancePayment, retry)
-		mockFinancePayment.AssertExpectations(t)
+		close(done)
 	}()
+
 	// Give consumer time to start
 	time.Sleep(2 * time.Second)
 
+	// Produce message
 	saramaConfig := sarama.NewConfig()
 	saramaConfig.Producer.Return.Successes = true
 	producer, err := sarama.NewSyncProducer(cfg.Kafka3BrokerAddr, saramaConfig)
@@ -115,14 +124,16 @@ func TestIntegrationConsume(t *testing.T) {
 	log.Info("sent test penalty-payments-processing message", log.Data{"partition": partition, "offset": offset})
 	require.NoError(t, err)
 
+	// Wait for message to be processed
+	time.Sleep(3 * time.Second)
+
 	// Simulate shutdown
-	time.Sleep(2 * time.Second)
 	process, _ := os.FindProcess(os.Getpid())
 	_ = process.Signal(os.Interrupt)
 
 	// Wait for graceful shutdown
-	time.Sleep(1 * time.Second)
+	<-done
 
-	// No assertion here - just ensuring no panic or crash
-	assert.True(t, true)
+	// Assert expectations
+	mockFinancePayment.AssertExpectations(t)
 }
