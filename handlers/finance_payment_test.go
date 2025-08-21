@@ -105,6 +105,29 @@ func (m *mockDAO) SaveE5Error(customerCode, payableRef string, action e5.Action)
 	return m.Called(customerCode, payableRef, action).Error(0)
 }
 
+func TestUnitProcessFinancialPenaltyPayment_IsAfter24Hours(t *testing.T) {
+	Convey("Process financial penalty payment is after 24 hours", t, func() {
+		// Given
+		e5Client, DAO := setupMocks()
+		handler := &PenaltyFinancePayment{
+			E5Client:                  e5Client,
+			PayableResourceDaoService: DAO,
+		}
+
+		penaltyPaymentToSkip := models.PenaltyPaymentsProcessing{
+			CreatedAt: "2025-08-19T08:52:11.648+00:00",
+		}
+
+		// When
+		err := handler.ProcessFinancialPenaltyPayment(penaltyPaymentToSkip, e5PaymentID, cfg, false)
+
+		// Then
+		So(err, ShouldBeNil)
+		e5Client.AssertExpectations(t)
+		DAO.AssertExpectations(t)
+	})
+}
+
 func TestUnitProcessFinancialPenaltyPayment_Success(t *testing.T) {
 	Convey("Process financial penalty payment success", t, func() {
 		// Given
