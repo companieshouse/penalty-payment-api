@@ -13,4 +13,10 @@ IFS=',' read -ra BROKERS <<< "${KAFKA_BROKER_ADDR}"
 # Ensure we only populate the broker address and topic via application arguments
 unset KAFKA_BROKER_ADDR
 
-exec ./penalty-payment-api "-bind-addr=:${PORT}" $(for broker in "${BROKERS[@]}"; do echo -n "-broker-addr=${broker} "; done)
+# Read kafka 3 brokers from environment and split on comma
+IFS=',' read -ra KAFKA3_BROKERS <<< "${KAFKA3_BROKER_ADDR}"
+
+# Ensure we only populate the kafka 3 broker address via application arguments
+unset KAFKA3_BROKER_ADDR
+
+exec ./penalty-payment-api "-bind-addr=:${PORT}" $(for broker in "${BROKERS[@]}"; do echo -n "-broker-addr=${broker} "; done) $(for broker in "${KAFKA3_BROKERS[@]}"; do echo -n "-kafka3-broker-addr=${broker} "; done)
