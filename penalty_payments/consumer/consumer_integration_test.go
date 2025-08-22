@@ -10,11 +10,10 @@ import (
 	"time"
 
 	"github.com/Shopify/sarama"
-	"github.com/companieshouse/chs.go/avro/schema"
-	"github.com/companieshouse/chs.go/kafka/resilience"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/testutils"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -56,8 +55,6 @@ func startMockSchemaRegistry(t *testing.T) *httptest.Server {
 }
 
 func TestIntegrationConsume(t *testing.T) {
-	t.Parallel()
-
 	// Start mock schema registry
 	mockSchemaRegistry := startMockSchemaRegistry(t)
 	defer mockSchemaRegistry.Close()
@@ -69,14 +66,9 @@ func TestIntegrationConsume(t *testing.T) {
 
 	kafka3BrokerAddr := fmt.Sprintf("%s:%s", kafkaContainer.GetHost(), kafkaContainer.GetPort())
 
-	// Load schema
-	latestSchema, err := schema.Get(mockSchemaRegistry.URL, "penalty-payments-processing")
-	require.NoError(t, err)
-	require.NotNil(t, latestSchema)
-
 	// Config setup
 	cfg := &config.Config{
-		BrokerAddr:                             []string{"dummy-kafka:9092"},
+		BrokerAddr:                             []string{kafka3BrokerAddr},
 		Kafka3BrokerAddr:                       []string{kafka3BrokerAddr},
 		SchemaRegistryURL:                      mockSchemaRegistry.URL,
 		PenaltyPaymentsProcessingTopic:         "penalty-payments-processing",
@@ -90,42 +82,58 @@ func TestIntegrationConsume(t *testing.T) {
 		FeatureFlagPaymentsProcessingEnabled:   true,
 	}
 
-	// Setup mock
+	// Setup mock with signal channel
+	processed := make(chan struct{})
 	mockFinancePayment := new(mockPenaltyFinancePayment)
-	mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID, cfg, true).Return(nil)
-
-	retry := &resilience.ServiceRetry{
-		ThrottleRate: time.Duration(cfg.ConsumerRetryThrottleRate) * time.Second,
-		MaxRetries:   cfg.ConsumerRetryMaxAttempts,
-	}
+	mockFinancePayment.On("ProcessFinancialPenaltyPayment", penaltyPayment, e5PaymentID, cfg, false).
+		Return(nil).
+		Run(func(args mock.Arguments) {
+			log.Info("Mock ProcessFinancialPenaltyPayment called")
+			close(processed)
+		})
 
 	// Start consumer
 	done := make(chan struct{})
 	go func() {
-		Consume(cfg, mockFinancePayment, retry)
+		Consume(cfg, mockFinancePayment, nil)
 		close(done)
 	}()
 
 	// Give consumer time to start
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	// Produce message
+	brokerAddrs := cfg.Kafka3BrokerAddr
+	topic := cfg.PenaltyPaymentsProcessingTopic
+
+	logContext := log.Data{
+		"customer_code": penaltyPayment.CustomerCode,
+		"payable_ref":   penaltyPayment.PayableRef,
+		"broker_addrs":  brokerAddrs,
+		"topic":         topic,
+	}
+
 	saramaConfig := sarama.NewConfig()
 	saramaConfig.Producer.Return.Successes = true
-	producer, err := sarama.NewSyncProducer(cfg.Kafka3BrokerAddr, saramaConfig)
+	producer, err := sarama.NewSyncProducer(brokerAddrs, saramaConfig)
 	require.NoError(t, err)
 	defer producer.Close()
 
 	avroBytes := getConsumerMessage(getTestAvroSchema(), penaltyPayment).Value
 	partition, offset, err := producer.SendMessage(&sarama.ProducerMessage{
-		Topic: cfg.PenaltyPaymentsProcessingTopic + `-penalty-payment-api-retry`,
+		Topic: topic,
 		Value: sarama.ByteEncoder(avroBytes),
 	})
-	log.Info("sent test penalty-payments-processing message", log.Data{"partition": partition, "offset": offset})
+	log.Info("Sent test penalty-payments-processing message", log.Data{"partition": partition, "offset": offset}, logContext)
 	require.NoError(t, err)
 
-	// Wait for message to be processed
-	time.Sleep(3 * time.Second)
+	// Wait for message to be processed or timeout
+	select {
+	case <-processed:
+		log.Info("Message processed successfully", logContext)
+	case <-time.After(2 * time.Minute):
+		t.Fatal("Timeout waiting for message to be processed")
+	}
 
 	// Simulate shutdown
 	process, _ := os.FindProcess(os.Getpid())

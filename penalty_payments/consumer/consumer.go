@@ -97,10 +97,22 @@ func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage, fin
 	// ones that begin with 'LP' which signify penalties that have been paid outside the digital service.
 	e5PaymentID := "X" + penaltyPayment.PaymentID
 
+	logContext := log.Data{
+		"customer_code": penaltyPayment.CustomerCode,
+		"company_code":  penaltyPayment.CompanyCode,
+		"payable_ref":   penaltyPayment.PayableRef,
+		"e5_payment_id": e5PaymentID,
+		"is_retry":      isRetry,
+	}
+	log.Info("Consumer handle message - BEFORE Financial penalty payment processing", log.Data{
+		"Topic":     message.Topic,
+		"Partition": message.Partition,
+		"Offset":    message.Offset,
+	}, logContext)
 	err = financePayment.ProcessFinancialPenaltyPayment(penaltyPayment, e5PaymentID, cfg, isRetry)
 	if err != nil {
 		err = fmt.Errorf("error processing financial penalty payment: [%v]", err)
-		log.Error(err, log.Data{"e5_payment_id": e5PaymentID, "customer_code": penaltyPayment.CustomerCode, "company_code": penaltyPayment.CompanyCode, "payable_ref": penaltyPayment.PayableRef})
+		log.Error(err, logContext)
 		return resilience.HandleError(err, message.Offset, &penaltyPayment)
 	}
 
