@@ -64,10 +64,11 @@ The only external finance system currently supported is E5.
 
 ## Docker support
 
-Pull image from ch-shared-services registry by running `docker pull 416670754337.dkr.ecr.eu-west-2.amazonaws.com/penalty-payment-api:latest` command or run the following steps to build image locally:
+Pull image from ch-shared-services registry by running `docker pull 416670754337.dkr.ecr.eu-west-2.amazonaws.com/penalty-payment-api:latest` command.
 
-1. `export SSH_PRIVATE_KEY_PASSPHRASE='[your SSH key passhprase goes here]'` (optional, set only if SSH key is passphrase protected)
-2. `DOCKER_BUILDKIT=0 docker build --build-arg SSH_PRIVATE_KEY="$(cat ~/.ssh/id_rsa)" --build-arg SSH_PRIVATE_KEY_PASSPHRASE -t 416670754337.dkr.ecr.eu-west-2.amazonaws.com/penalty-payment-api:latest .`
+Alternatively, ensure you have the cross-compiler installed and use the Makefile to run the docker build command locally:
+1. `brew install filosottile/musl-cross/musl-cross`
+2. `make docker-image`
 
 ## Vulnerability Checks
 
