@@ -41,7 +41,6 @@ test-unit:
 	@go test -run 'Unit' -coverpkg=./... -coverprofile=$(COVERAGE_OUT) $(TESTS) -json > report.json
 	@go-ignore-cov --file $(COVERAGE_OUT)
 	@go tool cover -func $(COVERAGE_OUT)
-	@make coverage-html
 
 .PHONY: test-integration
 test-integration:
