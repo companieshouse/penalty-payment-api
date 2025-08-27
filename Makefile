@@ -27,7 +27,8 @@ ifeq ($(shell uname; uname -p), Darwin arm)
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-linux-musl-gcc CXX=x86_64-linux-musl-g++ go build --ldflags '-linkmode external -extldflags "-static"' -o ecs-image-build/app/$(bin)
 	cp -R ./assets ecs-image-build/app
 else
-	CGO_ENABLED=0 go build -o ./$(bin)
+	CGO_ENABLED=0 go build -o ecs-image-build/app/$(bin)
+	cp -R ./assets ecs-image-build/app
 endif
 
 .PHONY: test
@@ -66,8 +67,7 @@ coverage-html:
 .PHONY: clean
 clean: clean-coverage
 	go mod tidy
-	rm -f ./$(bin) ./$(bin)-*.zip $(test_path) build.log
-	rm -rf ./ecs-image-build/app
+	rm -rf ./ecs-image-build/app ./$(bin)-*.zip $(test_path) build.log
 
 .PHONY: package
 package:
