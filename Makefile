@@ -3,11 +3,16 @@ TESTS        ?= ./...
 COVERAGE_OUT = coverage.out
 
 bin          := penalty-payment-api
+version      ?= unversioned
 xunit_output := test.xml
 lint_output  := lint.txt
 
 .EXPORT_ALL_VARIABLES:
 GO111MODULE = on
+
+.PHONY:
+arch:
+	@echo OS: $(shell uname) ARCH: $(shell uname -p)
 
 .PHONY: all
 all: build
@@ -17,10 +22,13 @@ fmt:
 	go fmt ./...
 
 .PHONY: build
-build: fmt $(bin)
-
-$(bin):
+build: arch fmt
+ifeq ($(shell uname; uname -p), Darwin arm)
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-linux-musl-gcc CXX=x86_64-linux-musl-g++ go build --ldflags '-linkmode external -extldflags "-static"' -o ecs-image-build/app/$(bin)
+	cp -R ./assets ecs-image-build/app
+else
 	CGO_ENABLED=0 go build -o ./$(bin)
+endif
 
 .PHONY: test
 test: test-unit test-integration
@@ -59,6 +67,7 @@ coverage-html:
 clean: clean-coverage
 	go mod tidy
 	rm -f ./$(bin) ./$(bin)-*.zip $(test_path) build.log
+	rm -rf ./ecs-image-build/app
 
 .PHONY: package
 package:
@@ -67,7 +76,7 @@ ifndef version
 endif
 	$(info Packaging version: $(version))
 	$(eval tmpdir := $(shell mktemp -d build-XXXXXXXXXX))
-	cp ./$(bin) $(tmpdir)
+	cp ./ecs-image-build/app/$(bin) $(tmpdir)
 	cp -r ./assets  $(tmpdir)/assets
 	cd $(tmpdir) && zip -r ../$(bin)-$(version).zip $(bin) assets
 	rm -rf $(tmpdir)
@@ -103,3 +112,8 @@ security-check-summary:
 	@LOW=0 MED=0 HIGH=0 CRIT=0 res=`go list -json -deps ./... | nancy sleuth -o json | jq -c '.vulnerable[].Vulnerabilities[].CvssScore'`; for score in $$res; do if [ $${score:1:1} -ge 9 ]; then CRIT=$$(($$CRIT+1)); elif [ $${score:1:1} -ge 7 ]; then HIGH=$$(($$HIGH+1)); elif [ $${score:1:1} -ge 4 ]; then MED=$$(($$MED+1)); else LOW=$$(($$LOW+1)); fi; done; echo -e "CRITICAL=$$CRIT\nHigh=$$HIGH\nMedium=$$MED\nLow=$$LOW";
 	@go build -o ${GOBIN} golang.org/x/vuln/cmd/govulncheck
 	@OTHER=`govulncheck ./... | grep "More info:" | wc -l | tr -d ' '`; echo -e "\nOther=$$OTHER"
+
+.PHONY: docker-image
+docker-image: dist
+	chmod +x build-docker-local.sh
+	./build-docker-local.sh

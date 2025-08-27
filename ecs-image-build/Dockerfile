@@ -1,5 +1,5 @@
 ARG IMAGE_VERSION="latest"
-FROM 416670754337.dkr.ecr.eu-west-2.amazonaws.com/ci-golang-build-1.24:${IMAGE_VERSION} 
+FROM 416670754337.dkr.ecr.eu-west-2.amazonaws.com/ci-golang-build-1.24:${IMAGE_VERSION}
 
 WORKDIR /opt
 
