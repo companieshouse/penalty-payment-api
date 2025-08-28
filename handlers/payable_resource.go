@@ -12,19 +12,20 @@ import (
 
 // HandleGetPayableResource retrieves the payable resource from request context
 func HandleGetPayableResource(w http.ResponseWriter, req *http.Request) {
-	log.InfoR(req, "start GET payable resource request")
+	context := req.Header.Get("X-Request-ID")
+	log.InfoC(context, "start GET payable resource request")
 
 	// get payable resource from context, put there by PayableResourceAuthenticationInterceptor
 	payableResource, ok := req.Context().Value(config.PayableResource).(*models.PayableResource)
 
 	if !ok {
-		log.ErrorR(req, fmt.Errorf("invalid PayableResource in request context"))
+		log.ErrorC(context, fmt.Errorf("invalid PayableResource in request context"))
 		m := models.NewMessageResponse("the payable resource is not present in the request context")
 		utils.WriteJSONWithStatus(w, req, m, http.StatusInternalServerError)
 		return
 	}
-	log.Debug("got payable resource", log.Data{"payable_resource": payableResource})
+	log.DebugC(context, "got payable resource", log.Data{"payable_resource": payableResource})
 	utils.WriteJSON(w, req, payableResource)
 
-	log.InfoR(req, "GET payable resource request completed successfully")
+	log.InfoC(context, "GET payable resource request completed successfully")
 }
