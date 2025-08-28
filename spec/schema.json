@@ -679,8 +679,8 @@
           "items": {
             "type": "string",
             "enum": [
-              "penalty",
-              "data-maintenance"
+              "penalty-lfp",
+              "penalty-sanctions"
             ]
           }
         },
