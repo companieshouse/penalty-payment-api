@@ -126,25 +126,24 @@ func paymentsProcessingEnabled() bool {
 
 func sendConfirmationEmail(resource *models.PayableResource, payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter,
 	penaltyPaymentDetails *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) {
-	// Send confirmation email
-	defer wg.Done()
-	err := handleSendEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
-	if err != nil {
-		log.ErrorR(r, err, log.Data{
-			"payable_ref":       resource.PayableRef,
-			"payment_reference": payment.Reference,
-			"customer_code":     resource.CustomerCode,
-			"email_address":     resource.CreatedBy.Email})
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 
-	log.Info("confirmation email sent to customer", log.Data{
+	logContext := log.Data{
 		"payable_ref":       resource.PayableRef,
 		"payment_reference": payment.Reference,
 		"customer_code":     resource.CustomerCode,
 		"email_address":     resource.CreatedBy.Email,
-	})
+	}
+
+	// Send confirmation email
+	defer wg.Done()
+	err := handleSendEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
+	if err != nil {
+		log.ErrorR(r, err, logContext)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	log.Info("Send email kafka message sent", logContext)
 }
 
 func updateAsPaidInDatabase(resource *models.PayableResource, payment *validators.PaymentInformation,
@@ -194,7 +193,7 @@ func addPaymentsProcessingMsgToTopic(payableResource *models.PayableResource,
 		"payable_ref":       payableResource.PayableRef,
 		"payment_reference": payment.Reference,
 	}
-	log.Info("adding payments processing message to topic", logContext)
+	log.Debug("adding payments processing message to topic", logContext)
 	// send the kafka message to the producer
 	err := handlePaymentProcessingKafkaMessage(*payableResource, payment)
 	if err != nil {
@@ -202,6 +201,7 @@ func addPaymentsProcessingMsgToTopic(payableResource *models.PayableResource,
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	log.Info("Payment processing kafka message sent", logContext)
 }
 
 func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.AccountPenaltiesDaoService) {

@@ -104,7 +104,7 @@ func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage, fin
 		"e5_payment_id": e5PaymentID,
 		"is_retry":      isRetry,
 	}
-	log.Info("Consumer handle message - BEFORE Financial penalty payment processing", log.Data{
+	log.Debug("Consumer handle message - BEFORE Financial penalty payment processing", log.Data{
 		"Topic":     message.Topic,
 		"Partition": message.Partition,
 		"Offset":    message.Offset,
