@@ -15,6 +15,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/transformers"
 )
 
@@ -45,8 +46,17 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		// Ensure that the transactions in the request are valid payable penalties that exist in E5
 		var payablePenalties []models.TransactionItem
 		for _, transaction := range request.Transactions {
-			payablePenalty, err := payablePenalty(penaltyRefType, request.CustomerCode, companyCode,
-				transaction, penaltyDetailsMap, allowedTransactionMap, apDaoSvc)
+			params := types.PayablePenaltyParams{
+				PenaltyRefType:             penaltyRefType,
+				CustomerCode:               customerCode,
+				CompanyCode:                companyCode,
+				PenaltyDetailsMap:          penaltyDetailsMap,
+				Transaction:                transaction,
+				AllowedTransactionsMap:     allowedTransactionMap,
+				AccountPenaltiesDaoService: apDaoSvc,
+				Context:                    context,
+			}
+			payablePenalty, err := payablePenalty(params)
 			if err != nil {
 				log.ErrorC(context, fmt.Errorf("invalid request - failed matching against e5"))
 				m := models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time")

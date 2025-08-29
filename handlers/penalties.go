@@ -12,6 +12,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/gorilla/mux"
 )
 
@@ -41,8 +42,16 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 		}
 
 		// Call service layer to handle request to E5
-		transactionListResponse, responseType, err := accountPenalties(penaltyRefType,
-			customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+		params := types.AccountPenaltiesParams{
+			PenaltyRefType:             penaltyRefType,
+			CustomerCode:               customerCode,
+			CompanyCode:                companyCode,
+			PenaltyDetailsMap:          penaltyDetailsMap,
+			AllowedTransactionsMap:     allowedTransactionsMap,
+			AccountPenaltiesDaoService: apDaoSvc,
+			Context:                    context,
+		}
+		transactionListResponse, responseType, err := accountPenalties(params)
 
 		if err != nil {
 			log.ErrorC(context, fmt.Errorf("error calling e5 to get transactions: %v", err))

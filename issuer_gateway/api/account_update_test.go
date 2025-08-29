@@ -48,7 +48,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 		r := models.PayableResource{}
 		p := validators.PaymentInformation{Amount: "foo"}
 
-		err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+		err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 		So(err, ShouldNotBeNil)
 	})
 
@@ -76,7 +76,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			},
 		}
 
-		err := UpdateIssuerAccountWithPenaltyPaid(svc, c, r, p)
+		err := UpdateIssuerAccountWithPenaltyPaid(svc, c, r, p, "")
 
 		So(err, ShouldBeError, "cannot determine company code")
 	})
@@ -112,7 +112,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 				},
 			}
 
-			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
 			So(err, ShouldBeError, e5.ErrE5BadRequest)
 		})
@@ -141,7 +141,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 				},
 			}
 
-			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
 			So(err, ShouldBeError, e5.ErrE5BadRequest)
 		})
@@ -171,7 +171,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 				},
 			}
 
-			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
 			So(err, ShouldBeError, e5.ErrE5BadRequest)
 		})
@@ -198,7 +198,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 				},
 			}
 
-			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
 			So(err, ShouldBeNil)
 		})
@@ -248,7 +248,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 				},
 			}
 
-			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 			So(err, ShouldBeNil)
 
 		})

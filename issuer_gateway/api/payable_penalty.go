@@ -3,8 +3,6 @@ package api
 import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/common/dao"
-	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 )
@@ -12,17 +10,33 @@ import (
 var getAccountPenalties = AccountPenalties
 var getMatchingPenalty = private.MatchPenalty
 
-func PayablePenalty(penaltyRefType, customerCode, companyCode string, transaction models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionItem, error) {
+func PayablePenalty(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
+	penaltyRefType := params.PenaltyRefType
+	customerCode := params.CustomerCode
+	companyCode := params.CompanyCode
+	transaction := params.Transaction
+	penaltyDetailsMap := params.PenaltyDetailsMap
+	apDaoSvc := params.AccountPenaltiesDaoService
+	allowedTransactionsMap := params.AllowedTransactionsMap
+	context := params.Context
 
-	response, _, err := getAccountPenalties(penaltyRefType, customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+	accountPenaltiesParams := types.AccountPenaltiesParams{
+		PenaltyRefType:             penaltyRefType,
+		CustomerCode:               customerCode,
+		CompanyCode:                companyCode,
+		PenaltyDetailsMap:          penaltyDetailsMap,
+		AllowedTransactionsMap:     allowedTransactionsMap,
+		AccountPenaltiesDaoService: apDaoSvc,
+		Context:                    context,
+	}
+	response, _, err := getAccountPenalties(accountPenaltiesParams)
 	if err != nil {
-		log.Error(err)
+		log.ErrorC(context, err)
 		return nil, err
 	}
 
 	unpaidPenaltyCount := getUnpaidPenaltyCount(response.Items)
-	log.Info("unpaid penalties", log.Data{
+	log.InfoC(context, "unpaid penalties", log.Data{
 		"unpaid_penalties_count": unpaidPenaltyCount,
 		"customer_code":          customerCode,
 		"company_code":           companyCode,

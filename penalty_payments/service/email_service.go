@@ -14,6 +14,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 )
 
 // SendEmailKafkaMessage sends a kafka message to the email-sender to send an email
@@ -115,8 +116,17 @@ func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource model
 	}
 
 	transaction := payableResource.Transactions[0]
-	payablePenalty, err := getPayablePenalty(penaltyRefType, payableResource.CustomerCode, companyCode, transaction,
-		penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+	params := types.PayablePenaltyParams{
+		PenaltyRefType:             penaltyRefType,
+		CustomerCode:               payableResource.CustomerCode,
+		CompanyCode:                companyCode,
+		Transaction:                transaction,
+		PenaltyDetailsMap:          penaltyDetailsMap,
+		AllowedTransactionsMap:     allowedTransactionsMap,
+		AccountPenaltiesDaoService: apDaoSvc,
+		Context:                    "",
+	}
+	payablePenalty, err := getPayablePenalty(params)
 	if err != nil {
 		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)
 		return nil, err

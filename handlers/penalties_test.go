@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -20,15 +20,15 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 	allowedTransactionsMap := &models.AllowedTransactionMap{}
 
 	Convey("Given a request to get penalties", t, func() {
-		mockedAccountPenalties := func(penaltyRefType, companyNumber, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
-			allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
-			if companyNumber == "INVALID_COMPANY" {
+		mockedAccountPenalties := func(params types.AccountPenaltiesParams) (*models.TransactionListResponse, services.ResponseType, error) {
+			customerCode := params.CustomerCode
+			if customerCode == "INVALID_COMPANY" {
 				return nil, services.Error, errors.New("error getting penalties")
 			}
-			if companyNumber == "INVALID_DATA" {
+			if customerCode == "INVALID_DATA" {
 				return nil, services.InvalidData, errors.New("error getting penalties")
 			}
-			if companyNumber == "INTERNAL_SERVER_ERROR" {
+			if customerCode == "INTERNAL_SERVER_ERROR" {
 				return nil, services.NotFound, errors.New("error getting penalties")
 			}
 			return nil, services.Success, nil

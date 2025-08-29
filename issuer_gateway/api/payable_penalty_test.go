@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
@@ -69,26 +69,33 @@ func TestUnitPayablePenalty(t *testing.T) {
 			},
 		},
 	}
+	params := types.PayablePenaltyParams{
+		PenaltyDetailsMap:      penaltyDetailsMap,
+		AllowedTransactionsMap: allowedTransactionMap,
+		Context:                "",
+	}
 
 	Convey("error is returned when fetching account penalties fails", t, func() {
 		accountPenaltiesErr := errors.New("failed to fetch account penalties")
-		mockedAccountPenalties := func(penaltyRefType, companyNumber, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
-			allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
+		mockedAccountPenalties := func(params types.AccountPenaltiesParams) (*models.TransactionListResponse, services.ResponseType, error) {
 			return nil, services.Error, accountPenaltiesErr
 		}
 		getAccountPenalties = mockedAccountPenalties
 
 		transaction := models.TransactionItem{PenaltyRef: "121"}
-		payablePenalty, err := PayablePenalty(utils.LateFilingPenRef, "10000024",
-			utils.LateFilingPenaltyCompanyCode, transaction, penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
+		params.PenaltyRefType = utils.LateFilingPenRef
+		params.CompanyCode = utils.LateFilingPenaltyCompanyCode
+		params.CustomerCode = "10000024"
+		params.Transaction = transaction
+		params.AccountPenaltiesDaoService = mockApDaoSvc
+		payablePenalty, err := PayablePenalty(params)
 
 		So(payablePenalty, ShouldBeNil)
 		So(err, ShouldEqual, accountPenaltiesErr)
 	})
 
 	Convey("payable penalty is successfully returned for multiple unpaid penalties", t, func() {
-		mockedAccountPenalties := func(penaltyRefType, companyNumber, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
-			allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
+		mockedAccountPenalties := func(params types.AccountPenaltiesParams) (*models.TransactionListResponse, services.ResponseType, error) {
 			return accountPenaltiesResponse(2), services.Success, nil
 		}
 		getAccountPenalties = mockedAccountPenalties
@@ -102,16 +109,19 @@ func TestUnitPayablePenalty(t *testing.T) {
 			IsPaid:     false,
 			Reason:     "Late filing of accounts",
 		}
-		gotPayablePenalty, err := PayablePenalty(utils.LateFilingPenRef, "10000024",
-			utils.LateFilingPenaltyCompanyCode, unpaidPenalty, penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
+		params.PenaltyRefType = utils.LateFilingPenRef
+		params.CompanyCode = utils.LateFilingPenaltyCompanyCode
+		params.CustomerCode = "10000024"
+		params.Transaction = unpaidPenalty
+		params.AccountPenaltiesDaoService = mockApDaoSvc
+		gotPayablePenalty, err := PayablePenalty(params)
 
 		So(gotPayablePenalty, ShouldResemble, &unpaidPenalty)
 		So(err, ShouldBeNil)
 	})
 
 	Convey("payable penalty is successfully returned", t, func() {
-		mockedAccountPenalties := func(penaltyRefType, companyNumber, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
-			allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
+		mockedAccountPenalties := func(params types.AccountPenaltiesParams) (*models.TransactionListResponse, services.ResponseType, error) {
 			return accountPenaltiesResponse(1), services.Success, nil
 		}
 		wantPayablePenalty := &models.TransactionItem{
@@ -130,8 +140,12 @@ func TestUnitPayablePenalty(t *testing.T) {
 		getAccountPenalties = mockedAccountPenalties
 		getMatchingPenalty = mockedMatchPenalty
 
-		gotPayablePenalty, err := PayablePenalty(utils.LateFilingPenRef, "10000024",
-			utils.LateFilingPenaltyCompanyCode, transaction, penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
+		params.PenaltyRefType = utils.LateFilingPenRef
+		params.CompanyCode = utils.LateFilingPenaltyCompanyCode
+		params.CustomerCode = "10000024"
+		params.Transaction = transaction
+		params.AccountPenaltiesDaoService = mockApDaoSvc
+		gotPayablePenalty, err := PayablePenalty(params)
 
 		So(gotPayablePenalty, ShouldResemble, wantPayablePenalty)
 		So(err, ShouldBeNil)

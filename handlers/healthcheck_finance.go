@@ -14,7 +14,7 @@ import (
 func HandleHealthCheckFinanceSystem(w http.ResponseWriter, r *http.Request) {
 	context := r.Header.Get("X-Request-ID")
 
-	systemAvailableTime, systemUnavailable, parseError := api.CheckScheduledMaintenance()
+	systemAvailableTime, systemUnavailable, parseError := api.CheckScheduledMaintenance(context)
 
 	if parseError {
 		log.ErrorC(context, fmt.Errorf("parseError from CheckScheduledMaintenance: [%v]", parseError))

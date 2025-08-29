@@ -10,6 +10,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
@@ -162,13 +163,21 @@ func TestUnitAccountPenalties(t *testing.T) {
 	cfg, _ := config.Get()
 	cfg.AccountPenaltiesTTL = "24h"
 	ctrl := gomock.NewController(t)
+	params := types.AccountPenaltiesParams{
+		PenaltyRefType:         penaltyRefType,
+		CustomerCode:           customerCode,
+		CompanyCode:            companyCode,
+		PenaltyDetailsMap:      penaltyDetailsMap,
+		AllowedTransactionsMap: allowedTransactionMap,
+		Context:                "",
+	}
 	defer ctrl.Finish()
 
 	Convey("error when no transactions provided", t, func() {
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
-		_, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
+		params.AccountPenaltiesDaoService = mockApDaoSvc
+		_, responseType, err := AccountPenalties(params)
 		So(err, ShouldNotBeNil)
 		So(responseType, ShouldEqual, services.Error)
 	})
@@ -185,8 +194,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 		getTransactions = mockedGetTransactions
 
-		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
+		params.AccountPenaltiesDaoService = mockApDaoSvc
+		listResponse, responseType, err := AccountPenalties(params)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
 		So(len(listResponse.Items), ShouldEqual, 6)
@@ -224,8 +233,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 		getTransactions = mockedGetTransactions
 
-		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
+		params.AccountPenaltiesDaoService = mockApDaoSvc
+		listResponse, responseType, err := AccountPenalties(params)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
 		So(responseType, ShouldEqual, services.Success)
@@ -237,8 +246,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
 
-		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
+		params.AccountPenaltiesDaoService = mockApDaoSvc
+		listResponse, responseType, err := AccountPenalties(params)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
 		So(listResponse.Items[0].PayableStatus, ShouldEqual, "OPEN")
@@ -253,8 +262,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
 
-		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
+		params.AccountPenaltiesDaoService = mockApDaoSvc
+		listResponse, responseType, err := AccountPenalties(params)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
 		So(listResponse.Items[0].PayableStatus, ShouldEqual, "CLOSED_PENDING_ALLOCATION")
@@ -273,8 +282,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 			return &transactionsResponse, nil
 		}
 
-		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
+		params.AccountPenaltiesDaoService = mockPenaltiesService
+		listResponse, responseType, err := AccountPenalties(params)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
 		So(responseType, ShouldEqual, services.Success)
@@ -294,8 +303,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 			return &transactionsResponse, nil
 		}
 
-		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
+		params.AccountPenaltiesDaoService = mockPenaltiesService
+		listResponse, responseType, err := AccountPenalties(params)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
 		So(listResponse.Items[0].PayableStatus, ShouldEqual, "OPEN")
@@ -317,8 +326,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 			return &transactionsResponse, nil
 		}
 
-		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
+		params.AccountPenaltiesDaoService = mockPenaltiesService
+		listResponse, responseType, err := AccountPenalties(params)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
 		So(listResponse.Items[0].PayableStatus, ShouldEqual, "CLOSED")
@@ -347,8 +356,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 			return &transactionsResponse, nil
 		}
 
-		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockPenaltiesService)
+		params.AccountPenaltiesDaoService = mockPenaltiesService
+		listResponse, responseType, err := AccountPenalties(params)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldNotBeNil)
 		So(len(listResponse.Items), ShouldEqual, 0)
@@ -366,8 +375,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 		getTransactions = mockedGetTransactions
 
-		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
+		params.AccountPenaltiesDaoService = mockApDaoSvc
+		listResponse, responseType, err := AccountPenalties(params)
 		So(err, ShouldEqual, errGettingTransactions)
 		So(listResponse, ShouldBeNil)
 		So(responseType, ShouldEqual, services.Error)
@@ -392,8 +401,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 		getTransactions = mockedGetTransactions
 		generateTransactionList = mockedGenerateTransactionList
 
-		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
+		params.AccountPenaltiesDaoService = mockApDaoSvc
+		listResponse, responseType, err := AccountPenalties(params)
 		So(err, ShouldResemble, errGeneratingTransactionList)
 		So(listResponse, ShouldBeNil)
 		So(responseType, ShouldEqual, services.Error)
@@ -409,8 +418,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 		getConfig = mockedGetConfig
 
-		listResponse, responseType, err := AccountPenalties(penaltyRefType, customerCode, companyCode,
-			penaltyDetailsMap, allowedTransactionMap, mockApDaoSvc)
+		params.AccountPenaltiesDaoService = mockApDaoSvc
+		listResponse, responseType, err := AccountPenalties(params)
 		So(err, ShouldBeNil)
 		So(listResponse, ShouldBeNil)
 		So(responseType, ShouldEqual, services.Error)

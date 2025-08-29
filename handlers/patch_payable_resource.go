@@ -170,7 +170,7 @@ func updateIssuer(payableResourceService *services.PayableResourceService, e5Cli
 	payment *validators.PaymentInformation, context string, w http.ResponseWriter) {
 	// Mark the resource as paid in e5
 	defer wg.Done()
-	err := api.UpdateIssuerAccountWithPenaltyPaid(payableResourceService, e5Client, *resource, *payment)
+	err := api.UpdateIssuerAccountWithPenaltyPaid(payableResourceService, e5Client, *resource, *payment, context)
 	if err != nil {
 		log.ErrorC(context, err, log.Data{
 			"payable_ref":   resource.PayableRef,
