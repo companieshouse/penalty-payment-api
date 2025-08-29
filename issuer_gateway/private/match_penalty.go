@@ -28,7 +28,7 @@ func MatchPenalty(referenceTransactions []models.TransactionListItem,
 		"customer_code": customerCode,
 	}
 
-	log.Debug("checking if penalty is payable", log.Data{"transaction_info": transactionInfo})
+	log.Debug("checking if penalty is payable", transactionInfo)
 
 	matched, ok := referenceTransactionsMap[transactionToMatch.PenaltyRef]
 	if !ok {
