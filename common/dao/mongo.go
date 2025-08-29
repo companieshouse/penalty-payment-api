@@ -153,10 +153,10 @@ func (m *MongoAccountPenaltiesService) CreateAccountPenalties(dao *models.Accoun
 
 // GetAccountPenalties gets the account penalties from the account_penalties database collection
 func (m *MongoAccountPenaltiesService) GetAccountPenalties(customerCode string, companyCode string) (*models.AccountPenaltiesDao, error) {
-	log.Info("retrieving document in account_penalties collection", log.Data{
+	logContext := log.Data{
 		"customer_code": customerCode,
 		"company_code":  companyCode,
-	})
+	}
 
 	var resource models.AccountPenaltiesDao
 
@@ -169,30 +169,21 @@ func (m *MongoAccountPenaltiesService) GetAccountPenalties(customerCode string, 
 	err := dbResource.Err()
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			log.Debug("no document found in account_penalties collection", log.Data{
-				"customer_code": customerCode,
-				"company_code":  companyCode,
-			})
+			log.Debug("no document found in account_penalties collection", logContext)
 			return nil, err
 		}
-		log.Error(err, log.Data{
-			"customer_code": customerCode,
-			"company_code":  companyCode,
-		})
+		log.Error(err, logContext)
 		return nil, err
 	}
 
 	err = dbResource.Decode(&resource)
 
 	if err != nil {
-		log.Error(err, log.Data{
-			"customer_code": customerCode,
-			"company_code":  companyCode,
-		})
+		log.Error(err, logContext)
 		return nil, err
 	}
 
-	log.Debug("accountPenalties", log.Data{"accountPenalties": resource})
+	log.Debug("GetAccountPenalties", logContext, log.Data{"account_penalties": resource})
 
 	return &resource, nil
 }
