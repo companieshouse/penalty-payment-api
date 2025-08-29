@@ -179,7 +179,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		etagGenerator = mockedEtagGenerator
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
 	})
@@ -198,7 +198,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 
 		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
 	})
@@ -211,7 +211,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 
 		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPWithUnpaidCostsTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg)
+			&e5TransactionsResponseValidLFPWithUnpaidCostsTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -243,7 +243,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 
 		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -275,7 +275,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 
 		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -307,7 +307,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 
 		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "Other"
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -340,7 +340,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
 		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg)
+			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -371,7 +371,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidSanctions, utils.SanctionsCompanyCode, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg)
+			&e5TransactionsResponseValidSanctions, utils.SanctionsCompanyCode, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -402,7 +402,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg)
+			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -434,7 +434,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 
 		e5TransactionsResponseValidSanctions.AccountPenalties[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidSanctions, utils.SanctionsCompanyCode, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg)
+			&e5TransactionsResponseValidSanctions, utils.SanctionsCompanyCode, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -466,7 +466,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 
 		e5TransactionsResponseValidRoe.AccountPenalties[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg)
+			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items

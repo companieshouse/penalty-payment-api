@@ -42,7 +42,7 @@ func PayablePenalty(params types.PayablePenaltyParams) (*models.TransactionItem,
 		"company_code":           companyCode,
 	})
 
-	return getMatchingPenalty(response.Items, transaction, customerCode)
+	return getMatchingPenalty(response.Items, transaction, customerCode, context)
 }
 
 func getUnpaidPenaltyCount(transactionListItems []models.TransactionListItem) int {

@@ -134,7 +134,7 @@ func TestUnitPayablePenalty(t *testing.T) {
 		}
 
 		transaction := models.TransactionItem{PenaltyRef: "121"}
-		mockedMatchPenalty := func(referenceTransactions []models.TransactionListItem, transactionToMatch models.TransactionItem, companyNumber string) (*models.TransactionItem, error) {
+		mockedMatchPenalty := func(referenceTransactions []models.TransactionListItem, transactionToMatch models.TransactionItem, companyNumber, context string) (*models.TransactionItem, error) {
 			return wantPayablePenalty, nil
 		}
 		getAccountPenalties = mockedAccountPenalties

@@ -76,7 +76,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 			log.ErrorC(context, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
 			return err
 		}
-		private.LogE5Error("failed to create payment in E5", err, resource, payment)
+		private.LogE5Error("failed to create payment in E5", err, resource, payment, context)
 		return err
 	}
 
@@ -94,7 +94,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 			log.ErrorC(context, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
 			return err
 		}
-		private.LogE5Error("failed to authorise payment in E5", err, resource, payment)
+		private.LogE5Error("failed to authorise payment in E5", err, resource, payment, context)
 		return err
 	}
 
@@ -109,7 +109,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 			log.ErrorC(context, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
 			return err
 		}
-		private.LogE5Error("failed to confirm payment in E5", err, resource, payment)
+		private.LogE5Error("failed to confirm payment in E5", err, resource, payment, context)
 		return err
 	}
 

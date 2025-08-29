@@ -68,7 +68,7 @@ func TestUnitMatchPenalty(t *testing.T) {
 					Reason:         testCase.Reason,
 				},
 			}
-			matched, err := MatchPenalty(refTransactions, transactionsToMatch, companyNumber)
+			matched, err := MatchPenalty(refTransactions, transactionsToMatch, companyNumber, "")
 
 			So(err, ShouldEqual, testCase.WantError)
 			So(matched, ShouldResemble, testCase.WantMatched)

@@ -11,6 +11,6 @@ import (
 
 func TestUnitLogE5Error(t *testing.T) {
 	Convey("no transactions found", t, func() {
-		LogE5Error("", errors.New("error getting transactions"), models.PayableResource{}, validators.PaymentInformation{})
+		LogE5Error("", errors.New("error getting transactions"), models.PayableResource{}, validators.PaymentInformation{}, "")
 	})
 }

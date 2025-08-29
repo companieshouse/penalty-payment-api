@@ -15,12 +15,12 @@ import (
 var etagGenerator = utils.GenerateEtag
 
 func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config) (*models.TransactionListResponse, error) {
+	allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, context string) (*models.TransactionListResponse, error) {
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := etagGenerator()
 	if err != nil {
 		err = fmt.Errorf("error generating etag: [%v]", err)
-		log.Error(err)
+		log.ErrorC(context, err)
 		return nil, err
 	}
 
@@ -29,9 +29,9 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 
 	// Loop through penalties and construct CH resources
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
-		transactionListItem, err := buildTransactionListItemFromAccountPenalty(
-			&accountPenalty, allowedTransactionsMap, penaltyDetailsMap, companyCode, accountPenalties.ClosedAt,
-			accountPenalties.AccountPenalties, cfg)
+		transactionType := getTransactionType(&accountPenalty, allowedTransactionsMap)
+		payableStatus := getPayableStatus(transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, allowedTransactionsMap, cfg)
+		transactionListItem, err := buildTransactionListItemFromAccountPenalty(&accountPenalty, penaltyDetailsMap, companyCode, transactionType, payableStatus, context)
 		if err != nil {
 			return nil, err
 		}
@@ -42,17 +42,14 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 	return &payableTransactionList, nil
 }
 
-func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap,
-	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string, closedAt *time.Time,
-	e5Transactions []models.AccountPenaltiesDataDao, cfg *config.Config) (models.TransactionListItem, error) {
+func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesDataDao,
+	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string, transactionType string, payableStatus string, context string) (models.TransactionListItem, error) {
 	etag, err := etagGenerator()
 	if err != nil {
 		err = fmt.Errorf("error generating etag: [%v]", err)
-		log.Error(err)
+		log.ErrorC(context, err)
 		return models.TransactionListItem{}, err
 	}
-
-	transactionType := getTransactionType(dao, allowedTransactionsMap)
 
 	transactionListItem := models.TransactionListItem{}
 	transactionListItem.Etag = etag
@@ -67,7 +64,7 @@ func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesData
 	transactionListItem.Outstanding = dao.OutstandingAmount
 	transactionListItem.Type = transactionType
 	transactionListItem.Reason = getReason(dao)
-	transactionListItem.PayableStatus = getPayableStatus(transactionType, dao, closedAt, e5Transactions, allowedTransactionsMap, cfg)
+	transactionListItem.PayableStatus = payableStatus
 
 	return transactionListItem, nil
 }
