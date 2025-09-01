@@ -27,7 +27,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 				{PenaltyRef: "123"},
 			},
 		}
-		dao := PayableResourceRequestToDB(req)
+		dao := PayableResourceRequestToDB(req, "")
 
 		So(dao.PayableRef, ShouldHaveLength, 10)
 	})
@@ -38,7 +38,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 				{PenaltyRef: "123"},
 			},
 		}
-		dao := PayableResourceRequestToDB(req)
+		dao := PayableResourceRequestToDB(req, "")
 
 		So(dao.PayableRef, ShouldHaveLength, 10)
 	})
@@ -50,7 +50,7 @@ func TestUnitPayableResourceRequestToDB(t *testing.T) {
 				{PenaltyRef: "123"},
 			},
 		}
-		dao := PayableResourceRequestToDB(req)
+		dao := PayableResourceRequestToDB(req, "")
 
 		// ensure a reference is generated for the next assertion
 		So(dao.PayableRef, ShouldHaveLength, 10)

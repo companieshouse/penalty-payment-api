@@ -198,7 +198,7 @@ func addPaymentsProcessingMsgToTopic(payableResource *models.PayableResource,
 	}
 	log.DebugC(context, "adding payments processing message to topic", logContext)
 	// send the kafka message to the producer
-	err := handlePaymentProcessingKafkaMessage(*payableResource, payment)
+	err := handlePaymentProcessingKafkaMessage(*payableResource, payment, context)
 	if err != nil {
 		log.ErrorC(context, err, logContext)
 		w.WriteHeader(http.StatusInternalServerError)

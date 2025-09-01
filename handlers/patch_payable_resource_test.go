@@ -109,12 +109,12 @@ func mockSendEmailKafkaMessage(_ models.PayableResource, _ *http.Request,
 }
 
 // Mock function for erroring when preparing and sending kafka message
-func mockPaymentsProcessingKafkaMessageError(_ models.PayableResource, _ *validators.PaymentInformation) error {
+func mockPaymentsProcessingKafkaMessageError(_ models.PayableResource, _ *validators.PaymentInformation, _ string) error {
 	return errors.New("error")
 }
 
 // Mock function for successful preparing and sending of kafka message
-func mockPaymentsProcessingKafkaMessage(_ models.PayableResource, _ *validators.PaymentInformation) error {
+func mockPaymentsProcessingKafkaMessage(_ models.PayableResource, _ *validators.PaymentInformation, _ string) error {
 	return nil
 }
 

@@ -80,7 +80,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		}
 		log.DebugC(context, "request transactions validated, creating payable resource", log.Data{"request": request})
 
-		model := transformers.PayableResourceRequestToDB(&request)
+		model := transformers.PayableResourceRequestToDB(&request, context)
 
 		err = prDaoSvc.CreatePayableResource(model)
 		if err != nil {
