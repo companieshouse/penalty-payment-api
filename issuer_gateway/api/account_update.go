@@ -69,7 +69,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 		PaymentID:    paymentID,
 		TotalValue:   amountPaid,
 		Transactions: transactions,
-	})
+	}, "")
 
 	if err != nil {
 		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.CreateAction); svcErr != nil {
@@ -87,7 +87,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 		CardReference: payment.ExternalPaymentID,
 		CardType:      payment.CardType,
 		Email:         payment.CreatedBy,
-	})
+	}, "")
 
 	if err != nil {
 		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.AuthoriseAction); svcErr != nil {
@@ -102,7 +102,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	err = client.ConfirmPayment(&e5.PaymentActionInput{
 		CompanyCode: companyCode,
 		PaymentID:   paymentID,
-	})
+	}, "")
 
 	if err != nil {
 		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.ConfirmAction); svcErr != nil {

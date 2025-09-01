@@ -14,8 +14,8 @@ import (
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 )
 
-var getTransactions = func(customerCode string, companyCode string, client e5.ClientInterface) (*e5.GetTransactionsResponse, error) {
-	return client.GetTransactions(&e5.GetTransactionsInput{CustomerCode: customerCode, CompanyCode: companyCode})
+var getTransactions = func(customerCode string, companyCode string, client e5.ClientInterface, context string) (*e5.GetTransactionsResponse, error) {
+	return client.GetTransactions(&e5.GetTransactionsInput{CustomerCode: customerCode, CompanyCode: companyCode}, context)
 }
 var getConfig = config.Get
 var generateTransactionList = private.GenerateTransactionListFromAccountPenalties
@@ -91,15 +91,15 @@ func updateAccountPenaltiesEntry(customerCode string, companyCode string, e5Resp
 	return &accountPenalties
 }
 
-func getTransactionListFromE5(customerCode string, companyCode string, cfg *config.Config) (*e5.GetTransactionsResponse, error) {
+func getTransactionListFromE5(customerCode string, companyCode string, cfg *config.Config, context string) (*e5.GetTransactionsResponse, error) {
 	client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
-	e5Response, err := getTransactions(customerCode, companyCode, client)
+	e5Response, err := getTransactions(customerCode, companyCode, client, context)
 	return e5Response, err
 }
 
 func getAccountPenaltiesFromE5Transactions(
 	customerCode string, companyCode string, cfg *config.Config, apDaoSvc dao.AccountPenaltiesDaoService, cacheRecordExists bool, context string) (*models.AccountPenaltiesDao, error) {
-	e5Response, err := getTransactionListFromE5(customerCode, companyCode, cfg)
+	e5Response, err := getTransactionListFromE5(customerCode, companyCode, cfg, context)
 	logData := log.Data{"customer_code": customerCode, "company_code": companyCode}
 	if err != nil {
 		log.ErrorC(context, fmt.Errorf("error getting transaction list: [%v]", err))

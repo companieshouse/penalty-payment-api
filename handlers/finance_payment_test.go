@@ -49,30 +49,30 @@ type mockE5Client struct {
 	mock.Mock
 }
 
-func (m *mockE5Client) GetTransactions(input *e5.GetTransactionsInput) (*e5.GetTransactionsResponse, error) {
+func (m *mockE5Client) GetTransactions(input *e5.GetTransactionsInput, context string) (*e5.GetTransactionsResponse, error) {
 	m.Called(input)
 	return nil, errors.New("get transactions not used")
 }
 
-func (m *mockE5Client) TimeoutPayment(input *e5.PaymentActionInput) error {
+func (m *mockE5Client) TimeoutPayment(input *e5.PaymentActionInput, context string) error {
 	m.Called(input)
 	return errors.New("timeout payment not used")
 }
 
-func (m *mockE5Client) RejectPayment(input *e5.PaymentActionInput) error {
+func (m *mockE5Client) RejectPayment(input *e5.PaymentActionInput, context string) error {
 	m.Called(input)
 	return errors.New("reject payment not used")
 }
 
-func (m *mockE5Client) CreatePayment(input *e5.CreatePaymentInput) error {
+func (m *mockE5Client) CreatePayment(input *e5.CreatePaymentInput, context string) error {
 	return m.Called(input).Error(0)
 }
 
-func (m *mockE5Client) AuthorisePayment(input *e5.AuthorisePaymentInput) error {
+func (m *mockE5Client) AuthorisePayment(input *e5.AuthorisePaymentInput, context string) error {
 	return m.Called(input).Error(0)
 }
 
-func (m *mockE5Client) ConfirmPayment(input *e5.PaymentActionInput) error {
+func (m *mockE5Client) ConfirmPayment(input *e5.PaymentActionInput, context string) error {
 	return m.Called(input).Error(0)
 }
 

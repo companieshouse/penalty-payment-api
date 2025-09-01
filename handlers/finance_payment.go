@@ -144,7 +144,7 @@ func createPayment(penaltyPayment models.PenaltyPaymentsProcessing, client e5.Cl
 		PaymentID:    e5PaymentID,
 		TotalValue:   penaltyPayment.TotalValue,
 		Transactions: e5Transactions,
-	})
+	}, "")
 	if err != nil {
 		return err
 	}
@@ -159,7 +159,7 @@ func authorisePayment(penaltyPayment models.PenaltyPaymentsProcessing, client e5
 		CardReference: penaltyPayment.ExternalPaymentID,
 		CardType:      penaltyPayment.CardType,
 		Email:         penaltyPayment.Email,
-	})
+	}, "")
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func confirmPayment(penaltyPayment models.PenaltyPaymentsProcessing, client e5.C
 	err = client.ConfirmPayment(&e5.PaymentActionInput{
 		CompanyCode: penaltyPayment.CompanyCode,
 		PaymentID:   e5PaymentID,
-	})
+	}, "")
 	if err != nil {
 		return err
 	}
