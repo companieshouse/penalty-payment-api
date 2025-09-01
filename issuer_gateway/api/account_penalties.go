@@ -42,7 +42,7 @@ func AccountPenalties(params types.AccountPenaltiesParams) (*models.TransactionL
 	companyInfoLogData := log.Data{"customer_code": customerCode, "company_code": companyCode}
 
 	log.InfoC(context, "getting account penalties from cache", companyInfoLogData)
-	accountPenalties, err := apDaoSvc.GetAccountPenalties(customerCode, companyCode)
+	accountPenalties, err := apDaoSvc.GetAccountPenalties(customerCode, companyCode, context)
 
 	if accountPenalties == nil {
 		log.InfoC(context, "account penalties not found in cache, getting account penalties from E5 transactions", companyInfoLogData)
@@ -71,7 +71,7 @@ func AccountPenalties(params types.AccountPenaltiesParams) (*models.TransactionL
 
 func createAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse, apDaoSvc dao.AccountPenaltiesDaoService, context string) *models.AccountPenaltiesDao {
 	accountPenalties := convertE5Response(customerCode, companyCode, e5Response)
-	err := apDaoSvc.CreateAccountPenalties(&accountPenalties)
+	err := apDaoSvc.CreateAccountPenalties(&accountPenalties, context)
 	if err != nil {
 		log.ErrorC(context, fmt.Errorf("error creating account penalties: [%v]", err),
 			log.Data{"customer_code": customerCode, "company_code": companyCode})
@@ -82,7 +82,7 @@ func createAccountPenaltiesEntry(customerCode string, companyCode string, e5Resp
 
 func updateAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse, apDaoSvc dao.AccountPenaltiesDaoService, context string) *models.AccountPenaltiesDao {
 	accountPenalties := convertE5Response(customerCode, companyCode, e5Response)
-	err := apDaoSvc.UpdateAccountPenalties(&accountPenalties)
+	err := apDaoSvc.UpdateAccountPenalties(&accountPenalties, context)
 	if err != nil {
 		log.ErrorC(context, fmt.Errorf("error updating account penalties: [%v]", err),
 			log.Data{"customer_code": customerCode, "company_code": companyCode})

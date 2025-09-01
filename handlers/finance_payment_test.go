@@ -49,30 +49,30 @@ type mockE5Client struct {
 	mock.Mock
 }
 
-func (m *mockE5Client) GetTransactions(input *e5.GetTransactionsInput, context string) (*e5.GetTransactionsResponse, error) {
+func (m *mockE5Client) GetTransactions(input *e5.GetTransactionsInput, _ string) (*e5.GetTransactionsResponse, error) {
 	m.Called(input)
 	return nil, errors.New("get transactions not used")
 }
 
-func (m *mockE5Client) TimeoutPayment(input *e5.PaymentActionInput, context string) error {
+func (m *mockE5Client) TimeoutPayment(input *e5.PaymentActionInput, _ string) error {
 	m.Called(input)
 	return errors.New("timeout payment not used")
 }
 
-func (m *mockE5Client) RejectPayment(input *e5.PaymentActionInput, context string) error {
+func (m *mockE5Client) RejectPayment(input *e5.PaymentActionInput, _ string) error {
 	m.Called(input)
 	return errors.New("reject payment not used")
 }
 
-func (m *mockE5Client) CreatePayment(input *e5.CreatePaymentInput, context string) error {
+func (m *mockE5Client) CreatePayment(input *e5.CreatePaymentInput, _ string) error {
 	return m.Called(input).Error(0)
 }
 
-func (m *mockE5Client) AuthorisePayment(input *e5.AuthorisePaymentInput, context string) error {
+func (m *mockE5Client) AuthorisePayment(input *e5.AuthorisePaymentInput, _ string) error {
 	return m.Called(input).Error(0)
 }
 
-func (m *mockE5Client) ConfirmPayment(input *e5.PaymentActionInput, context string) error {
+func (m *mockE5Client) ConfirmPayment(input *e5.PaymentActionInput, _ string) error {
 	return m.Called(input).Error(0)
 }
 
@@ -82,17 +82,17 @@ type mockDAO struct {
 	mock.Mock
 }
 
-func (m *mockDAO) CreatePayableResource(dao *models.PayableResourceDao) error {
+func (m *mockDAO) CreatePayableResource(dao *models.PayableResourceDao, _ string) error {
 	m.Called(dao)
 	return errors.New("create payable resource not used")
 }
 
-func (m *mockDAO) GetPayableResource(customerCode, payableRef string) (*models.PayableResourceDao, error) {
+func (m *mockDAO) GetPayableResource(customerCode, payableRef, _ string) (*models.PayableResourceDao, error) {
 	m.Called(customerCode, payableRef)
 	return nil, errors.New("get payable resource not used")
 }
 
-func (m *mockDAO) UpdatePaymentDetails(dao *models.PayableResourceDao) error {
+func (m *mockDAO) UpdatePaymentDetails(dao *models.PayableResourceDao, _ string) error {
 	m.Called(dao)
 	return errors.New("update payment details not used")
 }
@@ -101,7 +101,7 @@ func (m *mockDAO) Shutdown() {
 	panic("shutdown not used")
 }
 
-func (m *mockDAO) SaveE5Error(customerCode, payableRef string, action e5.Action) error {
+func (m *mockDAO) SaveE5Error(customerCode, payableRef, _ string, action e5.Action) error {
 	return m.Called(customerCode, payableRef, action).Error(0)
 }
 

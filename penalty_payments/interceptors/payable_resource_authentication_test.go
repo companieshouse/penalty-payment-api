@@ -184,7 +184,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
 
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(nil, nil)
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234", "").Return(nil, nil)
 
 		w := httptest.NewRecorder()
 		httpmock.Activate()
@@ -213,7 +213,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
 		payableAuthenticationInterceptor := createPayableAuthenticationInterceptorWithMockService(&mockPayableResourceSvc)
 
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(&models.PayableResourceDao{}, fmt.Errorf("error"))
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234", "").Return(&models.PayableResourceDao{}, fmt.Errorf("error"))
 
 		w := httptest.NewRecorder()
 		httpmock.Activate()
@@ -247,7 +247,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234", "").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
 				PayableRef:   "1234",
@@ -302,7 +302,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234", "").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
 				PayableRef:   "1234",
@@ -357,7 +357,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234", "").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
 				PayableRef:   "1234",
@@ -407,7 +407,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234").Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "1234", "").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
 				PayableRef:   "1234",
@@ -457,7 +457,7 @@ func TestUnitUserPaymentInterceptor(t *testing.T) {
 			"abcd": {Amount: 5},
 		}
 		createdAt := time.Now().Truncate(time.Millisecond)
-		mockPrDaoSvc.EXPECT().GetPayableResource("OC444555", "1234").Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("OC444555", "1234", "").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "OC444555",
 				PayableRef:   "1234",

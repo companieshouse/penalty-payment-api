@@ -258,7 +258,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 
 			Convey("Then an error should be returned", func() {
-				mockApDaoSvc.EXPECT().GetAccountPenalties(gomock.Any(), gomock.Any()).Return(nil, nil)
+				mockApDaoSvc.EXPECT().GetAccountPenalties(gomock.Any(), gomock.Any(), "").Return(nil, nil)
 
 				_, err := prepareEmailKafkaMessage(
 					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc, topic)

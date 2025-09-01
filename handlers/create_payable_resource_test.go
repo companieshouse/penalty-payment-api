@@ -300,8 +300,8 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 		// as there are two transaction, the Times is 2 here, possible enhancement to remove this duplicate call
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenaltyCompanyCode).Return(nil, nil).Times(2)
-		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil).Times(2)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenaltyCompanyCode, "").Return(nil, nil).Times(2)
+		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil).Times(2)
 
 		body, _ := json.Marshal(&models.PayableRequest{
 			CustomerCode: "10000024",
@@ -328,11 +328,11 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
 		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		// expect the CreatePayableResource to be called once and return an error
-		mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any()).Return(errors.New("any error"))
+		mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any(), "").Return(errors.New("any error"))
 
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenaltyCompanyCode).Return(nil, nil)
-		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenaltyCompanyCode, "").Return(nil, nil)
+		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil)
 
 		body, _ := json.Marshal(&models.PayableRequest{
 			CustomerCode: "10000024",
@@ -393,11 +393,11 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 				httpmock.RegisterResponder("GET", tc.urlE5, httpmock.NewStringResponder(200, tc.e5Response))
 				mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 				// expect the CreatePayableResource to be called once and return without error
-				mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any()).Return(nil)
+				mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any(), "").Return(nil)
 
 				mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
-				mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, tc.companyCode).Return(nil, nil)
-				mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil)
+				mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, tc.companyCode, "").Return(nil, nil)
+				mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil)
 
 				body, _ := json.Marshal(&models.PayableRequest{
 					CustomerCode: "10000024",

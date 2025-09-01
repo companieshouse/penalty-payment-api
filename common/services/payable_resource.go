@@ -28,14 +28,15 @@ type PayableResourceService struct {
 
 // GetPayableResource retrieves the payable resource with the given customer code and payable ref from the database
 func (s *PayableResourceService) GetPayableResource(req *http.Request, customerCode string, payableRef string) (*models.PayableResource, ResponseType, error) {
-	payable, err := s.DAO.GetPayableResource(customerCode, payableRef)
+	context := req.Header.Get("X-Request-ID")
+	payable, err := s.DAO.GetPayableResource(customerCode, payableRef, context)
 	if err != nil {
 		err = fmt.Errorf("error getting payable resource from db: [%v]", err)
-		log.ErrorR(req, err)
+		log.ErrorC(context, err)
 		return nil, Error, err
 	}
 	if payable == nil {
-		log.TraceR(req, "payable resource not found", log.Data{"customer_code": customerCode, "payable_ref": payableRef})
+		log.TraceC(context, "payable resource not found", log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 		return nil, NotFound, nil
 	}
 
@@ -45,7 +46,7 @@ func (s *PayableResourceService) GetPayableResource(req *http.Request, customerC
 
 // UpdateAsPaid will update the resource as paid and persist the changes in the database
 func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, payment validators.PaymentInformation, context string) error {
-	model, err := s.DAO.GetPayableResource(resource.CustomerCode, resource.PayableRef)
+	model, err := s.DAO.GetPayableResource(resource.CustomerCode, resource.PayableRef, context)
 	if err != nil {
 		err = fmt.Errorf("error getting payable resource from db: [%v]", err)
 		log.ErrorC(context, err, log.Data{
@@ -71,5 +72,5 @@ func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, p
 	model.Data.Payment.PaidAt = &payment.CompletedAt
 	model.Data.Payment.Amount = payment.Amount
 
-	return s.DAO.UpdatePaymentDetails(model)
+	return s.DAO.UpdatePaymentDetails(model, context)
 }

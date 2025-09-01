@@ -72,7 +72,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	}, "")
 
 	if err != nil {
-		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.CreateAction); svcErr != nil {
+		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.CreateAction, context); svcErr != nil {
 			log.ErrorC(context, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
 			return err
 		}
@@ -90,7 +90,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	}, "")
 
 	if err != nil {
-		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.AuthoriseAction); svcErr != nil {
+		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.AuthoriseAction, context); svcErr != nil {
 			log.ErrorC(context, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
 			return err
 		}
@@ -102,10 +102,10 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	err = client.ConfirmPayment(&e5.PaymentActionInput{
 		CompanyCode: companyCode,
 		PaymentID:   paymentID,
-	}, "")
+	}, context)
 
 	if err != nil {
-		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.ConfirmAction); svcErr != nil {
+		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.ConfirmAction, context); svcErr != nil {
 			log.ErrorC(context, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
 			return err
 		}
@@ -120,6 +120,6 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 
 // RecordIssuerCommandError will mark the resource as having failed to update E5.
 func RecordIssuerCommandError(payableResourceService *services.PayableResourceService,
-	resource models.PayableResource, action e5.Action) error {
-	return payableResourceService.DAO.SaveE5Error(resource.CustomerCode, resource.PayableRef, action)
+	resource models.PayableResource, action e5.Action, context string) error {
+	return payableResourceService.DAO.SaveE5Error(resource.CustomerCode, resource.PayableRef, context, action)
 }

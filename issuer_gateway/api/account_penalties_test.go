@@ -175,7 +175,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 	Convey("error when no transactions provided", t, func() {
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode, "").Return(nil, nil)
 		params.AccountPenaltiesDaoService = mockApDaoSvc
 		_, responseType, err := AccountPenalties(params)
 		So(err, ShouldNotBeNil)
@@ -184,8 +184,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 	Convey("Multiple payable late filing penalties, some with unpaid legal costs associated by made up date", t, func() {
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
-		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode, "").Return(nil, nil)
+		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil)
 
 		mockedGetTransactions := func(customerCode string, companyCode string,
 			client e5.ClientInterface, context string) (*e5.GetTransactionsResponse, error) {
@@ -223,8 +223,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 	Convey("penalties returned when valid transactions but error creating account penalties cache entry", t, func() {
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
-		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any()).Return(errors.New("error creating account penalties"))
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode, "").Return(nil, nil)
+		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(errors.New("error creating account penalties"))
 
 		mockedGetTransactions := func(customerCode string, companyCode string,
 			client e5.ClientInterface, context string) (*e5.GetTransactionsResponse, error) {
@@ -244,7 +244,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 		accountPenalties, _ := createData(false, false)
 
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode, "").Return(&accountPenalties, nil)
 
 		params.AccountPenaltiesDaoService = mockApDaoSvc
 		listResponse, responseType, err := AccountPenalties(params)
@@ -260,7 +260,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 		accountPenalties.AccountPenalties[0].OutstandingAmount = 250.0
 
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode, "").Return(&accountPenalties, nil)
 
 		params.AccountPenaltiesDaoService = mockApDaoSvc
 		listResponse, responseType, err := AccountPenalties(params)
@@ -274,8 +274,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 		accountPenalties, transactionsResponse := createData(false, true)
 
 		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
-		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(errors.New("error updating account penalties"))
+		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode, "").Return(&accountPenalties, nil)
+		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any(), "").Return(errors.New("error updating account penalties"))
 
 		getTransactions = func(customerCode string, companyCode string,
 			client e5.ClientInterface, context string) (*e5.GetTransactionsResponse, error) {
@@ -295,8 +295,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 		accountPenalties, transactionsResponse := createData(false, true)
 
 		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
-		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(nil)
+		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode, "").Return(&accountPenalties, nil)
+		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any(), "").Return(nil)
 
 		getTransactions = func(customerCode string, companyCode string,
 			client e5.ClientInterface, context string) (*e5.GetTransactionsResponse, error) {
@@ -318,8 +318,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 		accountPenalties.AccountPenalties[0].OutstandingAmount = 250.0
 
 		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(&accountPenalties, nil)
-		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(nil)
+		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode, "").Return(&accountPenalties, nil)
+		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any(), "").Return(nil)
 
 		getTransactions = func(customerCode string, companyCode string,
 			client e5.ClientInterface, context string) (*e5.GetTransactionsResponse, error) {
@@ -347,9 +347,9 @@ func TestUnitAccountPenalties(t *testing.T) {
 		}
 
 		mockPenaltiesService := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
-		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any()).Return(nil).MaxTimes(0)
-		mockPenaltiesService.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil).MaxTimes(0)
+		mockPenaltiesService.EXPECT().GetAccountPenalties(customerCode, companyCode, "").Return(nil, nil)
+		mockPenaltiesService.EXPECT().UpdateAccountPenalties(gomock.Any(), "").Return(nil).MaxTimes(0)
+		mockPenaltiesService.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil).MaxTimes(0)
 
 		getTransactions = func(customerCode string, companyCode string,
 			client e5.ClientInterface, context string) (*e5.GetTransactionsResponse, error) {
@@ -366,7 +366,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 	Convey("error when transactions cannot be found", t, func() {
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode, "").Return(nil, nil)
 
 		errGettingTransactions := errors.New("error getting transactions")
 		mockedGetTransactions := func(customerCode string, companyCode string, client e5.ClientInterface, context string) (*e5.GetTransactionsResponse, error) {
@@ -384,8 +384,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 
 	Convey("error when generating transaction list fails", t, func() {
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode).Return(nil, nil)
-		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any()).Return(nil)
+		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, companyCode, "").Return(nil, nil)
+		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil)
 
 		errGeneratingTransactionList := errors.New("error generating transaction list from account penalties: [error generating etag]")
 		payableTransactionList := models.TransactionListResponse{}
@@ -448,7 +448,7 @@ func assertTransactionListItem(transactionListItem models.TransactionListItem, e
 }
 
 func createData(isPaid bool, isStale bool) (models.AccountPenaltiesDao, e5.GetTransactionsResponse) {
-	createdAt := time.Now().Add(time.Hour * -6)
+	createdAt := time.Now().Add(time.Minute * -10)
 	if isStale {
 		createdAt = time.Now().Add(-24 * time.Hour)
 	}

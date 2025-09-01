@@ -31,7 +31,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 	Convey("Error getting payable resource from DB", t, func() {
 		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", gomock.Any()).Return(&models.PayableResourceDao{}, fmt.Errorf("error"))
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", gomock.Any(), "").Return(&models.PayableResourceDao{}, fmt.Errorf("error"))
 
 		req := httptest.NewRequest("Get", "/test", nil)
 
@@ -44,7 +44,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 	Convey("Payable resource not found", t, func() {
 		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "invalid").Return(nil, nil)
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "invalid", "").Return(nil, nil)
 
 		req := httptest.NewRequest("Get", "/test", nil)
 
@@ -62,7 +62,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 			"abcd": {Amount: 5},
 		}
 		t := time.Now().Truncate(time.Millisecond)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", gomock.Any()).Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", gomock.Any(), "").Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
 				PayableRef:   "1234",
@@ -123,7 +123,7 @@ func TestUnitGetPayableResource(t *testing.T) {
 			"wxyz": {Amount: 10},
 		}
 		t := time.Now().Truncate(time.Millisecond)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", gomock.Any()).Return(
+		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", gomock.Any(), gomock.Any()).Return(
 			&models.PayableResourceDao{
 				CustomerCode: "12345678",
 				PayableRef:   "1234",
@@ -187,7 +187,7 @@ func TestUnitPayableResourceService_UpdateAsPaid(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(nil, errors.New("not found"))
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("not found"))
 			svc := PayableResourceService{DAO: mockPrDaoSvc}
 
 			err := svc.UpdateAsPaid(models.PayableResource{}, validators.PaymentInformation{}, "")
@@ -207,7 +207,7 @@ func TestUnitPayableResourceService_UpdateAsPaid(t *testing.T) {
 				},
 			}
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), gomock.Any()).Return(dataModel, nil)
 			svc := PayableResourceService{DAO: mockPrDaoSvc}
 
 			err := svc.UpdateAsPaid(models.PayableResource{}, validators.PaymentInformation{Status: constants.Paid.String()}, "")
@@ -225,8 +225,8 @@ func TestUnitPayableResourceService_UpdateAsPaid(t *testing.T) {
 				},
 			}
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(gomock.Any()).Times(1)
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), gomock.Any()).Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(gomock.Any(), gomock.Any()).Times(1)
 			svc := PayableResourceService{DAO: mockPrDaoSvc}
 
 			layout := "2006-01-02T15:04:05.000Z"

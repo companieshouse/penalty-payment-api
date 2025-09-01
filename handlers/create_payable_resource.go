@@ -82,7 +82,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 
 		model := transformers.PayableResourceRequestToDB(&request, context)
 
-		err = prDaoSvc.CreatePayableResource(model)
+		err = prDaoSvc.CreatePayableResource(model, context)
 		if err != nil {
 			log.ErrorC(context, fmt.Errorf("failed to create payable request in database"))
 			m := models.NewMessageResponse("there was a problem handling your request")

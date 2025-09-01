@@ -249,10 +249,10 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 			dataModel := &models.PayableResourceDao{}
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
-			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
-			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel, "").Times(1)
+			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", "", e5.CreateAction).Return(errors.New(""))
+			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -304,10 +304,10 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 			dataModel := &models.PayableResourceDao{}
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
-			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
-			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel, "").Times(1)
+			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", "", e5.CreateAction).Return(errors.New(""))
+			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -366,9 +366,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
-			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", "", e5.CreateAction).Return(errors.New(""))
+			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -418,10 +418,10 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 			dataModel := &models.PayableResourceDao{}
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
-			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", e5.CreateAction).Return(errors.New(""))
-			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel, "").Times(1)
+			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", "", e5.CreateAction).Return(errors.New(""))
+			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -481,8 +481,8 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 			dataModel := &models.PayableResourceDao{}
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel, "").Times(1)
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -543,9 +543,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 			dataModel := &models.PayableResourceDao{}
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
-			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("error"))
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel, "").Times(1)
+			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(errors.New("error"))
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -606,9 +606,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 			dataModel := &models.PayableResourceDao{}
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
-			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel, "").Times(1)
+			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
 			model := &models.PayableResource{
@@ -674,9 +674,9 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 			dataModel := &models.PayableResourceDao{}
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel).Times(1)
-			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
+			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel, "").Times(1)
+			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
 			model := &models.PayableResource{

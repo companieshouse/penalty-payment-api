@@ -216,7 +216,7 @@ func updateAccountPenaltyAsPaid(resource *models.PayableResource, svc dao.Accoun
 	}
 	penalty := resource.Transactions[0]
 
-	err = svc.UpdateAccountPenaltyAsPaid(resource.CustomerCode, companyCode, penalty.PenaltyRef)
+	err = svc.UpdateAccountPenaltyAsPaid(resource.CustomerCode, companyCode, penalty.PenaltyRef, context)
 	if err != nil {
 		log.ErrorC(context, fmt.Errorf("error updating account penalties collection as paid: [%v]", err),
 			log.Data{"customer_code": resource.CustomerCode, "company_code": companyCode,
