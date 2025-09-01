@@ -190,7 +190,7 @@ func TestUnitPayableResourceService_UpdateAsPaid(t *testing.T) {
 			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(nil, errors.New("not found"))
 			svc := PayableResourceService{DAO: mockPrDaoSvc}
 
-			err := svc.UpdateAsPaid(models.PayableResource{}, validators.PaymentInformation{})
+			err := svc.UpdateAsPaid(models.PayableResource{}, validators.PaymentInformation{}, "")
 
 			So(err, ShouldBeError, ErrPenaltyNotFound)
 		})
@@ -210,7 +210,7 @@ func TestUnitPayableResourceService_UpdateAsPaid(t *testing.T) {
 			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any()).Return(dataModel, nil)
 			svc := PayableResourceService{DAO: mockPrDaoSvc}
 
-			err := svc.UpdateAsPaid(models.PayableResource{}, validators.PaymentInformation{Status: constants.Paid.String()})
+			err := svc.UpdateAsPaid(models.PayableResource{}, validators.PaymentInformation{Status: constants.Paid.String()}, "")
 
 			So(err, ShouldBeError, ErrAlreadyPaid)
 		})
@@ -241,7 +241,7 @@ func TestUnitPayableResourceService_UpdateAsPaid(t *testing.T) {
 				CreatedBy:   "test@example.com",
 			}
 
-			err := svc.UpdateAsPaid(models.PayableResource{}, paymentResponse)
+			err := svc.UpdateAsPaid(models.PayableResource{}, paymentResponse, "")
 
 			So(err, ShouldBeNil)
 			So(dataModel.Data.Payment.Status, ShouldEqual, paymentResponse.Status)

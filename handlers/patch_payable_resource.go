@@ -153,7 +153,7 @@ func updateAsPaidInDatabase(resource *models.PayableResource, payment *validator
 	payableResourceService *services.PayableResourceService, context string, w http.ResponseWriter) {
 	// Update the payable resource in the db
 	defer wg.Done()
-	err := payableResourceService.UpdateAsPaid(*resource, *payment)
+	err := payableResourceService.UpdateAsPaid(*resource, *payment, context)
 	if err != nil {
 		log.ErrorC(context, err, log.Data{"payable_ref": resource.PayableRef, "payment_reference": payment.Reference})
 		w.WriteHeader(http.StatusInternalServerError)
