@@ -72,7 +72,7 @@ func TestUnitPayablePenalty(t *testing.T) {
 	params := types.PayablePenaltyParams{
 		PenaltyDetailsMap:      penaltyDetailsMap,
 		AllowedTransactionsMap: allowedTransactionMap,
-		Context:                "",
+		RequestId:              "",
 	}
 
 	Convey("error is returned when fetching account penalties fails", t, func() {
@@ -134,7 +134,7 @@ func TestUnitPayablePenalty(t *testing.T) {
 		}
 
 		transaction := models.TransactionItem{PenaltyRef: "121"}
-		mockedMatchPenalty := func(referenceTransactions []models.TransactionListItem, transactionToMatch models.TransactionItem, companyNumber, context string) (*models.TransactionItem, error) {
+		mockedMatchPenalty := func(referenceTransactions []models.TransactionListItem, transactionToMatch models.TransactionItem, companyNumber, requestId string) (*models.TransactionItem, error) {
 			return wantPayablePenalty, nil
 		}
 		getAccountPenalties = mockedAccountPenalties

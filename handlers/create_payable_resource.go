@@ -25,15 +25,15 @@ var payablePenalty = api.PayablePenalty
 func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
 	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		context := r.Header.Get("X-Request-ID")
-		log.InfoC(context, "start POST payable resource request")
+		requestId := r.Header.Get("X-Request-ID")
+		log.InfoC(requestId, "start POST payable resource request")
 
 		var request models.PayableRequest
 		err := json.NewDecoder(r.Body).Decode(&request)
 
 		userDetails, companyCode, penaltyRefType, failedValidation := extractRequestData(w, r, err, request)
 		if failedValidation {
-			log.ErrorC(context, fmt.Errorf("error extracting request data: %v", err))
+			log.ErrorC(requestId, fmt.Errorf("error extracting request data: %v", err))
 			return
 		}
 
@@ -41,7 +41,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 
 		request.CustomerCode = strings.ToUpper(customerCode)
 		request.CreatedBy = userDetails.(authentication.AuthUserDetails)
-		log.DebugC(context, "successfully extracted request data", log.Data{"request": request})
+		log.DebugC(requestId, "successfully extracted request data", log.Data{"request": request})
 
 		// Ensure that the transactions in the request are valid payable penalties that exist in E5
 		var payablePenalties []models.TransactionItem
@@ -54,11 +54,11 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 				Transaction:                transaction,
 				AllowedTransactionsMap:     allowedTransactionMap,
 				AccountPenaltiesDaoService: apDaoSvc,
-				Context:                    context,
+				RequestId:                  requestId,
 			}
 			payablePenalty, err := payablePenalty(params)
 			if err != nil {
-				log.ErrorC(context, fmt.Errorf("invalid request - failed matching against e5"))
+				log.ErrorC(requestId, fmt.Errorf("invalid request - failed matching against e5"))
 				m := models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time")
 				utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 				return
@@ -73,29 +73,29 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		err = v.Struct(request)
 
 		if err != nil {
-			log.ErrorC(context, fmt.Errorf("invalid request - failed validation"))
+			log.ErrorC(requestId, fmt.Errorf("invalid request - failed validation"))
 			m := models.NewMessageResponse("invalid request body")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
-		log.DebugC(context, "request transactions validated, creating payable resource", log.Data{"request": request})
+		log.DebugC(requestId, "request transactions validated, creating payable resource", log.Data{"request": request})
 
-		model := transformers.PayableResourceRequestToDB(&request, context)
+		model := transformers.PayableResourceRequestToDB(&request, requestId)
 
-		err = prDaoSvc.CreatePayableResource(model, context)
+		err = prDaoSvc.CreatePayableResource(model, requestId)
 		if err != nil {
-			log.ErrorC(context, fmt.Errorf("failed to create payable request in database"))
+			log.ErrorC(requestId, fmt.Errorf("failed to create payable request in database"))
 			m := models.NewMessageResponse("there was a problem handling your request")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusInternalServerError)
 			return
 		}
 
 		payableResource := transformers.PayableResourceDaoToCreatedResponse(model)
-		log.DebugC(context, "successfully created payable resource", log.Data{"payable_resource": payableResource})
+		log.DebugC(requestId, "successfully created payable resource", log.Data{"payable_resource": payableResource})
 
 		utils.WriteJSONWithStatus(w, r, payableResource, http.StatusCreated)
 
-		log.InfoC(context, "POST payable resource request completed successfully")
+		log.InfoC(requestId, "POST payable resource request completed successfully")
 	})
 }
 

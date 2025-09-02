@@ -28,15 +28,15 @@ type PayableResourceService struct {
 
 // GetPayableResource retrieves the payable resource with the given customer code and payable ref from the database
 func (s *PayableResourceService) GetPayableResource(req *http.Request, customerCode string, payableRef string) (*models.PayableResource, ResponseType, error) {
-	context := req.Header.Get("X-Request-ID")
-	payable, err := s.DAO.GetPayableResource(customerCode, payableRef, context)
+	requestId := req.Header.Get("X-Request-ID")
+	payable, err := s.DAO.GetPayableResource(customerCode, payableRef, requestId)
 	if err != nil {
 		err = fmt.Errorf("error getting payable resource from db: [%v]", err)
-		log.ErrorC(context, err)
+		log.ErrorC(requestId, err)
 		return nil, Error, err
 	}
 	if payable == nil {
-		log.TraceC(context, "payable resource not found", log.Data{"customer_code": customerCode, "payable_ref": payableRef})
+		log.TraceC(requestId, "payable resource not found", log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 		return nil, NotFound, nil
 	}
 
@@ -45,11 +45,11 @@ func (s *PayableResourceService) GetPayableResource(req *http.Request, customerC
 }
 
 // UpdateAsPaid will update the resource as paid and persist the changes in the database
-func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, payment validators.PaymentInformation, context string) error {
-	model, err := s.DAO.GetPayableResource(resource.CustomerCode, resource.PayableRef, context)
+func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, payment validators.PaymentInformation, requestId string) error {
+	model, err := s.DAO.GetPayableResource(resource.CustomerCode, resource.PayableRef, requestId)
 	if err != nil {
 		err = fmt.Errorf("error getting payable resource from db: [%v]", err)
-		log.ErrorC(context, err, log.Data{
+		log.ErrorC(requestId, err, log.Data{
 			"payable_ref":   resource.PayableRef,
 			"customer_code": resource.CustomerCode,
 		})
@@ -59,7 +59,7 @@ func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, p
 	// check if this resource has already been paid
 	if model.IsPaid() {
 		err = errors.New("this penalty has already been paid")
-		log.ErrorC(context, err, log.Data{
+		log.ErrorC(requestId, err, log.Data{
 			"payable_ref":   model.PayableRef,
 			"customer_code": model.CustomerCode,
 			"payment_id":    model.Data.Payment.Reference,
@@ -72,5 +72,5 @@ func (s *PayableResourceService) UpdateAsPaid(resource models.PayableResource, p
 	model.Data.Payment.PaidAt = &payment.CompletedAt
 	model.Data.Payment.Amount = payment.Amount
 
-	return s.DAO.UpdatePaymentDetails(model, context)
+	return s.DAO.UpdatePaymentDetails(model, requestId)
 }

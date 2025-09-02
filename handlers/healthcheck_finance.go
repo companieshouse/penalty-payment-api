@@ -12,12 +12,12 @@ import (
 
 // HandleHealthCheckFinanceSystem checks whether the e5 system is available to take requests
 func HandleHealthCheckFinanceSystem(w http.ResponseWriter, r *http.Request) {
-	context := r.Header.Get("X-Request-ID")
+	requestId := r.Header.Get("X-Request-ID")
 
-	systemAvailableTime, systemUnavailable, parseError := api.CheckScheduledMaintenance(context)
+	systemAvailableTime, systemUnavailable, parseError := api.CheckScheduledMaintenance(requestId)
 
 	if parseError {
-		log.ErrorC(context, fmt.Errorf("parseError from CheckScheduledMaintenance: [%v]", parseError))
+		log.ErrorC(requestId, fmt.Errorf("parseError from CheckScheduledMaintenance: [%v]", parseError))
 		m := models.NewMessageResponse("failed to check scheduled maintenance")
 		utils.WriteJSONWithStatus(w, r, m, http.StatusInternalServerError)
 		return
@@ -26,7 +26,7 @@ func HandleHealthCheckFinanceSystem(w http.ResponseWriter, r *http.Request) {
 	if systemUnavailable {
 		m := models.NewMessageTimeResponse("UNHEALTHY - PLANNED MAINTENANCE", systemAvailableTime)
 		utils.WriteJSONWithStatus(w, r, m, http.StatusServiceUnavailable)
-		log.TraceC(context, "Planned maintenance")
+		log.TraceC(requestId, "Planned maintenance")
 		return
 	}
 

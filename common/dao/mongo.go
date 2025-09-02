@@ -99,8 +99,8 @@ type MongoAccountPenaltiesService struct {
 
 // CreateAccountPenalties creates a new document in the account_penalties database collection if a
 // document does not already exist for the customer
-func (m *MongoAccountPenaltiesService) CreateAccountPenalties(dao *models.AccountPenaltiesDao, ctx string) error {
-	log.InfoC(ctx, "creating new document in account_penalties collection", log.Data{
+func (m *MongoAccountPenaltiesService) CreateAccountPenalties(dao *models.AccountPenaltiesDao, requestId string) error {
+	log.InfoC(requestId, "creating new document in account_penalties collection", log.Data{
 		"customer_code": dao.CustomerCode,
 		"company_code":  dao.CompanyCode,
 	})
@@ -129,7 +129,7 @@ func (m *MongoAccountPenaltiesService) CreateAccountPenalties(dao *models.Accoun
 	// completed in an atomic operation
 	result, err := collection.UpdateOne(context.Background(), filter, update, opts)
 	if err != nil {
-		log.ErrorC(ctx, err, log.Data{
+		log.ErrorC(requestId, err, log.Data{
 			"customer_code": dao.CustomerCode,
 			"company_code":  dao.CompanyCode,
 		})
@@ -137,12 +137,12 @@ func (m *MongoAccountPenaltiesService) CreateAccountPenalties(dao *models.Accoun
 	}
 
 	if result.MatchedCount == 0 && result.UpsertedCount == 1 {
-		log.InfoC(ctx, "created new document in account_penalties collection", log.Data{
+		log.InfoC(requestId, "created new document in account_penalties collection", log.Data{
 			"customer_code": dao.CustomerCode,
 			"company_code":  dao.CompanyCode,
 		})
 	} else {
-		log.InfoC(ctx, "no new document created in account_penalties collection as one already exists", log.Data{
+		log.InfoC(requestId, "no new document created in account_penalties collection as one already exists", log.Data{
 			"customer_code": dao.CustomerCode,
 			"company_code":  dao.CompanyCode,
 		})
@@ -152,7 +152,7 @@ func (m *MongoAccountPenaltiesService) CreateAccountPenalties(dao *models.Accoun
 }
 
 // GetAccountPenalties gets the account penalties from the account_penalties database collection
-func (m *MongoAccountPenaltiesService) GetAccountPenalties(customerCode string, companyCode, ctx string) (*models.AccountPenaltiesDao, error) {
+func (m *MongoAccountPenaltiesService) GetAccountPenalties(customerCode string, companyCode, requestId string) (*models.AccountPenaltiesDao, error) {
 	logContext := log.Data{
 		"customer_code": customerCode,
 		"company_code":  companyCode,
@@ -169,28 +169,28 @@ func (m *MongoAccountPenaltiesService) GetAccountPenalties(customerCode string, 
 	err := dbResource.Err()
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			log.DebugC(ctx, "no document found in account_penalties collection", logContext)
+			log.DebugC(requestId, "no document found in account_penalties collection", logContext)
 			return nil, err
 		}
-		log.ErrorC(ctx, err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return nil, err
 	}
 
 	err = dbResource.Decode(&resource)
 
 	if err != nil {
-		log.ErrorC(ctx, err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return nil, err
 	}
 
-	log.DebugC(ctx, "GetAccountPenalties", logContext, log.Data{"account_penalties": resource})
+	log.DebugC(requestId, "GetAccountPenalties", logContext, log.Data{"account_penalties": resource})
 
 	return &resource, nil
 }
 
 // UpdateAccountPenaltyAsPaid will update the penalty status of an item in account_penalties database collection
-func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode string, companyCode string, penaltyRef, ctx string) error {
-	log.InfoC(ctx, "updating penalty as paid in account_penalties collection", log.Data{
+func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode string, companyCode string, penaltyRef, requestId string) error {
+	log.InfoC(requestId, "updating penalty as paid in account_penalties collection", log.Data{
 		"customer_code": customerCode,
 		"company_code":  companyCode,
 		"penalty_ref":   penaltyRef,
@@ -214,7 +214,7 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode s
 
 	result, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.ErrorC(ctx, err, log.Data{
+		log.ErrorC(requestId, err, log.Data{
 			"customer_code": customerCode,
 			"company_code":  companyCode,
 			"penalty_ref":   penaltyRef,
@@ -224,7 +224,7 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode s
 
 	if result.ModifiedCount == 0 {
 		err = errors.New("failed to update penalty as paid in account_penalties collection as no penalty was found")
-		log.ErrorC(ctx, err, log.Data{
+		log.ErrorC(requestId, err, log.Data{
 			"customer_code": customerCode,
 			"company_code":  companyCode,
 			"penalty_ref":   penaltyRef,
@@ -232,7 +232,7 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode s
 		return err
 	}
 
-	log.InfoC(ctx, "successfully updated penalty as paid in account_penalties collection", log.Data{
+	log.InfoC(requestId, "successfully updated penalty as paid in account_penalties collection", log.Data{
 		"customer_code": customerCode,
 		"company_code":  companyCode,
 		"closed_at":     closedAt,
@@ -243,8 +243,8 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenaltyAsPaid(customerCode s
 }
 
 // UpdateAccountPenalties updates the created_at, closed_at and data fields of an existing document
-func (m *MongoAccountPenaltiesService) UpdateAccountPenalties(dao *models.AccountPenaltiesDao, ctx string) error {
-	log.InfoC(ctx, "updating existing document in account_penalties collection", log.Data{
+func (m *MongoAccountPenaltiesService) UpdateAccountPenalties(dao *models.AccountPenaltiesDao, requestId string) error {
+	log.InfoC(requestId, "updating existing document in account_penalties collection", log.Data{
 		"customer_code": dao.CustomerCode,
 		"company_code":  dao.CompanyCode,
 	})
@@ -266,7 +266,7 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenalties(dao *models.Accoun
 
 	result, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.ErrorC(ctx, err, log.Data{
+		log.ErrorC(requestId, err, log.Data{
 			"customer_code": dao.CustomerCode,
 			"company_code":  dao.CompanyCode,
 		})
@@ -274,13 +274,13 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenalties(dao *models.Accoun
 	}
 
 	if result.ModifiedCount == 1 {
-		log.DebugC(ctx, "updated a document in account_penalties collection", log.Data{
+		log.DebugC(requestId, "updated a document in account_penalties collection", log.Data{
 			"customer_code": dao.CustomerCode,
 			"company_code":  dao.CompanyCode,
 		})
 	} else {
 		err = errors.New("failed to update document in account_penalties collection")
-		log.ErrorC(ctx, err, log.Data{
+		log.ErrorC(requestId, err, log.Data{
 			"customer_code": dao.CustomerCode,
 			"company_code":  dao.CompanyCode,
 		})
@@ -291,10 +291,10 @@ func (m *MongoAccountPenaltiesService) UpdateAccountPenalties(dao *models.Accoun
 }
 
 // SaveE5Error will update the resource by flagging an error in e5 for a particular action
-func (m *MongoPayableResourceService) SaveE5Error(customerCode, payableRef, ctx string, action e5.Action) error {
-	dao, err := m.GetPayableResource(customerCode, payableRef, ctx)
+func (m *MongoPayableResourceService) SaveE5Error(customerCode, payableRef, requestId string, action e5.Action) error {
+	dao, err := m.GetPayableResource(customerCode, payableRef, requestId)
 	if err != nil {
-		log.ErrorC(ctx, err, log.Data{"customer_code": customerCode, "payable_ref": payableRef})
+		log.ErrorC(requestId, err, log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 		return err
 	}
 
@@ -309,11 +309,11 @@ func (m *MongoPayableResourceService) SaveE5Error(customerCode, payableRef, ctx 
 
 	collection := m.db.Collection(m.CollectionName)
 
-	log.DebugC(ctx, "updating e5 command error in mongo document", log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef, "e5_command_error": action})
+	log.DebugC(requestId, "updating e5 command error in mongo document", log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef, "e5_command_error": action})
 
 	_, err = collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.ErrorC(ctx, err, log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
+		log.ErrorC(requestId, err, log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
 		return err
 	}
 
@@ -321,14 +321,14 @@ func (m *MongoPayableResourceService) SaveE5Error(customerCode, payableRef, ctx 
 }
 
 // CreatePayableResource will store the payable request into the database
-func (m *MongoPayableResourceService) CreatePayableResource(dao *models.PayableResourceDao, ctx string) error {
+func (m *MongoPayableResourceService) CreatePayableResource(dao *models.PayableResourceDao, requestId string) error {
 
 	dao.ID = primitive.NewObjectID()
 
 	collection := m.db.Collection(m.CollectionName)
 	_, err := collection.InsertOne(context.Background(), dao)
 	if err != nil {
-		log.ErrorC(ctx, err)
+		log.ErrorC(requestId, err)
 		return err
 	}
 
@@ -336,7 +336,7 @@ func (m *MongoPayableResourceService) CreatePayableResource(dao *models.PayableR
 }
 
 // GetPayableResource gets the payable request from the database
-func (m *MongoPayableResourceService) GetPayableResource(customerCode, payableRef, ctx string) (*models.PayableResourceDao, error) {
+func (m *MongoPayableResourceService) GetPayableResource(customerCode, payableRef, requestId string) (*models.PayableResourceDao, error) {
 	var resource models.PayableResourceDao
 
 	collection := m.db.Collection(m.CollectionName)
@@ -345,17 +345,17 @@ func (m *MongoPayableResourceService) GetPayableResource(customerCode, payableRe
 	err := dbResource.Err()
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			log.DebugC(ctx, "no payable resource found", log.Data{"customer_code": customerCode, "payable_ref": payableRef})
+			log.DebugC(requestId, "no payable resource found", log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 			return nil, err
 		}
-		log.ErrorC(ctx, err, log.Data{"customer_code": customerCode, "payable_ref": payableRef})
+		log.ErrorC(requestId, err, log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 		return nil, err
 	}
 
 	err = dbResource.Decode(&resource)
 
 	if err != nil {
-		log.ErrorC(ctx, err, log.Data{"customer_code": customerCode, "payable_ref": payableRef})
+		log.ErrorC(requestId, err, log.Data{"customer_code": customerCode, "payable_ref": payableRef})
 		return nil, err
 	}
 
@@ -363,7 +363,7 @@ func (m *MongoPayableResourceService) GetPayableResource(customerCode, payableRe
 }
 
 // UpdatePaymentDetails will save the document back to Mongo
-func (m *MongoPayableResourceService) UpdatePaymentDetails(dao *models.PayableResourceDao, ctx string) error {
+func (m *MongoPayableResourceService) UpdatePaymentDetails(dao *models.PayableResourceDao, requestId string) error {
 	filter := bson.M{"_id": dao.ID}
 
 	update := bson.D{
@@ -379,15 +379,15 @@ func (m *MongoPayableResourceService) UpdatePaymentDetails(dao *models.PayableRe
 
 	collection := m.db.Collection(m.CollectionName)
 
-	log.DebugC(ctx, "updating payment details in mongo document", log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
+	log.DebugC(requestId, "updating payment details in mongo document", log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
 
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.ErrorC(ctx, err, log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
+		log.ErrorC(requestId, err, log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
 		return err
 	}
 
-	log.DebugC(ctx, "updated payment details in mongo document", log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
+	log.DebugC(requestId, "updated payment details in mongo document", log.Data{"_id": dao.ID, "customer_code": dao.CustomerCode, "payable_ref": dao.PayableRef})
 
 	return nil
 }

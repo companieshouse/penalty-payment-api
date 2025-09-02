@@ -18,7 +18,7 @@ func PayablePenalty(params types.PayablePenaltyParams) (*models.TransactionItem,
 	penaltyDetailsMap := params.PenaltyDetailsMap
 	apDaoSvc := params.AccountPenaltiesDaoService
 	allowedTransactionsMap := params.AllowedTransactionsMap
-	context := params.Context
+	requestId := params.RequestId
 
 	accountPenaltiesParams := types.AccountPenaltiesParams{
 		PenaltyRefType:             penaltyRefType,
@@ -27,22 +27,22 @@ func PayablePenalty(params types.PayablePenaltyParams) (*models.TransactionItem,
 		PenaltyDetailsMap:          penaltyDetailsMap,
 		AllowedTransactionsMap:     allowedTransactionsMap,
 		AccountPenaltiesDaoService: apDaoSvc,
-		Context:                    context,
+		RequestId:                  requestId,
 	}
 	response, _, err := getAccountPenalties(accountPenaltiesParams)
 	if err != nil {
-		log.ErrorC(context, err)
+		log.ErrorC(requestId, err)
 		return nil, err
 	}
 
 	unpaidPenaltyCount := getUnpaidPenaltyCount(response.Items)
-	log.InfoC(context, "unpaid penalties", log.Data{
+	log.InfoC(requestId, "unpaid penalties", log.Data{
 		"unpaid_penalties_count": unpaidPenaltyCount,
 		"customer_code":          customerCode,
 		"company_code":           companyCode,
 	})
 
-	return getMatchingPenalty(response.Items, transaction, customerCode, context)
+	return getMatchingPenalty(response.Items, transaction, customerCode, requestId)
 }
 
 func getUnpaidPenaltyCount(transactionListItems []models.TransactionListItem) int {

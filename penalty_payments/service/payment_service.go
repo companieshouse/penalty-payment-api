@@ -12,27 +12,27 @@ import (
 // this can then be used to validate the state of a payment.
 func GetPaymentInformation(id string, req *http.Request) (*validators.PaymentInformation, error) {
 	publicSDK, err := manager.GetSDK(req)
-	context := req.Header.Get("X-Request-Id")
+	requestId := req.Header.Get("X-Request-Id")
 	if err != nil {
-		log.ErrorC(context, err, log.Data{"payment_id": id})
+		log.ErrorC(requestId, err, log.Data{"payment_id": id})
 		return nil, err
 	}
 
 	paymentResource, err := publicSDK.Payments.Get(id).Do()
 	if err != nil {
-		log.ErrorC(context, err, log.Data{"payment_id": id})
+		log.ErrorC(requestId, err, log.Data{"payment_id": id})
 		return nil, err
 	}
 
 	privateSDK, err := manager.GetPrivateSDK(req)
 	if err != nil {
-		log.ErrorC(context, err, log.Data{"payment_id": id})
+		log.ErrorC(requestId, err, log.Data{"payment_id": id})
 		return nil, err
 	}
 
 	paymentDetails, err := privateSDK.Payments.GetPaymentDetails(id).Do()
 	if err != nil {
-		log.ErrorC(context, err, log.Data{"payment_id": id})
+		log.ErrorC(requestId, err, log.Data{"payment_id": id})
 		return nil, err
 	}
 

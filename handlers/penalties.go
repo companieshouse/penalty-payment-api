@@ -22,8 +22,8 @@ var accountPenalties = api.AccountPenalties
 func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		context := req.Header.Get("X-Request-ID")
-		log.InfoC(context, "start GET penalties request")
+		requestId := req.Header.Get("X-Request-ID")
+		log.InfoC(requestId, "start GET penalties request")
 
 		customerCode := req.Context().Value(config.CustomerCode).(string)
 
@@ -35,7 +35,7 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 		companyCode, err := getCompanyCode(penaltyRefType)
 
 		if err != nil {
-			log.ErrorC(context, err)
+			log.ErrorC(requestId, err)
 			m := models.NewMessageResponse("invalid penalty reference type supplied")
 			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 			return
@@ -49,12 +49,12 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 			PenaltyDetailsMap:          penaltyDetailsMap,
 			AllowedTransactionsMap:     allowedTransactionsMap,
 			AccountPenaltiesDaoService: apDaoSvc,
-			Context:                    context,
+			RequestId:                  requestId,
 		}
 		transactionListResponse, responseType, err := accountPenalties(params)
 
 		if err != nil {
-			log.ErrorC(context, fmt.Errorf("error calling e5 to get transactions: %v", err))
+			log.ErrorC(requestId, fmt.Errorf("error calling e5 to get transactions: %v", err))
 			switch responseType {
 			case services.InvalidData:
 				m := models.NewMessageResponse("failed to read finance transactions")
@@ -72,10 +72,10 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 
 		err = json.NewEncoder(w).Encode(transactionListResponse)
 		if err != nil {
-			log.ErrorC(context, fmt.Errorf("error writing response: %v", err))
+			log.ErrorC(requestId, fmt.Errorf("error writing response: %v", err))
 			return
 		}
-		log.InfoC(context, "GET penalties request completed successfully", log.Data{"customer_code": customerCode})
+		log.InfoC(requestId, "GET penalties request completed successfully", log.Data{"customer_code": customerCode})
 	}
 }
 

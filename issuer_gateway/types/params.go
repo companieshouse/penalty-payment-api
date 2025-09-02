@@ -13,7 +13,7 @@ type AccountPenaltiesParams struct {
 	PenaltyDetailsMap          *config.PenaltyDetailsMap
 	AllowedTransactionsMap     *models.AllowedTransactionMap
 	AccountPenaltiesDaoService dao.AccountPenaltiesDaoService
-	Context                    string
+	RequestId                  string
 }
 
 type PayablePenaltyParams struct {
@@ -24,5 +24,5 @@ type PayablePenaltyParams struct {
 	PenaltyDetailsMap          *config.PenaltyDetailsMap
 	AllowedTransactionsMap     *models.AllowedTransactionMap
 	AccountPenaltiesDaoService dao.AccountPenaltiesDaoService
-	Context                    string
+	RequestId                  string
 }

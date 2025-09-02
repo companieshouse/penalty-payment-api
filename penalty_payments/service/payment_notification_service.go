@@ -11,7 +11,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/validators"
 )
 
-func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payment *validators.PaymentInformation, context string) error {
+func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payment *validators.PaymentInformation, requestId string) error {
 	cfg, err := getConfig()
 	if err != nil {
 		err = fmt.Errorf("error getting config for penalty payments processing kafka message production: [%v]", err)
@@ -28,7 +28,7 @@ func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payme
 		"topic":         topic,
 	}
 
-	log.InfoC(context, "getting penalty payments processing kafka producer", logContext)
+	log.InfoC(requestId, "getting penalty payments processing kafka producer", logContext)
 	kafkaProducer, err := getProducer(brokerAddrs)
 	if err != nil {
 		err = fmt.Errorf("error creating penalty payments processing kafka producer: [%v]", err)
@@ -43,14 +43,14 @@ func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payme
 	producerSchema := &avro.Schema{
 		Definition: penaltyPaymentsProcessingSchema,
 	}
-	log.DebugC(context, "penalty payments processing avro schema", logContext, log.Data{"schema": producerSchema})
+	log.DebugC(requestId, "penalty payments processing avro schema", logContext, log.Data{"schema": producerSchema})
 
-	message, err := preparePaymentProcessingKafkaMessage(*producerSchema, payableResource, payment, topic, context)
+	message, err := preparePaymentProcessingKafkaMessage(*producerSchema, payableResource, payment, topic, requestId)
 	if err != nil {
 		err = fmt.Errorf("error preparing penalty payments processing kafka message with schema: [%v]", err)
 		return err
 	}
-	log.DebugC(context, "penalty payment processing message prepared successfully", logContext, log.Data{
+	log.DebugC(requestId, "penalty payment processing message prepared successfully", logContext, log.Data{
 		"message.Value":     message.Value,
 		"message.Topic":     message.Topic,
 		"message.Partition": message.Partition,
@@ -63,7 +63,7 @@ func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payme
 		log.Error(err, logContext)
 		return err
 	}
-	log.InfoC(context, "successfully published penalty payments processing message", logContext, log.Data{
+	log.InfoC(requestId, "successfully published penalty payments processing message", logContext, log.Data{
 		"kafka_topic":     topic,
 		"kafka_partition": partition,
 		"kafka_offset":    offset,
@@ -74,7 +74,7 @@ func PaymentProcessingKafkaMessage(payableResource models.PayableResource, payme
 
 // preparePaymentProcessingKafkaMessage generates the kafka message that is to be sent
 func preparePaymentProcessingKafkaMessage(penaltyPaymentProcessingSchema avro.Schema,
-	payableResource models.PayableResource, payment *validators.PaymentInformation, topic string, context string) (*producer.Message, error) {
+	payableResource models.PayableResource, payment *validators.PaymentInformation, topic string, requestId string) (*producer.Message, error) {
 	// Ensure payableResource contains at least one transaction
 	if payableResource.Transactions == nil || len(payableResource.Transactions) == 0 {
 		err := fmt.Errorf("empty transactions list in payable resource: %v", payableResource.PayableRef)
@@ -92,7 +92,7 @@ func preparePaymentProcessingKafkaMessage(penaltyPaymentProcessingSchema avro.Sc
 		"customer_code": payableResource.CustomerCode,
 		"payable_ref":   payableResource.PayableRef,
 	}
-	log.DebugC(context, "penalty payment processing message constructed", logContext, log.Data{
+	log.DebugC(requestId, "penalty payment processing message constructed", logContext, log.Data{
 		"penalty_payments_processing": penaltyPaymentProcessing,
 	})
 

@@ -19,7 +19,7 @@ var (
 )
 
 func MatchPenalty(referenceTransactions []models.TransactionListItem,
-	transactionToMatch models.TransactionItem, customerCode, context string) (*models.TransactionItem, error) {
+	transactionToMatch models.TransactionItem, customerCode, requestId string) (*models.TransactionItem, error) {
 
 	referenceTransactionsMap := mapTransactions(referenceTransactions)
 	transactionInfo := map[string]interface{}{
@@ -27,15 +27,15 @@ func MatchPenalty(referenceTransactions []models.TransactionListItem,
 		"customer_code": customerCode,
 	}
 
-	log.DebugC(context, "checking if penalty is payable", transactionInfo)
+	log.DebugC(requestId, "checking if penalty is payable", transactionInfo)
 
 	matched, ok := referenceTransactionsMap[transactionToMatch.PenaltyRef]
 	if !ok {
-		log.InfoC(context, "disallowing paying for a penalty that does not exist in E5", transactionInfo)
+		log.InfoC(requestId, "disallowing paying for a penalty that does not exist in E5", transactionInfo)
 		return nil, ErrPenaltyDoesNotExist
 	}
 
-	valid, err := validate(matched, transactionInfo, transactionToMatch, context)
+	valid, err := validate(matched, transactionInfo, transactionToMatch, requestId)
 	if valid {
 		matchedPenalty := models.TransactionItem{
 			PenaltyRef: matched.ID,
@@ -46,7 +46,7 @@ func MatchPenalty(referenceTransactions []models.TransactionListItem,
 			IsPaid:     matched.IsPaid,
 			Reason:     matched.Reason,
 		}
-		log.DebugC(context, "penalty is payable", log.Data{"penalty": matchedPenalty})
+		log.DebugC(requestId, "penalty is payable", log.Data{"penalty": matchedPenalty})
 		return &matchedPenalty, nil
 	} else {
 		return nil, err[0]
@@ -56,35 +56,35 @@ func MatchPenalty(referenceTransactions []models.TransactionListItem,
 func validate(
 	refTransaction models.TransactionListItem,
 	data map[string]interface{},
-	transactionToMatch models.TransactionItem, context string) (bool, []error) {
+	transactionToMatch models.TransactionItem, requestId string) (bool, []error) {
 
 	var errs []error
 	valid := true
 
 	if refTransaction.IsPartPaid() {
-		log.InfoC(context, "attempting to pay a penalty that is already part paid", data)
+		log.InfoC(requestId, "attempting to pay a penalty that is already part paid", data)
 		valid = false
 		errs = append(errs, ErrPenaltyIsPartPaid)
 	}
 	if refTransaction.IsPaid {
-		log.InfoC(context, "disallowing paying for a penalty that is already paid", data)
+		log.InfoC(requestId, "disallowing paying for a penalty that is already paid", data)
 		valid = false
 		errs = append(errs, ErrPenaltyIsPaid)
 	}
 	if refTransaction.Type != types.Penalty.String() {
-		log.InfoC(context, "disallowing paying for a transaction that is not a penalty", data)
+		log.InfoC(requestId, "disallowing paying for a transaction that is not a penalty", data)
 		valid = false
 		errs = append(errs, ErrPenaltyNotPayable)
 	}
 	if refTransaction.Outstanding != transactionToMatch.Amount {
 		data["attempted_amount"] = fmt.Sprintf("%f", transactionToMatch.Amount)
 		data["outstanding_amount"] = fmt.Sprintf("%f", refTransaction.Outstanding)
-		log.InfoC(context, "attempting to pay off partial balance of a penalty", data)
+		log.InfoC(requestId, "attempting to pay off partial balance of a penalty", data)
 		valid = false
 		errs = append(errs, ErrPenaltyAmountMismatch)
 	}
 	if refTransaction.IsDCA {
-		log.InfoC(context, "attempting to pay a penalty that is with a debt collecting agency", data)
+		log.InfoC(requestId, "attempting to pay a penalty that is with a debt collecting agency", data)
 		valid = false
 		errs = append(errs, ErrPenaltyDCA)
 	}

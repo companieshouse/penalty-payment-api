@@ -19,11 +19,11 @@ var getCompanyCodeFromTransaction = utils.GetCompanyCodeFromTransaction
 // resource - is the payable resource from the db representing the penalty(ies)
 // payment - is the information about the payment session
 func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.PayableResourceService,
-	client e5.ClientInterface, resource models.PayableResource, payment validators.PaymentInformation, context string) error {
-	log.DebugC(context, "converting payment amount from string to float", log.Data{"amount": payment.Amount})
+	client e5.ClientInterface, resource models.PayableResource, payment validators.PaymentInformation, requestId string) error {
+	log.DebugC(requestId, "converting payment amount from string to float", log.Data{"amount": payment.Amount})
 	amountPaid, err := strconv.ParseFloat(payment.Amount, 32)
 	if err != nil {
-		log.ErrorC(context, err, log.Data{"payment_reference": payment.Reference, "amount": payment.Amount})
+		log.ErrorC(requestId, err, log.Data{"payment_reference": payment.Reference, "amount": payment.Amount})
 		return err
 	}
 
@@ -41,11 +41,11 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	// ones that begin with 'LP' which signify penalties that have been paid outside the digital service.
 	paymentID := "X" + payment.PaymentID
 
-	log.DebugC(context, "getting company code from transaction", log.Data{"transaction": transactions[0]})
+	log.DebugC(requestId, "getting company code from transaction", log.Data{"transaction": transactions[0]})
 	companyCode, err := getCompanyCodeFromTransaction(resource.Transactions)
 
 	if err != nil {
-		log.ErrorC(context, fmt.Errorf("error getting company code from transaction: %v", err))
+		log.ErrorC(requestId, fmt.Errorf("error getting company code from transaction: %v", err))
 		return err
 	}
 
@@ -62,7 +62,7 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 		"e5_puon":       paymentID,
 		"total_value":   amountPaid,
 	}
-	log.DebugC(context, "creating payment in E5", logData)
+	log.DebugC(requestId, "creating payment in E5", logData)
 	err = client.CreatePayment(&e5.CreatePaymentInput{
 		CompanyCode:  companyCode,
 		CustomerCode: resource.CustomerCode,
@@ -72,15 +72,15 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	}, "")
 
 	if err != nil {
-		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.CreateAction, context); svcErr != nil {
-			log.ErrorC(context, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
+		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.CreateAction, requestId); svcErr != nil {
+			log.ErrorC(requestId, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
 			return err
 		}
-		private.LogE5Error("failed to create payment in E5", err, resource, payment, context)
+		private.LogE5Error("failed to create payment in E5", err, resource, payment, requestId)
 		return err
 	}
 
-	log.DebugC(context, "authorising payment in E5", logData)
+	log.DebugC(requestId, "authorising payment in E5", logData)
 	err = client.AuthorisePayment(&e5.AuthorisePaymentInput{
 		CompanyCode:   companyCode,
 		PaymentID:     paymentID,
@@ -90,36 +90,36 @@ func UpdateIssuerAccountWithPenaltyPaid(payableResourceService *services.Payable
 	}, "")
 
 	if err != nil {
-		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.AuthoriseAction, context); svcErr != nil {
-			log.ErrorC(context, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
+		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.AuthoriseAction, requestId); svcErr != nil {
+			log.ErrorC(requestId, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
 			return err
 		}
-		private.LogE5Error("failed to authorise payment in E5", err, resource, payment, context)
+		private.LogE5Error("failed to authorise payment in E5", err, resource, payment, requestId)
 		return err
 	}
 
-	log.DebugC(context, "confirming payment in E5", logData)
+	log.DebugC(requestId, "confirming payment in E5", logData)
 	err = client.ConfirmPayment(&e5.PaymentActionInput{
 		CompanyCode: companyCode,
 		PaymentID:   paymentID,
-	}, context)
+	}, requestId)
 
 	if err != nil {
-		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.ConfirmAction, context); svcErr != nil {
-			log.ErrorC(context, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
+		if svcErr := RecordIssuerCommandError(payableResourceService, resource, e5.ConfirmAction, requestId); svcErr != nil {
+			log.ErrorC(requestId, svcErr, log.Data{"payment_id": payment.PaymentID, "payable_ref": resource.PayableRef})
 			return err
 		}
-		private.LogE5Error("failed to confirm payment in E5", err, resource, payment, context)
+		private.LogE5Error("failed to confirm payment in E5", err, resource, payment, requestId)
 		return err
 	}
 
-	log.InfoC(context, "marked penalty transaction(s) as paid in E5", logData)
+	log.InfoC(requestId, "marked penalty transaction(s) as paid in E5", logData)
 
 	return nil
 }
 
 // RecordIssuerCommandError will mark the resource as having failed to update E5.
 func RecordIssuerCommandError(payableResourceService *services.PayableResourceService,
-	resource models.PayableResource, action e5.Action, context string) error {
-	return payableResourceService.DAO.SaveE5Error(resource.CustomerCode, resource.PayableRef, context, action)
+	resource models.PayableResource, action e5.Action, requestId string) error {
+	return payableResourceService.DAO.SaveE5Error(resource.CustomerCode, resource.PayableRef, requestId, action)
 }
