@@ -48,7 +48,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 		r := models.PayableResource{}
 		p := validators.PaymentInformation{Amount: "foo"}
 
-		err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+		err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 		So(err, ShouldNotBeNil)
 	})
 
@@ -76,7 +76,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			},
 		}
 
-		err := UpdateIssuerAccountWithPenaltyPaid(svc, c, r, p)
+		err := UpdateIssuerAccountWithPenaltyPaid(svc, c, r, p, "")
 
 		So(err, ShouldBeError, "cannot determine company code")
 	})
@@ -100,7 +100,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			e5Responder := httpmock.NewStringResponder(http.StatusBadRequest, e5ValidationError)
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment", e5Responder)
 
-			mockPrDaoSvc.EXPECT().SaveE5Error("10000024", "123", e5.CreateAction).Return(errors.New(""))
+			mockPrDaoSvc.EXPECT().SaveE5Error("10000024", "123", "", e5.CreateAction).Return(errors.New(""))
 
 			c := &e5.Client{}
 			p := validators.PaymentInformation{Amount: "150", PaymentID: "123"}
@@ -112,7 +112,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 				},
 			}
 
-			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
 			So(err, ShouldBeError, e5.ErrE5BadRequest)
 		})
@@ -124,7 +124,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment", okResponder)
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment/authorise", e5Responder)
 
-			mockPrDaoSvc.EXPECT().SaveE5Error("10000024", "123", e5.AuthoriseAction).Return(errors.New(""))
+			mockPrDaoSvc.EXPECT().SaveE5Error("10000024", "123", "", e5.AuthoriseAction).Return(errors.New(""))
 
 			c := &e5.Client{}
 			p := validators.PaymentInformation{
@@ -141,7 +141,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 				},
 			}
 
-			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
 			So(err, ShouldBeError, e5.ErrE5BadRequest)
 		})
@@ -154,7 +154,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment/authorise", okResponder)
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment/confirm", e5Responder)
 
-			mockPrDaoSvc.EXPECT().SaveE5Error("10000024", "123", e5.ConfirmAction).Return(errors.New(""))
+			mockPrDaoSvc.EXPECT().SaveE5Error("10000024", "123", "", e5.ConfirmAction).Return(errors.New(""))
 
 			c := &e5.Client{}
 			p := validators.PaymentInformation{
@@ -171,7 +171,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 				},
 			}
 
-			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
 			So(err, ShouldBeError, e5.ErrE5BadRequest)
 		})
@@ -198,7 +198,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 				},
 			}
 
-			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
 			So(err, ShouldBeNil)
 		})
@@ -248,7 +248,7 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 				},
 			}
 
-			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p)
+			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 			So(err, ShouldBeNil)
 
 		})

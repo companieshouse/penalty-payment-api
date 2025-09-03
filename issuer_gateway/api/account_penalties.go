@@ -11,10 +11,11 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 )
 
-var getTransactions = func(customerCode string, companyCode string, client e5.ClientInterface) (*e5.GetTransactionsResponse, error) {
-	return client.GetTransactions(&e5.GetTransactionsInput{CustomerCode: customerCode, CompanyCode: companyCode})
+var getTransactions = func(customerCode string, companyCode string, client e5.ClientInterface, requestId string) (*e5.GetTransactionsResponse, error) {
+	return client.GetTransactions(&e5.GetTransactionsInput{CustomerCode: customerCode, CompanyCode: companyCode}, requestId)
 }
 var getConfig = config.Get
 var generateTransactionList = private.GenerateTransactionListFromAccountPenalties
@@ -23,26 +24,32 @@ var generateTransactionList = private.GenerateTransactionListFromAccountPenaltie
 // 1. makes a request to account_penalties collection to get a list of cached transactions for the specified customer
 // 2. if no cache entry is found or if the cache entry is stale it makes a request to e5 to get a list of transactions for the specified customer
 // 2. takes the results of this request and maps them to a format that the penalty-payment-web can consume
-func AccountPenalties(penaltyRefType, customerCode, companyCode string,
-	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap,
-	apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionListResponse, services.ResponseType, error) {
+func AccountPenalties(params types.AccountPenaltiesParams) (*models.TransactionListResponse, services.ResponseType, error) {
+	penaltyRefType := params.PenaltyRefType
+	customerCode := params.CustomerCode
+	companyCode := params.CompanyCode
+	penaltyDetailsMap := params.PenaltyDetailsMap
+	apDaoSvc := params.AccountPenaltiesDaoService
+	allowedTransactionsMap := params.AllowedTransactionsMap
+	requestId := params.RequestId
+
 	cfg, err := getConfig()
 	if err != nil {
-		log.Error(fmt.Errorf("error getting config: %v", err))
+		log.ErrorC(requestId, fmt.Errorf("error getting config: %v", err))
 		return nil, services.Error, nil
 	}
 
 	companyInfoLogData := log.Data{"customer_code": customerCode, "company_code": companyCode}
 
-	log.Info("getting account penalties from cache", companyInfoLogData)
-	accountPenalties, err := apDaoSvc.GetAccountPenalties(customerCode, companyCode)
+	log.InfoC(requestId, "getting account penalties from cache", companyInfoLogData)
+	accountPenalties, err := apDaoSvc.GetAccountPenalties(customerCode, companyCode, requestId)
 
 	if accountPenalties == nil {
-		log.Info("account penalties not found in cache, getting account penalties from E5 transactions", companyInfoLogData)
-		accountPenalties, err = getAccountPenaltiesFromE5Transactions(customerCode, companyCode, cfg, apDaoSvc, false)
-	} else if isStale(accountPenalties, cfg) {
-		log.Info("account penalties cache record is stale, getting account penalties from E5 transactions", companyInfoLogData)
-		accountPenalties, err = getAccountPenaltiesFromE5Transactions(customerCode, companyCode, cfg, apDaoSvc, true)
+		log.InfoC(requestId, "account penalties not found in cache, getting account penalties from E5 transactions", companyInfoLogData)
+		accountPenalties, err = getAccountPenaltiesFromE5Transactions(customerCode, companyCode, cfg, apDaoSvc, false, requestId)
+	} else if isStale(accountPenalties, cfg, requestId) {
+		log.InfoC(requestId, "account penalties cache record is stale, getting account penalties from E5 transactions", companyInfoLogData)
+		accountPenalties, err = getAccountPenaltiesFromE5Transactions(customerCode, companyCode, cfg, apDaoSvc, true, requestId)
 	}
 	if err != nil {
 		return nil, services.Error, err
@@ -51,57 +58,57 @@ func AccountPenalties(penaltyRefType, customerCode, companyCode string,
 	// Generate the CH preferred format of the results i.e. classify the transactions into
 	// payable "penalty" types or non-payable "other" types
 	generatedTransactionListFromAccountPenalties, err :=
-		generateTransactionList(accountPenalties, penaltyRefType, penaltyDetailsMap, allowedTransactionsMap, cfg)
+		generateTransactionList(accountPenalties, penaltyRefType, penaltyDetailsMap, allowedTransactionsMap, cfg, requestId)
 	if err != nil {
 		err = fmt.Errorf("error generating transaction list from account penalties: [%v]", err)
-		log.Error(err)
+		log.ErrorC(requestId, err)
 		return nil, services.Error, err
 	}
 
-	log.Info("Completed AccountPenalties request and mapped to CH penalty transactions", companyInfoLogData)
+	log.InfoC(requestId, "Completed AccountPenalties request and mapped to CH penalty transactions", companyInfoLogData)
 	return generatedTransactionListFromAccountPenalties, services.Success, nil
 }
 
-func createAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse, apDaoSvc dao.AccountPenaltiesDaoService) *models.AccountPenaltiesDao {
+func createAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse, apDaoSvc dao.AccountPenaltiesDaoService, requestId string) *models.AccountPenaltiesDao {
 	accountPenalties := convertE5Response(customerCode, companyCode, e5Response)
-	err := apDaoSvc.CreateAccountPenalties(&accountPenalties)
+	err := apDaoSvc.CreateAccountPenalties(&accountPenalties, requestId)
 	if err != nil {
-		log.Error(fmt.Errorf("error creating account penalties: [%v]", err),
+		log.ErrorC(requestId, fmt.Errorf("error creating account penalties: [%v]", err),
 			log.Data{"customer_code": customerCode, "company_code": companyCode})
 	}
 
 	return &accountPenalties
 }
 
-func updateAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse, apDaoSvc dao.AccountPenaltiesDaoService) *models.AccountPenaltiesDao {
+func updateAccountPenaltiesEntry(customerCode string, companyCode string, e5Response *e5.GetTransactionsResponse, apDaoSvc dao.AccountPenaltiesDaoService, requestId string) *models.AccountPenaltiesDao {
 	accountPenalties := convertE5Response(customerCode, companyCode, e5Response)
-	err := apDaoSvc.UpdateAccountPenalties(&accountPenalties)
+	err := apDaoSvc.UpdateAccountPenalties(&accountPenalties, requestId)
 	if err != nil {
-		log.Error(fmt.Errorf("error updating account penalties: [%v]", err),
+		log.ErrorC(requestId, fmt.Errorf("error updating account penalties: [%v]", err),
 			log.Data{"customer_code": customerCode, "company_code": companyCode})
 	}
 
 	return &accountPenalties
 }
 
-func getTransactionListFromE5(customerCode string, companyCode string, cfg *config.Config) (*e5.GetTransactionsResponse, error) {
+func getTransactionListFromE5(customerCode string, companyCode string, cfg *config.Config, requestId string) (*e5.GetTransactionsResponse, error) {
 	client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
-	e5Response, err := getTransactions(customerCode, companyCode, client)
+	e5Response, err := getTransactions(customerCode, companyCode, client, requestId)
 	return e5Response, err
 }
 
 func getAccountPenaltiesFromE5Transactions(
-	customerCode string, companyCode string, cfg *config.Config, apDaoSvc dao.AccountPenaltiesDaoService, cacheRecordExists bool) (*models.AccountPenaltiesDao, error) {
-	e5Response, err := getTransactionListFromE5(customerCode, companyCode, cfg)
+	customerCode string, companyCode string, cfg *config.Config, apDaoSvc dao.AccountPenaltiesDaoService, cacheRecordExists bool, requestId string) (*models.AccountPenaltiesDao, error) {
+	e5Response, err := getTransactionListFromE5(customerCode, companyCode, cfg, requestId)
 	logData := log.Data{"customer_code": customerCode, "company_code": companyCode}
 	if err != nil {
-		log.Error(fmt.Errorf("error getting transaction list: [%v]", err))
+		log.ErrorC(requestId, fmt.Errorf("error getting transaction list: [%v]", err))
 		return nil, err
 	}
-	log.Debug("E5 transactions", log.Data{"transactions": e5Response.Transactions})
+	log.DebugC(requestId, "E5 transactions", log.Data{"transactions": e5Response.Transactions})
 
 	if len(e5Response.Transactions) == 0 {
-		log.Info("E5 transactions empty, account penalties not cached", logData)
+		log.InfoC(requestId, "E5 transactions empty, account penalties not cached", logData)
 		// If company or transactions do not exist in E5, return account penalties with empty transaction list
 		return &models.AccountPenaltiesDao{
 			CustomerCode:     customerCode,
@@ -109,11 +116,11 @@ func getAccountPenaltiesFromE5Transactions(
 			AccountPenalties: make([]models.AccountPenaltiesDataDao, 0),
 		}, nil
 	} else if cacheRecordExists {
-		log.Info("updating account penalties cache from E5 transactions", logData)
-		return updateAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc), nil
+		log.InfoC(requestId, "updating account penalties cache from E5 transactions", logData)
+		return updateAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc, requestId), nil
 	} else {
-		log.Info("creating account penalties cache from E5 transactions", logData)
-		return createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc), nil
+		log.InfoC(requestId, "creating account penalties cache from E5 transactions", logData)
+		return createAccountPenaltiesEntry(customerCode, companyCode, e5Response, apDaoSvc, requestId), nil
 	}
 }
 
@@ -149,7 +156,7 @@ func convertE5Response(customerCode, companyCode string, response *e5.GetTransac
 	}
 }
 
-func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config) bool {
+func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config, requestId string) bool {
 	// If ClosedAt time is set, start counting ttl from then, otherwise, start from CreatedAt
 	// Starting from ClosedAt time will ensure that if a user initiates a penalty payment without completing it at the same time
 	// and comes back later to complete the payment, we'll have enough confidence that E5 allocation routine
@@ -160,12 +167,12 @@ func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config
 		ttlStart = accountPenaltiesDao.CreatedAt
 	}
 
-	ttl := getTimeToLive(cfg)
+	ttl := getTimeToLive(cfg, requestId)
 	cacheRecordAge := time.Since(*accountPenaltiesDao.CreatedAt)
 
 	stale := cacheRecordAge == ttl || cacheRecordAge > ttl
 
-	log.Info("Checking if account penalties record is stale ", log.Data{
+	log.InfoC(requestId, "Checking if account penalties record is stale ", log.Data{
 		"customer_code": accountPenaltiesDao.CustomerCode,
 		"company_code":  accountPenaltiesDao.CompanyCode,
 		"ttl":           ttl.String(),
@@ -177,7 +184,7 @@ func isStale(accountPenaltiesDao *models.AccountPenaltiesDao, cfg *config.Config
 	return stale
 }
 
-func getTimeToLive(cfg *config.Config) time.Duration {
+func getTimeToLive(cfg *config.Config, requestId string) time.Duration {
 	ttlString := cfg.AccountPenaltiesTTL
 	if ttlString == "" {
 		ttlString = "24h" // time to live defaults to 24 hours if not set in config
@@ -185,8 +192,8 @@ func getTimeToLive(cfg *config.Config) time.Duration {
 
 	ttl, err := time.ParseDuration(ttlString)
 	if err != nil {
-		log.Error(fmt.Errorf("error parsing account penalties TTL: %v", err))
-		log.Info("Applying a TTL of 24 hours")
+		log.ErrorC(requestId, fmt.Errorf("error parsing account penalties TTL: %v", err))
+		log.InfoC(requestId, "Applying a TTL of 24 hours")
 		ttl = 24 * time.Hour // default to TTL of 24 hours if parsing the config TTL string fails
 	}
 

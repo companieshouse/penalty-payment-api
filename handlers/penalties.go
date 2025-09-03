@@ -12,6 +12,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/gorilla/mux"
 )
 
@@ -21,7 +22,8 @@ var accountPenalties = api.AccountPenalties
 func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		log.InfoR(req, "start GET penalties request")
+		requestId := req.Header.Get("X-Request-ID")
+		log.InfoC(requestId, "start GET penalties request")
 
 		customerCode := req.Context().Value(config.CustomerCode).(string)
 
@@ -33,18 +35,26 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 		companyCode, err := getCompanyCode(penaltyRefType)
 
 		if err != nil {
-			log.ErrorR(req, err)
+			log.ErrorC(requestId, err)
 			m := models.NewMessageResponse("invalid penalty reference type supplied")
 			utils.WriteJSONWithStatus(w, req, m, http.StatusBadRequest)
 			return
 		}
 
 		// Call service layer to handle request to E5
-		transactionListResponse, responseType, err := accountPenalties(penaltyRefType,
-			customerCode, companyCode, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+		params := types.AccountPenaltiesParams{
+			PenaltyRefType:             penaltyRefType,
+			CustomerCode:               customerCode,
+			CompanyCode:                companyCode,
+			PenaltyDetailsMap:          penaltyDetailsMap,
+			AllowedTransactionsMap:     allowedTransactionsMap,
+			AccountPenaltiesDaoService: apDaoSvc,
+			RequestId:                  requestId,
+		}
+		transactionListResponse, responseType, err := accountPenalties(params)
 
 		if err != nil {
-			log.ErrorR(req, fmt.Errorf("error calling e5 to get transactions: %v", err))
+			log.ErrorC(requestId, fmt.Errorf("error calling e5 to get transactions: %v", err))
 			switch responseType {
 			case services.InvalidData:
 				m := models.NewMessageResponse("failed to read finance transactions")
@@ -62,10 +72,10 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 
 		err = json.NewEncoder(w).Encode(transactionListResponse)
 		if err != nil {
-			log.ErrorR(req, fmt.Errorf("error writing response: %v", err))
+			log.ErrorC(requestId, fmt.Errorf("error writing response: %v", err))
 			return
 		}
-		log.InfoR(req, "GET penalties request completed successfully", log.Data{"customer_code": customerCode})
+		log.InfoC(requestId, "GET penalties request completed successfully", log.Data{"customer_code": customerCode})
 	}
 }
 

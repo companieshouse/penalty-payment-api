@@ -9,10 +9,11 @@ import (
 	"github.com/companieshouse/penalty-payment-api/config"
 )
 
-func CheckScheduledMaintenance() (systemAvailableTime time.Time, systemUnavailable bool, parseError bool) {
+func CheckScheduledMaintenance(requestId string) (systemAvailableTime time.Time, systemUnavailable bool, parseError bool) {
 	cfg, err := config.Get()
 	if err != nil {
 		err = fmt.Errorf("error getting config for planned maintenance: [%v]", err)
+		log.ErrorC(requestId, err)
 		return time.Time{}, false, true
 	}
 
@@ -24,12 +25,12 @@ func CheckScheduledMaintenance() (systemAvailableTime time.Time, systemUnavailab
 		timeDateLayout := time.RFC822
 		maintenanceStart, err := time.Parse(timeDateLayout, cfg.PlannedMaintenanceStart)
 		if err != nil {
-			log.Error(fmt.Errorf("error parsing Maintenance Start time: [%v]", err))
+			log.ErrorC(requestId, fmt.Errorf("error parsing Maintenance Start time: [%v]", err))
 			return time.Time{}, false, true
 		}
 		maintenanceEnd, err := time.Parse(timeDateLayout, cfg.PlannedMaintenanceEnd)
 		if err != nil {
-			log.Error(fmt.Errorf("error parsing Maintenance End time: [%v]", err))
+			log.ErrorC(requestId, fmt.Errorf("error parsing Maintenance End time: [%v]", err))
 			return time.Time{}, false, true
 		}
 

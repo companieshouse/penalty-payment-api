@@ -45,12 +45,12 @@ const (
 
 // ClientInterface interface declares the Client finance system operations for AR Transactions and Payments
 type ClientInterface interface {
-	GetTransactions(input *GetTransactionsInput) (*GetTransactionsResponse, error)
-	CreatePayment(input *CreatePaymentInput) error
-	AuthorisePayment(input *AuthorisePaymentInput) error
-	ConfirmPayment(input *PaymentActionInput) error
-	TimeoutPayment(input *PaymentActionInput) error
-	RejectPayment(input *PaymentActionInput) error
+	GetTransactions(input *GetTransactionsInput, requestId string) (*GetTransactionsResponse, error)
+	CreatePayment(input *CreatePaymentInput, requestId string) error
+	AuthorisePayment(input *AuthorisePaymentInput, requestId string) error
+	ConfirmPayment(input *PaymentActionInput, requestId string) error
+	TimeoutPayment(input *PaymentActionInput, requestId string) error
+	RejectPayment(input *PaymentActionInput, requestId string) error
 }
 
 // Client interacts with the Client finance system
@@ -60,7 +60,7 @@ type Client struct {
 }
 
 // GetTransactions will return a list of transactions for a company
-func (c *Client) GetTransactions(input *GetTransactionsInput) (*GetTransactionsResponse, error) {
+func (c *Client) GetTransactions(input *GetTransactionsInput, requestId string) (*GetTransactionsResponse, error) {
 	err := c.validateInput(input)
 	if err != nil {
 		return nil, err
@@ -75,20 +75,20 @@ func (c *Client) GetTransactions(input *GetTransactionsInput) (*GetTransactionsR
 	}
 
 	// make the http request to E5
-	resp, err := c.sendRequest(http.MethodGet, path, nil, qp)
+	resp, err := c.sendRequest(http.MethodGet, path, nil, qp, requestId)
 
 	// deal with any http transport errors
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return nil, err
 	}
 
 	defer CloseResponseBody(resp, logContext)
 
 	// determine if there are 4xx/5xx errors. an error here relates to a response parsing issue
-	err = c.checkResponseForError(resp)
+	err = c.checkResponseForError(resp, requestId)
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return nil, err
 	}
 
@@ -99,13 +99,13 @@ func (c *Client) GetTransactions(input *GetTransactionsInput) (*GetTransactionsR
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return nil, ErrFailedToReadBody
 	}
 
 	err = json.Unmarshal(b, out)
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return nil, ErrFailedToReadBody
 	}
 
@@ -114,7 +114,7 @@ func (c *Client) GetTransactions(input *GetTransactionsInput) (*GetTransactionsR
 
 // CreatePayment will create a new payment session in Client. This will lock the account in Client so no other modifications can
 // happen until it is released by a confirm call or manually released in the Client portal.
-func (c *Client) CreatePayment(input *CreatePaymentInput) error {
+func (c *Client) CreatePayment(input *CreatePaymentInput, requestId string) error {
 	logContext := log.Data{
 		"customer_code":  input.CustomerCode,
 		"company_code":   input.CompanyCode,
@@ -130,12 +130,13 @@ func (c *Client) CreatePayment(input *CreatePaymentInput) error {
 		logContext,
 		"sending request to E5 Create Payment",
 		"response received from E5 after creating a new payment",
+		requestId,
 	)
 }
 
 // AuthorisePayment will mark the payment as been authorised by the payment provider, but the money has not yet reached
 // use yet. The customer account will remain locked.
-func (c *Client) AuthorisePayment(input *AuthorisePaymentInput) error {
+func (c *Client) AuthorisePayment(input *AuthorisePaymentInput, requestId string) error {
 	logContext := log.Data{
 		"company_code":   input.CompanyCode,
 		"payment_action": AuthoriseAction,
@@ -148,6 +149,7 @@ func (c *Client) AuthorisePayment(input *AuthorisePaymentInput) error {
 		logContext,
 		"sending request to E5 Authorise Payment",
 		"response received from E5 after authorising a payment",
+		requestId,
 	)
 }
 
@@ -158,6 +160,7 @@ func (c *Client) doPaymentRequest(
 	logContext log.Data,
 	debugMsg string,
 	infoMsg string,
+	requestId string,
 ) error {
 	err := c.validateInput(input)
 	if err != nil {
@@ -166,48 +169,48 @@ func (c *Client) doPaymentRequest(
 
 	body, err := json.Marshal(input)
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return err
 	}
 
-	log.Debug(debugMsg, logContext, log.Data{
+	log.DebugC(requestId, debugMsg, logContext, log.Data{
 		"input": input,
 		"path":  path,
 	})
-	resp, err := c.sendRequest(http.MethodPost, path, bytes.NewReader(body), nil)
+	resp, err := c.sendRequest(http.MethodPost, path, bytes.NewReader(body), nil, requestId)
 
 	// err here will be an http transport error rather than 4xx or 5xx responses
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return err
 	}
 
 	defer CloseResponseBody(resp, logContext)
 
-	log.Info(infoMsg, logContext, log.Data{
+	log.InfoC(requestId, infoMsg, logContext, log.Data{
 		"status": resp.StatusCode,
 	})
 
-	return c.checkResponseForError(resp)
+	return c.checkResponseForError(resp, requestId)
 }
 
 // ConfirmPayment allocates the money in Client and unlocks the customer account
-func (c *Client) ConfirmPayment(input *PaymentActionInput) error {
-	return c.doPaymentAction(ConfirmAction, input)
+func (c *Client) ConfirmPayment(input *PaymentActionInput, requestId string) error {
+	return c.doPaymentAction(ConfirmAction, input, requestId)
 }
 
 // TimeoutPayment will unlock the customer account
-func (c *Client) TimeoutPayment(input *PaymentActionInput) error {
-	return c.doPaymentAction(TimeoutAction, input)
+func (c *Client) TimeoutPayment(input *PaymentActionInput, requestId string) error {
+	return c.doPaymentAction(TimeoutAction, input, requestId)
 }
 
 // RejectPayment will mark a payment as rejected and unlock the account.
-func (c *Client) RejectPayment(input *PaymentActionInput) error {
-	return c.doPaymentAction(RejectAction, input)
+func (c *Client) RejectPayment(input *PaymentActionInput, requestId string) error {
+	return c.doPaymentAction(RejectAction, input, requestId)
 }
 
 // doPaymentAction is a wrapper for the confirm, reject and timeout endpoints
-func (c *Client) doPaymentAction(action Action, input *PaymentActionInput) error {
+func (c *Client) doPaymentAction(action Action, input *PaymentActionInput, requestId string) error {
 	err := c.validateInput(input)
 	if err != nil {
 		return err
@@ -221,36 +224,36 @@ func (c *Client) doPaymentAction(action Action, input *PaymentActionInput) error
 
 	body, err := json.Marshal(input)
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return err
 	}
 
-	log.Info("sending request to E5", logContext)
+	log.InfoC(requestId, "sending request to E5", logContext)
 
 	path := fmt.Sprintf("/arTransactions/payment/%s", action)
 
-	log.Debug("sending request to E5", logContext, log.Data{
+	log.DebugC(requestId, "sending request to E5", logContext, log.Data{
 		"input": input,
 		"path":  path,
 	})
-	resp, err := c.sendRequest(http.MethodPost, path, bytes.NewReader(body), nil)
+	resp, err := c.sendRequest(http.MethodPost, path, bytes.NewReader(body), nil, requestId)
 
 	// err here will be a http transport error rather than 4xx or 5xx responses
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return err
 	}
 
-	log.Info("response received from E5", logContext)
+	log.InfoC(requestId, "response received from E5", logContext)
 
 	defer CloseResponseBody(resp, logContext)
 
-	return c.checkResponseForError(resp)
+	return c.checkResponseForError(resp, requestId)
 }
 
 // generic function that inspects the http response and will return the response struct or an error if there was a
 // problem reading and parsing the body
-func (c *Client) checkResponseForError(r *http.Response) error {
+func (c *Client) checkResponseForError(r *http.Response, requestId string) error {
 
 	if r.StatusCode == 200 {
 		return nil
@@ -265,13 +268,13 @@ func (c *Client) checkResponseForError(r *http.Response) error {
 	b, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return ErrFailedToReadBody
 	}
 
 	err = json.Unmarshal(b, e)
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return ErrFailedToReadBody
 	}
 
@@ -284,7 +287,7 @@ func (c *Client) checkResponseForError(r *http.Response) error {
 		"errors":        e.SubErrorMap(),
 	}
 
-	log.Error(errors.New("error response from E5"), d)
+	log.ErrorC(requestId, errors.New("error response from E5"), d)
 
 	switch r.StatusCode {
 	case http.StatusBadRequest:
@@ -304,13 +307,13 @@ func (c *Client) validateInput(i interface{}) error {
 }
 
 // sendRequest will make a http request and unmarshal the response body into a struct
-func (c *Client) sendRequest(method, path string, body io.Reader, queryParameters map[string]string) (*http.Response, error) {
+func (c *Client) sendRequest(method, path string, body io.Reader, queryParameters map[string]string, requestId string) (*http.Response, error) {
 	url := fmt.Sprintf("%s%s", c.E5BaseURL, path)
 	req, err := http.NewRequest(method, url, body)
 
 	logContext := log.Data{"request_method": method, "path": path}
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return nil, err
 	}
 
@@ -328,7 +331,7 @@ func (c *Client) sendRequest(method, path string, body io.Reader, queryParameter
 	resp, err := http.DefaultClient.Do(req)
 	// any errors here are due to transport errors, not 4xx/5xx responses
 	if err != nil {
-		log.Error(err, logContext)
+		log.ErrorC(requestId, err, logContext)
 		return nil, err
 	}
 

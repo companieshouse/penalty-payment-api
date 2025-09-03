@@ -33,7 +33,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 			getConfig = mockedConfigGet
 
 			Convey("Then an error should be returned", func() {
-				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo)
+				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo, "")
 
 				So(err, ShouldResemble, errors.New("error getting config for penalty payments processing kafka message production: ["+errMsg+"]"))
 			})
@@ -50,7 +50,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 			getProducer = mockedGetProducer
 
 			Convey("Then an error should be returned", func() {
-				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo)
+				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo, "")
 
 				So(err, ShouldResemble, errors.New("error creating penalty payments processing kafka producer: [kafka: invalid configuration (You must provide at least one broker address)]"))
 			})
@@ -71,7 +71,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 			getSchema = mockedGetSchema
 
 			Convey("Then an error should be returned", func() {
-				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo)
+				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo, "")
 
 				So(err, ShouldResemble, errors.New("error getting penalty payments processing schema from schema registry: [get \"/subjects/penalty-payments-processing/versions/latest\": unsupported protocol scheme \"\"]"))
 			})
@@ -92,7 +92,7 @@ func TestUnitPaymentProcessingKafkaMessage(t *testing.T) {
 			getSchema = mockedGetSchema
 
 			Convey("Then an error should be returned", func() {
-				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo)
+				err := PaymentProcessingKafkaMessage(payableResource, &paymentInfo, "")
 
 				So(err.Error(), ShouldStartWith, "error preparing penalty payments processing kafka message with schema:")
 			})
@@ -136,7 +136,7 @@ func TestUnitPreparePaymentProcessingKafkaMessage(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				_, err := preparePaymentProcessingKafkaMessage(producerSchema,
-					payableResource, &paymentInfo, topic)
+					payableResource, &paymentInfo, topic, "")
 
 				So(err.Error(), ShouldEqual, "error getting company code")
 			})
@@ -151,7 +151,7 @@ func TestUnitPreparePaymentProcessingKafkaMessage(t *testing.T) {
 
 			Convey("Then an error should be returned", func() {
 				_, err := preparePaymentProcessingKafkaMessage(
-					producerSchema, payableResource, &paymentInfo, topic)
+					producerSchema, payableResource, &paymentInfo, topic, "")
 
 				// fix
 				//So(err, ShouldResemble, errors.New("error getting penalty ref type"))
@@ -168,7 +168,7 @@ func TestUnitPreparePaymentProcessingKafkaMessage(t *testing.T) {
 				}
 
 				_, err := preparePaymentProcessingKafkaMessage(
-					producerSchema, payableResourceNoItems, &paymentInfo, topic)
+					producerSchema, payableResourceNoItems, &paymentInfo, topic, "")
 
 				So(err.Error(), ShouldStartWith, "empty transactions list in payable resource:")
 			})

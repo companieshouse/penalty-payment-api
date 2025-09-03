@@ -17,7 +17,7 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		// Given
 
 		// When
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance("")
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -34,7 +34,7 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
 
 		// When
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance("")
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -50,7 +50,7 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
 
 		// When
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance("")
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), endHour, 0, 0, 0, currentTime.Location()))
@@ -67,7 +67,7 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		cfg.WeeklyMaintenanceDay = currentTime.Weekday()
 
 		// When
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance("")
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -86,7 +86,7 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		cfg.PlannedMaintenanceEnd = endTime.Format(time.RFC3339)
 
 		// When
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance("")
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -105,7 +105,7 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		cfg.PlannedMaintenanceEnd = "1111111111"
 
 		// When
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance("")
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -124,7 +124,7 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		cfg.PlannedMaintenanceEnd = endTime.Format(time.RFC822)
 
 		// When
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance("")
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -143,7 +143,7 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		cfg.PlannedMaintenanceEnd = endTime.Format(time.RFC822)
 
 		// When
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance("")
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, endTime)
@@ -162,7 +162,7 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		cfg.PlannedMaintenanceEnd = endTime.Format(time.RFC822)
 
 		// When
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance("")
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Time{})
@@ -182,7 +182,7 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		cfg.PlannedMaintenanceEnd = plannedEndTime.Format(time.RFC822)
 
 		// When
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance("")
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, plannedEndTime)
@@ -202,7 +202,7 @@ func TestUnitCheckScheduledMaintenance(t *testing.T) {
 		cfg.PlannedMaintenanceEnd = plannedEndTime.Format(time.RFC822)
 
 		// When
-		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance()
+		gotSystemAvailableTime, gotSystemUnavailable, gotParseError := CheckScheduledMaintenance("")
 
 		// Then
 		So(gotSystemAvailableTime, ShouldEqual, time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), weeklyEndHour, 0, 0, 0, currentTime.Location()))

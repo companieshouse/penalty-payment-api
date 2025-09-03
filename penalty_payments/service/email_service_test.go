@@ -9,9 +9,9 @@ import (
 	"github.com/companieshouse/chs.go/avro/schema"
 	"github.com/companieshouse/chs.go/kafka/producer"
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
@@ -258,7 +258,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 
 			Convey("Then an error should be returned", func() {
-				mockApDaoSvc.EXPECT().GetAccountPenalties(gomock.Any(), gomock.Any()).Return(nil, nil)
+				mockApDaoSvc.EXPECT().GetAccountPenalties(gomock.Any(), gomock.Any(), "").Return(nil, nil)
 
 				_, err := prepareEmailKafkaMessage(
 					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc, topic)
@@ -273,8 +273,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetPayablePenalty := func(penaltyRefType, customerCode, companyCode string, t models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
-				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionItem, error) {
+			mockedGetPayablePenalty := func(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
 
 				return &models.TransactionItem{PenaltyRef: "A1234567", Reason: "Late filing of accounts"}, nil
 			}
@@ -297,8 +296,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
 				return "Brewery", nil
 			}
-			mockedGetPayablePenalty := func(penaltyRefType, customerCode, companyCode string, t models.TransactionItem, penaltyDetailsMap *config.PenaltyDetailsMap,
-				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.TransactionItem, error) {
+			mockedGetPayablePenalty := func(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
 
 				return &models.TransactionItem{
 					PenaltyRef: "A123567",

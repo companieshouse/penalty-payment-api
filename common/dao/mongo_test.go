@@ -45,7 +45,7 @@ func TestUnitMongo_CreateAccountPenalties(t *testing.T) {
 
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&result, nil)
 
-			err := svc.CreateAccountPenalties(dao)
+			err := svc.CreateAccountPenalties(dao, "")
 
 			So(err, ShouldBeNil)
 		})
@@ -57,7 +57,7 @@ func TestUnitMongo_CreateAccountPenalties(t *testing.T) {
 
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&result, nil)
 
-			err := svc.CreateAccountPenalties(dao)
+			err := svc.CreateAccountPenalties(dao, "")
 
 			So(err, ShouldBeNil)
 		})
@@ -65,7 +65,7 @@ func TestUnitMongo_CreateAccountPenalties(t *testing.T) {
 		Convey("error when creating account penalty", func() {
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("error creating payable resource"))
 
-			err := svc.CreateAccountPenalties(dao)
+			err := svc.CreateAccountPenalties(dao, "")
 
 			So(err, ShouldNotBeNil)
 		})
@@ -97,7 +97,7 @@ func TestUnitMongo_GetAccountPenalties(t *testing.T) {
 
 			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
 
-			resource, err := svc.GetAccountPenalties(customerCode, companyCode)
+			resource, err := svc.GetAccountPenalties(customerCode, companyCode, "")
 
 			So(err, ShouldBeNil)
 			So(resource.CompanyCode, ShouldEqual, companyCode)
@@ -109,7 +109,7 @@ func TestUnitMongo_GetAccountPenalties(t *testing.T) {
 
 			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
 
-			resource, err := svc.GetAccountPenalties(customerCode, companyCode)
+			resource, err := svc.GetAccountPenalties(customerCode, companyCode, "")
 
 			So(err, ShouldNotBeNil)
 			So(resource, ShouldBeNil)
@@ -120,7 +120,7 @@ func TestUnitMongo_GetAccountPenalties(t *testing.T) {
 
 			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
 
-			_, err := svc.GetAccountPenalties(customerCode, companyCode)
+			_, err := svc.GetAccountPenalties(customerCode, companyCode, "")
 
 			So(err, ShouldNotBeNil)
 		})
@@ -152,7 +152,7 @@ func TestUnitMongo_UpdateAccountPenaltyAsPaid(t *testing.T) {
 
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(&result, nil)
 
-			err := svc.UpdateAccountPenaltyAsPaid(customerCode, companyCode, penaltyRef)
+			err := svc.UpdateAccountPenaltyAsPaid(customerCode, companyCode, penaltyRef, "")
 
 			So(err, ShouldBeNil)
 		})
@@ -165,7 +165,7 @@ func TestUnitMongo_UpdateAccountPenaltyAsPaid(t *testing.T) {
 
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(&result, errors.New("error updating as paid"))
 
-			err := svc.UpdateAccountPenaltyAsPaid(companyCode, companyCode, penaltyRef)
+			err := svc.UpdateAccountPenaltyAsPaid(companyCode, companyCode, penaltyRef, "")
 
 			So(err, ShouldNotBeNil)
 		})
@@ -178,7 +178,7 @@ func TestUnitMongo_UpdateAccountPenaltyAsPaid(t *testing.T) {
 
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(&result, nil)
 
-			err := svc.UpdateAccountPenaltyAsPaid(customerCode, companyCode, penaltyRef)
+			err := svc.UpdateAccountPenaltyAsPaid(customerCode, companyCode, penaltyRef, "")
 
 			So(err, ShouldNotBeNil)
 		})
@@ -211,7 +211,7 @@ func TestUnitMongo_UpdateAccountPenalties(t *testing.T) {
 
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(&result, nil)
 
-			err := svc.UpdateAccountPenalties(dao)
+			err := svc.UpdateAccountPenalties(dao, "")
 
 			So(err, ShouldBeNil)
 		})
@@ -224,7 +224,7 @@ func TestUnitMongo_UpdateAccountPenalties(t *testing.T) {
 
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(&result, errors.New("error updating penalties"))
 
-			err := svc.UpdateAccountPenalties(dao)
+			err := svc.UpdateAccountPenalties(dao, "")
 
 			So(err, ShouldNotBeNil)
 		})
@@ -237,7 +237,7 @@ func TestUnitMongo_UpdateAccountPenalties(t *testing.T) {
 
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(&result, nil)
 
-			err := svc.UpdateAccountPenalties(dao)
+			err := svc.UpdateAccountPenalties(dao, "")
 
 			So(err, ShouldNotBeNil)
 		})
@@ -265,7 +265,7 @@ func TestUnitMongo_CreatePayableResource(t *testing.T) {
 		Convey("success when creating payable resource", func() {
 			mockCollection.EXPECT().InsertOne(gomock.Any(), gomock.Any()).Return(nil, nil)
 
-			err := svc.CreatePayableResource(dao)
+			err := svc.CreatePayableResource(dao, "")
 
 			So(err, ShouldBeNil)
 		})
@@ -273,7 +273,7 @@ func TestUnitMongo_CreatePayableResource(t *testing.T) {
 		Convey("error when creating payable resource", func() {
 			mockCollection.EXPECT().InsertOne(gomock.Any(), gomock.Any()).Return(nil, errors.New("error creating payable resource"))
 
-			err := svc.CreatePayableResource(dao)
+			err := svc.CreatePayableResource(dao, "")
 
 			So(err, ShouldNotBeNil)
 		})
@@ -302,7 +302,7 @@ func TestUnitMongo_UpdatePaymentDetails(t *testing.T) {
 		Convey("success when updating payable resource", func() {
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
 
-			err := svc.UpdatePaymentDetails(dao)
+			err := svc.UpdatePaymentDetails(dao, "")
 
 			So(err, ShouldBeNil)
 		})
@@ -310,7 +310,7 @@ func TestUnitMongo_UpdatePaymentDetails(t *testing.T) {
 		Convey("error when getting payable resource", func() {
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("not found"))
 
-			err := svc.UpdatePaymentDetails(dao)
+			err := svc.UpdatePaymentDetails(dao, "")
 
 			So(err, ShouldNotBeNil)
 		})
@@ -342,7 +342,7 @@ func TestUnitMongo_GetPayableResource(t *testing.T) {
 
 			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
 
-			resource, err := svc.GetPayableResource(customerCode, payableRef)
+			resource, err := svc.GetPayableResource(customerCode, payableRef, "")
 
 			So(err, ShouldBeNil)
 			So(resource.CustomerCode, ShouldEqual, customerCode)
@@ -354,7 +354,7 @@ func TestUnitMongo_GetPayableResource(t *testing.T) {
 
 			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
 
-			_, err := svc.GetPayableResource(customerCode, payableRef)
+			_, err := svc.GetPayableResource(customerCode, payableRef, "")
 
 			So(err, ShouldNotBeNil)
 		})
@@ -364,7 +364,7 @@ func TestUnitMongo_GetPayableResource(t *testing.T) {
 
 			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
 
-			resource, err := svc.GetPayableResource(customerCode, payableRef)
+			resource, err := svc.GetPayableResource(customerCode, payableRef, "")
 
 			So(err, ShouldNotBeNil)
 			So(resource, ShouldBeNil)
@@ -400,7 +400,7 @@ func TestUnitMongo_SaveE5Error(t *testing.T) {
 			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
 
-			err := svc.SaveE5Error(customerCode, penaltyRef, e5.CreateAction)
+			err := svc.SaveE5Error(customerCode, penaltyRef, "", e5.CreateAction)
 
 			So(err, ShouldBeNil)
 		})
@@ -411,7 +411,7 @@ func TestUnitMongo_SaveE5Error(t *testing.T) {
 			mockDatabase.EXPECT().Collection("payable_resources").Return(mockCollection)
 			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
 
-			err := svc.SaveE5Error(customerCode, penaltyRef, e5.CreateAction)
+			err := svc.SaveE5Error(customerCode, penaltyRef, "", e5.CreateAction)
 
 			So(err, ShouldNotBeNil)
 		})
@@ -428,7 +428,7 @@ func TestUnitMongo_SaveE5Error(t *testing.T) {
 			mockCollection.EXPECT().FindOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(result)
 			mockCollection.EXPECT().UpdateOne(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, mongo.ErrInvalidIndexValue)
 
-			err := svc.SaveE5Error(customerCode, penaltyRef, e5.CreateAction)
+			err := svc.SaveE5Error(customerCode, penaltyRef, "", e5.CreateAction)
 
 			So(err, ShouldNotBeNil)
 		})

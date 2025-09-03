@@ -49,7 +49,7 @@ func TestUnitClient_CreatePayment(t *testing.T) {
 			responder, _ := httpmock.NewJsonResponder(http.StatusInternalServerError, httpErr)
 			httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-			err := e5.CreatePayment(input)
+			err := e5.CreatePayment(input, "")
 
 			So(err, ShouldBeError, ErrE5InternalServer)
 		})
@@ -62,7 +62,7 @@ func TestUnitClient_CreatePayment(t *testing.T) {
 			responder, _ := httpmock.NewJsonResponder(http.StatusNotFound, httpErr)
 			httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-			err := e5.CreatePayment(input)
+			err := e5.CreatePayment(input, "")
 
 			So(err, ShouldBeError, ErrE5NotFound)
 		})
@@ -74,7 +74,7 @@ func TestUnitClient_CreatePayment(t *testing.T) {
 			responder := httpmock.NewBytesResponder(http.StatusOK, nil)
 			httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-			err := e5.CreatePayment(input)
+			err := e5.CreatePayment(input, "")
 
 			So(err, ShouldBeNil)
 		})
@@ -150,7 +150,7 @@ func TestUnitClient_GetTransactions(t *testing.T) {
 			responder := httpmock.NewStringResponder(http.StatusOK, e5EmptyResponse)
 			httpmock.RegisterResponder(http.MethodGet, url, responder)
 
-			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"})
+			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"}, "")
 
 			So(err, ShouldBeNil)
 			So(r.Transactions, ShouldBeEmpty)
@@ -164,7 +164,7 @@ func TestUnitClient_GetTransactions(t *testing.T) {
 			responder := httpmock.NewStringResponder(http.StatusOK, e5TransactionResponse)
 			httpmock.RegisterResponder(http.MethodGet, url, responder)
 
-			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"})
+			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"}, "")
 
 			So(err, ShouldBeNil)
 			So(r.Transactions, ShouldHaveLength, 1)
@@ -177,7 +177,7 @@ func TestUnitClient_GetTransactions(t *testing.T) {
 			responder := httpmock.NewStringResponder(http.StatusBadRequest, e5ValidationError)
 			httpmock.RegisterResponder(http.MethodGet, url, responder)
 
-			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"})
+			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"}, "")
 
 			So(r, ShouldBeNil)
 			So(err, ShouldBeError, ErrE5BadRequest)
@@ -193,7 +193,7 @@ func TestUnitClient_AuthorisePayment(t *testing.T) {
 	Convey("email, paymentId are required parameters", t, func() {
 		input := &AuthorisePaymentInput{}
 
-		err := e5.AuthorisePayment(input)
+		err := e5.AuthorisePayment(input, "")
 
 		So(err, ShouldNotBeNil)
 
@@ -212,7 +212,7 @@ func TestUnitClient_AuthorisePayment(t *testing.T) {
 		responder := httpmock.NewStringResponder(http.StatusInternalServerError, e5ValidationError)
 		httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"})
+		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"}, "")
 
 		So(err, ShouldBeError, ErrE5InternalServer)
 	})
@@ -224,7 +224,7 @@ func TestUnitClient_AuthorisePayment(t *testing.T) {
 		responder := httpmock.NewStringResponder(http.StatusBadRequest, e5ValidationError)
 		httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"})
+		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"}, "")
 
 		So(err, ShouldBeError, ErrE5BadRequest)
 	})
@@ -236,7 +236,7 @@ func TestUnitClient_AuthorisePayment(t *testing.T) {
 		responder := httpmock.NewStringResponder(http.StatusNotFound, e5ValidationError)
 		httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"})
+		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"}, "")
 
 		So(err, ShouldBeError, ErrE5NotFound)
 	})
@@ -248,7 +248,7 @@ func TestUnitClient_AuthorisePayment(t *testing.T) {
 		responder := httpmock.NewStringResponder(http.StatusForbidden, e5ValidationError)
 		httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"})
+		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"}, "")
 
 		So(err, ShouldBeError, ErrUnexpectedServerError)
 	})
@@ -261,7 +261,7 @@ func TestUnitClient_AuthorisePayment(t *testing.T) {
 		httpmock.RegisterResponder(http.MethodPost, url, responder)
 
 		input := &AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"}
-		err := e5.AuthorisePayment(input)
+		err := e5.AuthorisePayment(input, "")
 
 		So(err, ShouldBeNil)
 	})
@@ -273,7 +273,7 @@ func TestUnitClient_Confirm(t *testing.T) {
 	input := &PaymentActionInput{PaymentID: "123", CompanyCode: "LP"}
 
 	Convey("paymentId is required", t, func() {
-		err := e5.ConfirmPayment(&PaymentActionInput{})
+		err := e5.ConfirmPayment(&PaymentActionInput{}, "")
 
 		errors := err.(validator.ValidationErrors)
 
@@ -288,7 +288,7 @@ func TestUnitClient_Confirm(t *testing.T) {
 		responder := httpmock.NewStringResponder(http.StatusInternalServerError, e5ValidationError)
 		httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-		err := e5.ConfirmPayment(input)
+		err := e5.ConfirmPayment(input, "")
 
 		So(err, ShouldBeError, ErrE5InternalServer)
 	})
@@ -300,7 +300,7 @@ func TestUnitClient_Confirm(t *testing.T) {
 		responder := httpmock.NewStringResponder(http.StatusBadRequest, e5ValidationError)
 		httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-		err := e5.ConfirmPayment(input)
+		err := e5.ConfirmPayment(input, "")
 
 		So(err, ShouldBeError, ErrE5BadRequest)
 	})
@@ -312,7 +312,7 @@ func TestUnitClient_Confirm(t *testing.T) {
 		responder := httpmock.NewStringResponder(http.StatusNotFound, e5ValidationError)
 		httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-		err := e5.ConfirmPayment(input)
+		err := e5.ConfirmPayment(input, "")
 
 		So(err, ShouldBeError, ErrE5NotFound)
 	})
@@ -324,7 +324,7 @@ func TestUnitClient_Confirm(t *testing.T) {
 		responder := httpmock.NewStringResponder(http.StatusForbidden, e5ValidationError)
 		httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-		err := e5.ConfirmPayment(input)
+		err := e5.ConfirmPayment(input, "")
 
 		So(err, ShouldBeError, ErrUnexpectedServerError)
 	})
@@ -336,7 +336,7 @@ func TestUnitClient_Confirm(t *testing.T) {
 		responder := httpmock.NewStringResponder(http.StatusOK, "")
 		httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-		err := e5.ConfirmPayment(input)
+		err := e5.ConfirmPayment(input, "")
 
 		So(err, ShouldBeNil)
 	})

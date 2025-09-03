@@ -15,7 +15,7 @@ var etagGenerator = utils.GenerateEtag
 
 // PayableResourceRequestToDB will take the input request from the REST call and transform it to a dao ready for
 // insertion into the database
-func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResourceDao {
+func PayableResourceRequestToDB(req *models.PayableRequest, requestId string) *models.PayableResourceDao {
 	transactionsDAO := map[string]models.TransactionDao{}
 	for _, tx := range req.Transactions {
 		transactionsDAO[tx.PenaltyRef] = models.TransactionDao{
@@ -29,7 +29,7 @@ func PayableResourceRequestToDB(req *models.PayableRequest) *models.PayableResou
 	reference := utils.GenerateReferenceNumber()
 	etag, err := etagGenerator()
 	if err != nil {
-		log.Error(fmt.Errorf("error generating etag: [%s]", err))
+		log.ErrorC(requestId, fmt.Errorf("error generating etag: [%s]", err))
 	}
 	format := "/company/%s/penalties/payable/%s"
 
