@@ -52,10 +52,10 @@ func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment mod
 		return createPayment(penaltyPayment, p.E5Client, e5PaymentID)
 	})
 	if err != nil {
-		saveE5Error(penaltyPayment, p.PayableResourceDaoService, err, e5PaymentID, e5.CreateAction)
 		if penaltyPayment.Attempt < int32(cfg.ConsumerRetryMaxAttempts) {
 			return err // put it on the retry topic
 		}
+		saveE5Error(penaltyPayment, p.PayableResourceDaoService, err, e5PaymentID, e5.CreateAction)
 		return nil // don't put it on the retry topic
 	}
 
@@ -75,7 +75,6 @@ func (p PenaltyFinancePayment) ProcessFinancialPenaltyPayment(penaltyPayment mod
 		return nil // don't put it on the retry topic
 	}
 
-	saveE5Success(logContext, p.PayableResourceDaoService, penaltyPayment.CustomerCode, penaltyPayment.PayableRef)
 	log.Info("Financial penalty payment processing successful", logContext)
 	return nil
 }
@@ -189,13 +188,6 @@ func saveE5Error(penaltyPayment models.PenaltyPaymentsProcessing, payableResourc
 	}
 	log.Error(e5PaymentError, logContext)
 	if svcErr := payableResourceDaoService.SaveE5Error(penaltyPayment.CustomerCode, penaltyPayment.PayableRef, "", e5Action); svcErr != nil {
-		log.Error(svcErr, logContext)
-	}
-}
-
-// Ensure that any previous E5 payment errors are cleared following the last successful attempt to confirm payment
-func saveE5Success(logContext log.Data, payableResourceDaoService dao.PayableResourceDaoService, customerCode string, payableRef string) {
-	if svcErr := payableResourceDaoService.SaveE5Error(customerCode, payableRef, "", ""); svcErr != nil {
 		log.Error(svcErr, logContext)
 	}
 }
