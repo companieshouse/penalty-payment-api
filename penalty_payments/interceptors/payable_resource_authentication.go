@@ -78,7 +78,7 @@ func (payableAuthInterceptor *PayableAuthenticationInterceptor) PayableAuthentic
 			authUserHasPenaltyLookupRole, isGetRequest,
 			isAPIKeyRequest, apiKeyHasElevatedPrivileges}
 
-		checkAllowedThrough(w, r, debugMap, next, ctx, booleans)
+		checkAllowedThrough(ctx, w, r, debugMap, next, booleans)
 	})
 }
 
@@ -110,12 +110,7 @@ func preCheckRequest(w http.ResponseWriter, r *http.Request) (string, string, st
 	return customerCode, payableRef, identityType, false
 }
 
-func checkAllowedThrough(w http.ResponseWriter,
-	r *http.Request,
-	debugMap log.Data,
-	next http.Handler,
-	ctx context.Context,
-	b booleanParameters) {
+func checkAllowedThrough(ctx context.Context, w http.ResponseWriter, r *http.Request, debugMap log.Data, next http.Handler, b booleanParameters) {
 	// Now that we have the payable resource data and authorized user there are
 	// multiple cases that can be allowed through:
 	switch {
