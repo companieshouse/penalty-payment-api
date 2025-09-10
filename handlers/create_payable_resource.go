@@ -40,7 +40,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		customerCode := r.Context().Value(config.CustomerCode).(string)
 
 		request.CustomerCode = strings.ToUpper(customerCode)
-		request.CreatedBy = userDetails.(authentication.AuthUserDetails)
+		request.CreatedBy = userDetails
 		log.DebugC(requestId, "successfully extracted request data", log.Data{"request": request})
 
 		// Ensure that the transactions in the request are valid payable penalties that exist in E5
@@ -99,21 +99,22 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 	})
 }
 
-func extractRequestData(w http.ResponseWriter, r *http.Request, err error, request models.PayableRequest) (any, string, string, bool) {
+func extractRequestData(w http.ResponseWriter, r *http.Request, err error, request models.PayableRequest) (authentication.AuthUserDetails, string, string, bool) {
+	var emptyUserDetails authentication.AuthUserDetails
 	// request body failed to get decoded
 	if err != nil {
 		log.ErrorR(r, fmt.Errorf("invalid request"))
 		m := models.NewMessageResponse("failed to read request body")
 		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return nil, "", "", true
+		return emptyUserDetails, "", "", true
 	}
 
-	userDetails := r.Context().Value(authentication.ContextKeyUserDetails)
-	if userDetails == nil {
+	userDetailsValue := r.Context().Value(authentication.ContextKeyUserDetails)
+	if userDetailsValue == nil {
 		log.ErrorR(r, fmt.Errorf("user details not in context"))
 		m := models.NewMessageResponse("user details not in request context")
 		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return nil, "", "", true
+		return emptyUserDetails, "", "", true
 	}
 
 	companyCode, err := getCompanyCodeFromTransaction(request.Transactions)
@@ -121,7 +122,7 @@ func extractRequestData(w http.ResponseWriter, r *http.Request, err error, reque
 		log.ErrorR(r, fmt.Errorf("company code cannot be resolved"))
 		m := models.NewMessageResponse("company code cannot be resolved")
 		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return nil, "", "", true
+		return emptyUserDetails, "", "", true
 	}
 
 	penaltyRefType, err := getPenaltyRefTypeFromTransaction(request.Transactions)
@@ -129,7 +130,7 @@ func extractRequestData(w http.ResponseWriter, r *http.Request, err error, reque
 		log.ErrorR(r, fmt.Errorf("penalty reference type cannot be resolved"))
 		m := models.NewMessageResponse("penalty reference type cannot be resolved")
 		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return nil, "", "", true
+		return emptyUserDetails, "", "", true
 	}
-	return userDetails, companyCode, penaltyRefType, false
+	return userDetailsValue.(authentication.AuthUserDetails), companyCode, penaltyRefType, false
 }
