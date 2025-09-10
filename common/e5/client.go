@@ -83,7 +83,7 @@ func (c *Client) GetTransactions(input *GetTransactionsInput, requestId string) 
 		return nil, err
 	}
 
-	defer CloseResponseBody(resp, logContext)
+	defer closeResponseBody(resp, logContext)
 
 	// determine if there are 4xx/5xx errors. an error here relates to a response parsing issue
 	err = c.checkResponseForError(resp, requestId)
@@ -185,7 +185,7 @@ func (c *Client) doPaymentRequest(
 		return err
 	}
 
-	defer CloseResponseBody(resp, logContext)
+	defer closeResponseBody(resp, logContext)
 
 	log.InfoC(requestId, infoMsg, logContext, log.Data{
 		"status": resp.StatusCode,
@@ -246,7 +246,7 @@ func (c *Client) doPaymentAction(action Action, input *PaymentActionInput, reque
 
 	log.InfoC(requestId, "response received from E5", logContext)
 
-	defer CloseResponseBody(resp, logContext)
+	defer closeResponseBody(resp, logContext)
 
 	return c.checkResponseForError(resp, requestId)
 }
@@ -346,11 +346,9 @@ func NewClient(username, baseURL string) ClientInterface {
 	}
 }
 
-func CloseResponseBody(resp *http.Response, logContext log.Data) {
-	func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Error(err, logContext)
-		}
-	}(resp.Body)
+func closeResponseBody(resp *http.Response, logContext log.Data) {
+	err := resp.Body.Close()
+	if err != nil {
+		log.Error(err, logContext)
+	}
 }
