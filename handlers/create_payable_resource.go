@@ -100,13 +100,13 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 }
 
 func extractRequestData(w http.ResponseWriter, r *http.Request, err error, request models.PayableRequest) (authentication.AuthUserDetails, string, string, bool) {
-	var emptyUserDetails authentication.AuthUserDetails
+	var authUserDetails authentication.AuthUserDetails
 	// request body failed to get decoded
 	if err != nil {
 		log.ErrorR(r, fmt.Errorf("invalid request"))
 		m := models.NewMessageResponse("failed to read request body")
 		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return emptyUserDetails, "", "", true
+		return authUserDetails, "", "", true
 	}
 
 	userDetailsValue := r.Context().Value(authentication.ContextKeyUserDetails)
@@ -114,7 +114,7 @@ func extractRequestData(w http.ResponseWriter, r *http.Request, err error, reque
 		log.ErrorR(r, fmt.Errorf("user details not in context"))
 		m := models.NewMessageResponse("user details not in request context")
 		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return emptyUserDetails, "", "", true
+		return authUserDetails, "", "", true
 	}
 
 	companyCode, err := getCompanyCodeFromTransaction(request.Transactions)
@@ -122,7 +122,7 @@ func extractRequestData(w http.ResponseWriter, r *http.Request, err error, reque
 		log.ErrorR(r, fmt.Errorf("company code cannot be resolved"))
 		m := models.NewMessageResponse("company code cannot be resolved")
 		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return emptyUserDetails, "", "", true
+		return authUserDetails, "", "", true
 	}
 
 	penaltyRefType, err := getPenaltyRefTypeFromTransaction(request.Transactions)
@@ -130,7 +130,9 @@ func extractRequestData(w http.ResponseWriter, r *http.Request, err error, reque
 		log.ErrorR(r, fmt.Errorf("penalty reference type cannot be resolved"))
 		m := models.NewMessageResponse("penalty reference type cannot be resolved")
 		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return emptyUserDetails, "", "", true
+		return authUserDetails, "", "", true
 	}
-	return userDetailsValue.(authentication.AuthUserDetails), companyCode, penaltyRefType, false
+
+	authUserDetails = userDetailsValue.(authentication.AuthUserDetails)
+	return authUserDetails, companyCode, penaltyRefType, false
 }
