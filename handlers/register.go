@@ -36,6 +36,12 @@ func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.Payab
 		Service: *payableResourceService,
 	}
 
+	payableResourceRequestPreprocessor := middleware.PayableResourceRequestValidator{
+		PenaltyDetailsMap:      penaltyDetailsMap,
+		AllowedTransactionsMap: allowedTransactionsMap,
+		ApDaoService:           apDaoService,
+	}
+
 	// only oauth2 users can create payable resources
 	oauth2OnlyInterceptor := &authentication.OAuth2OnlyAuthenticationInterceptor{
 		StrictPaths: map[string][]string{
@@ -56,12 +62,17 @@ func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.Payab
 	appRouter := mainRouter.PathPrefix("/company/{customer_code}").Subrouter()
 	appRouter.HandleFunc("/penalties/late-filing", HandleGetPenalties(apDaoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties-legacy")
 	appRouter.HandleFunc("/penalties/{penalty_reference_type}", HandleGetPenalties(apDaoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties")
-	appRouter.Handle("/penalties/payable", CreatePayableResourceHandler(prDaoService, apDaoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodPost).Name("create-payable")
 	appRouter.Use(
 		oauth2OnlyInterceptor.OAuth2OnlyAuthenticationIntercept,
 		userAuthInterceptor.UserAuthenticationIntercept,
 		middleware.CompanyMiddleware,
 	)
+
+	// sub router for handling requests to create payable resource to apply relevant middleware
+	// PayableResourceRequestValidator
+	createPayableResourceRouter := appRouter.PathPrefix("/penalties/payable").Subrouter()
+	createPayableResourceRouter.Handle("", CreatePayableResourceHandler(prDaoService)).Methods(http.MethodPost).Name("create-payable")
+	createPayableResourceRouter.Use(payableResourceRequestPreprocessor.PayableResourceValidate)
 
 	// sub router for handling interactions with existing payable resources to apply relevant
 	// PayableAuthenticationInterceptor
