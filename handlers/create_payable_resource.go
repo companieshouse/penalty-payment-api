@@ -28,54 +28,33 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		requestId := r.Header.Get("X-Request-ID")
 		log.InfoC(requestId, "start POST payable resource request")
 
-		var request models.PayableRequest
-		err := json.NewDecoder(r.Body).Decode(&request)
-
-		userDetails, companyCode, penaltyRefType, failedValidation := extractRequestData(w, r, err, request)
-		if failedValidation {
+		request, err := decodeRequestBody(r)
+		if handleError(w, r, err, "failed to read request body", http.StatusBadRequest) {
 			log.ErrorC(requestId, fmt.Errorf("error extracting request data: %v", err))
 			return
 		}
 
-		customerCode := r.Context().Value(config.CustomerCode).(string)
-
-		request.CustomerCode = strings.ToUpper(customerCode)
-		request.CreatedBy = userDetails
-		log.DebugC(requestId, "successfully extracted request data", log.Data{"request": request})
-
-		// Ensure that the transactions in the request are valid payable penalties that exist in E5
-		var payablePenalties []models.TransactionItem
-		for _, transaction := range request.Transactions {
-			params := types.PayablePenaltyParams{
-				PenaltyRefType:             penaltyRefType,
-				CustomerCode:               customerCode,
-				CompanyCode:                companyCode,
-				PenaltyDetailsMap:          penaltyDetailsMap,
-				Transaction:                transaction,
-				AllowedTransactionsMap:     allowedTransactionMap,
-				AccountPenaltiesDaoService: apDaoSvc,
-				RequestId:                  requestId,
-			}
-			payablePenalty, err := payablePenalty(params)
-			if err != nil {
-				log.ErrorC(requestId, fmt.Errorf("invalid request - failed matching against e5"))
-				m := models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time")
-				utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-				return
-			}
-			payablePenalties = append(payablePenalties, *payablePenalty)
+		customerCode, authUserDetails, companyCode, penaltyRefType, err := extractRequestContext(r, request)
+		if handleError(w, r, err, err.Error(), http.StatusBadRequest) {
+			log.ErrorC(requestId, fmt.Errorf("error extracting request data: %v", err))
+			return
 		}
 
-		// Replace request transactions with payable penalties to include updated values in the request
-		request.Transactions = payablePenalties
+		request.CustomerCode = strings.ToUpper(customerCode)
+		request.CreatedBy = authUserDetails
+		log.DebugC(requestId, "successfully extracted request data", log.Data{"request": request})
 
-		v := validator.New()
-		err = v.Struct(request)
+		validatedTransactions, err := validatePayableTransactions(request.Transactions, apDaoSvc, penaltyDetailsMap, allowedTransactionMap, companyCode, customerCode, penaltyRefType, requestId)
+		if handleError(w, r, err, "one or more of the transactions you want to pay for do not exist or are not payable at this time", http.StatusBadRequest) {
+			log.ErrorC(requestId, fmt.Errorf("invalid request - failed matching against e5"))
+			return
+		}
 
-		if err != nil {
+		request.Transactions = validatedTransactions
+
+		err = validateStruct(request)
+		if handleError(w, r, err, "invalid request body", http.StatusBadRequest) {
 			log.ErrorC(requestId, fmt.Errorf("invalid request - failed validation"))
-			m := models.NewMessageResponse("invalid request body")
-			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
 		log.DebugC(requestId, "request transactions validated, creating payable resource", log.Data{"request": request})
@@ -83,10 +62,8 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		model := transformers.PayableResourceRequestToDB(&request, requestId)
 
 		err = prDaoSvc.CreatePayableResource(model, requestId)
-		if err != nil {
+		if handleError(w, r, err, "there was a problem handling your request", http.StatusInternalServerError) {
 			log.ErrorC(requestId, fmt.Errorf("failed to create payable request in database"))
-			m := models.NewMessageResponse("there was a problem handling your request")
-			utils.WriteJSONWithStatus(w, r, m, http.StatusInternalServerError)
 			return
 		}
 
@@ -99,40 +76,72 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 	})
 }
 
-func extractRequestData(w http.ResponseWriter, r *http.Request, err error, request models.PayableRequest) (authentication.AuthUserDetails, string, string, bool) {
+func decodeRequestBody(r *http.Request) (models.PayableRequest, error) {
+	var request models.PayableRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	return request, err
+}
+
+func extractRequestContext(r *http.Request, request models.PayableRequest) (string, authentication.AuthUserDetails, string, string, error) {
 	var authUserDetails authentication.AuthUserDetails
-	// request body failed to get decoded
-	if err != nil {
-		log.ErrorR(r, fmt.Errorf("invalid request"))
-		m := models.NewMessageResponse("failed to read request body")
-		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return authUserDetails, "", "", true
-	}
 
 	userDetailsValue := r.Context().Value(authentication.ContextKeyUserDetails)
 	if userDetailsValue == nil {
-		log.ErrorR(r, fmt.Errorf("user details not in context"))
-		m := models.NewMessageResponse("user details not in request context")
-		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return authUserDetails, "", "", true
+		return "", authUserDetails, "", "", fmt.Errorf("user details not in request context")
 	}
 
 	companyCode, err := getCompanyCodeFromTransaction(request.Transactions)
 	if err != nil {
-		log.ErrorR(r, fmt.Errorf("company code cannot be resolved"))
-		m := models.NewMessageResponse("company code cannot be resolved")
-		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return authUserDetails, "", "", true
+		return "", authUserDetails, "", "", fmt.Errorf("company code cannot be resolved")
 	}
 
 	penaltyRefType, err := getPenaltyRefTypeFromTransaction(request.Transactions)
 	if err != nil {
-		log.ErrorR(r, fmt.Errorf("penalty reference type cannot be resolved"))
-		m := models.NewMessageResponse("penalty reference type cannot be resolved")
-		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-		return authUserDetails, "", "", true
+		return "", authUserDetails, "", "", fmt.Errorf("penalty reference type cannot be resolved")
 	}
 
+	customerCode := r.Context().Value(config.CustomerCode).(string)
 	authUserDetails = userDetailsValue.(authentication.AuthUserDetails)
-	return authUserDetails, companyCode, penaltyRefType, false
+
+	return customerCode, authUserDetails, companyCode, penaltyRefType, nil
+}
+
+func validatePayableTransactions(transactions []models.TransactionItem, apDaoSvc dao.AccountPenaltiesDaoService,
+	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionMap *models.AllowedTransactionMap,
+	companyCode, customerCode, penaltyRefType, requestId string) ([]models.TransactionItem, error) {
+
+	var payablePenalties []models.TransactionItem
+	for _, transaction := range transactions {
+		params := types.PayablePenaltyParams{
+			PenaltyRefType:             penaltyRefType,
+			CustomerCode:               customerCode,
+			CompanyCode:                companyCode,
+			PenaltyDetailsMap:          penaltyDetailsMap,
+			Transaction:                transaction,
+			AllowedTransactionsMap:     allowedTransactionMap,
+			AccountPenaltiesDaoService: apDaoSvc,
+			RequestId:                  requestId,
+		}
+		payablePenalty, err := payablePenalty(params)
+		if err != nil {
+			return nil, err
+		}
+		payablePenalties = append(payablePenalties, *payablePenalty)
+	}
+	return payablePenalties, nil
+}
+
+func validateStruct(req interface{}) error {
+	v := validator.New()
+	return v.Struct(req)
+}
+
+func handleError(w http.ResponseWriter, r *http.Request, err error, msg string, status int) bool {
+	if err != nil {
+		log.ErrorR(r, fmt.Errorf("%s", msg))
+		m := models.NewMessageResponse(msg)
+		utils.WriteJSONWithStatus(w, r, m, status)
+		return true
+	}
+	return false
 }
