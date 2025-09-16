@@ -12,4 +12,6 @@ const (
 	CreatePayableResource = ContextKey("CreatePayableResource")
 	// RequestId is the key that stores the request ID
 	RequestId = ContextKey("RequestId")
+	// Payment is the key that stores the payment
+	PaymentInformation = ContextKey("PaymentInformation")
 )

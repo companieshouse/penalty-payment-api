@@ -84,7 +84,7 @@ func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.Payab
 	// separate router for the patch request so that we can apply the interceptor to it without interfering with
 	// other routes
 	payResourceRouter := appRouter.PathPrefix("/penalties/payable/{payable_ref}/payment").Methods(http.MethodPatch).Subrouter()
-	payResourceRouter.Use(payableAuthInterceptor.PayableAuthenticationIntercept, authentication.ElevatedPrivilegesInterceptor)
+	payResourceRouter.Use(payableAuthInterceptor.PayableAuthenticationIntercept, authentication.ElevatedPrivilegesInterceptor, payableResourceRequestPreprocessor.PayableResourceValidate)
 	payResourceRouter.Handle("", PayResourceHandler(payableResourceService, e5Client, penaltyDetailsMap, allowedTransactionsMap, apDaoService)).Name("mark-as-paid")
 
 	// Set middleware across all routers and sub routers

@@ -13,15 +13,16 @@ import (
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api-core/validators"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
+	"github.com/companieshouse/penalty-payment-api/penalty_payments/service"
 )
 
-// PayableResourceRequestValidator contains the services and configs needed to preprocess PayableResource
-// requests
+// PayableResourceRequestValidator contains the services and configs needed to validate PayableResource requests
 type PayableResourceRequestValidator struct {
 	PenaltyDetailsMap      *config.PenaltyDetailsMap
 	AllowedTransactionsMap *models.AllowedTransactionMap
@@ -30,6 +31,7 @@ type PayableResourceRequestValidator struct {
 
 var payablePenalty = api.PayablePenalty
 var getCompanyCode = utils.GetCompanyCode
+var getPaymentInformation = service.GetPaymentInformation
 
 // PayableResourceValidate will intercept enhance and/or validate requests to create payable resource,
 // patch payable resource and get payment details from payable resource
@@ -56,7 +58,7 @@ func (processor *PayableResourceRequestValidator) PayableResourceValidate(next h
 				validateCreatePayableResourceRequest(r, w, next, processor.PenaltyDetailsMap, processor.AllowedTransactionsMap, processor.ApDaoService, requestId)
 			} else if httpMethod == http.MethodPatch {
 				log.InfoC(requestId, "start PATCH payable resource request")
-				next.ServeHTTP(w, r)
+				validatePatchPayableResourceRequest(r, w, next, requestId)
 			}
 			return
 		}
@@ -157,4 +159,65 @@ func extractRequestData(w http.ResponseWriter, r *http.Request, request *models.
 
 	authUserDetails = userDetailsValue.(authentication.AuthUserDetails)
 	return authUserDetails, companyCode, penaltyRefType, nil
+}
+
+func validatePatchPayableResourceRequest(r *http.Request, w http.ResponseWriter, next http.Handler, requestId string) {
+	// 1. get the payable resource out of the context. authorisation is already handled in the interceptor
+	i := r.Context().Value(config.PayableResource)
+	if i == nil {
+		err := fmt.Errorf("no payable resource in context. check PayableAuthenticationInterceptor is installed")
+		log.ErrorC(requestId, err)
+		m := models.NewMessageResponse("no payable request present in request context")
+		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
+		return
+	}
+	resource := i.(*models.PayableResource)
+	logContext := log.Data{"payable_resource": resource}
+	log.DebugC(requestId, "got payable resource from context", logContext)
+
+	// 2. validate the request and check the payment reference against the payment api to validate that it has
+	// actually been paid
+	log.InfoC(requestId, "validating request", logContext)
+	var request models.PatchResourceRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		log.ErrorC(requestId, err)
+		m := models.NewMessageResponse("there was a problem reading the request body")
+		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
+		return
+	}
+	v := validator.New()
+	err = v.Struct(request)
+
+	if err != nil {
+		log.ErrorC(requestId, err)
+		m := models.NewMessageResponse("the request contained insufficient data and/or failed validation")
+		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
+		return
+	}
+	log.DebugC(requestId, "request is valid", log.Data{"request": request})
+
+	log.InfoC(requestId, "getting payment information", log.Data{"payment_ref": request.Reference, "payable_ref": resource.PayableRef})
+	payment, err := getPaymentInformation(request.Reference, r)
+	if err != nil {
+		log.ErrorC(requestId, err)
+		m := models.NewMessageResponse("the payable resource does not exist")
+		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
+		return
+	}
+
+	log.InfoC(requestId, "validating payment", log.Data{"payable_ref": resource.PayableRef, "external_payment_id": payment.ExternalPaymentID})
+	err = validators.New().ValidateForPayment(*resource, *payment)
+	if err != nil {
+		log.ErrorC(requestId, err)
+		m := models.NewMessageResponse("there was a problem validating this payment")
+		utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
+		return
+	}
+	log.DebugC(requestId, "payment is valid", log.Data{"payment": payment})
+
+	// Store payment information in context to use later in the handler
+	ctx := context.WithValue(r.Context(), config.PaymentInformation, payment)
+
+	next.ServeHTTP(w, r.WithContext(ctx))
 }
