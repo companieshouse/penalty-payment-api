@@ -10,6 +10,9 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+var dbUrl = "mongodb://localhost:27017"
+var db = "test"
+
 func TestUnitService(t *testing.T) {
 	getMongoDB = func(mongoDBURL, databaseName string) interfaces.MongoDatabaseInterface {
 		return &MongoDatabaseWrapper{
@@ -19,8 +22,8 @@ func TestUnitService(t *testing.T) {
 
 	Convey("successful creation of new payable resources dao service", t, func() {
 		cfg := &config.Config{
-			MongoDBURL:                 "mongodb://localhost:27017",
-			Database:                   "test",
+			MongoDBURL:                 dbUrl,
+			Database:                   db,
 			PayableResourcesCollection: "payable_resources",
 		}
 
@@ -30,8 +33,8 @@ func TestUnitService(t *testing.T) {
 
 	Convey("successful creation of new account penalties dao service", t, func() {
 		cfg := &config.Config{
-			MongoDBURL:                 "mongodb://localhost:27017",
-			Database:                   "test",
+			MongoDBURL:                 dbUrl,
+			Database:                   db,
 			AccountPenaltiesCollection: "account_penalties",
 		}
 
