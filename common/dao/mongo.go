@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	"errors"
-	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,23 +16,28 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/interfaces"
 )
 
-var client *mongo.Client
+// mongoClientProviderImpl is the concrete implementation of MongoClientProvider
+type mongoClientProviderImpl struct {
+	client *mongo.Client
+}
 
-func getMongoClient(mongoDBURL string) *mongo.Client {
-	if client != nil {
-		return client
-	}
+// Client returns the underlying *mongo.Client
+func (m *mongoClientProviderImpl) Client() *mongo.Client {
+	return m.client
+}
 
+// Database returns a reference to the specified mongodb
+func (m *mongoClientProviderImpl) Database(name string) *mongo.Database {
+	return m.client.Database(name)
+}
+
+func NewMongoClient(mongoDBURL string) (interfaces.MongoClientProvider, error) {
 	ctx := context.Background()
 
 	clientOptions := options.Client().ApplyURI(mongoDBURL)
 	client, err := mongo.Connect(ctx, clientOptions)
-
-	// assume the caller of this func cannot handle the case where there is no database connection so the prog must
-	// crash here as the service cannot continue.
 	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	// check we can connect to the mongodb mongoInstance. failure here should result in a crash.
@@ -42,17 +46,12 @@ func getMongoClient(mongoDBURL string) *mongo.Client {
 	err = client.Ping(pingContext, nil)
 	if err != nil {
 		log.Error(errors.New("ping to mongodb timed out. please check the connection to mongodb and that it is running"))
-		os.Exit(1)
+		return nil, err
 	}
 
 	log.Info("connected to mongodb successfully")
 
-	return client
-}
-
-func getMongoDatabase(mongoDBURL, databaseName string) interfaces.MongoDatabaseInterface {
-	db := getMongoClient(mongoDBURL).Database(databaseName)
-	return &MongoDatabaseWrapper{db: db}
+	return &mongoClientProviderImpl{client: client}, nil
 }
 
 type MongoCollectionWrapper struct {
@@ -86,15 +85,17 @@ func (m *MongoCollectionWrapper) DeleteOne(ctx context.Context, filter interface
 // MongoPayableResourceService is an implementation of the PayableResourceDaoService interface using
 // MongoDB as the backend driver.
 type MongoPayableResourceService struct {
-	db             interfaces.MongoDatabaseInterface
-	CollectionName string
+	mongoClientProvider interfaces.MongoClientProvider
+	db                  interfaces.MongoDatabaseInterface
+	CollectionName      string
 }
 
 // MongoAccountPenaltiesService is an implementation of the AccountPenaltiesDaoService interface using
 // MongoDB as the backend driver.
 type MongoAccountPenaltiesService struct {
-	db             interfaces.MongoDatabaseInterface
-	CollectionName string
+	mongoClientProvider interfaces.MongoClientProvider
+	db                  interfaces.MongoDatabaseInterface
+	CollectionName      string
 }
 
 // CreateAccountPenalties creates a new document in the account_penalties database collection if a
@@ -394,6 +395,7 @@ func (m *MongoPayableResourceService) UpdatePaymentDetails(dao *models.PayableRe
 
 // Shutdown is a hook that can be used to clean up db resources
 func (m *MongoPayableResourceService) Shutdown() {
+	client := m.mongoClientProvider.Client()
 	if client != nil {
 		err := client.Disconnect(context.Background())
 		if err != nil {

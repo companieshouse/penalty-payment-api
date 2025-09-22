@@ -39,8 +39,13 @@ func main() {
 
 	// Create router
 	mainRouter := mux.NewRouter()
-	prDaoService := dao.NewPayableResourcesDaoService(cfg)
-	apDaoService := dao.NewAccountPenaltiesDaoService(cfg)
+	mongoClientProvider, err := dao.NewMongoClient(cfg.MongoDBURL)
+	if err != nil {
+		log.Error(fmt.Errorf("mongo client error: %s. Exiting", err), nil)
+		os.Exit(1)
+	}
+	prDaoService := dao.NewPayableResourcesDaoService(mongoClientProvider, cfg)
+	apDaoService := dao.NewAccountPenaltiesDaoService(mongoClientProvider, cfg)
 
 	penaltyDetailsMap, err := config.LoadPenaltyDetails("assets/penalty_details.yml")
 	if err != nil {
