@@ -21,18 +21,9 @@ var penaltyRef = "A1234567"
 var payableRef = "1234568"
 
 func TestUnitMongo_CreateAccountPenalties(t *testing.T) {
-	ctrl := gomock.NewController(t)
+	ctrl, svc, mockCollection, mockDatabase, dao := setUpForAccountPenaltiesService(t)
+
 	defer ctrl.Finish()
-
-	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
-	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
-
-	dao := &models.AccountPenaltiesDao{}
-
-	svc := MongoAccountPenaltiesService{
-		db:             mockDatabase,
-		CollectionName: "account_penalties",
-	}
 
 	Convey("create account penalties should return", t, func() {
 		mockDatabase.EXPECT().Collection("account_penalties").Return(mockCollection)
@@ -75,16 +66,9 @@ func TestUnitMongo_CreateAccountPenalties(t *testing.T) {
 }
 
 func TestUnitMongo_GetAccountPenalties(t *testing.T) {
-	ctrl := gomock.NewController(t)
+	ctrl, svc, mockCollection, mockDatabase, _ := setUpForAccountPenaltiesService(t)
+
 	defer ctrl.Finish()
-
-	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
-	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
-
-	svc := MongoAccountPenaltiesService{
-		db:             mockDatabase,
-		CollectionName: "account_penalties",
-	}
 
 	Convey("get account penalties should return", t, func() {
 		mockDatabase.EXPECT().Collection("account_penalties").Return(mockCollection)
@@ -130,16 +114,9 @@ func TestUnitMongo_GetAccountPenalties(t *testing.T) {
 }
 
 func TestUnitMongo_UpdateAccountPenaltyAsPaid(t *testing.T) {
-	ctrl := gomock.NewController(t)
+	ctrl, svc, mockCollection, mockDatabase, _ := setUpForAccountPenaltiesService(t)
+
 	defer ctrl.Finish()
-
-	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
-	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
-
-	svc := MongoAccountPenaltiesService{
-		db:             mockDatabase,
-		CollectionName: "account_penalties",
-	}
 
 	Convey("update account penalty as paid should return", t, func() {
 		mockDatabase.EXPECT().Collection("account_penalties").Return(mockCollection)
@@ -187,18 +164,9 @@ func TestUnitMongo_UpdateAccountPenaltyAsPaid(t *testing.T) {
 }
 
 func TestUnitMongo_UpdateAccountPenalties(t *testing.T) {
-	ctrl := gomock.NewController(t)
+	ctrl, svc, mockCollection, mockDatabase, dao := setUpForAccountPenaltiesService(t)
+
 	defer ctrl.Finish()
-
-	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
-	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
-
-	dao := &models.AccountPenaltiesDao{}
-
-	svc := MongoAccountPenaltiesService{
-		db:             mockDatabase,
-		CollectionName: "account_penalties",
-	}
 
 	Convey("update account penalties should return", t, func() {
 		mockDatabase.EXPECT().Collection("account_penalties").Return(mockCollection)
@@ -246,18 +214,9 @@ func TestUnitMongo_UpdateAccountPenalties(t *testing.T) {
 }
 
 func TestUnitMongo_CreatePayableResource(t *testing.T) {
-	ctrl := gomock.NewController(t)
+	ctrl, svc, mockCollection, mockDatabase, dao := setUpForPayableResourceService(t)
+
 	defer ctrl.Finish()
-
-	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
-	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
-
-	dao := &models.PayableResourceDao{}
-
-	svc := MongoPayableResourceService{
-		db:             mockDatabase,
-		CollectionName: "payable_resources",
-	}
 
 	Convey("create payable resource should return", t, func() {
 		mockDatabase.EXPECT().Collection("payable_resources").Return(mockCollection)
@@ -283,18 +242,9 @@ func TestUnitMongo_CreatePayableResource(t *testing.T) {
 }
 
 func TestUnitMongo_UpdatePaymentDetails(t *testing.T) {
-	ctrl := gomock.NewController(t)
+	ctrl, svc, mockCollection, mockDatabase, dao := setUpForPayableResourceService(t)
+
 	defer ctrl.Finish()
-
-	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
-	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
-
-	dao := &models.PayableResourceDao{}
-
-	svc := MongoPayableResourceService{
-		db:             mockDatabase,
-		CollectionName: "payable_resources",
-	}
 
 	Convey("create payment details should return", t, func() {
 		mockDatabase.EXPECT().Collection("payable_resources").Return(mockCollection)
@@ -320,16 +270,9 @@ func TestUnitMongo_UpdatePaymentDetails(t *testing.T) {
 }
 
 func TestUnitMongo_GetPayableResource(t *testing.T) {
-	ctrl := gomock.NewController(t)
+	ctrl, svc, mockCollection, mockDatabase, _ := setUpForPayableResourceService(t)
+
 	defer ctrl.Finish()
-
-	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
-	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
-
-	svc := MongoPayableResourceService{
-		db:             mockDatabase,
-		CollectionName: "payable_resources",
-	}
 
 	Convey("get payable resource should return", t, func() {
 		mockDatabase.EXPECT().Collection("payable_resources").Return(mockCollection)
@@ -375,16 +318,9 @@ func TestUnitMongo_GetPayableResource(t *testing.T) {
 }
 
 func TestUnitMongo_SaveE5Error(t *testing.T) {
-	ctrl := gomock.NewController(t)
+	ctrl, svc, mockCollection, mockDatabase, _ := setUpForPayableResourceService(t)
+
 	defer ctrl.Finish()
-
-	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
-	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
-
-	svc := MongoPayableResourceService{
-		db:             mockDatabase,
-		CollectionName: "payable_resources",
-	}
 
 	Convey("save e5 should return", t, func() {
 
@@ -454,4 +390,34 @@ func TestUnitMongo_PayableResourceService_Shutdown(t *testing.T) {
 		}
 		m.Shutdown()
 	})
+}
+
+func setUpForAccountPenaltiesService(t *testing.T) (*gomock.Controller, MongoAccountPenaltiesService,
+	*mocks.MockMongoCollectionInterface, *mocks.MockMongoDatabaseInterface, *models.AccountPenaltiesDao) {
+	ctrl := gomock.NewController(t)
+
+	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
+	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
+	dao := &models.AccountPenaltiesDao{}
+
+	svc := MongoAccountPenaltiesService{
+		db:             mockDatabase,
+		CollectionName: "account_penalties",
+	}
+	return ctrl, svc, mockCollection, mockDatabase, dao
+}
+
+func setUpForPayableResourceService(t *testing.T) (*gomock.Controller, MongoPayableResourceService,
+	*mocks.MockMongoCollectionInterface, *mocks.MockMongoDatabaseInterface, *models.PayableResourceDao) {
+	ctrl := gomock.NewController(t)
+
+	mockCollection := mocks.NewMockMongoCollectionInterface(ctrl)
+	mockDatabase := mocks.NewMockMongoDatabaseInterface(ctrl)
+	dao := &models.PayableResourceDao{}
+
+	svc := MongoPayableResourceService{
+		db:             mockDatabase,
+		CollectionName: "payable_resources",
+	}
+	return ctrl, svc, mockCollection, mockDatabase, dao
 }
