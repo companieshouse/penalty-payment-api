@@ -23,8 +23,21 @@ func hasFieldError(field, tag string, errs validator.ValidationErrors) bool {
 	return false
 }
 
+func getE5Client() ClientInterface {
+	return NewClient("foo", "https://e5")
+}
+
+var requestId = "123456abc"
+
+type TestCase struct {
+	name       string
+	statusCode int
+	payload    string
+	err        error
+}
+
 func TestUnitClient_CreatePayment(t *testing.T) {
-	e5 := NewClient("foo", "https://e5")
+	e5 := getE5Client()
 	url := "https://e5/arTransactions/payment?ADV_userName=foo"
 
 	Convey("creating a payment", t, func() {
@@ -41,43 +54,50 @@ func TestUnitClient_CreatePayment(t *testing.T) {
 			},
 		}
 
-		Convey("response should be unsuccessful when there is a 500 error from E5", func() {
-			httpmock.Activate()
-			defer httpmock.DeactivateAndReset()
+		testCases := []TestCase{
+			{
+				name:       "response should be unsuccessful when there is a 500 error from E5",
+				statusCode: http.StatusInternalServerError,
+				payload:    "test error",
+				err:        ErrE5InternalServer,
+			},
+			{
+				name:       "response should be unsuccessful when the company does not exist",
+				statusCode: http.StatusNotFound,
+				payload:    "company not found",
+				err:        ErrE5NotFound,
+			},
+			{
+				name:       "response should be successful if a 200 is returned from E5",
+				statusCode: http.StatusOK,
+				payload:    "",
+				err:        nil,
+			},
+		}
 
-			httpErr := &apiErrorResponse{Code: 500, Message: "test error"}
-			responder, _ := httpmock.NewJsonResponder(http.StatusInternalServerError, httpErr)
-			httpmock.RegisterResponder(http.MethodPost, url, responder)
+		httpmock.Activate()
+		defer httpmock.DeactivateAndReset()
 
-			err := e5.CreatePayment(input, "")
+		for _, testCase := range testCases {
+			Convey(testCase.name, func() {
+				if testCase.statusCode == http.StatusOK {
+					responder, _ := httpmock.NewJsonResponder(testCase.statusCode, nil)
+					httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-			So(err, ShouldBeError, ErrE5InternalServer)
-		})
+					err := e5.CreatePayment(input, requestId)
 
-		Convey("response should be unsuccessful when the company does not exist", func() {
-			httpmock.Activate()
-			defer httpmock.DeactivateAndReset()
+					So(err, ShouldBeNil)
+				} else {
+					httpErr := &apiErrorResponse{Code: testCase.statusCode, Message: testCase.payload}
+					responder, _ := httpmock.NewJsonResponder(testCase.statusCode, httpErr)
+					httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-			httpErr := &apiErrorResponse{Code: 404, Message: "company not found"}
-			responder, _ := httpmock.NewJsonResponder(http.StatusNotFound, httpErr)
-			httpmock.RegisterResponder(http.MethodPost, url, responder)
+					err := e5.CreatePayment(input, requestId)
 
-			err := e5.CreatePayment(input, "")
-
-			So(err, ShouldBeError, ErrE5NotFound)
-		})
-
-		Convey("response should be successful if a 200 is returned from E5", func() {
-			httpmock.Activate()
-			defer httpmock.DeactivateAndReset()
-
-			responder := httpmock.NewBytesResponder(http.StatusOK, nil)
-			httpmock.RegisterResponder(http.MethodPost, url, responder)
-
-			err := e5.CreatePayment(input, "")
-
-			So(err, ShouldBeNil)
-		})
+					So(err, ShouldBeError, testCase.err)
+				}
+			})
+		}
 	})
 }
 
@@ -138,19 +158,25 @@ var e5ValidationError = `
 }
 `
 
+func getTestE5Transactions(response string, statusCode int) (*GetTransactionsResponse, error) {
+	e5 := getE5Client()
+	url := "https://e5/arTransactions/10000024?ADV_userName=foo&companyCode=LP&fromDate=1990-01-01"
+	transactionInput := &GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"}
+
+	responder := httpmock.NewStringResponder(statusCode, response)
+	httpmock.RegisterResponder(http.MethodGet, url, responder)
+
+	return e5.GetTransactions(transactionInput, requestId)
+}
+
 func TestUnitClient_GetTransactions(t *testing.T) {
 	Convey("getting a list of transactions for a company", t, func() {
-		e5 := NewClient("foo", "https://e5")
-		url := "https://e5/arTransactions/10000024?ADV_userName=foo&companyCode=LP&fromDate=1990-01-01"
+
+		httpmock.Activate()
+		defer httpmock.DeactivateAndReset()
 
 		Convey("company does not exist or no transactions returned", func() {
-			httpmock.Activate()
-			defer httpmock.DeactivateAndReset()
-
-			responder := httpmock.NewStringResponder(http.StatusOK, e5EmptyResponse)
-			httpmock.RegisterResponder(http.MethodGet, url, responder)
-
-			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"}, "")
+			r, err := getTestE5Transactions(e5EmptyResponse, http.StatusOK)
 
 			So(err, ShouldBeNil)
 			So(r.Transactions, ShouldBeEmpty)
@@ -158,26 +184,14 @@ func TestUnitClient_GetTransactions(t *testing.T) {
 		})
 
 		Convey("should return a list of transactions", func() {
-			httpmock.Activate()
-			defer httpmock.DeactivateAndReset()
-
-			responder := httpmock.NewStringResponder(http.StatusOK, e5TransactionResponse)
-			httpmock.RegisterResponder(http.MethodGet, url, responder)
-
-			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"}, "")
+			r, err := getTestE5Transactions(e5TransactionResponse, http.StatusOK)
 
 			So(err, ShouldBeNil)
 			So(r.Transactions, ShouldHaveLength, 1)
 		})
 
 		Convey("using an incorrect company code", func() {
-			httpmock.Activate()
-			defer httpmock.DeactivateAndReset()
-
-			responder := httpmock.NewStringResponder(http.StatusBadRequest, e5ValidationError)
-			httpmock.RegisterResponder(http.MethodGet, url, responder)
-
-			r, err := e5.GetTransactions(&GetTransactionsInput{CustomerCode: "10000024", CompanyCode: "LP"}, "")
+			r, err := getTestE5Transactions(e5ValidationError, http.StatusBadRequest)
 
 			So(r, ShouldBeNil)
 			So(err, ShouldBeError, ErrE5BadRequest)
@@ -186,14 +200,48 @@ func TestUnitClient_GetTransactions(t *testing.T) {
 	})
 }
 
+func getAuthoriseConfirmTestCases() []TestCase {
+	return []TestCase{
+		{
+			name:       "500 error from E5",
+			statusCode: http.StatusInternalServerError,
+			payload:    e5ValidationError,
+			err:        ErrE5InternalServer,
+		},
+		{
+			name:       "400 error from E5",
+			statusCode: http.StatusBadRequest,
+			payload:    e5ValidationError,
+			err:        ErrE5BadRequest,
+		},
+		{
+			name:       "404 error from E5",
+			statusCode: http.StatusNotFound,
+			payload:    e5ValidationError,
+			err:        ErrE5NotFound,
+		},
+		{
+			name:       "403 error from E5",
+			statusCode: http.StatusForbidden,
+			payload:    e5ValidationError,
+			err:        ErrUnexpectedServerError,
+		},
+		{
+			name:       "successful request",
+			statusCode: http.StatusOK,
+			payload:    "",
+			err:        nil,
+		},
+	}
+}
+
 func TestUnitClient_AuthorisePayment(t *testing.T) {
-	e5 := NewClient("foo", "https://e5")
-	url := "https://e5/arTransactions/payment/authorise?ADV_userName=foo"
+	e5 := getE5Client()
 
 	Convey("email, paymentId are required parameters", t, func() {
 		input := &AuthorisePaymentInput{}
 
-		err := e5.AuthorisePayment(input, "")
+		err := e5.AuthorisePayment(input, requestId)
 
 		So(err, ShouldNotBeNil)
 
@@ -205,72 +253,29 @@ func TestUnitClient_AuthorisePayment(t *testing.T) {
 		So(hasFieldError("CompanyCode", "required", errors), ShouldBeTrue)
 	})
 
-	Convey("500 error from E5", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
+	url := "https://e5/arTransactions/payment/authorise?ADV_userName=foo"
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
 
-		responder := httpmock.NewStringResponder(http.StatusInternalServerError, e5ValidationError)
-		httpmock.RegisterResponder(http.MethodPost, url, responder)
+	for _, testCase := range getAuthoriseConfirmTestCases() {
+		Convey(testCase.name, t, func() {
 
-		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"}, "")
+			responder := httpmock.NewStringResponder(testCase.statusCode, testCase.payload)
+			httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-		So(err, ShouldBeError, ErrE5InternalServer)
-	})
+			err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"}, requestId)
 
-	Convey("400 error from E5", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		responder := httpmock.NewStringResponder(http.StatusBadRequest, e5ValidationError)
-		httpmock.RegisterResponder(http.MethodPost, url, responder)
-
-		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"}, "")
-
-		So(err, ShouldBeError, ErrE5BadRequest)
-	})
-
-	Convey("404 error from E5", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		responder := httpmock.NewStringResponder(http.StatusNotFound, e5ValidationError)
-		httpmock.RegisterResponder(http.MethodPost, url, responder)
-
-		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"}, "")
-
-		So(err, ShouldBeError, ErrE5NotFound)
-	})
-
-	Convey("403 error from E5", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		responder := httpmock.NewStringResponder(http.StatusForbidden, e5ValidationError)
-		httpmock.RegisterResponder(http.MethodPost, url, responder)
-
-		err := e5.AuthorisePayment(&AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"}, "")
-
-		So(err, ShouldBeError, ErrUnexpectedServerError)
-	})
-
-	Convey("everything okay when there are not errors", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		responder := httpmock.NewStringResponder(http.StatusOK, "")
-		httpmock.RegisterResponder(http.MethodPost, url, responder)
-
-		input := &AuthorisePaymentInput{PaymentID: "123", Email: "test@example.com", CompanyCode: "LP"}
-		err := e5.AuthorisePayment(input, "")
-
-		So(err, ShouldBeNil)
-	})
+			if testCase.err == nil {
+				So(err, ShouldBeNil)
+			} else {
+				So(err, ShouldBeError, testCase.err)
+			}
+		})
+	}
 }
 
 func TestUnitClient_Confirm(t *testing.T) {
-	e5 := NewClient("foo", "https://e5")
-	url := "https://e5/arTransactions/payment/confirm?ADV_userName=foo"
-	input := &PaymentActionInput{PaymentID: "123", CompanyCode: "LP"}
+	e5 := getE5Client()
 
 	Convey("paymentId is required", t, func() {
 		err := e5.ConfirmPayment(&PaymentActionInput{}, "")
@@ -281,63 +286,23 @@ func TestUnitClient_Confirm(t *testing.T) {
 		So(hasFieldError("PaymentID", "required", errors), ShouldBeTrue)
 	})
 
-	Convey("500 error from E5", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
+	url := "https://e5/arTransactions/payment/confirm?ADV_userName=foo"
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
 
-		responder := httpmock.NewStringResponder(http.StatusInternalServerError, e5ValidationError)
-		httpmock.RegisterResponder(http.MethodPost, url, responder)
+	for _, testCase := range getAuthoriseConfirmTestCases() {
+		Convey(testCase.name, t, func() {
 
-		err := e5.ConfirmPayment(input, "")
+			responder := httpmock.NewStringResponder(testCase.statusCode, testCase.payload)
+			httpmock.RegisterResponder(http.MethodPost, url, responder)
 
-		So(err, ShouldBeError, ErrE5InternalServer)
-	})
+			err := e5.ConfirmPayment(&PaymentActionInput{PaymentID: "123", CompanyCode: "LP"}, requestId)
 
-	Convey("400 error from E5", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		responder := httpmock.NewStringResponder(http.StatusBadRequest, e5ValidationError)
-		httpmock.RegisterResponder(http.MethodPost, url, responder)
-
-		err := e5.ConfirmPayment(input, "")
-
-		So(err, ShouldBeError, ErrE5BadRequest)
-	})
-
-	Convey("404 error from E5", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		responder := httpmock.NewStringResponder(http.StatusNotFound, e5ValidationError)
-		httpmock.RegisterResponder(http.MethodPost, url, responder)
-
-		err := e5.ConfirmPayment(input, "")
-
-		So(err, ShouldBeError, ErrE5NotFound)
-	})
-
-	Convey("403 error from E5", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		responder := httpmock.NewStringResponder(http.StatusForbidden, e5ValidationError)
-		httpmock.RegisterResponder(http.MethodPost, url, responder)
-
-		err := e5.ConfirmPayment(input, "")
-
-		So(err, ShouldBeError, ErrUnexpectedServerError)
-	})
-
-	Convey("successful confirmation", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		responder := httpmock.NewStringResponder(http.StatusOK, "")
-		httpmock.RegisterResponder(http.MethodPost, url, responder)
-
-		err := e5.ConfirmPayment(input, "")
-
-		So(err, ShouldBeNil)
-	})
+			if testCase.err == nil {
+				So(err, ShouldBeNil)
+			} else {
+				So(err, ShouldBeError, testCase.err)
+			}
+		})
+	}
 }
