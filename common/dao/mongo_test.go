@@ -435,3 +435,23 @@ func TestUnitMongo_SaveE5Error(t *testing.T) {
 
 	})
 }
+
+func TestUnitMongo_PayableResourceService_Shutdown(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockClient := &mongo.Client{}
+	mockDB := &mocks.MockMongoDatabaseInterface{}
+
+	Convey("Payable resource service shutdown - disconnected from mongodb successfully", t, func() {
+		mockMongoClientProvider := mocks.NewMockMongoClientProvider(ctrl)
+		mockMongoClientProvider.EXPECT().Client().Return(mockClient)
+
+		m := &MongoPayableResourceService{
+			mongoClientProvider: mockMongoClientProvider,
+			db:                  mockDB,
+			CollectionName:      "payable_resources",
+		}
+		m.Shutdown()
+	})
+}
