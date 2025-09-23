@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"gopkg.in/go-playground/validator.v9"
-
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
@@ -56,8 +54,9 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		}
 
 		request.Transactions = payablePenalties
+		err = utils.GetValidator(request)
 
-		if err := validateRequest(request); err != nil {
+		if err != nil {
 			log.ErrorC(requestId, fmt.Errorf("invalid request - failed validation"))
 			writeJSONResponse(w, r, models.NewMessageResponse("invalid request body"), http.StatusBadRequest)
 			return
@@ -142,12 +141,6 @@ func validateTransactions(transactions []models.TransactionItem, penaltyRefType,
 		payablePenalties = append(payablePenalties, *payablePenalty)
 	}
 	return payablePenalties, nil
-}
-
-// validateRequest validates the final request struct using validator
-func validateRequest(request models.PayableRequest) error {
-	v := validator.New()
-	return v.Struct(request)
 }
 
 // createPayableResource saves the payable resource to the database
