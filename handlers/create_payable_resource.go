@@ -54,6 +54,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		}
 
 		request.Transactions = payablePenalties
+
 		err = utils.GetValidator(request)
 
 		if err != nil {

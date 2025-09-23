@@ -3,6 +3,7 @@ package dao
 import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/e5"
+	"github.com/companieshouse/penalty-payment-api/common/interfaces"
 	"github.com/companieshouse/penalty-payment-api/config"
 )
 
@@ -20,15 +21,13 @@ type PayableResourceDaoService interface {
 	Shutdown()
 }
 
-var getMongoDB = getMongoDatabase
-
-// NewPayableResourcesDaoService will create a new instance of the PayableResourceDaoService interface. All details about its implementation and the
-// database driver will be hidden from outside of this package
-func NewPayableResourcesDaoService(cfg *config.Config) PayableResourceDaoService {
-	database := getMongoDB(cfg.MongoDBURL, cfg.Database)
+// NewPayableResourcesDaoService will create a new instance of the PayableResourceDaoService interface.
+// All details about its implementation and the database driver will be hidden from outside of this package
+func NewPayableResourcesDaoService(mongoClientProvider interfaces.MongoClientProvider, cfg *config.Config) PayableResourceDaoService {
 	return &MongoPayableResourceService{
-		db:             database,
-		CollectionName: cfg.PayableResourcesCollection,
+		mongoClientProvider: mongoClientProvider,
+		db:                  &MongoDatabaseWrapper{db: mongoClientProvider.Database(cfg.Database)},
+		CollectionName:      cfg.PayableResourcesCollection,
 	}
 }
 
@@ -46,11 +45,11 @@ type AccountPenaltiesDaoService interface {
 }
 
 // NewAccountPenaltiesDaoService will create a new instance of the AccountPenaltiesDaoService interface.
-// All details about its implementation and the  database driver will be hidden from outside of this package
-func NewAccountPenaltiesDaoService(cfg *config.Config) AccountPenaltiesDaoService {
-	database := getMongoDB(cfg.MongoDBURL, cfg.Database)
+// All details about its implementation and the database driver will be hidden from outside of this package
+func NewAccountPenaltiesDaoService(mongoClientProvider interfaces.MongoClientProvider, cfg *config.Config) AccountPenaltiesDaoService {
 	return &MongoAccountPenaltiesService{
-		db:             database,
-		CollectionName: cfg.AccountPenaltiesCollection,
+		mongoClientProvider: mongoClientProvider,
+		db:                  &MongoDatabaseWrapper{db: mongoClientProvider.Database(cfg.Database)},
+		CollectionName:      cfg.AccountPenaltiesCollection,
 	}
 }
