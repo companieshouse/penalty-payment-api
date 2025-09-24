@@ -32,7 +32,6 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 			message := "failed to read request body"
 			log.ErrorR(r, fmt.Errorf(message+": %v", err))
 			writeJSONResponse(w, r, models.NewMessageResponse(message), http.StatusBadRequest)
-			writeJSONResponse(w, r, models.NewMessageResponse("failed to read request body"), http.StatusBadRequest)
 			return
 		}
 
@@ -57,7 +56,6 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		}
 
 		// Replace request transactions with payable penalties to include updated values in the request
-
 		request.Transactions = payablePenalties
 
 		err = utils.GetValidator(request)
