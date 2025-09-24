@@ -28,14 +28,14 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 
 		request, err := decodeRequest(r)
 		if err != nil {
-			log.ErrorC(requestId, fmt.Errorf("invalid request"))
+			log.ErrorC(requestId, "invalid request")
 			writeJSONResponse(w, r, models.NewMessageResponse("failed to read request body"), http.StatusBadRequest)
 			return
 		}
 
 		authUserDetails, companyCode, penaltyRefType, failedValidation := extractRequestData(w, r, request)
 		if failedValidation {
-			log.ErrorC(requestId, fmt.Errorf("error extracting request data"))
+			log.ErrorC(requestId, "error extracting request data")
 			return
 		}
 
@@ -48,7 +48,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		payablePenalties, err := validateTransactions(request.Transactions, penaltyRefType, customerCode, companyCode,
 			apDaoSvc, penaltyDetailsMap, allowedTransactionMap, requestId)
 		if err != nil {
-			log.ErrorC(requestId, fmt.Errorf("invalid request - failed matching against e5"))
+			log.ErrorC(requestId, "invalid request - failed matching against e5")
 			writeJSONResponse(w, r, models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time"), http.StatusBadRequest)
 			return
 		}
@@ -60,7 +60,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		err = utils.GetValidator(request)
 
 		if err != nil {
-			log.ErrorC(requestId, fmt.Errorf("invalid request - failed validation"))
+			log.ErrorC(requestId, "invalid request - failed validation")
 			writeJSONResponse(w, r, models.NewMessageResponse("invalid request body"), http.StatusBadRequest)
 			return
 		}
@@ -68,7 +68,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		log.DebugC(requestId, "request transactions validated, creating payable resource", log.Data{"request": request})
 
 		if err := createPayableResource(prDaoSvc, &request, requestId); err != nil {
-			log.ErrorC(requestId, fmt.Errorf("failed to create payable request in database"))
+			log.ErrorC(requestId, "failed to create payable request in database")
 			writeJSONResponse(w, r, models.NewMessageResponse("there was a problem handling your request"), http.StatusInternalServerError)
 			return
 		}
@@ -95,21 +95,21 @@ func extractRequestData(w http.ResponseWriter, r *http.Request, request models.P
 
 	userDetailsValue := r.Context().Value(authentication.ContextKeyUserDetails)
 	if userDetailsValue == nil {
-		log.ErrorR(r, fmt.Errorf("user details not in context"))
+		log.ErrorR(r, "user details not in context")
 		writeJSONResponse(w, r, models.NewMessageResponse("user details not in request context"), http.StatusBadRequest)
 		return authUserDetails, "", "", true
 	}
 
 	companyCode, err := getCompanyCodeFromTransaction(request.Transactions)
 	if err != nil {
-		log.ErrorR(r, fmt.Errorf("company code cannot be resolved"))
+		log.ErrorR(r, "company code cannot be resolved")
 		writeJSONResponse(w, r, models.NewMessageResponse("company code cannot be resolved"), http.StatusBadRequest)
 		return authUserDetails, "", "", true
 	}
 
 	penaltyRefType, err := getPenaltyRefTypeFromTransaction(request.Transactions)
 	if err != nil {
-		log.ErrorR(r, fmt.Errorf("penalty reference type cannot be resolved"))
+		log.ErrorR(r, "penalty reference type cannot be resolved")
 		writeJSONResponse(w, r, models.NewMessageResponse("penalty reference type cannot be resolved"), http.StatusBadRequest)
 		return authUserDetails, "", "", true
 	}
