@@ -28,7 +28,9 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 
 		request, err := decodeRequest(r)
 		if err != nil {
-			log.ErrorC(requestId, errors.New("invalid request"))
+			message := "failed to read request body"
+			log.ErrorR(r, fmt.Errorf(message + ": %v", err))
+			writeJSONResponse(w, r, models.NewMessageResponse(message), http.StatusBadRequest)
 			writeJSONResponse(w, r, models.NewMessageResponse("failed to read request body"), http.StatusBadRequest)
 			return
 		}
