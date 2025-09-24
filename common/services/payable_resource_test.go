@@ -3,7 +3,9 @@ package services
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -17,237 +19,197 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func createMockPayableResourceService(mockDAO *mocks.MockPayableResourceDaoService, cfg *config.Config) PayableResourceService {
-	return PayableResourceService{
-		DAO:    mockDAO,
+var requestId = "123abc5789"
+var customerCode = "12345678"
+var validPayableRef = "1234"
+var invalidPayableRef = "invalid"
+
+func setup(t *testing.T) (*gomock.Controller, *mocks.MockPayableResourceDaoService, *PayableResourceService) {
+	mockCtrl := gomock.NewController(t)
+	cfg, _ := config.Get()
+
+	mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+	mockPayableResourceSvc := PayableResourceService{
+		DAO:    mockPrDaoSvc,
 		Config: cfg,
+	}
+
+	return mockCtrl, mockPrDaoSvc, &mockPayableResourceSvc
+}
+
+func createTestGetRequest(requestId string) *http.Request {
+	req := httptest.NewRequest("Get", "/test", nil)
+	req.Header.Add("X-Request-ID", requestId)
+
+	return req
+}
+
+func buildTestPayableResourceDao(size int, customerCode string, payableRef string, status string) *models.PayableResourceDao {
+	transactions := map[string]models.TransactionDao{
+		"abcd": {Amount: 5},
+	}
+	totalAmount := 5
+	if size > 1 {
+		transactions["wxyz"] = models.TransactionDao{Amount: 10}
+		totalAmount = totalAmount + 10
+	}
+	t := time.Now().Truncate(time.Millisecond)
+	return &models.PayableResourceDao{
+		CustomerCode: customerCode,
+		PayableRef:   payableRef,
+		Data: models.PayableResourceDataDao{
+			Etag:      "qwertyetag1234",
+			CreatedAt: &t,
+			CreatedBy: models.CreatedByDao{
+				ID:       "identity",
+				Email:    "test@user.com",
+				Forename: "some",
+				Surname:  "body",
+			},
+			Links: models.PayableResourceLinksDao{
+				Self:    fmt.Sprintf("/company/%s/penalties/payable/%s", customerCode, payableRef),
+				Payment: fmt.Sprintf("/company/%s/penalties/payable/%s/payment", customerCode, payableRef),
+			},
+			Transactions: transactions,
+			Payment: models.PaymentDao{
+				Status:    status,
+				Amount:    strconv.Itoa(totalAmount),
+				Reference: "payref",
+				PaidAt:    &t,
+			},
+		},
+	}
+}
+
+func testGetPayableResource(mockPayableResourceSvc *PayableResourceService, dao *models.PayableResourceDao,
+	customerCode string, payableRef string, responseType ResponseType, requestId string) {
+	req := createTestGetRequest(requestId)
+
+	payableResource, status, err := mockPayableResourceSvc.GetPayableResource(req, customerCode, payableRef)
+
+	So(status, ShouldEqual, responseType)
+	if err != nil {
+		So(err.Error(), ShouldEqual, "error getting payable resource from db: [error]")
+	} else {
+		So(err, ShouldBeNil)
+	}
+	if payableResource == nil {
+		So(payableResource, ShouldBeNil)
+	} else {
+		So(payableResource.CustomerCode, ShouldEqual, dao.CustomerCode)
+		So(payableResource.PayableRef, ShouldEqual, dao.PayableRef)
+		So(payableResource.Etag, ShouldEqual, dao.Data.Etag)
+		So(payableResource.CreatedAt, ShouldEqual, dao.Data.CreatedAt)
+		So(payableResource.CreatedBy.ID, ShouldEqual, dao.Data.CreatedBy.ID)
+		So(payableResource.CreatedBy.Email, ShouldEqual, dao.Data.CreatedBy.Email)
+		So(payableResource.CreatedBy.Forename, ShouldEqual, dao.Data.CreatedBy.Forename)
+		So(payableResource.CreatedBy.Surname, ShouldEqual, dao.Data.CreatedBy.Surname)
+		So(payableResource.Links.Self, ShouldEqual, dao.Data.Links.Self)
+		So(payableResource.Links.Payment, ShouldEqual, dao.Data.Links.Payment)
+		So(payableResource.Payment.Amount, ShouldEqual, dao.Data.Payment.Amount)
+		So(payableResource.Payment.Status, ShouldEqual, dao.Data.Payment.Status)
+		So(len(payableResource.Transactions), ShouldEqual, len(dao.Data.Transactions))
 	}
 }
 
 func TestUnitGetPayableResource(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	cfg, _ := config.Get()
+	mockCtrl, mockPrDaoSvc, mockPayableResourceSvc := setup(t)
+
+	httpmock.Activate()
+
+	defer httpmock.DeactivateAndReset()
+	defer mockCtrl.Finish()
 
 	Convey("Error getting payable resource from DB", t, func() {
-		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", gomock.Any(), "").Return(&models.PayableResourceDao{}, fmt.Errorf("error"))
+		mockPrDaoSvc.EXPECT().GetPayableResource(customerCode, validPayableRef, requestId).Return(&models.PayableResourceDao{}, fmt.Errorf("error"))
 
-		req := httptest.NewRequest("Get", "/test", nil)
-
-		payableResource, status, err := mockPayableResourceSvc.GetPayableResource(req, "12345678", "1234")
-		So(payableResource, ShouldBeNil)
-		So(status, ShouldEqual, Error)
-		So(err.Error(), ShouldEqual, "error getting payable resource from db: [error]")
+		testGetPayableResource(mockPayableResourceSvc, nil, customerCode, validPayableRef, Error, requestId)
 	})
 
 	Convey("Payable resource not found", t, func() {
-		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", "invalid", "").Return(nil, nil)
+		mockPrDaoSvc.EXPECT().GetPayableResource(customerCode, invalidPayableRef, requestId).Return(nil, nil)
 
-		req := httptest.NewRequest("Get", "/test", nil)
-
-		payableResource, status, err := mockPayableResourceSvc.GetPayableResource(req, "12345678", "invalid")
-		So(payableResource, ShouldBeNil)
-		So(status, ShouldEqual, NotFound)
-		So(err, ShouldBeNil)
+		testGetPayableResource(mockPayableResourceSvc, nil, customerCode, invalidPayableRef, NotFound, requestId)
 	})
 
 	Convey("Get Payable resource - success - Single transaction", t, func() {
-		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
-
-		txs := map[string]models.TransactionDao{
-			"abcd": {Amount: 5},
-		}
-		t := time.Now().Truncate(time.Millisecond)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", gomock.Any(), "").Return(
-			&models.PayableResourceDao{
-				CustomerCode: "12345678",
-				PayableRef:   "1234",
-				Data: models.PayableResourceDataDao{
-					Etag:      "qwertyetag1234",
-					CreatedAt: &t,
-					CreatedBy: models.CreatedByDao{
-						ID:       "identity",
-						Email:    "test@user.com",
-						Forename: "some",
-						Surname:  "body",
-					},
-					Links: models.PayableResourceLinksDao{
-						Self:    "/company/12345678/penalties/payable/1234",
-						Payment: "/company/12345678/penalties/payable/1234/payment",
-					},
-					Transactions: txs,
-					Payment: models.PaymentDao{
-						Status: constants.Pending.String(),
-						Amount: "5",
-					},
-				},
-			},
-			nil,
+		payableResourceDao := buildTestPayableResourceDao(1, customerCode, validPayableRef, "pending")
+		mockPrDaoSvc.EXPECT().GetPayableResource(customerCode, validPayableRef, requestId).Return(
+			payableResourceDao, nil,
 		)
 
-		req := httptest.NewRequest("Get", "/test", nil)
-
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		payableResource, status, err := mockPayableResourceSvc.GetPayableResource(req, "12345678", "1234")
-
-		So(status, ShouldEqual, Success)
-		So(err, ShouldBeNil)
-		So(payableResource.CustomerCode, ShouldEqual, "12345678")
-		So(payableResource.PayableRef, ShouldEqual, "1234")
-		So(payableResource.Etag, ShouldEqual, "qwertyetag1234")
-		So(payableResource.CreatedAt, ShouldEqual, &t)
-		So(payableResource.CreatedBy.ID, ShouldEqual, "identity")
-		So(payableResource.CreatedBy.Email, ShouldEqual, "test@user.com")
-		So(payableResource.CreatedBy.Forename, ShouldEqual, "some")
-		So(payableResource.CreatedBy.Surname, ShouldEqual, "body")
-		So(payableResource.Links.Self, ShouldEqual, "/company/12345678/penalties/payable/1234")
-		So(payableResource.Links.Payment, ShouldEqual, "/company/12345678/penalties/payable/1234/payment")
-		So(payableResource.Payment.Amount, ShouldEqual, "5")
-		So(payableResource.Payment.Status, ShouldEqual, "pending")
-		So(len(payableResource.Transactions), ShouldEqual, 1)
-		So(payableResource.Transactions[0].Amount, ShouldEqual, 5)
+		testGetPayableResource(mockPayableResourceSvc, payableResourceDao, customerCode, validPayableRef, Success, requestId)
 	})
 
 	Convey("Get Payable resource - success - Multiple transactions", t, func() {
-		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-		mockPayableResourceSvc := createMockPayableResourceService(mockPrDaoSvc, cfg)
-
-		txs := map[string]models.TransactionDao{
-			"abcd": {Amount: 5},
-			"wxyz": {Amount: 10},
-		}
-		t := time.Now().Truncate(time.Millisecond)
-		mockPrDaoSvc.EXPECT().GetPayableResource("12345678", gomock.Any(), gomock.Any()).Return(
-			&models.PayableResourceDao{
-				CustomerCode: "12345678",
-				PayableRef:   "1234",
-				Data: models.PayableResourceDataDao{
-					Etag:      "qwertyetag1234",
-					CreatedAt: &t,
-					CreatedBy: models.CreatedByDao{
-						ID:       "identity",
-						Email:    "test@user.com",
-						Forename: "some",
-						Surname:  "body",
-					},
-					Links: models.PayableResourceLinksDao{
-						Self:    "/company/12345678/penalties/payable/1234",
-						Payment: "/company/12345678/penalties/payable/1234/payment",
-					},
-					Transactions: txs,
-					Payment: models.PaymentDao{
-						Status:    constants.Paid.String(),
-						Amount:    "15",
-						Reference: "payref",
-						PaidAt:    &t,
-					},
-				},
-			},
+		payableResourceDao := buildTestPayableResourceDao(2, customerCode, validPayableRef, "paid")
+		mockPrDaoSvc.EXPECT().GetPayableResource(customerCode, validPayableRef, requestId).Return(
+			payableResourceDao,
 			nil,
 		)
 
-		req := httptest.NewRequest("Get", "/test", nil)
-
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		payableResource, status, err := mockPayableResourceSvc.GetPayableResource(req, "12345678", "1234")
-
-		So(status, ShouldEqual, Success)
-		So(err, ShouldBeNil)
-		So(payableResource.CustomerCode, ShouldEqual, "12345678")
-		So(payableResource.PayableRef, ShouldEqual, "1234")
-		So(payableResource.Etag, ShouldEqual, "qwertyetag1234")
-		So(payableResource.CreatedAt, ShouldEqual, &t)
-		So(payableResource.CreatedBy.ID, ShouldEqual, "identity")
-		So(payableResource.CreatedBy.Email, ShouldEqual, "test@user.com")
-		So(payableResource.CreatedBy.Forename, ShouldEqual, "some")
-		So(payableResource.CreatedBy.Surname, ShouldEqual, "body")
-		So(payableResource.Links.Self, ShouldEqual, "/company/12345678/penalties/payable/1234")
-		So(payableResource.Links.Payment, ShouldEqual, "/company/12345678/penalties/payable/1234/payment")
-		So(payableResource.Payment.Amount, ShouldEqual, "15")
-		So(payableResource.Payment.Status, ShouldEqual, "paid")
-		So(payableResource.Payment.Reference, ShouldEqual, "payref")
-		So(payableResource.Payment.PaidAt, ShouldEqual, &t)
-		So(len(payableResource.Transactions), ShouldEqual, 2)
-		So(payableResource.Transactions[0].Amount+payableResource.Transactions[1].Amount, ShouldEqual, 15) // array order can change - sum can't
+		testGetPayableResource(mockPayableResourceSvc, payableResourceDao, customerCode, validPayableRef, Success, requestId)
 	})
+}
+
+func buildEmptyPayableResource() models.PayableResource {
+	return models.PayableResource{
+		CustomerCode: customerCode,
+		PayableRef:   validPayableRef,
+	}
+}
+
+func buildPaymentInformation() validators.PaymentInformation {
+	layout := "2006-01-02T15:04:05.000Z"
+	str := "2014-11-12T11:45:26.371Z"
+	completedAt, _ := time.Parse(layout, str)
+
+	return validators.PaymentInformation{
+		Reference:   "123",
+		Amount:      "150",
+		Status:      "paid",
+		CompletedAt: completedAt,
+		CreatedBy:   "test@example.com",
+	}
 }
 
 func TestUnitPayableResourceService_UpdateAsPaid(t *testing.T) {
 	Convey("PayableResourceService.UpdateAsPaid", t, func() {
+		mockCtrl, mockPrDaoSvc, mockPayableResourceSvc := setup(t)
+
+		defer mockCtrl.Finish()
+
 		Convey("Payable resource must exist", func() {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
+			mockPrDaoSvc.EXPECT().GetPayableResource(customerCode, validPayableRef, requestId).Return(nil, errors.New("not found"))
 
-			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("not found"))
-			svc := PayableResourceService{DAO: mockPrDaoSvc}
-
-			err := svc.UpdateAsPaid(models.PayableResource{}, validators.PaymentInformation{}, "")
+			err := mockPayableResourceSvc.UpdateAsPaid(buildEmptyPayableResource(), validators.PaymentInformation{}, requestId)
 
 			So(err, ShouldBeError, ErrPenaltyNotFound)
 		})
 
 		Convey("Penalty payable resource must not have already been paid", func() {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
+			payableResourceDao := buildTestPayableResourceDao(1, customerCode, validPayableRef, "paid")
+			mockPrDaoSvc.EXPECT().GetPayableResource(customerCode, validPayableRef, requestId).Return(payableResourceDao, nil)
 
-			dataModel := &models.PayableResourceDao{
-				Data: models.PayableResourceDataDao{
-					Payment: models.PaymentDao{
-						Status: constants.Paid.String(),
-					},
-				},
-			}
-			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			svc := PayableResourceService{DAO: mockPrDaoSvc}
-
-			err := svc.UpdateAsPaid(models.PayableResource{}, validators.PaymentInformation{Status: constants.Paid.String()}, "")
+			err := mockPayableResourceSvc.UpdateAsPaid(buildEmptyPayableResource(), validators.PaymentInformation{Status: constants.Paid.String()}, requestId)
 
 			So(err, ShouldBeError, ErrAlreadyPaid)
 		})
 
 		Convey("payment details are saved to db", func() {
-			mockCtrl := gomock.NewController(t)
-			defer mockCtrl.Finish()
+			payableResourceDao := buildTestPayableResourceDao(1, customerCode, validPayableRef, "pending")
+			mockPrDaoSvc.EXPECT().GetPayableResource(customerCode, validPayableRef, requestId).Return(payableResourceDao, nil)
+			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(payableResourceDao, requestId).Times(1)
 
-			dataModel := &models.PayableResourceDao{
-				Data: models.PayableResourceDataDao{
-					Payment: models.PaymentDao{},
-				},
-			}
-			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), gomock.Any()).Return(dataModel, nil)
-			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(gomock.Any(), gomock.Any()).Times(1)
-			svc := PayableResourceService{DAO: mockPrDaoSvc}
+			paymentResponse := buildPaymentInformation()
 
-			layout := "2006-01-02T15:04:05.000Z"
-			str := "2014-11-12T11:45:26.371Z"
-			completedAt, _ := time.Parse(layout, str)
-
-			paymentResponse := validators.PaymentInformation{
-				Reference:   "123",
-				Amount:      "150",
-				Status:      "paid",
-				CompletedAt: completedAt,
-				CreatedBy:   "test@example.com",
-			}
-
-			err := svc.UpdateAsPaid(models.PayableResource{}, paymentResponse, "")
+			err := mockPayableResourceSvc.UpdateAsPaid(buildEmptyPayableResource(), paymentResponse, requestId)
 
 			So(err, ShouldBeNil)
-			So(dataModel.Data.Payment.Status, ShouldEqual, paymentResponse.Status)
-			So(dataModel.Data.Payment.PaidAt, ShouldNotBeNil)
-			So(dataModel.Data.Payment.Amount, ShouldEqual, paymentResponse.Amount)
-			So(dataModel.Data.Payment.Reference, ShouldEqual, paymentResponse.Reference)
+			So(payableResourceDao.Data.Payment.Status, ShouldEqual, paymentResponse.Status)
+			So(payableResourceDao.Data.Payment.PaidAt, ShouldNotBeNil)
+			So(payableResourceDao.Data.Payment.Amount, ShouldEqual, paymentResponse.Amount)
+			So(payableResourceDao.Data.Payment.Reference, ShouldEqual, paymentResponse.Reference)
 		})
 	})
 }
