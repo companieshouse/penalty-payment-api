@@ -53,6 +53,8 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 			return
 		}
 
+		// Replace request transactions with payable penalties to include updated values in the request
+
 		request.Transactions = payablePenalties
 
 		err = utils.GetValidator(request)
