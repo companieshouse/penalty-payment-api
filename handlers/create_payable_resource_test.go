@@ -23,22 +23,38 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var customerCode = "10000024"
+func setup(t *testing.T) (*gomock.Controller, *mocks.MockPayableResourceDaoService, *mocks.MockAccountPenaltiesDaoService, string, error) {
+	err := os.Chdir("..")
+	if err != nil {
+		return nil, nil, nil, "", err
+	}
+	cfg, _ := config.Get()
+	cfg.E5APIURL = "https://e5"
+	cfg.E5Username = "SYSTEM"
+	url := "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" + utils.LateFilingPenaltyCompanyCode + "&fromDate=1990-01-01"
+
+	httpmock.Activate()
+	mockCtrl := gomock.NewController(t)
+	mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+	mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
+
+	return mockCtrl, mockPrDaoSvc, mockApDaoSvc, url, nil
+}
 
 func serveCreatePayableResourceHandler(body []byte, payableResourceService dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
-	withAuthUserDetails bool) *httptest.ResponseRecorder {
+	withAuthUserDetails bool, customerCode string) *httptest.ResponseRecorder {
 	template := "/company/%s/penalties/payable"
 	path := fmt.Sprintf(template, customerCode)
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	res := httptest.NewRecorder()
 
 	handler := CreatePayableResourceHandler(payableResourceService, apDaoSvc, penaltyDetailsMap, allowedTransactionsMap)
-	handler.ServeHTTP(res, req.WithContext(testContext(withAuthUserDetails)))
+	handler.ServeHTTP(res, req.WithContext(testContext(withAuthUserDetails, customerCode)))
 
 	return res
 }
 
-func testContext(withAuthUserDetails bool) context.Context {
+func testContext(withAuthUserDetails bool, customerCode string) context.Context {
 	ctx := context.Background()
 	if withAuthUserDetails {
 		ctx = context.WithValue(ctx, authentication.ContextKeyUserDetails, authentication.AuthUserDetails{})
@@ -186,83 +202,84 @@ var e5ResponseMultipleTx = `
   ]
 }
 `
+var customerCode = "10000024"
+var penaltyRef1 = "A1234567"
+var penaltyRef2 = "A0378421"
+
+func buildRequestBody(customerCode string, malformed bool, empty bool, penaltyRefs []string) []byte {
+	if malformed {
+		return []byte{'{'}
+	} else if empty {
+		body, _ := json.Marshal(&models.PayableRequest{})
+		return body
+	}
+	payableRequest := models.PayableRequest{
+		CustomerCode: customerCode,
+		CreatedBy:    authentication.AuthUserDetails{},
+	}
+	if len(penaltyRefs) > 0 {
+		var transactions []models.TransactionItem
+		for _, ref := range penaltyRefs {
+			transactions = append(transactions, models.TransactionItem{
+				PenaltyRef: ref, Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty",
+			})
+		}
+		payableRequest.Transactions = transactions
+	}
+	body, _ := json.Marshal(payableRequest)
+
+	return body
+}
 
 func TestUnitCreatePayableResourceHandler(t *testing.T) {
-	err := os.Chdir("..")
+	mockCtrl, mockPrDaoSvc, mockApDaoSvc, url, err := setup(t)
 	if err != nil {
 		return
 	}
-	cfg, _ := config.Get()
-	cfg.E5APIURL = "https://e5"
-	cfg.E5Username = "SYSTEM"
 
-	url := "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" + utils.LateFilingPenaltyCompanyCode + "&fromDate=1990-01-01"
+	defer httpmock.DeactivateAndReset()
+	defer mockCtrl.Finish()
 
 	Convey("Error decoding request body", t, func() {
-		httpmock.Activate()
-		mockCtrl := gomock.NewController(t)
-		defer httpmock.DeactivateAndReset()
-		defer mockCtrl.Finish()
-
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
 
-		body := []byte{'{'}
+		body := buildRequestBody("", true, false, []string{})
 		res := serveCreatePayableResourceHandler(body, mocks.NewMockPayableResourceDaoService(mockCtrl),
-			mocks.NewMockAccountPenaltiesDaoService(mockCtrl), true)
+			mocks.NewMockAccountPenaltiesDaoService(mockCtrl), true, customerCode)
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
 
 	Convey("Error when user details not in context", t, func() {
-		httpmock.Activate()
-		mockCtrl := gomock.NewController(t)
-		defer httpmock.DeactivateAndReset()
-		defer mockCtrl.Finish()
-
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
 
-		body, _ := json.Marshal(&models.PayableRequest{})
+		body := buildRequestBody("", false, true, []string{})
 		res := serveCreatePayableResourceHandler(body, mocks.NewMockPayableResourceDaoService(mockCtrl),
-			mocks.NewMockAccountPenaltiesDaoService(mockCtrl), false)
+			mocks.NewMockAccountPenaltiesDaoService(mockCtrl), false, customerCode)
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
 
-	Convey("Error when company number not in context", t, func() {
-		httpmock.Activate()
-		mockCtrl := gomock.NewController(t)
-		defer httpmock.DeactivateAndReset()
-		defer mockCtrl.Finish()
-
+	Convey("Error when customer code not in context", t, func() {
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
 
-		body, _ := json.Marshal(&models.PayableRequest{})
-		customerCode = ""
+		body := buildRequestBody("", false, true, []string{})
 		res := serveCreatePayableResourceHandler(body, mocks.NewMockPayableResourceDaoService(mockCtrl),
-			mocks.NewMockAccountPenaltiesDaoService(mockCtrl), true)
-		customerCode = "10000024"
+			mocks.NewMockAccountPenaltiesDaoService(mockCtrl), true, "")
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
 
 	Convey("Error when company code cannot be resolved", t, func() {
-		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+		getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
 			return "", errors.New("no penalty reference found")
 		}
-		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
-
-		httpmock.Activate()
-		mockCtrl := gomock.NewController(t)
-		defer httpmock.DeactivateAndReset()
-		defer mockCtrl.Finish()
 
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
 
-		body, _ := json.Marshal(&models.PayableRequest{})
-		customerCode = ""
+		body := buildRequestBody("", false, true, []string{})
 		res := serveCreatePayableResourceHandler(body, mocks.NewMockPayableResourceDaoService(mockCtrl),
-			mocks.NewMockAccountPenaltiesDaoService(mockCtrl), true)
-		customerCode = "10000024"
+			mocks.NewMockAccountPenaltiesDaoService(mockCtrl), true, "")
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
@@ -270,19 +287,11 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 	Convey("Must need at least one transaction", t, func() {
 		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenaltyCompanyCode)
 
-		httpmock.Activate()
-		mockCtrl := gomock.NewController(t)
-		defer httpmock.DeactivateAndReset()
-		defer mockCtrl.Finish()
-
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
 
-		body, _ := json.Marshal(&models.PayableRequest{
-			CustomerCode: "10000024",
-			CreatedBy:    authentication.AuthUserDetails{},
-		})
+		body := buildRequestBody(customerCode, false, false, []string{})
 		res := serveCreatePayableResourceHandler(body, mocks.NewMockPayableResourceDaoService(mockCtrl),
-			mocks.NewMockAccountPenaltiesDaoService(mockCtrl), true)
+			mocks.NewMockAccountPenaltiesDaoService(mockCtrl), true, customerCode)
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
@@ -290,29 +299,15 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 	Convey("Only allowed 1 transaction in a resource", t, func() {
 		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenaltyCompanyCode)
 
-		httpmock.Activate()
-		mockCtrl := gomock.NewController(t)
-		defer httpmock.DeactivateAndReset()
-		defer mockCtrl.Finish()
-
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseMultipleTx))
-		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 
-		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 		// as there are two transaction, the Times is 2 here, possible enhancement to remove this duplicate call
 		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenaltyCompanyCode, "").Return(nil, nil).Times(2)
 		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil).Times(2)
 
-		body, _ := json.Marshal(&models.PayableRequest{
-			CustomerCode: "10000024",
-			CreatedBy:    authentication.AuthUserDetails{},
-			Transactions: []models.TransactionItem{
-				{PenaltyRef: "A1234567", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
-				{PenaltyRef: "A0378421", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
-			},
-		})
+		body := buildRequestBody(customerCode, false, false, []string{penaltyRef1, penaltyRef2})
 
-		res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true)
+		res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true, customerCode)
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
@@ -320,29 +315,15 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 	Convey("internal server error when failing to create payable resource", t, func() {
 		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenaltyCompanyCode)
 
-		httpmock.Activate()
-		mockCtrl := gomock.NewController(t)
-		defer httpmock.DeactivateAndReset()
-		defer mockCtrl.Finish()
-
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
-		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-		// expect the CreatePayableResource to be called once and return an error
-		mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any(), "").Return(errors.New("any error"))
 
-		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
+		mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any(), "").Return(errors.New("any error"))
 		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenaltyCompanyCode, "").Return(nil, nil)
 		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil)
 
-		body, _ := json.Marshal(&models.PayableRequest{
-			CustomerCode: "10000024",
-			CreatedBy:    authentication.AuthUserDetails{},
-			Transactions: []models.TransactionItem{
-				{PenaltyRef: "A1234567", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
-			},
-		})
+		body := buildRequestBody(customerCode, false, false, []string{penaltyRef1})
 
-		res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true)
+		res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true, customerCode)
 
 		So(res.Code, ShouldEqual, http.StatusInternalServerError)
 	})
@@ -385,29 +366,15 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 			Convey(tc.name, func() {
 				setGetCompanyCodeFromTransactionMock(tc.companyCode)
 
-				httpmock.Activate()
-				mockCtrl := gomock.NewController(t)
-				defer httpmock.DeactivateAndReset()
-				defer mockCtrl.Finish()
-
 				httpmock.RegisterResponder("GET", tc.urlE5, httpmock.NewStringResponder(200, tc.e5Response))
-				mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-				// expect the CreatePayableResource to be called once and return without error
-				mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any(), "").Return(nil)
 
-				mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
+				mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any(), "").Return(nil)
 				mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, tc.companyCode, "").Return(nil, nil)
 				mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil)
 
-				body, _ := json.Marshal(&models.PayableRequest{
-					CustomerCode: "10000024",
-					CreatedBy:    authentication.AuthUserDetails{},
-					Transactions: []models.TransactionItem{
-						{PenaltyRef: tc.penaltyRef, Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
-					},
-				})
+				body := buildRequestBody(customerCode, false, false, []string{tc.penaltyRef})
 
-				res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true)
+				res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true, customerCode)
 
 				So(res.Code, ShouldEqual, http.StatusCreated)
 				So(res.Header().Get("Content-Type"), ShouldEqual, "application/json")
@@ -417,44 +384,26 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 }
 
 func TestUnitCreatePayableResourceHandler_MockedPayablePenalty(t *testing.T) {
-	err := os.Chdir("..")
+	mockCtrl, mockPrDaoSvc, mockApDaoSvc, url, err := setup(t)
 	if err != nil {
 		return
 	}
-	cfg, _ := config.Get()
-	cfg.E5APIURL = "https://e5"
-	cfg.E5Username = "SYSTEM"
 
-	url := "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" + utils.LateFilingPenaltyCompanyCode + "&fromDate=1990-01-01"
+	defer httpmock.DeactivateAndReset()
+	defer mockCtrl.Finish()
 
 	Convey("Error getting account penalties", t, func() {
 		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenaltyCompanyCode)
 
-		httpmock.Activate()
-		mockCtrl := gomock.NewController(t)
-		defer httpmock.DeactivateAndReset()
-		defer mockCtrl.Finish()
-
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseMultipleTx))
-		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 
-		mockedPayablePenalty := func(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
+		payablePenalty = func(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
 			return nil, errors.New("error")
 		}
 
-		payablePenalty = mockedPayablePenalty
+		body := buildRequestBody(customerCode, false, false, []string{penaltyRef1, penaltyRef2})
 
-		body, _ := json.Marshal(&models.PayableRequest{
-			CustomerCode: "10000024",
-			CreatedBy:    authentication.AuthUserDetails{},
-			Transactions: []models.TransactionItem{
-				{PenaltyRef: "A1234567", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
-				{PenaltyRef: "A0378421", Amount: 150, MadeUpDate: "2017-02-28", Type: "penalty"},
-			},
-		})
-
-		res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true)
+		res := serveCreatePayableResourceHandler(body, mockPrDaoSvc, mockApDaoSvc, true, customerCode)
 
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
