@@ -118,7 +118,7 @@ func extractRequestData(w http.ResponseWriter, r *http.Request, request models.P
 	return authUserDetails, companyCode, penaltyRefType, false
 }
 
-// validateTransactions checks that transactions are valid payable penalties
+// validateTransactions to ensure that the transactions in the request are valid payable penalties that exist in E5
 func validateTransactions(transactions []models.TransactionItem, penaltyRefType, customerCode, companyCode string,
 	apDaoSvc dao.AccountPenaltiesDaoService,
 	penaltyDetailsMap *config.PenaltyDetailsMap,
