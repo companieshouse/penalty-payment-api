@@ -37,63 +37,72 @@ var e5ValidationError = `
 
 `
 
+func generatePaymentInformation(validAmount bool, paymentCreated bool) validators.PaymentInformation {
+	if !validAmount {
+		return validators.PaymentInformation{Amount: "foo"}
+	}
+	p := validators.PaymentInformation{
+		Amount:    "150",
+		PaymentID: "123",
+	}
+	if paymentCreated {
+		p.CreatedBy = "test@example.com"
+	}
+	return p
+}
+
+func generatePayableResource(empty bool) models.PayableResource {
+	if empty {
+		return models.PayableResource{}
+	}
+
+	return models.PayableResource{
+		PayableRef:   "123",
+		CustomerCode: "10000024",
+		Transactions: []models.TransactionItem{
+			{PenaltyRef: "123", Amount: 150},
+		},
+	}
+}
+
 func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
+	payableResourceSvc := &services.PayableResourceService{DAO: mockPrDaoSvc}
+
+	httpmock.Activate()
+
+	defer httpmock.DeactivateAndReset()
+	defer mockCtrl.Finish()
+
 	Convey("amount must be okay to parse as float", t, func() {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
-		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-		payableResourceSvc := &services.PayableResourceService{DAO: mockPrDaoSvc}
 
 		c := &e5.Client{}
-		r := models.PayableResource{}
-		p := validators.PaymentInformation{Amount: "foo"}
+		r := generatePayableResource(true)
+		p := generatePaymentInformation(false, false)
 
 		err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 		So(err, ShouldNotBeNil)
 	})
 
 	Convey("invalid company code", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
-		mockService := mocks.NewMockPayableResourceDaoService(mockCtrl)
-		svc := &services.PayableResourceService{DAO: mockService}
-
-		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+		getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
 			return "", errors.New("cannot determine company code")
 		}
-		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
 		c := &e5.Client{}
-		p := validators.PaymentInformation{Amount: "150", PaymentID: "123"}
-		r := models.PayableResource{
-			PayableRef:   "123",
-			CustomerCode: "10000024",
-			Transactions: []models.TransactionItem{
-				{PenaltyRef: "123", Amount: 150},
-			},
-		}
+		p := generatePaymentInformation(true, false)
+		r := generatePayableResource(false)
 
-		err := UpdateIssuerAccountWithPenaltyPaid(svc, c, r, p, "")
+		err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
 		So(err, ShouldBeError, "cannot determine company code")
 	})
 
 	Convey("E5 request errors", t, func() {
-		httpmock.Activate()
-		defer httpmock.DeactivateAndReset()
-
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
-		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
-		payableResourceSvc := &services.PayableResourceService{DAO: mockPrDaoSvc}
-
-		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+		getCompanyCodeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
 			return utils.LateFilingPenaltyCompanyCode, nil
 		}
-		getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
 		Convey("failure in creating a new payment", func() {
 			defer httpmock.Reset()
@@ -103,14 +112,8 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			mockPrDaoSvc.EXPECT().SaveE5Error("10000024", "123", "", e5.CreateAction).Return(errors.New(""))
 
 			c := &e5.Client{}
-			p := validators.PaymentInformation{Amount: "150", PaymentID: "123"}
-			r := models.PayableResource{
-				PayableRef:   "123",
-				CustomerCode: "10000024",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "123", Amount: 150},
-				},
-			}
+			p := generatePaymentInformation(true, false)
+			r := generatePayableResource(false)
 
 			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
@@ -127,19 +130,8 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			mockPrDaoSvc.EXPECT().SaveE5Error("10000024", "123", "", e5.AuthoriseAction).Return(errors.New(""))
 
 			c := &e5.Client{}
-			p := validators.PaymentInformation{
-				Amount:    "150",
-				PaymentID: "123",
-				CreatedBy: "test@example.com",
-			}
-
-			r := models.PayableResource{
-				PayableRef:   "123",
-				CustomerCode: "10000024",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "123", Amount: 150},
-				},
-			}
+			p := generatePaymentInformation(true, true)
+			r := generatePayableResource(false)
 
 			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
@@ -157,19 +149,8 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			mockPrDaoSvc.EXPECT().SaveE5Error("10000024", "123", "", e5.ConfirmAction).Return(errors.New(""))
 
 			c := &e5.Client{}
-			p := validators.PaymentInformation{
-				Amount:    "150",
-				PaymentID: "123",
-				CreatedBy: "test@example.com",
-			}
-
-			r := models.PayableResource{
-				PayableRef:   "123",
-				CustomerCode: "10000024",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "123", Amount: 150},
-				},
-			}
+			p := generatePaymentInformation(true, true)
+			r := generatePayableResource(false)
 
 			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
@@ -184,19 +165,8 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment/confirm", okResponder)
 
 			c := &e5.Client{}
-			p := validators.PaymentInformation{
-				Amount:    "150",
-				PaymentID: "123",
-				CreatedBy: "test@example.com",
-			}
-
-			r := models.PayableResource{
-				PayableRef:   "123",
-				CustomerCode: "10000024",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "123", Amount: 150},
-				},
-			}
+			p := generatePaymentInformation(true, true)
+			r := generatePayableResource(false)
 
 			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 
@@ -234,19 +204,8 @@ func TestUnitUpdateIssuerAccountWithPenaltyPaid(t *testing.T) {
 			httpmock.RegisterResponder(http.MethodPost, "/arTransactions/payment/confirm", paymentIDResponder)
 
 			c := &e5.Client{}
-			p := validators.PaymentInformation{
-				Amount:    "150",
-				PaymentID: "123",
-				CreatedBy: "test@example.com",
-			}
-
-			r := models.PayableResource{
-				PayableRef:   "123",
-				CustomerCode: "10000024",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "123", Amount: 150},
-				},
-			}
+			p := generatePaymentInformation(true, true)
+			r := generatePayableResource(false)
 
 			err := UpdateIssuerAccountWithPenaltyPaid(payableResourceSvc, c, r, p, "")
 			So(err, ShouldBeNil)
