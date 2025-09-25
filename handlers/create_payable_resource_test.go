@@ -23,7 +23,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func setup(t *testing.T) (*gomock.Controller, *mocks.MockPayableResourceDaoService, *mocks.MockAccountPenaltiesDaoService, string, error) {
+func createPayableResourceHandlerTestSetup(t *testing.T) (*gomock.Controller, *mocks.MockPayableResourceDaoService, *mocks.MockAccountPenaltiesDaoService, string, error) {
 	err := os.Chdir("..")
 	if err != nil {
 		return nil, nil, nil, "", err
@@ -232,7 +232,7 @@ func buildRequestBody(customerCode string, malformed bool, empty bool, penaltyRe
 }
 
 func TestUnitCreatePayableResourceHandler(t *testing.T) {
-	mockCtrl, mockPrDaoSvc, mockApDaoSvc, url, err := setup(t)
+	mockCtrl, mockPrDaoSvc, mockApDaoSvc, url, err := createPayableResourceHandlerTestSetup(t)
 	if err != nil {
 		return
 	}
@@ -384,7 +384,7 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 }
 
 func TestUnitCreatePayableResourceHandler_MockedPayablePenalty(t *testing.T) {
-	mockCtrl, mockPrDaoSvc, mockApDaoSvc, url, err := setup(t)
+	mockCtrl, mockPrDaoSvc, mockApDaoSvc, url, err := createPayableResourceHandlerTestSetup(t)
 	if err != nil {
 		return
 	}

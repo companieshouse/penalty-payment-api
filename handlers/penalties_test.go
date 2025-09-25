@@ -15,6 +15,14 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func buildGetPenaltiesRequest(customerCode string) *http.Request {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, config.CustomerCode, customerCode)
+	req := httptest.NewRequest("GET", "/penalties", nil)
+
+	return req.WithContext(ctx)
+}
+
 func TestUnitHandleGetPenalties(t *testing.T) {
 	penaltyDetailsMap := &config.PenaltyDetailsMap{}
 	allowedTransactionsMap := &models.AllowedTransactionMap{}
@@ -50,36 +58,27 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 		getCompanyCode = mockedGetCompanyCode
 		accountPenalties = mockedAccountPenalties
 
-		for _, testCases := range testCases {
-			tc := testCases
+		for _, tc := range testCases {
 
-			ctx := context.Background()
-			ctx = context.WithValue(ctx, config.CustomerCode, tc.companyCode)
-
-			req := httptest.NewRequest("GET", "/penalties", nil)
+			req := buildGetPenaltiesRequest(tc.companyCode)
 			rr := httptest.NewRecorder()
 
 			handler := HandleGetPenalties(nil, penaltyDetailsMap, allowedTransactionsMap)
-			handler.ServeHTTP(rr, req.WithContext(ctx))
+			handler.ServeHTTP(rr, req)
 
 			So(rr.Code, ShouldEqual, tc.response)
 		}
 	})
 	Convey("Given a request to get penalties when company code cannot be determined", t, func() {
-		mockedGetCompanyCode := func(penaltyRefType string) (string, error) {
+		getCompanyCode = func(penaltyRefType string) (string, error) {
 			return "", errors.New("cannot determine company code")
 		}
 
-		getCompanyCode = mockedGetCompanyCode
-
-		ctx := context.Background()
-		ctx = context.WithValue(ctx, config.CustomerCode, "NI123546")
-
-		req := httptest.NewRequest("GET", "/penalties", nil)
 		rr := httptest.NewRecorder()
+		req := buildGetPenaltiesRequest("NI123546")
 
 		handler := HandleGetPenalties(nil, penaltyDetailsMap, allowedTransactionsMap)
-		handler.ServeHTTP(rr, req.WithContext(ctx))
+		handler.ServeHTTP(rr, req)
 
 		So(rr.Code, ShouldEqual, http.StatusBadRequest)
 	})

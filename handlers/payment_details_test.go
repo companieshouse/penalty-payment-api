@@ -37,6 +37,38 @@ func setGetPenaltyRefTypeFromTransactionMock(penaltyRefType string) {
 	getPenaltyRefTypeFromTransaction = mockedGetPenaltyRefTypeFromTransaction
 }
 
+func generateTestPayableResource(withTransaction bool, penaltyRef string) models.PayableResource {
+	t := time.Now().Truncate(time.Millisecond)
+	p := models.PayableResource{
+		CustomerCode: "12345678",
+		PayableRef:   "abcdef",
+		Links: models.PayableResourceLinks{
+			Self:    "/company/12345678/penalties/abcdef",
+			Payment: "/company/12345678/penalties/abcdef/payment",
+		},
+		Etag:      "qwertyetag1234",
+		CreatedAt: &t,
+		CreatedBy: models.CreatedBy{
+			Email: "test@user.com",
+			ID:    "uz3r1D_H3r3",
+		},
+		Payment: models.Payment{
+			Amount: "5",
+			Status: "pending",
+		},
+	}
+	if withTransaction {
+		p.Transactions = []models.TransactionItem{
+			{
+				Amount:     5,
+				Type:       "penalty",
+				PenaltyRef: penaltyRef,
+			},
+		}
+	}
+	return p
+}
+
 func TestUnitHandleGetPaymentDetails(t *testing.T) {
 	Convey("No payable resource in request context", t, func() {
 		setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenRef)
@@ -46,31 +78,12 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 	})
 
 	Convey("Cannot determine penalty ref type from transaction ID", t, func() {
-		t := time.Now().Truncate(time.Millisecond)
 
-		mockedGetPenaltyRefTypeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
+		getPenaltyRefTypeFromTransaction = func(transactions []models.TransactionItem) (string, error) {
 			return "", errors.New("cannot determine penalty ref type")
 		}
-		getPenaltyRefTypeFromTransaction = mockedGetPenaltyRefTypeFromTransaction
 
-		payable := models.PayableResource{
-			CustomerCode: "12345678",
-			PayableRef:   "abcdef",
-			Links: models.PayableResourceLinks{
-				Self:    "/company/12345678/penalties/abcdef",
-				Payment: "/company/12345678/penalties/abcdef/payment",
-			},
-			Etag:      "qwertyetag1234",
-			CreatedAt: &t,
-			CreatedBy: models.CreatedBy{
-				Email: "test@user.com",
-				ID:    "uz3r1D_H3r3",
-			},
-			Payment: models.Payment{
-				Amount: "5",
-				Status: "pending",
-			},
-		}
+		payable := generateTestPayableResource(false, "")
 
 		res := serveGetPaymentDetailsHandler(&payable)
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
@@ -78,26 +91,8 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 
 	Convey("Payment PenaltyDetails not found due to no costs", t, func() {
 		setGetPenaltyRefTypeFromTransactionMock(utils.SanctionsPenRef)
-		t := time.Now().Truncate(time.Millisecond)
 
-		payable := models.PayableResource{
-			CustomerCode: "12345678",
-			PayableRef:   "abcdef",
-			Links: models.PayableResourceLinks{
-				Self:    "/company/12345678/penalties/abcdef",
-				Payment: "/company/12345678/penalties/abcdef/payment",
-			},
-			Etag:      "qwertyetag1234",
-			CreatedAt: &t,
-			CreatedBy: models.CreatedBy{
-				Email: "test@user.com",
-				ID:    "uz3r1D_H3r3",
-			},
-			Payment: models.Payment{
-				Amount: "5",
-				Status: "pending",
-			},
-		}
+		payable := generateTestPayableResource(false, "")
 
 		res := serveGetPaymentDetailsHandler(&payable)
 		So(res.Code, ShouldEqual, http.StatusNotFound)
@@ -133,33 +128,8 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				setGetPenaltyRefTypeFromTransactionMock(tc.penaltyRefType)
-				t := time.Now().Truncate(time.Millisecond)
 
-				payable := models.PayableResource{
-					CustomerCode: "12345678",
-					PayableRef:   "abcdef",
-					Links: models.PayableResourceLinks{
-						Self:    "/company/12345678/penalties/abcdef",
-						Payment: "/company/12345678/penalties/abcdef/payment",
-					},
-					Etag:      "qwertyetag1234",
-					CreatedAt: &t,
-					CreatedBy: models.CreatedBy{
-						Email: "test@user.com",
-						ID:    "uz3r1D_H3r3",
-					},
-					Transactions: []models.TransactionItem{
-						{
-							Amount:     5,
-							Type:       "penalty",
-							PenaltyRef: tc.penaltyRef,
-						},
-					},
-					Payment: models.Payment{
-						Amount: "5",
-						Status: "pending",
-					},
-				}
+				payable := generateTestPayableResource(true, tc.penaltyRef)
 
 				res := serveGetPaymentDetailsHandler(&payable)
 				So(res.Code, ShouldEqual, http.StatusOK)

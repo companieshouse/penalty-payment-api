@@ -126,6 +126,33 @@ func mockedGetCompanyCodeFromTransactionError(_ []models.TransactionItem) (strin
 	return "", errors.New("no penalty reference found")
 }
 
+func buildMockedPaymentResource(status string, amount string) *companieshouseapi.PaymentResource {
+	p := &companieshouseapi.PaymentResource{
+		Status: status,
+		Amount: amount,
+	}
+	if status == "paid" {
+		p.Reference = "financial_penalty_123"
+		p.CreatedBy = companieshouseapi.CreatedBy{
+			Email: "test@example.com",
+		}
+	}
+	return p
+}
+
+func buildMockedPayableResource(withTransaction bool, amount float64) *models.PayableResource {
+	p := &models.PayableResource{
+		PayableRef:   "123",
+		CustomerCode: "10000024",
+	}
+	if withTransaction {
+		p.Transactions = []models.TransactionItem{
+			{PenaltyRef: "A1234567", Amount: amount},
+		}
+	}
+	return p
+}
+
 func TestUnitPayResourceHandler(t *testing.T) {
 	Convey("PayResourceHandler tests", t, func() {
 		httpmock.Activate()
@@ -155,7 +182,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 				httpmock.NewStringResponder(404, ""),
 			)
 
-			model := &models.PayableResource{PayableRef: "123"}
+			model := buildMockedPayableResource(false, 0)
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			payableResourceService := &services.PayableResourceService{}
@@ -181,7 +208,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 				httpmock.NewStringResponder(404, ""),
 			)
 
-			model := &models.PayableResource{PayableRef: "123"}
+			model := buildMockedPayableResource(false, 0)
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
 
@@ -196,7 +223,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{Status: "failed", Amount: "150"}
+			p := buildMockedPaymentResource("failed", "150")
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
 				http.MethodGet,
@@ -210,7 +237,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			)
 
 			// the payable resource in the request context
-			model := &models.PayableResource{PayableRef: "123"}
+			model := buildMockedPayableResource(false, 0)
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
@@ -231,7 +258,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "financial_penalty_123"}
+			p := buildMockedPaymentResource("paid", "0")
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
 				http.MethodGet,
@@ -251,16 +278,11 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
 			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel, "").Times(1)
-			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", "", e5.CreateAction).Return(errors.New(""))
+			mockPrDaoSvc.EXPECT().SaveE5Error(customerCode, "123", "", e5.CreateAction).Return(errors.New(""))
 			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
-			model := &models.PayableResource{
-				PayableRef: "123",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "A1234567"},
-				},
-			}
+			model := buildMockedPayableResource(true, 0)
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka messages
@@ -286,7 +308,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "financial_penalty_123"}
+			p := buildMockedPaymentResource("paid", "0")
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
 				http.MethodGet,
@@ -306,16 +328,11 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
 			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel, "").Times(1)
-			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", "", e5.CreateAction).Return(errors.New(""))
+			mockPrDaoSvc.EXPECT().SaveE5Error(customerCode, "123", "", e5.CreateAction).Return(errors.New(""))
 			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
-			model := &models.PayableResource{
-				PayableRef: "123",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "A1234567"},
-				},
-			}
+			model := buildMockedPayableResource(true, 0)
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka messages
@@ -341,7 +358,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "financial_penalty_123"}
+			p := buildMockedPaymentResource("paid", "0")
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
 				http.MethodGet,
@@ -367,16 +384,11 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
-			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", "", e5.CreateAction).Return(errors.New(""))
+			mockPrDaoSvc.EXPECT().SaveE5Error(customerCode, "123", "", e5.CreateAction).Return(errors.New(""))
 			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
-			model := &models.PayableResource{
-				PayableRef: "123",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "A1234567"},
-				},
-			}
+			model := buildMockedPayableResource(true, 0)
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka messages
@@ -396,7 +408,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{Status: "paid", Amount: "0", Reference: "financial_penalty_123"}
+			p := buildMockedPaymentResource("paid", "0")
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
 				http.MethodGet,
@@ -420,16 +432,11 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 			mockPrDaoSvc.EXPECT().GetPayableResource(gomock.Any(), gomock.Any(), "").Return(dataModel, nil)
 			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel, "").Times(1)
-			mockPrDaoSvc.EXPECT().SaveE5Error("", "123", "", e5.CreateAction).Return(errors.New(""))
+			mockPrDaoSvc.EXPECT().SaveE5Error(customerCode, "123", "", e5.CreateAction).Return(errors.New(""))
 			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
-			model := &models.PayableResource{
-				PayableRef: "123",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "A1234567"},
-				},
-			}
+			model := buildMockedPayableResource(true, 0)
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka messages
@@ -449,14 +456,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{
-				Status:    "paid",
-				Amount:    "150",
-				Reference: "financial_penalty_123",
-				CreatedBy: companieshouseapi.CreatedBy{
-					Email: "test@example.com",
-				},
-			}
+			p := buildMockedPaymentResource("paid", "150")
 
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
@@ -485,13 +485,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockPrDaoSvc.EXPECT().UpdatePaymentDetails(dataModel, "").Times(1)
 
 			// the payable resource in the request context
-			model := &models.PayableResource{
-				PayableRef:   "123",
-				CustomerCode: "10000024",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "A1234567", Amount: 150},
-				},
-			}
+			model := buildMockedPayableResource(true, 150)
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka messages
@@ -511,14 +505,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{
-				Status:    "paid",
-				Amount:    "150",
-				Reference: "financial_penalty_123",
-				CreatedBy: companieshouseapi.CreatedBy{
-					Email: "test@example.com",
-				},
-			}
+			p := buildMockedPaymentResource("paid", "150")
 
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
@@ -548,13 +535,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(errors.New("error"))
 
 			// the payable resource in the request context
-			model := &models.PayableResource{
-				PayableRef:   "123",
-				CustomerCode: "10000024",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "A1234567", Amount: 150},
-				},
-			}
+			model := buildMockedPayableResource(true, 150)
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
@@ -574,14 +555,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{
-				Status:    "paid",
-				Amount:    "150",
-				Reference: "financial_penalty_123",
-				CreatedBy: companieshouseapi.CreatedBy{
-					Email: "test@example.com",
-				},
-			}
+			p := buildMockedPaymentResource("paid", "150")
 
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
@@ -611,13 +585,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
-			model := &models.PayableResource{
-				PayableRef:   "123",
-				CustomerCode: "10000024",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "A1234567", Amount: 150},
-				},
-			}
+			model := buildMockedPayableResource(true, 150)
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
@@ -642,14 +610,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api
-			p := &companieshouseapi.PaymentResource{
-				Status:    "paid",
-				Amount:    "150",
-				Reference: "financial_penalty_123",
-				CreatedBy: companieshouseapi.CreatedBy{
-					Email: "test@example.com",
-				},
-			}
+			p := buildMockedPaymentResource("paid", "150")
 
 			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
 			httpmock.RegisterResponder(
@@ -679,13 +640,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			mockApDaoSvc.EXPECT().UpdateAccountPenaltyAsPaid(gomock.Any(), gomock.Any(), gomock.Any(), "").Return(nil)
 
 			// the payable resource in the request context
-			model := &models.PayableResource{
-				PayableRef:   "123",
-				CustomerCode: "10000024",
-				Transactions: []models.TransactionItem{
-					{PenaltyRef: "A1234567", Amount: 150},
-				},
-			}
+			model := buildMockedPayableResource(true, 150)
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
