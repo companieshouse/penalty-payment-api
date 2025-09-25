@@ -32,7 +32,6 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 			message := "failed to read request body"
 			log.ErrorR(r, fmt.Errorf(message+": %v", err))
 			writeJSONResponse(w, r, models.NewMessageResponse(message), http.StatusBadRequest)
-			writeJSONResponse(w, r, models.NewMessageResponse("failed to read request body"), http.StatusBadRequest)
 			return
 		}
 
@@ -48,8 +47,18 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		request.CreatedBy = authUserDetails
 		log.DebugC(requestId, "successfully extracted request data", log.Data{"request": request})
 
-		payablePenalties, err := validateTransactions(request.Transactions, penaltyRefType, customerCode, companyCode,
-			apDaoSvc, penaltyDetailsMap, allowedTransactionMap, requestId)
+		// Create validation context
+		validationCtx := ValidationContext{
+			PenaltyRefType:         penaltyRefType,
+			CustomerCode:           customerCode,
+			CompanyCode:            companyCode,
+			RequestID:              requestId,
+			AccountPenaltiesDao:    apDaoSvc,
+			PenaltyDetailsMap:      penaltyDetailsMap,
+			AllowedTransactionsMap: allowedTransactionMap,
+		}
+
+		payablePenalties, err := validateTransactions(request.Transactions, validationCtx)
 		if err != nil {
 			log.ErrorC(requestId, errors.New("invalid request - failed matching against e5"))
 			writeJSONResponse(w, r, models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time"), http.StatusBadRequest)
@@ -57,11 +66,9 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		}
 
 		// Replace request transactions with payable penalties to include updated values in the request
-
 		request.Transactions = payablePenalties
 
 		err = utils.GetValidator(request)
-
 		if err != nil {
 			log.ErrorC(requestId, errors.New("invalid request - failed validation"))
 			writeJSONResponse(w, r, models.NewMessageResponse("invalid request body"), http.StatusBadRequest)
@@ -121,24 +128,30 @@ func extractRequestData(w http.ResponseWriter, r *http.Request, request models.P
 	return authUserDetails, companyCode, penaltyRefType, false
 }
 
-// validateTransactions to ensure that the transactions in the request are valid payable penalties that exist in E5
-func validateTransactions(transactions []models.TransactionItem, penaltyRefType, customerCode, companyCode string,
-	apDaoSvc dao.AccountPenaltiesDaoService,
-	penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionMap *models.AllowedTransactionMap,
-	requestId string) ([]models.TransactionItem, error) {
+// ValidationContext holds related config and context needed for transaction validation
+type ValidationContext struct {
+	PenaltyRefType         string
+	CustomerCode           string
+	CompanyCode            string
+	RequestID              string
+	AccountPenaltiesDao    dao.AccountPenaltiesDaoService
+	PenaltyDetailsMap      *config.PenaltyDetailsMap
+	AllowedTransactionsMap *models.AllowedTransactionMap
+}
 
+// validateTransactions ensures the transactions are valid payable penalties that exist in E5
+func validateTransactions(transactions []models.TransactionItem, ctx ValidationContext) ([]models.TransactionItem, error) {
 	var payablePenalties []models.TransactionItem
 	for _, transaction := range transactions {
 		params := types.PayablePenaltyParams{
-			PenaltyRefType:             penaltyRefType,
-			CustomerCode:               customerCode,
-			CompanyCode:                companyCode,
-			PenaltyDetailsMap:          penaltyDetailsMap,
+			PenaltyRefType:             ctx.PenaltyRefType,
+			CustomerCode:               ctx.CustomerCode,
+			CompanyCode:                ctx.CompanyCode,
+			PenaltyDetailsMap:          ctx.PenaltyDetailsMap,
 			Transaction:                transaction,
-			AllowedTransactionsMap:     allowedTransactionMap,
-			AccountPenaltiesDaoService: apDaoSvc,
-			RequestId:                  requestId,
+			AllowedTransactionsMap:     ctx.AllowedTransactionsMap,
+			AccountPenaltiesDaoService: ctx.AccountPenaltiesDao,
+			RequestId:                  ctx.RequestID,
 		}
 		payablePenalty, err := payablePenalty(params)
 		if err != nil {
