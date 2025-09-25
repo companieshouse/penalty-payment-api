@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"sync"
 
-	"gopkg.in/go-playground/validator.v9"
-
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api-core/validators"
@@ -58,8 +56,8 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
 			return
 		}
-		v := validator.New()
-		err = v.Struct(request)
+
+		err = utils.GetValidator(request)
 
 		if err != nil {
 			log.ErrorC(requestId, err)
