@@ -7,10 +7,10 @@ import (
 
 	"github.com/companieshouse/chs.go/kafka/resilience"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/handlers"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 )
 
-var mockConsumerFunc = func(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment, retry *resilience.ServiceRetry) {
+var mockConsumerFunc = func(cfg *config.Config, penaltyFinancePayment api.FinancePayment, retry *resilience.ServiceRetry) {
 	panic("simulated panic")
 }
 
@@ -26,7 +26,7 @@ func TestUnitSuperviseConsumer_PanicRecoveryAndShutdown(t *testing.T) {
 	defer cancel()
 
 	cfg := &config.Config{}
-	penaltyFinancePayment := &handlers.PenaltyFinancePayment{}
+	penaltyFinancePayment := &api.PenaltyFinancePayment{}
 	retry := &resilience.ServiceRetry{}
 
 	done := make(chan struct{})
