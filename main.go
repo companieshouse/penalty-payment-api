@@ -12,6 +12,8 @@ import (
 	"syscall"
 	"time"
 
+	_ "golang.org/x/oauth2"
+
 	"github.com/Shopify/sarama"
 	"github.com/companieshouse/chs.go/kafka/resilience"
 	"github.com/companieshouse/chs.go/log"
@@ -19,9 +21,9 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/handlers"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/supervisor"
 	"github.com/gorilla/mux"
-	_ "golang.org/x/oauth2"
 )
 
 func main() {
@@ -67,7 +69,7 @@ func main() {
 
 		// Push the Sarama logs into our custom writer
 		sarama.Logger = gologger.New(&log.Writer{}, "[Sarama] ", gologger.LstdFlags)
-		penaltyFinancePayment := &handlers.PenaltyFinancePayment{
+		penaltyFinancePayment := &api.PenaltyFinancePayment{
 			E5Client:                  e5.NewClient(cfg.E5Username, cfg.E5APIURL),
 			PayableResourceDaoService: prDaoService,
 		}

@@ -14,10 +14,10 @@ import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/handlers"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 )
 
-func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment, retry *resilience.ServiceRetry) {
+func Consume(cfg *config.Config, penaltyFinancePayment api.FinancePayment, retry *resilience.ServiceRetry) {
 	avroSchema := getAvroSchema(cfg)
 	topic := cfg.PenaltyPaymentsProcessingTopic
 	resilienceHandler := resilience.NewHandler(topic, cfg.Namespace(), retry, getProducer(cfg), avroSchema)
@@ -80,7 +80,7 @@ func Consume(cfg *config.Config, penaltyFinancePayment handlers.FinancePayment, 
 
 }
 
-func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage, financePayment handlers.FinancePayment,
+func handleMessage(avroSchema *avro.Schema, message *sarama.ConsumerMessage, financePayment api.FinancePayment,
 	cfg *config.Config, resilience *resilience.Resilience, isRetry bool) error {
 	log.Debug("Received message", log.Data{
 		"message":  message,

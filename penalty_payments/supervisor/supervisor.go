@@ -8,14 +8,14 @@ import (
 	"github.com/companieshouse/chs.go/kafka/resilience"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api/config"
-	"github.com/companieshouse/penalty-payment-api/handlers"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/consumer"
 )
 
 var consumerFunc = consumer.Consume
 
 // SuperviseConsumer runs a consumer in a loop, restarting it if it exits unexpectedly
-func SuperviseConsumer(ctx context.Context, name string, cfg *config.Config, penaltyFinancePayment *handlers.PenaltyFinancePayment, retry *resilience.ServiceRetry) {
+func SuperviseConsumer(ctx context.Context, name string, cfg *config.Config, penaltyFinancePayment *api.PenaltyFinancePayment, retry *resilience.ServiceRetry) {
 	for {
 		select {
 		case <-ctx.Done():
