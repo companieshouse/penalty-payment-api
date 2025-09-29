@@ -93,11 +93,7 @@ func (m *mockDAO) SaveE5Error(customerCode, payableRef, _ string, action e5.Acti
 func TestUnitProcessFinancialPenaltyPayment_IsAfter24Hours(t *testing.T) {
 	Convey("Process financial penalty payment is after 24 hours", t, func() {
 		// Given
-		e5Client, DAO := setupMocks()
-		handler := &PenaltyFinancePayment{
-			E5Client:                  e5Client,
-			PayableResourceDaoService: DAO,
-		}
+		e5Client, DAO, handler := financePaymentTestSetup()
 
 		penaltyPaymentToSkip := models.PenaltyPaymentsProcessing{
 			CreatedAt: "2025-08-19T08:52:11.648+00:00",
@@ -116,11 +112,7 @@ func TestUnitProcessFinancialPenaltyPayment_IsAfter24Hours(t *testing.T) {
 func TestUnitProcessFinancialPenaltyPayment_Success(t *testing.T) {
 	Convey("Process financial penalty payment success", t, func() {
 		// Given
-		e5Client, DAO := setupMocks()
-		handler := &PenaltyFinancePayment{
-			E5Client:                  e5Client,
-			PayableResourceDaoService: DAO,
-		}
+		e5Client, DAO, handler := financePaymentTestSetup()
 
 		e5Client.On("CreatePayment", mock.Anything).Return(nil)
 		e5Client.On("AuthorisePayment", mock.Anything).Return(nil)
@@ -139,11 +131,7 @@ func TestUnitProcessFinancialPenaltyPayment_Success(t *testing.T) {
 func TestUnitProcessFinancialPenaltyPayment_CreatePaymentFails(t *testing.T) {
 	Convey("Process financial penalty payment create payment fails", t, func() {
 		// Given
-		e5Client, DAO := setupMocks()
-		handler := &PenaltyFinancePayment{
-			E5Client:                  e5Client,
-			PayableResourceDaoService: DAO,
-		}
+		e5Client, DAO, handler := financePaymentTestSetup()
 
 		e5Client.On("CreatePayment", mock.Anything).Return(errors.New("create payment in E5 failed"))
 
@@ -160,11 +148,7 @@ func TestUnitProcessFinancialPenaltyPayment_CreatePaymentFails(t *testing.T) {
 func TestUnitProcessFinancialPenaltyPayment_AuthorisePaymentFails(t *testing.T) {
 	Convey("Process financial penalty payment authorise payment fails", t, func() {
 		// Given
-		e5Client, DAO := setupMocks()
-		handler := &PenaltyFinancePayment{
-			E5Client:                  e5Client,
-			PayableResourceDaoService: DAO,
-		}
+		e5Client, DAO, handler := financePaymentTestSetup()
 
 		e5Client.On("CreatePayment", mock.Anything).Return(nil)
 		e5Client.On("AuthorisePayment", mock.Anything).Return(errors.New("authorise payment in E5 failed"))
@@ -183,11 +167,7 @@ func TestUnitProcessFinancialPenaltyPayment_AuthorisePaymentFails(t *testing.T) 
 func TestUnitProcessFinancialPenaltyPayment_ConfirmPaymentFails(t *testing.T) {
 	Convey("Process financial penalty payment confirm payment fails", t, func() {
 		// Given
-		e5Client, DAO := setupMocks()
-		handler := &PenaltyFinancePayment{
-			E5Client:                  e5Client,
-			PayableResourceDaoService: DAO,
-		}
+		e5Client, DAO, handler := financePaymentTestSetup()
 
 		e5Client.On("CreatePayment", mock.Anything).Return(nil)
 		e5Client.On("AuthorisePayment", mock.Anything).Return(nil)
@@ -206,11 +186,7 @@ func TestUnitProcessFinancialPenaltyPayment_ConfirmPaymentFails(t *testing.T) {
 
 func TestUnitProcessFinancialPenaltyPayment_Retry_Success(t *testing.T) {
 	// Given
-	e5Client, DAO := setupMocks()
-	handler := &PenaltyFinancePayment{
-		E5Client:                  e5Client,
-		PayableResourceDaoService: DAO,
-	}
+	e5Client, DAO, handler := financePaymentTestSetup()
 
 	e5Client.On("CreatePayment", mock.Anything).Return(nil)
 	e5Client.On("AuthorisePayment", mock.Anything).Return(nil)
@@ -239,11 +215,7 @@ func TestUnitProcessFinancialPenaltyPayment_Retry_Success(t *testing.T) {
 
 func TestUnitProcessFinancialPenaltyPayment_Retry_CreatePaymentFails(t *testing.T) {
 	// Given
-	e5Client, DAO := setupMocks()
-	handler := &PenaltyFinancePayment{
-		E5Client:                  e5Client,
-		PayableResourceDaoService: DAO,
-	}
+	e5Client, DAO, handler := financePaymentTestSetup()
 
 	e5Client.On("CreatePayment", mock.Anything).Return(errors.New("create payment in E5 failed"))
 
@@ -272,11 +244,7 @@ func TestUnitProcessFinancialPenaltyPayment_Retry_CreatePaymentFails(t *testing.
 
 func TestUnitProcessFinancialPenaltyPayment_Retry_AuthorisePaymentFails(t *testing.T) {
 	// Given
-	e5Client, DAO := setupMocks()
-	handler := &PenaltyFinancePayment{
-		E5Client:                  e5Client,
-		PayableResourceDaoService: DAO,
-	}
+	e5Client, DAO, handler := financePaymentTestSetup()
 
 	e5Client.On("CreatePayment", mock.Anything).Return(nil)
 	e5Client.On("AuthorisePayment", mock.Anything).Return(errors.New("authorise payment in E5 failed"))
@@ -308,11 +276,7 @@ func TestUnitProcessFinancialPenaltyPayment_Retry_AuthorisePaymentFails(t *testi
 
 func TestUnitProcessFinancialPenaltyPayment_Retry_ConfirmPaymentFails(t *testing.T) {
 	// Given
-	e5Client, DAO := setupMocks()
-	handler := &PenaltyFinancePayment{
-		E5Client:                  e5Client,
-		PayableResourceDaoService: DAO,
-	}
+	e5Client, DAO, handler := financePaymentTestSetup()
 
 	e5Client.On("CreatePayment", mock.Anything).Return(nil)
 	e5Client.On("AuthorisePayment", mock.Anything).Return(nil)
@@ -343,10 +307,14 @@ func TestUnitProcessFinancialPenaltyPayment_Retry_ConfirmPaymentFails(t *testing
 	})
 }
 
-func setupMocks() (*mockE5Client, *mockDAO) {
+func financePaymentTestSetup() (*mockE5Client, *mockDAO, *PenaltyFinancePayment) {
 	e5Client := new(mockE5Client)
 	DAO := new(mockDAO)
-	return e5Client, DAO
+	handler := &PenaltyFinancePayment{
+		E5Client:                  e5Client,
+		PayableResourceDaoService: DAO,
+	}
+	return e5Client, DAO, handler
 }
 
 func newPenaltyPayment(attempt int32) models.PenaltyPaymentsProcessing {

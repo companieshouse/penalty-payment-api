@@ -3,13 +3,17 @@ package dao
 import (
 	"testing"
 
+	"go.mongodb.org/mongo-driver/mongo"
+
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
-	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/companieshouse/penalty-payment-api/config"
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+var dbUrl = "mongodb://localhost:27017"
+var db = "test"
 
 func TestUnitService(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -22,8 +26,8 @@ func TestUnitService(t *testing.T) {
 		mockMongoClientProvider.EXPECT().Database("test").Return(mockDatabase)
 
 		cfg := &config.Config{
-			MongoDBURL:                 "mongodb://localhost:27017",
-			Database:                   "test",
+			MongoDBURL:                 dbUrl,
+			Database:                   db,
 			PayableResourcesCollection: "payable_resources",
 		}
 
@@ -36,8 +40,8 @@ func TestUnitService(t *testing.T) {
 		mockMongoClientProvider.EXPECT().Database("test").Return(mockDatabase)
 
 		cfg := &config.Config{
-			MongoDBURL:                 "mongodb://localhost:27017",
-			Database:                   "test",
+			MongoDBURL:                 dbUrl,
+			Database:                   db,
 			AccountPenaltiesCollection: "account_penalties",
 		}
 

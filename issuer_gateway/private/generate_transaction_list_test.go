@@ -15,49 +15,6 @@ import (
 
 var now = time.Now().Truncate(time.Millisecond)
 var yesterday = time.Now().AddDate(0, 0, -1).Truncate(time.Millisecond)
-
-var sanctionsPenaltyDetailsMap = &config.PenaltyDetailsMap{
-	Name: "penalty details",
-	Details: map[string]config.PenaltyDetails{
-		utils.SanctionsCompanyCode: {
-			Description:        "Sanctions Penalty Payment",
-			DescriptionId:      "penalty-sanctions",
-			ClassOfPayment:     "penalty-sanctions",
-			ResourceKind:       "penalty#sanctions",
-			ProductType:        "penalty-sanctions",
-			EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
-			EmailMsgType:       "penalty_payment_received_email",
-		},
-	},
-}
-var sanctionsRoePenaltyDetailsMap = &config.PenaltyDetailsMap{
-	Name: "penalty details",
-	Details: map[string]config.PenaltyDetails{
-		utils.SanctionsCompanyCode: {
-			Description:        "Overseas Entity Penalty Payment",
-			DescriptionId:      "penalty-sanctions",
-			ClassOfPayment:     "penalty-sanctions",
-			ResourceKind:       "penalty#sanctions",
-			ProductType:        "penalty-sanctions",
-			EmailReceivedAppId: "penalty-payment-api.sanctions_roe_penalty_payment_received_email",
-			EmailMsgType:       "sanctions_roe_penalty_payment_received_email",
-		},
-	},
-}
-var lfpPenaltyDetailsMap = &config.PenaltyDetailsMap{
-	Name: "penalty details",
-	Details: map[string]config.PenaltyDetails{
-		utils.LateFilingPenaltyCompanyCode: {
-			Description:        "Late Filing Penalty",
-			DescriptionId:      "late-filing-penalty",
-			ClassOfPayment:     "penalty-lfp",
-			ResourceKind:       "late-filing-penalty#late-filing-penalty",
-			ProductType:        "late-filing-penalty",
-			EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
-			EmailMsgType:       "penalty_payment_received_email",
-		},
-	},
-}
 var allowedTransactionMap = &models.AllowedTransactionMap{
 	Types: map[string]map[string]bool{
 		"1": {
@@ -68,150 +25,64 @@ var allowedTransactionMap = &models.AllowedTransactionMap{
 		},
 	},
 }
-var validSanctionsTransaction = models.AccountPenaltiesDataDao{
-	CompanyCode:          utils.SanctionsCompanyCode,
-	LedgerCode:           "E1",
-	CustomerCode:         "12345678",
-	TransactionReference: "P1234567",
-	TransactionDate:      "2025-02-25",
-	MadeUpDate:           "2025-02-12",
-	Amount:               250,
-	OutstandingAmount:    250,
-	IsPaid:               false,
-	TransactionType:      SanctionsTransactionType,
-	TransactionSubType:   SanctionsTransactionSubType,
-	TypeDescription:      "CS01                                    ",
-	DueDate:              "2025-03-26",
-	AccountStatus:        CHSAccountStatus,
-	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
-}
-var validSanctionsRoeFailureToUpdateTransaction = models.AccountPenaltiesDataDao{
-	CompanyCode:          utils.SanctionsCompanyCode,
-	LedgerCode:           "FU",
-	CustomerCode:         "OE123456",
-	TransactionReference: "U1234567",
-	TransactionDate:      "2025-02-25",
-	MadeUpDate:           "2025-02-12",
-	Amount:               250,
-	OutstandingAmount:    250,
-	IsPaid:               false,
-	TransactionType:      SanctionsTransactionType,
-	TransactionSubType:   SanctionsRoeFailureToUpdateTransactionSubType,
-	TypeDescription:      "PENU                                    ",
-	DueDate:              "2025-03-26",
-	AccountStatus:        CHSAccountStatus,
-	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
-}
-var validLFPTransaction = models.AccountPenaltiesDataDao{
-	CompanyCode:          utils.LateFilingPenaltyCompanyCode,
-	LedgerCode:           "EW",
-	CustomerCode:         "12345678",
-	TransactionReference: "A1234567",
-	TransactionDate:      "2025-02-25",
-	MadeUpDate:           "2025-02-12",
-	Amount:               250,
-	OutstandingAmount:    250,
-	IsPaid:               false,
-	TransactionType:      "1",
-	TransactionSubType:   "EU",
-	DueDate:              "2025-03-26",
-	AccountStatus:        CHSAccountStatus,
-	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
-}
-var validLFPUnpaidCostsTransaction = models.AccountPenaltiesDataDao{
-	CompanyCode:          utils.LateFilingPenaltyCompanyCode,
-	LedgerCode:           "EW",
-	CustomerCode:         "12345678",
-	TransactionReference: "F1",
-	TransactionDate:      "2025-02-25",
-	MadeUpDate:           "2025-02-12",
-	Amount:               250,
-	OutstandingAmount:    250,
-	IsPaid:               false,
-	TransactionType:      "2",
-	TransactionSubType:   "EU",
-	DueDate:              "2025-03-26",
-	AccountStatus:        CHSAccountStatus,
-	DunningStatus:        addTrailingSpacesToDunningStatus(PEN1DunningStatus),
-}
-var e5TransactionsResponseValidSanctions = models.AccountPenaltiesDao{
-	CustomerCode: "12345678",
-	CompanyCode:  utils.SanctionsCompanyCode,
-	CreatedAt:    &now,
-	AccountPenalties: []models.AccountPenaltiesDataDao{
-		validSanctionsTransaction,
-	},
-}
-var e5TransactionsResponseValidRoe = models.AccountPenaltiesDao{
-	CustomerCode: "OE123456",
-	CompanyCode:  utils.SanctionsCompanyCode,
-	CreatedAt:    &now,
-	AccountPenalties: []models.AccountPenaltiesDataDao{
-		validSanctionsRoeFailureToUpdateTransaction,
-	},
-}
-var e5TransactionsResponseValidLFPTransaction = models.AccountPenaltiesDao{
-	CustomerCode: "12345678",
-	CompanyCode:  utils.LateFilingPenaltyCompanyCode,
-	CreatedAt:    &now,
-	AccountPenalties: []models.AccountPenaltiesDataDao{
-		validLFPTransaction,
-	},
-}
-var e5TransactionsResponseValidLFPWithUnpaidCostsTransaction = models.AccountPenaltiesDao{
-	CustomerCode: "12345678",
-	CompanyCode:  utils.LateFilingPenaltyCompanyCode,
-	CreatedAt:    &now,
-	AccountPenalties: []models.AccountPenaltiesDataDao{
-		validLFPTransaction,
-		validLFPUnpaidCostsTransaction,
-	},
-}
 
 var cfg = config.Config{}
 var SanctionsMultipleTransactionSubType = "S1,A2"
 
 func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
+	etag := "ABCDE"
+	customerCode := "12345678"
+	overSeasEntityId := "OE123456"
+	otherTransactionSubType := "Other"
+	euTransactionSubType := "EU"
+	pen1DunningStatus := addTrailingSpacesToDunningStatus(PEN1DunningStatus)
+	dcaDunningStatus := addTrailingSpacesToDunningStatus(DCADunningStatus)
+	lfpAccountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
+		customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, pen1DunningStatus, utils.LateFilingPenRef, false)
+	lfpPenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.LateFilingPenRef)
+	sanctionsPenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.SanctionsPenRef)
+	sanctionsRoePenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.SanctionsRoePenRef)
+
 	Convey("error when first etag generator fails", t, func() {
-		mockedEtagGenerator := func() (string, error) {
+		etagGenerator = func() (string, error) {
 			return "", errors.New("error generating etag")
 		}
-		etagGenerator = mockedEtagGenerator
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			lfpAccountPenaltiesDao, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
 	})
 
 	Convey("error when first etag generator succeeds but second etag generator fails", t, func() {
 		callCount := 0
-		mockedEtagGenerator := func() (string, error) {
+		etagGenerator = func() (string, error) {
 			callCount++
 			if callCount == 2 {
 				return "", errors.New("error generating etag")
 			}
-			return "ABCDE", nil
+			return etag, nil
 		}
 
-		etagGenerator = mockedEtagGenerator
-
-		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			lfpAccountPenaltiesDao, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
 	})
 
 	Convey("penalty list successfully generated from E5 response - unpaid costs", t, func() {
-		mockedEtagGenerator := func() (string, error) {
-			return "ABCDE", nil
+		etagGenerator = func() (string, error) {
+			return etag, nil
 		}
-		etagGenerator = mockedEtagGenerator
 
-		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
+		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
+			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, pen1DunningStatus, utils.LateFilingPenRef, true)
+
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPWithUnpaidCostsTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -236,46 +107,13 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 	})
 
 	Convey("penalty list successfully generated from E5 response - penalty type EU", t, func() {
-		mockedEtagGenerator := func() (string, error) {
-			return "ABCDE", nil
-		}
-		etagGenerator = mockedEtagGenerator
-
-		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
-		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
-		So(err, ShouldBeNil)
-		So(transactionList, ShouldNotBeNil)
-		transactionListItems := transactionList.Items
-		So(len(transactionListItems), ShouldEqual, 1)
-		transactionListItem := transactionListItems[0]
-		expected := models.TransactionListItem{
-			ID:              "A1234567",
-			Etag:            transactionListItem.Etag,
-			Kind:            "late-filing-penalty#late-filing-penalty",
-			IsPaid:          false,
-			IsDCA:           false,
-			DueDate:         "2025-03-26",
-			MadeUpDate:      "2025-02-12",
-			TransactionDate: "2025-02-25",
-			OriginalAmount:  250,
-			Outstanding:     250,
-			Type:            "penalty",
-			Reason:          LateFilingPenaltyReason,
-			PayableStatus:   OpenPayableStatus,
-		}
-		So(transactionListItem, ShouldResemble, expected)
-	})
-
-	Convey("penalty list successfully generated from E5 response - penalty type EU", t, func() {
-		etag := "ABCDE"
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
 
-		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			lfpAccountPenaltiesDao, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -300,14 +138,16 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 	})
 
 	Convey("penalty list successfully generated from E5 response - penalty type Other", t, func() {
-		etag := "ABCDE"
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
 
-		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "Other"
+		otherAccountPenalties := buildTestUnpaidAccountPenaltiesDao(
+			customerCode, utils.LateFilingPenaltyCompanyCode, otherTransactionSubType, pen1DunningStatus, utils.LateFilingPenRef, false)
+
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			otherAccountPenalties, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -337,10 +177,11 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 
-		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
-		e5TransactionsResponseValidLFPTransaction.AccountPenalties[0].TransactionSubType = "EU"
+		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
+			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, dcaDunningStatus, utils.LateFilingPenRef, false)
+
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidLFPTransaction, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, utils.LateFilingPenaltyCompanyCode, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -365,13 +206,16 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 	})
 
 	Convey("penalty list successfully generated from E5 response - valid sanctions", t, func() {
-		etag := "ABCDE"
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
 
+		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
+			customerCode, utils.SanctionsCompanyCode, SanctionsTransactionSubType, pen1DunningStatus, utils.SanctionsPenRef, false)
+
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidSanctions, utils.SanctionsCompanyCode, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, utils.SanctionsCompanyCode, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -396,13 +240,16 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 	})
 
 	Convey("penalty list successfully generated from E5 response - valid sanctions ROE", t, func() {
-		etag := "ABCDE"
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
 
+		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
+			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, pen1DunningStatus, utils.SanctionsRoePenRef, false)
+
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -427,14 +274,16 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 	})
 
 	Convey("penalty list successfully generated from E5 response - valid sanctions with dunning status is dca", t, func() {
-		etag := "ABCDE"
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
 
-		e5TransactionsResponseValidSanctions.AccountPenalties[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
+		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
+			customerCode, utils.SanctionsCompanyCode, SanctionsTransactionSubType, dcaDunningStatus, utils.SanctionsPenRef, false)
+
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidSanctions, utils.SanctionsCompanyCode, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, utils.SanctionsCompanyCode, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -459,14 +308,16 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 	})
 
 	Convey("penalty list successfully generated from E5 response - valid sanctions ROE with dunning status is dca", t, func() {
-		etag := "ABCDE"
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
 
-		e5TransactionsResponseValidRoe.AccountPenalties[0].DunningStatus = addTrailingSpacesToDunningStatus(DCADunningStatus)
+		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
+			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, dcaDunningStatus, utils.SanctionsRoePenRef, false)
+
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			&e5TransactionsResponseValidRoe, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, utils.SanctionsCompanyCode, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -566,98 +417,98 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}{
 			{
 				name: "Late filing penalty (valid)",
-				args: args{penalty: createLateFilingPenalty(false, 150, CHSAccountStatus,
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount and not paid",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, CHSAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, CHSAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is PEN1",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, CHSAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, CHSAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is PEN2",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, CHSAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, CHSAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is PEN3",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, CHSAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, CHSAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is DCA, dunning status is PEN1",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, DCADunningStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, DCADunningStatus,
 						addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is DCA, dunning status is PEN2",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, DCAAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, DCAAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is DCA, dunning status is PEN3",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, DCAAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, DCAAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is HLD, dunning status is PEN1",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, HLDAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, HLDAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is HLD, dunning status is PEN2",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, HLDAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, HLDAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is HLD, dunning status is PEN3",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, HLDAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, HLDAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is WDR, dunning status is PEN1",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, WDRAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, WDRAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is WDR, dunning status is PEN2",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, WDRAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, WDRAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is WDR, dunning status is PEN3",
 				args: args{
-					penalty: createLateFilingPenalty(false, 150, WDRAccountStatus,
+					penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, WDRAccountStatus,
 						addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: OpenPayableStatus,
 			},
@@ -684,60 +535,60 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}{
 			{
 				name: "Late filing penalty with outstanding amount is 0 and is paid (valid)",
-				args: args{penalty: createLateFilingPenalty(true, 0, CHSAccountStatus,
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(true, 0, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount less than 0 and is paid",
-				args: args{penalty: createLateFilingPenalty(true, -150, CHSAccountStatus,
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(true, -150, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is DCA, dunning status is DCA",
-				args: args{penalty: createLateFilingPenalty(false, 150, DCAAccountStatus,
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(DCADunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is DCA, dunning status is DCA (no trailing spaces)",
-				args: args{penalty: createLateFilingPenalty(false, 150, DCAAccountStatus, DCADunningStatus)},
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, DCAAccountStatus, DCADunningStatus)},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is DCA",
-				args: args{penalty: createLateFilingPenalty(false, 150, CHSAccountStatus,
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(DCADunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is HLD, dunning status is DCA",
-				args: args{penalty: createLateFilingPenalty(false, 150, HLDAccountStatus,
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(DCADunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is WDR, dunning status is DCA",
-				args: args{penalty: createLateFilingPenalty(false, 150, WDRAccountStatus,
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, WDRAccountStatus,
 					addTrailingSpacesToDunningStatus(DCADunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is IPEN1",
-				args: args{penalty: createLateFilingPenalty(false, 150, CHSAccountStatus,
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus("IPEN1"))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is HLD, dunning status is IPEN2",
-				args: args{penalty: createLateFilingPenalty(false, 150, HLDAccountStatus,
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus("IPEN2"))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Late filing penalty with outstanding amount, not paid, account status is CHS, dunning status is CAN",
-				args: args{penalty: createLateFilingPenalty(false, 150, CHSAccountStatus,
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(false, 150, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus("CAN"))},
 				want: ClosedPayableStatus,
 			},
@@ -764,55 +615,55 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}{
 			{
 				name: "Sanctions (valid)",
-				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount and not paid",
-				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid and account on hold",
-				args: args{penalty: createSanctionsPenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is dca, dunning status is pen1",
-				args: args{penalty: createSanctionsPenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is dca, dunning status is pen2",
-				args: args{penalty: createSanctionsPenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is chs, dunning status is pen1",
-				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is chs, dunning status is pen2",
-				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is hld, dunning status is pen1",
-				args: args{penalty: createSanctionsPenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is hld, dunning status is pen2",
-				args: args{penalty: createSanctionsPenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: OpenPayableStatus,
 			},
@@ -838,61 +689,61 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}{
 			{
 				name: "Sanctions with outstanding amount is 0 and is paid (valid)",
-				args: args{penalty: createSanctionsPenalty(true, 0, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(true, 0, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount less than 0 and is paid",
-				args: args{penalty: createSanctionsPenalty(true, -250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(true, -250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status and dunning status is dca",
-				args: args{penalty: createSanctionsPenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(DCADunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account not dca and dunning status is dca",
-				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(DCADunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is dca, dunning status is pen3",
-				args: args{penalty: createSanctionsPenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is chs, dunning status is pen3",
-				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is hld, dunning status is pen3",
-				args: args{penalty: createSanctionsPenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is wdr, dunning status is pen1",
-				args: args{penalty: createSanctionsPenalty(false, 250, WDRAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, WDRAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is wdr, dunning status is pen2",
-				args: args{penalty: createSanctionsPenalty(false, 250, WDRAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, WDRAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is wdr, dunning status is pen3",
-				args: args{penalty: createSanctionsPenalty(false, 250, WDRAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, WDRAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: ClosedPayableStatus,
 			},
@@ -919,55 +770,55 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}{
 			{
 				name: "Sanctions ROE (valid)",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount and not paid",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid and account on hold",
-				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is dca, dunning status is pen1",
-				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is dca, dunning status is pen2",
-				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is chs, dunning status is pen1",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is chs, dunning status is pen2",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is hld, dunning status is pen1",
-				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: OpenPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is hld, dunning status is pen2",
-				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: OpenPayableStatus,
 			},
@@ -993,79 +844,79 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}{
 			{
 				name: "Sanctions ROE with outstanding amount is 0 and is paid (valid)",
-				args: args{penalty: createRoePenalty(true, 0, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(true, 0, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount less than 0 and is paid",
-				args: args{penalty: createRoePenalty(true, -250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(true, -250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status and dunning status is dca",
-				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(DCADunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account not dca and dunning status is dca",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(DCADunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is dca, dunning status is pen3",
-				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is chs, dunning status is pen3",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is hld, dunning status is pen3",
-				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is wdr, dunning status is pen1",
-				args: args{penalty: createRoePenalty(false, 250, WDRAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, WDRAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is wdr, dunning status is pen2",
-				args: args{penalty: createRoePenalty(false, 250, WDRAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, WDRAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is wdr, dunning status is pen3",
-				args: args{penalty: createRoePenalty(false, 250, WDRAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, WDRAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN3DunningStatus))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is dca, dunning status is ipen1",
-				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus("IPEN1"))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is chs, dunning status is ipen2",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus("IPEN2"))},
 				want: ClosedPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is hld, dunning status is ipen3",
-				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus("IPEN3"))},
 				want: ClosedPayableStatus,
 			},
@@ -1091,17 +942,17 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}{
 			{
 				name: "Late filing penalty paid today",
-				args: args{penalty: createLateFilingPenalty(true, 150, CHSAccountStatus,
+				args: args{penalty: buildTestLFPAccountPenaltiesDataDao(true, 150, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 			},
 			{
 				name: "Sanctions penalty paid today",
-				args: args{penalty: createSanctionsPenalty(true, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(true, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 			},
 			{
 				name: "Sanctions ROE penalty paid today",
-				args: args{penalty: createRoePenalty(true, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(true, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 			},
 		}
@@ -1117,9 +968,9 @@ func TestUnit_getPayableStatus(t *testing.T) {
 	})
 
 	Convey("Get closed payable status for an existing paid penalty from E5 in the same account as a newly paid penalty", t, func() {
-		oldPaidPenalty := createRoePenalty(true, 0, CHSAccountStatus,
+		oldPaidPenalty := buildTestROEAccountPenaltiesDataDao(true, 0, CHSAccountStatus,
 			addTrailingSpacesToDunningStatus(PEN1DunningStatus))
-		newPaidPenalty := createRoePenalty(true, 250, CHSAccountStatus,
+		newPaidPenalty := buildTestROEAccountPenaltiesDataDao(true, 250, CHSAccountStatus,
 			addTrailingSpacesToDunningStatus(PEN1DunningStatus))
 
 		closedAt := time.Now()
@@ -1141,55 +992,55 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}{
 			{
 				name: "Sanctions (valid)",
-				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount and not paid",
-				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid and account on hold",
-				args: args{penalty: createSanctionsPenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is dca, dunning status is pen1",
-				args: args{penalty: createSanctionsPenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is dca, dunning status is pen2",
-				args: args{penalty: createSanctionsPenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is chs, dunning status is pen1",
-				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is chs, dunning status is pen2",
-				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is hld, dunning status is pen1",
-				args: args{penalty: createSanctionsPenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions with outstanding amount, not paid, account status is hld, dunning status is pen2",
-				args: args{penalty: createSanctionsPenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: DisabledPayableStatus,
 			},
@@ -1216,55 +1067,55 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}{
 			{
 				name: "Sanctions ROE (valid)",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount and not paid",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid and account on hold",
-				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is dca, dunning status is pen1",
-				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is dca, dunning status is pen2",
-				args: args{penalty: createRoePenalty(false, 250, DCAAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, DCAAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is chs, dunning status is pen1",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is chs, dunning status is pen2",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is hld, dunning status is pen1",
-				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions ROE with outstanding amount, not paid, account status is hld, dunning status is pen2",
-				args: args{penalty: createRoePenalty(false, 250, HLDAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, HLDAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN2DunningStatus))},
 				want: DisabledPayableStatus,
 			},
@@ -1291,13 +1142,13 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		}{
 			{
 				name: "Sanctions (valid)",
-				args: args{penalty: createSanctionsPenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestSanctionsAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
 			{
 				name: "Sanctions ROE (valid)",
-				args: args{penalty: createRoePenalty(false, 250, CHSAccountStatus,
+				args: args{penalty: buildTestROEAccountPenaltiesDataDao(false, 250, CHSAccountStatus,
 					addTrailingSpacesToDunningStatus(PEN1DunningStatus))},
 				want: DisabledPayableStatus,
 			},
@@ -1314,62 +1165,185 @@ func TestUnit_getPayableStatus(t *testing.T) {
 	})
 }
 
-func createLateFilingPenalty(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
-	return &models.AccountPenaltiesDataDao{
+func buildTestLFPAccountPenaltiesDataDao(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
+	dataDao := buildTestAccountPenaltiesDataDao(AccountPenaltiesParams{
 		CompanyCode:          utils.LateFilingPenaltyCompanyCode,
 		LedgerCode:           "EW",
 		CustomerCode:         "12345678",
 		TransactionReference: "A1234567",
-		TransactionDate:      "2025-02-25",
-		MadeUpDate:           "2025-02-12",
 		Amount:               150,
 		OutstandingAmount:    outstandingAmount,
 		IsPaid:               isPaid,
 		TransactionType:      "1",
-		TransactionSubType:   "EH",
+		TransactionSubType:   "EU",
 		TypeDescription:      "Penalty Ltd Wel & Eng <=1m    LTDWA",
-		DueDate:              "2025-03-26",
 		AccountStatus:        accountStatus,
 		DunningStatus:        dunningStatus,
-	}
+	})
+
+	return &dataDao
 }
 
-func createSanctionsPenalty(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
-	return &models.AccountPenaltiesDataDao{
+func buildTestSanctionsAccountPenaltiesDataDao(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
+	dataDao := buildTestAccountPenaltiesDataDao(AccountPenaltiesParams{
 		CompanyCode:          utils.SanctionsCompanyCode,
 		LedgerCode:           "E1",
 		CustomerCode:         "12345678",
 		TransactionReference: "P1234567",
-		TransactionDate:      "2025-02-25",
-		MadeUpDate:           "2025-02-12",
 		Amount:               250,
 		OutstandingAmount:    outstandingAmount,
 		IsPaid:               isPaid,
 		TransactionType:      SanctionsTransactionType,
 		TransactionSubType:   SanctionsTransactionSubType,
 		TypeDescription:      "CS01                                    ",
-		DueDate:              "2025-03-26",
 		AccountStatus:        accountStatus,
 		DunningStatus:        dunningStatus,
-	}
+	})
+
+	return &dataDao
 }
 
-func createRoePenalty(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
-	return &models.AccountPenaltiesDataDao{
+func buildTestROEAccountPenaltiesDataDao(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
+	dataDao := buildTestAccountPenaltiesDataDao(AccountPenaltiesParams{
 		CompanyCode:          utils.SanctionsCompanyCode,
 		LedgerCode:           "FU",
 		CustomerCode:         "OE123456",
 		TransactionReference: "U1234567",
-		TransactionDate:      "2025-02-25",
-		MadeUpDate:           "2025-02-12",
 		Amount:               250,
 		OutstandingAmount:    outstandingAmount,
 		IsPaid:               isPaid,
 		TransactionType:      SanctionsTransactionType,
 		TransactionSubType:   SanctionsRoeFailureToUpdateTransactionSubType,
 		TypeDescription:      "PENU                                    ",
-		DueDate:              "2025-03-26",
 		AccountStatus:        accountStatus,
 		DunningStatus:        dunningStatus,
+	})
+
+	return &dataDao
+}
+
+type AccountPenaltiesParams struct {
+	CompanyCode          string
+	LedgerCode           string
+	CustomerCode         string
+	TransactionReference string
+	Amount               float64
+	OutstandingAmount    float64
+	IsPaid               bool
+	TransactionType      string
+	TransactionSubType   string
+	TypeDescription      string
+	AccountStatus        string
+	DunningStatus        string
+}
+
+func buildTestAccountPenaltiesDataDao(params AccountPenaltiesParams) models.AccountPenaltiesDataDao {
+	return models.AccountPenaltiesDataDao{
+		CompanyCode:          params.CompanyCode,
+		LedgerCode:           params.LedgerCode,
+		CustomerCode:         params.CustomerCode,
+		TransactionReference: params.TransactionReference,
+		TransactionDate:      "2025-02-25",
+		MadeUpDate:           "2025-02-12",
+		Amount:               params.Amount,
+		OutstandingAmount:    params.OutstandingAmount,
+		IsPaid:               params.IsPaid,
+		TransactionType:      params.TransactionType,
+		TransactionSubType:   params.TransactionSubType,
+		TypeDescription:      params.TypeDescription,
+		DueDate:              "2025-03-26",
+		AccountStatus:        params.AccountStatus,
+		DunningStatus:        params.DunningStatus,
 	}
+}
+
+func buildTestUnpaidAccountPenaltiesDao(customerCode, companyCode, transactionSubType, dunningStatus, penaltyType string, withUnpaidCost bool) *models.AccountPenaltiesDao {
+	params := AccountPenaltiesParams{
+		CompanyCode:        companyCode,
+		CustomerCode:       customerCode,
+		TransactionSubType: transactionSubType,
+		Amount:             250,
+		OutstandingAmount:  250,
+		IsPaid:             false,
+		AccountStatus:      CHSAccountStatus,
+		DunningStatus:      dunningStatus,
+	}
+	switch penaltyType {
+	case utils.SanctionsPenRef:
+		{
+			params.TransactionReference = "P1234567"
+			params.TransactionType = SanctionsTransactionType
+			params.LedgerCode = "E1"
+			params.TypeDescription = "CS01                                    "
+		}
+	case utils.LateFilingPenRef:
+		{
+			params.TransactionReference = "A1234567"
+			params.TransactionType = "1"
+			params.LedgerCode = "EW"
+			params.TypeDescription = "Penalty Ltd Wel & Eng <=1m    LTDWA"
+		}
+	default:
+		{
+			params.TransactionReference = "U1234567"
+			params.TransactionType = SanctionsTransactionType
+			params.LedgerCode = "FU"
+			params.TypeDescription = "Penalty Ltd Wel & Eng <=1m    LTDWA"
+		}
+	}
+	accountPenaltiesDataDao := []models.AccountPenaltiesDataDao{
+		buildTestAccountPenaltiesDataDao(params),
+	}
+	if withUnpaidCost {
+		params.TransactionReference = "F1"
+		params.TransactionType = "2"
+		accountPenaltiesDataDao = append(accountPenaltiesDataDao, buildTestAccountPenaltiesDataDao(params))
+	}
+	return &models.AccountPenaltiesDao{
+		CustomerCode:     customerCode,
+		CompanyCode:      companyCode,
+		CreatedAt:        &now,
+		AccountPenalties: accountPenaltiesDataDao,
+	}
+}
+
+func buildTestPenaltyDetailsMap(penaltyType string) *config.PenaltyDetailsMap {
+	penaltyDetailsMap := config.PenaltyDetailsMap{
+		Name:    "penalty details",
+		Details: map[string]config.PenaltyDetails{},
+	}
+	switch penaltyType {
+	case utils.LateFilingPenRef:
+		penaltyDetailsMap.Details[utils.LateFilingPenaltyCompanyCode] = config.PenaltyDetails{
+			Description:        "Late Filing Penalty",
+			DescriptionId:      "late-filing-penalty",
+			ClassOfPayment:     "penalty-lfp",
+			ResourceKind:       "late-filing-penalty#late-filing-penalty",
+			ProductType:        "late-filing-penalty",
+			EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
+			EmailMsgType:       "penalty_payment_received_email",
+		}
+	case utils.SanctionsPenRef:
+		penaltyDetailsMap.Details[utils.SanctionsCompanyCode] = config.PenaltyDetails{
+			Description:        "Sanctions Penalty Payment",
+			DescriptionId:      "penalty-sanctions",
+			ClassOfPayment:     "penalty-sanctions",
+			ResourceKind:       "penalty#sanctions",
+			ProductType:        "penalty-sanctions",
+			EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
+			EmailMsgType:       "penalty_payment_received_email",
+		}
+	default:
+		penaltyDetailsMap.Details[utils.SanctionsCompanyCode] = config.PenaltyDetails{
+			Description:        "Overseas Entity Penalty Payment",
+			DescriptionId:      "penalty-sanctions",
+			ClassOfPayment:     "penalty-sanctions",
+			ResourceKind:       "penalty#sanctions",
+			ProductType:        "penalty-sanctions",
+			EmailReceivedAppId: "penalty-payment-api.sanctions_roe_penalty_payment_received_email",
+			EmailMsgType:       "sanctions_roe_penalty_payment_received_email",
+		}
+	}
+
+	return &penaltyDetailsMap
 }
