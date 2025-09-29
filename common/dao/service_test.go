@@ -3,9 +3,10 @@ package dao
 import (
 	"testing"
 
+	"go.mongodb.org/mongo-driver/mongo"
+
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
-	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/companieshouse/penalty-payment-api/config"
 	. "github.com/smartystreets/goconvey/convey"

@@ -29,7 +29,7 @@ func getE5Client() ClientInterface {
 
 var requestId = "123456abc"
 
-type TestCase struct {
+type testCase struct {
 	name       string
 	statusCode int
 	payload    string
@@ -54,7 +54,7 @@ func TestUnitClient_CreatePayment(t *testing.T) {
 			},
 		}
 
-		testCases := []TestCase{
+		testCases := []testCase{
 			{
 				name:       "response should be unsuccessful when there is a 500 error from E5",
 				statusCode: http.StatusInternalServerError,
@@ -200,8 +200,8 @@ func TestUnitClient_GetTransactions(t *testing.T) {
 	})
 }
 
-func getAuthoriseConfirmTestCases() []TestCase {
-	return []TestCase{
+func getAuthoriseConfirmTestCases() []testCase {
+	return []testCase{
 		{
 			name:       "500 error from E5",
 			statusCode: http.StatusInternalServerError,
