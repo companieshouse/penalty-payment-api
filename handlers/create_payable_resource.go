@@ -31,7 +31,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		if err != nil {
 			message := "failed to read request body"
 			log.ErrorR(r, fmt.Errorf(message+": %v", err))
-			writeJSONResponse(w, r, models.NewMessageResponse(message), http.StatusBadRequest)
+			utils.WriteJSONWithStatus(w, r, models.NewMessageResponse(message), http.StatusBadRequest)
 			return
 		}
 
@@ -61,7 +61,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		payablePenalties, err := validateTransactions(request.Transactions, validationCtx)
 		if err != nil {
 			log.ErrorC(requestId, errors.New("invalid request - failed matching against e5"))
-			writeJSONResponse(w, r, models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time"), http.StatusBadRequest)
+			utils.WriteJSONWithStatus(w, r, models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time"), http.StatusBadRequest)
 			return
 		}
 
@@ -72,7 +72,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 
 		if err != nil {
 			log.ErrorC(requestId, errors.New("invalid request - failed validation"))
-			writeJSONResponse(w, r, models.NewMessageResponse("invalid request body"), http.StatusBadRequest)
+			utils.WriteJSONWithStatus(w, r, models.NewMessageResponse("invalid request body"), http.StatusBadRequest)
 			return
 		}
 
@@ -80,16 +80,16 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 
 		model := transformers.PayableResourceRequestToDB(&request, requestId)
 
-		if err := createPayableResource(model, prDaoSvc, requestId); err != nil {
+		if err := prDaoSvc.CreatePayableResource(model, requestId); err != nil {
 			log.ErrorC(requestId, errors.New("failed to create payable request in database"))
-			writeJSONResponse(w, r, models.NewMessageResponse("there was a problem handling your request"), http.StatusInternalServerError)
+			utils.WriteJSONWithStatus(w, r, models.NewMessageResponse("there was a problem handling your request"), http.StatusInternalServerError)
 			return
 		}
 
 		payableResource := transformers.PayableResourceDaoToCreatedResponse(model)
 		log.DebugC(requestId, "successfully created payable resource", log.Data{"payable_resource": payableResource})
 
-		writeJSONResponse(w, r, payableResource, http.StatusCreated)
+		utils.WriteJSONWithStatus(w, r, payableResource, http.StatusCreated)
 
 		log.InfoC(requestId, "POST payable resource request completed successfully")
 	})
@@ -109,21 +109,21 @@ func extractRequestData(w http.ResponseWriter, r *http.Request, request models.P
 	userDetailsValue := r.Context().Value(authentication.ContextKeyUserDetails)
 	if userDetailsValue == nil {
 		log.ErrorR(r, errors.New("user details not in context"))
-		writeJSONResponse(w, r, models.NewMessageResponse("user details not in request context"), http.StatusBadRequest)
+		utils.WriteJSONWithStatus(w, r, models.NewMessageResponse("user details not in request context"), http.StatusBadRequest)
 		return authUserDetails, "", "", true
 	}
 
 	companyCode, err := getCompanyCodeFromTransaction(request.Transactions)
 	if err != nil {
 		log.ErrorR(r, errors.New("company code cannot be resolved"))
-		writeJSONResponse(w, r, models.NewMessageResponse("company code cannot be resolved"), http.StatusBadRequest)
+		utils.WriteJSONWithStatus(w, r, models.NewMessageResponse("company code cannot be resolved"), http.StatusBadRequest)
 		return authUserDetails, "", "", true
 	}
 
 	penaltyRefType, err := getPenaltyRefTypeFromTransaction(request.Transactions)
 	if err != nil {
 		log.ErrorR(r, errors.New("penalty reference type cannot be resolved"))
-		writeJSONResponse(w, r, models.NewMessageResponse("penalty reference type cannot be resolved"), http.StatusBadRequest)
+		utils.WriteJSONWithStatus(w, r, models.NewMessageResponse("penalty reference type cannot be resolved"), http.StatusBadRequest)
 		return authUserDetails, "", "", true
 	}
 
@@ -163,14 +163,4 @@ func validateTransactions(transactions []models.TransactionItem, validationCtx v
 		payablePenalties = append(payablePenalties, *payablePenalty)
 	}
 	return payablePenalties, nil
-}
-
-// createPayableResource saves the payable resource to the database
-func createPayableResource(model *models.PayableResourceDao, prDaoSvc dao.PayableResourceDaoService, requestId string) error {
-	return prDaoSvc.CreatePayableResource(model, requestId)
-}
-
-// writeJSONResponse is a helper to write JSON response with status code
-func writeJSONResponse(w http.ResponseWriter, r *http.Request, payload interface{}, status int) {
-	utils.WriteJSONWithStatus(w, r, payload, status)
 }
