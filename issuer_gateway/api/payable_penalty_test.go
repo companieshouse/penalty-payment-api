@@ -57,7 +57,7 @@ func accountPenaltiesResponse(unpaidPenaltyCount int) *models.TransactionListRes
 
 func generateParams(daoService dao.AccountPenaltiesDaoService, transaction models.TransactionItem) types.PayablePenaltyParams {
 	return types.PayablePenaltyParams{
-		PenaltyRefType:    utils.LateFilingPenRef,
+		PenaltyRefType:    utils.LateFilingPenaltyRefType,
 		CompanyCode:       utils.LateFilingPenaltyCompanyCode,
 		CustomerCode:      "10000024",
 		PenaltyDetailsMap: &config.PenaltyDetailsMap{},

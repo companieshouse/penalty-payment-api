@@ -229,7 +229,7 @@ details:
 			Convey("Then the penalty details should be returned", func() {
 				So(err, ShouldBeNil)
 				So(penaltyDetailsMap.Name, ShouldEqual, "penalty details")
-				So(penaltyDetailsMap.Details[utils.LateFilingPenRef].EmailReceivedAppId, ShouldEqual, "penalty-payment-api.penalty_payment_received_email")
+				So(penaltyDetailsMap.Details[utils.LateFilingPenaltyRefType].EmailReceivedAppId, ShouldEqual, "penalty-payment-api.penalty_payment_received_email")
 			})
 		})
 	})

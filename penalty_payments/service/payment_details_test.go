@@ -19,7 +19,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	penaltyDetails := penaltyDetailsMap.Details[utils.LateFilingPenaltyCompanyCode]
+	penaltyDetails := penaltyDetailsMap.Details[utils.LateFilingPenaltyRefType]
 
 	Convey("Get payment details no transactions - invalid data", t, func() {
 
@@ -77,7 +77,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				resourceKind:          "late-filing-penalty#late-filing-penalty",
 				productType:           "late-filing-penalty",
 				companyCode:           utils.LateFilingPenaltyCompanyCode,
-				penaltyRefType:        utils.LateFilingPenRef,
+				penaltyRefType:        utils.LateFilingPenaltyRefType,
 			},
 			{
 				description:           "Sanctions Penalty Payment",
@@ -87,7 +87,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				resourceKind:          "penalty#sanctions",
 				productType:           "penalty-sanctions",
 				companyCode:           utils.SanctionsCompanyCode,
-				penaltyRefType:        utils.SanctionsPenRef,
+				penaltyRefType:        utils.SanctionsPenaltyRefType,
 			},
 			{
 				description:           "Overseas Entity Penalty Payment",
@@ -97,7 +97,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				resourceKind:          "penalty#sanctions",
 				productType:           "penalty-sanctions",
 				companyCode:           utils.SanctionsCompanyCode,
-				penaltyRefType:        utils.SanctionsRoePenRef,
+				penaltyRefType:        utils.SanctionsRoePenaltyRefType,
 			},
 		}
 		for _, tc := range testCases {
@@ -184,7 +184,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				resourceKind:          "late-filing-penalty#late-filing-penalty",
 				productType:           "late-filing-penalty",
 				companyCode:           utils.LateFilingPenaltyCompanyCode,
-				penaltyRefType:        utils.LateFilingPenRef,
+				penaltyRefType:        utils.LateFilingPenaltyRefType,
 			},
 			{
 				description:           "Sanctions Penalty Payment",
@@ -194,7 +194,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				resourceKind:          "penalty#sanctions",
 				productType:           "penalty-sanctions",
 				companyCode:           utils.SanctionsCompanyCode,
-				penaltyRefType:        utils.SanctionsPenRef,
+				penaltyRefType:        utils.SanctionsPenaltyRefType,
 			},
 			{
 				description:           "Overseas Entity Penalty Payment",
@@ -204,7 +204,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 				resourceKind:          "penalty#sanctions",
 				productType:           "penalty-sanctions",
 				companyCode:           utils.SanctionsCompanyCode,
-				penaltyRefType:        utils.SanctionsRoePenRef,
+				penaltyRefType:        utils.SanctionsRoePenaltyRefType,
 			},
 		}
 		for _, tc := range testCases {

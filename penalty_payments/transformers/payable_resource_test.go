@@ -163,7 +163,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				resourceKind:          "late-filing-penalty#late-filing-penalty",
 				productType:           "late-filing-penalty",
 				companyCode:           utils.LateFilingPenaltyCompanyCode,
-				penaltyRefType:        utils.LateFilingPenRef,
+				penaltyRefType:        utils.LateFilingPenaltyRefType,
 			},
 			{
 				description:           "Sanctions Penalty Payment",
@@ -173,7 +173,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				resourceKind:          "penalty#sanctions",
 				productType:           "penalty-sanctions",
 				companyCode:           utils.SanctionsCompanyCode,
-				penaltyRefType:        utils.SanctionsPenRef,
+				penaltyRefType:        utils.SanctionsPenaltyRefType,
 			},
 			{
 				description:           "Overseas Entity Penalty Payment",
@@ -183,7 +183,7 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				resourceKind:          "penalty#sanctions",
 				productType:           "penalty-sanctions",
 				companyCode:           utils.SanctionsCompanyCode,
-				penaltyRefType:        utils.SanctionsRoePenRef,
+				penaltyRefType:        utils.SanctionsRoePenaltyRefType,
 			},
 		}
 		for _, tc := range testCases {

@@ -71,7 +71,7 @@ func generateTestPayableResource(withTransaction bool, penaltyRef string) models
 
 func TestUnitHandleGetPaymentDetails(t *testing.T) {
 	Convey("No payable resource in request context", t, func() {
-		setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenRef)
+		setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenaltyRefType)
 
 		res := serveGetPaymentDetailsHandler(nil)
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
@@ -90,7 +90,7 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 	})
 
 	Convey("Payment PenaltyDetails not found due to no costs", t, func() {
-		setGetPenaltyRefTypeFromTransactionMock(utils.SanctionsPenRef)
+		setGetPenaltyRefTypeFromTransactionMock(utils.SanctionsPenaltyRefType)
 
 		payable := generateTestPayableResource(false, "")
 
@@ -108,19 +108,19 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 			{
 				name:           "Late Filing",
 				companyCode:    utils.LateFilingPenaltyCompanyCode,
-				penaltyRefType: utils.LateFilingPenRef,
+				penaltyRefType: utils.LateFilingPenaltyRefType,
 				penaltyRef:     "A1234567",
 			},
 			{
 				name:           "Sanctions",
 				companyCode:    utils.SanctionsCompanyCode,
-				penaltyRefType: utils.SanctionsPenRef,
+				penaltyRefType: utils.SanctionsPenaltyRefType,
 				penaltyRef:     "P1234567",
 			},
 			{
 				name:           "Sanctions ROE",
 				companyCode:    utils.SanctionsCompanyCode,
-				penaltyRefType: utils.SanctionsRoePenRef,
+				penaltyRefType: utils.SanctionsRoePenaltyRefType,
 				penaltyRef:     "U1234567",
 			},
 		}

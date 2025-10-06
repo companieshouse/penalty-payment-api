@@ -14,7 +14,7 @@ import (
 
 var etagGenerator = utils.GenerateEtag
 
-func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
+func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao, penaltyRefType string, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string) (*models.TransactionListResponse, error) {
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := etagGenerator()
@@ -31,7 +31,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
 		transactionType := getTransactionType(&accountPenalty, allowedTransactionsMap)
 		payableStatus := getPayableStatus(transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, allowedTransactionsMap, cfg)
-		transactionListItem, err := buildTransactionListItemFromAccountPenalty(&accountPenalty, penaltyDetailsMap, companyCode, transactionType, payableStatus, requestId)
+		transactionListItem, err := buildTransactionListItemFromAccountPenalty(&accountPenalty, penaltyDetailsMap, penaltyRefType, transactionType, payableStatus, requestId)
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +43,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 }
 
 func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesDataDao,
-	penaltyDetailsMap *config.PenaltyDetailsMap, companyCode string, transactionType string, payableStatus string, requestId string) (models.TransactionListItem, error) {
+	penaltyDetailsMap *config.PenaltyDetailsMap, penaltyRefType string, transactionType string, payableStatus string, requestId string) (models.TransactionListItem, error) {
 	etag, err := etagGenerator()
 	if err != nil {
 		err = fmt.Errorf("error generating etag: [%v]", err)
@@ -55,7 +55,7 @@ func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesData
 	transactionListItem.Etag = etag
 	transactionListItem.ID = dao.TransactionReference
 	transactionListItem.IsPaid = dao.IsPaid
-	transactionListItem.Kind = penaltyDetailsMap.Details[companyCode].ResourceKind
+	transactionListItem.Kind = penaltyDetailsMap.Details[penaltyRefType].ResourceKind
 	transactionListItem.IsDCA = checkDunningStatus(dao, DCADunningStatus)
 	transactionListItem.DueDate = dao.DueDate
 	transactionListItem.MadeUpDate = dao.MadeUpDate
