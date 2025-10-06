@@ -94,22 +94,22 @@ func TestUnitHandleGetPenaltyRefType(t *testing.T) {
 			{
 				name:                   "Empty",
 				input:                  "",
-				expectedPenaltyRefType: utils.LateFilingPenRef,
+				expectedPenaltyRefType: utils.LateFilingPenaltyRefType,
 			},
 			{
 				name:                   "Late Filing",
-				input:                  utils.LateFilingPenRef,
-				expectedPenaltyRefType: utils.LateFilingPenRef,
+				input:                  utils.LateFilingPenaltyRefType,
+				expectedPenaltyRefType: utils.LateFilingPenaltyRefType,
 			},
 			{
 				name:                   "Sanctions",
-				input:                  utils.SanctionsPenRef,
-				expectedPenaltyRefType: utils.SanctionsPenRef,
+				input:                  utils.SanctionsPenaltyRefType,
+				expectedPenaltyRefType: utils.SanctionsPenaltyRefType,
 			},
 			{
 				name:                   "Sanctions ROE",
-				input:                  utils.SanctionsRoePenRef,
-				expectedPenaltyRefType: utils.SanctionsRoePenRef,
+				input:                  utils.SanctionsRoePenaltyRefType,
+				expectedPenaltyRefType: utils.SanctionsRoePenaltyRefType,
 			},
 		}
 

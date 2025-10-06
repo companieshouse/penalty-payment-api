@@ -84,7 +84,7 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 // so defaulting to LateFiling until agreement is made to update other services calling the api
 func GetPenaltyRefType(penaltyRefType string) string {
 	if len(penaltyRefType) == 0 {
-		return utils.LateFilingPenRef
+		return utils.LateFilingPenaltyRefType
 	} else {
 		return penaltyRefType
 	}

@@ -38,16 +38,16 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 	pen1DunningStatus := addTrailingSpacesToDunningStatus(PEN1DunningStatus)
 	dcaDunningStatus := addTrailingSpacesToDunningStatus(DCADunningStatus)
 	lfpAccountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
-		customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, pen1DunningStatus, utils.LateFilingPenRef, false)
-	lfpPenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.LateFilingPenRef)
-	sanctionsPenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.SanctionsPenRef)
-	sanctionsRoePenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.SanctionsRoePenRef)
+		customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, pen1DunningStatus, utils.LateFilingPenaltyRefType, false)
+	lfpPenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.LateFilingPenaltyRefType)
+	sanctionsPenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.SanctionsPenaltyRefType)
+	sanctionsRoePenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.SanctionsRoePenaltyRefType)
 
 	Convey("error when first etag generator fails", t, func() {
 		etagGenerator = func() (string, error) {
 			return "", errors.New("error generating etag")
 		}
-		penaltyRefType := utils.LateFilingPenRef
+		penaltyRefType := utils.LateFilingPenaltyRefType
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
 			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
@@ -65,7 +65,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			}
 			return etag, nil
 		}
-		penaltyRefType := utils.LateFilingPenRef
+		penaltyRefType := utils.LateFilingPenaltyRefType
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
 			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
@@ -78,7 +78,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
-		penaltyRefType := utils.LateFilingPenRef
+		penaltyRefType := utils.LateFilingPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, pen1DunningStatus, penaltyRefType, true)
 
@@ -112,7 +112,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
-		penaltyRefType := utils.LateFilingPenRef
+		penaltyRefType := utils.LateFilingPenaltyRefType
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
 			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
@@ -144,7 +144,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
-		penaltyRefType := utils.LateFilingPenRef
+		penaltyRefType := utils.LateFilingPenaltyRefType
 		otherAccountPenalties := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.LateFilingPenaltyCompanyCode, otherTransactionSubType, pen1DunningStatus, penaltyRefType, false)
 
@@ -179,7 +179,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
-		penaltyRefType := utils.LateFilingPenRef
+		penaltyRefType := utils.LateFilingPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, dcaDunningStatus, penaltyRefType, false)
 
@@ -212,7 +212,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
-		penaltyRefType := utils.SanctionsPenRef
+		penaltyRefType := utils.SanctionsPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.SanctionsCompanyCode, SanctionsTransactionSubType, pen1DunningStatus, penaltyRefType, false)
 
@@ -246,7 +246,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
-		penaltyRefType := utils.SanctionsRoePenRef
+		penaltyRefType := utils.SanctionsRoePenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, pen1DunningStatus, penaltyRefType, false)
 
@@ -280,7 +280,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
-		penaltyRefType := utils.SanctionsPenRef
+		penaltyRefType := utils.SanctionsPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.SanctionsCompanyCode, SanctionsTransactionSubType, dcaDunningStatus, penaltyRefType, false)
 
@@ -314,7 +314,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		etagGenerator = func() (string, error) {
 			return etag, nil
 		}
-		penaltyRefType := utils.SanctionsRoePenRef
+		penaltyRefType := utils.SanctionsRoePenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, dcaDunningStatus, penaltyRefType, false)
 
@@ -1272,14 +1272,14 @@ func buildTestUnpaidAccountPenaltiesDao(customerCode, companyCode, transactionSu
 		DunningStatus:      dunningStatus,
 	}
 	switch penaltyRefType {
-	case utils.SanctionsPenRef:
+	case utils.SanctionsPenaltyRefType:
 		{
 			params.TransactionReference = "P1234567"
 			params.TransactionType = SanctionsTransactionType
 			params.LedgerCode = "E1"
 			params.TypeDescription = "CS01                                    "
 		}
-	case utils.LateFilingPenRef:
+	case utils.LateFilingPenaltyRefType:
 		{
 			params.TransactionReference = "A1234567"
 			params.TransactionType = "1"
@@ -1316,7 +1316,7 @@ func buildTestPenaltyDetailsMap(penaltyRefType string) *config.PenaltyDetailsMap
 		Details: map[string]config.PenaltyDetails{},
 	}
 	switch penaltyRefType {
-	case utils.LateFilingPenRef:
+	case utils.LateFilingPenaltyRefType:
 		penaltyDetailsMap.Details[penaltyRefType] = config.PenaltyDetails{
 			Description:        "Late Filing Penalty",
 			DescriptionId:      "late-filing-penalty",
@@ -1326,7 +1326,7 @@ func buildTestPenaltyDetailsMap(penaltyRefType string) *config.PenaltyDetailsMap
 			EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
 			EmailMsgType:       "penalty_payment_received_email",
 		}
-	case utils.SanctionsPenRef:
+	case utils.SanctionsPenaltyRefType:
 		penaltyDetailsMap.Details[penaltyRefType] = config.PenaltyDetails{
 			Description:        "Sanctions Penalty Payment",
 			DescriptionId:      "penalty-sanctions",
@@ -1336,7 +1336,7 @@ func buildTestPenaltyDetailsMap(penaltyRefType string) *config.PenaltyDetailsMap
 			EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
 			EmailMsgType:       "penalty_payment_received_email",
 		}
-	case utils.SanctionsRoePenRef:
+	case utils.SanctionsRoePenaltyRefType:
 		penaltyDetailsMap.Details[penaltyRefType] = config.PenaltyDetails{
 			Description:        "Overseas Entity Penalty Payment",
 			DescriptionId:      "penalty-sanctions",

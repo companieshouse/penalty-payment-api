@@ -16,7 +16,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var penaltyRefType = utils.LateFilingPenRef
+var penaltyRefType = utils.LateFilingPenaltyRefType
 var customerCode = "12345678"
 var companyCode = "LP"
 var penaltyDetailsMap = &config.PenaltyDetailsMap{

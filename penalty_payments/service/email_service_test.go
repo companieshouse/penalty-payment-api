@@ -120,17 +120,17 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			{
 				name:           "Late Filing",
 				companyCode:    utils.LateFilingPenaltyCompanyCode,
-				penaltyRefType: utils.LateFilingPenRef,
+				penaltyRefType: utils.LateFilingPenaltyRefType,
 			},
 			{
 				name:           "Sanctions",
 				companyCode:    utils.SanctionsCompanyCode,
-				penaltyRefType: utils.SanctionsPenRef,
+				penaltyRefType: utils.SanctionsPenaltyRefType,
 			},
 			{
 				name:           "Sanctions ROE",
 				companyCode:    utils.SanctionsCompanyCode,
-				penaltyRefType: utils.SanctionsRoePenRef,
+				penaltyRefType: utils.SanctionsRoePenaltyRefType,
 			},
 		}
 
@@ -227,7 +227,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 
 			getConfig = mockedConfigGet
 			getCompanyName = mockedGetCompanyName
-			setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenRef)
+			setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenaltyRefType)
 
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 
@@ -253,7 +253,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 
 			getConfig = mockedConfigGet
 			getCompanyName = mockedGetCompanyName
-			setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenRef)
+			setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenaltyRefType)
 
 			mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(ctrl)
 

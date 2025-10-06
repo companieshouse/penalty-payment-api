@@ -159,7 +159,7 @@ func TestUnitPreparePaymentProcessingKafkaMessage(t *testing.T) {
 			})
 		})
 		Convey("When config is called with no transaction items", func() {
-			setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenRef)
+			setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenaltyRefType)
 
 			Convey("Then an error should be returned", func() {
 				payableResourceNoItems := models.PayableResource{

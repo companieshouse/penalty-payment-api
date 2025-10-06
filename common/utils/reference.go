@@ -57,11 +57,11 @@ func GetCustomerCodeFromVars(vars map[string]string) (string, error) {
 // GetCompanyCode gets the company code from the penalty reference type
 func GetCompanyCode(penaltyRefType string) (string, error) {
 	switch penaltyRefType {
-	case LateFilingPenRef:
+	case LateFilingPenaltyRefType:
 		return LateFilingPenaltyCompanyCode, nil
-	case SanctionsPenRef:
+	case SanctionsPenaltyRefType:
 		return SanctionsCompanyCode, nil
-	case SanctionsRoePenRef:
+	case SanctionsRoePenaltyRefType:
 		return SanctionsCompanyCode, nil
 	default:
 		return "", fmt.Errorf("invalid penalty reference type supplied")
@@ -98,11 +98,11 @@ func GetPenaltyRefTypeFromTransaction(transactions []models.TransactionItem) (st
 
 	switch penaltyPrefix {
 	case "A":
-		return LateFilingPenRef, nil
+		return LateFilingPenaltyRefType, nil
 	case "P":
-		return SanctionsPenRef, nil
+		return SanctionsPenaltyRefType, nil
 	case "U":
-		return SanctionsRoePenRef, nil
+		return SanctionsRoePenaltyRefType, nil
 	default:
 		return "", fmt.Errorf("error converting penalty reference")
 	}
@@ -125,7 +125,7 @@ func getPrefix(transactions []models.TransactionItem) (string, error) {
 const (
 	LateFilingPenaltyCompanyCode = "LP"
 	SanctionsCompanyCode         = "C1"
-	LateFilingPenRef             = "LATE_FILING"
-	SanctionsPenRef              = "SANCTIONS"
-	SanctionsRoePenRef           = "SANCTIONS_ROE"
+	LateFilingPenaltyRefType     = "LATE_FILING"
+	SanctionsPenaltyRefType      = "SANCTIONS"
+	SanctionsRoePenaltyRefType   = "SANCTIONS_ROE"
 )

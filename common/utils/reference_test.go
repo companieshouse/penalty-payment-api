@@ -98,18 +98,18 @@ func TestUnitGetCompanyCode(t *testing.T) {
 		}{
 			{
 				name:          "Late Filing",
-				input:         LateFilingPenRef,
+				input:         LateFilingPenaltyRefType,
 				expectedCode:  LateFilingPenaltyCompanyCode,
 				expectedError: false,
 			},
 			{
 				name:         "Sanctions",
-				input:        SanctionsPenRef,
+				input:        SanctionsPenaltyRefType,
 				expectedCode: SanctionsCompanyCode,
 			},
 			{
 				name:         "Sanctions ROE",
-				input:        SanctionsRoePenRef,
+				input:        SanctionsRoePenaltyRefType,
 				expectedCode: SanctionsCompanyCode,
 			},
 			{
@@ -239,7 +239,7 @@ func TestUnitGetPenaltyRefTypeFromTransaction(t *testing.T) {
 						PenaltyRef: "A1000007",
 					},
 				},
-				expectedPenaltyRefType: LateFilingPenRef,
+				expectedPenaltyRefType: LateFilingPenaltyRefType,
 			},
 			{
 				name: "Sanctions",
@@ -250,7 +250,7 @@ func TestUnitGetPenaltyRefTypeFromTransaction(t *testing.T) {
 						PenaltyRef: "P1000007",
 					},
 				},
-				expectedPenaltyRefType: SanctionsPenRef,
+				expectedPenaltyRefType: SanctionsPenaltyRefType,
 			},
 			{
 				name: "Sanctions ROE",
@@ -261,7 +261,7 @@ func TestUnitGetPenaltyRefTypeFromTransaction(t *testing.T) {
 						PenaltyRef: "U1000007",
 					},
 				},
-				expectedPenaltyRefType: SanctionsRoePenRef,
+				expectedPenaltyRefType: SanctionsRoePenaltyRefType,
 			},
 			{
 				name: "Error unknown penalty reference",
