@@ -19,7 +19,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	penaltyDetails := penaltyDetailsMap.Details[utils.LateFilingPenaltyCompanyCode]
+	penaltyDetails := penaltyDetailsMap.Details[utils.LateFilingPenRef]
 
 	Convey("Get payment details no transactions - invalid data", t, func() {
 
