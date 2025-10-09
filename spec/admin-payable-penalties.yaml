@@ -1,0 +1,243 @@
+openapi: 3.0.3
+info:
+  title: Admin Payable Penalties API
+  description: An Admin API for managing details to support payable penalties with the E5 finance system and CHS penalty payments (cost and email notification)
+  version: 0.1.0
+servers:
+  - url: https://api.companieshouse.gov.uk/
+tags:
+  - name: Admin Payable Penalties
+paths:
+  /admin/payable-penalties:
+    post:
+      tags:
+        - Admin Payable Penalties
+      summary: Add a new payable penalties configuration in MongoDB
+      operationId: post-admin-payable-penalty
+      requestBody:
+        description: Create a new admin payable penalty
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminPayablePenalty'
+        required: true
+      responses:
+        "201":
+          description: Successfully added admin payable penalty
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostAdminPayablePenaltyResponse'
+        "400":
+          description: Bad request - Invalid input
+  /admin/payable-penalties/{penalty_reference_type}:
+    get:
+      tags:
+        - Admin Payable Penalties
+      summary: Finds payable penalties configuration in MongoDB
+      operationId: get-admin-payable-penalties
+      parameters:
+        - name: penalty_reference_type
+          in: path
+          description: Penalty reference type e.g. LATE_FILING
+          required: false
+          schema:
+            type: string
+        - name: penalty_reference_enabled
+          in: query
+          description: Penalty reference enabled
+          required: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: A list of admin payable penalties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminPayablePenalty'
+        "400":
+          description: Bad request - Invalid input
+        "404":
+          description: Penalty reference type not found
+    put:
+      tags:
+        - Admin Payable Penalties
+      summary: Update an existing payable penalties configuration in MongoDB
+      operationId: put-admin-payable-penalty
+      parameters:
+        - name: penalty_reference_type
+          in: path
+          description: Penalty reference type
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Updates an existing admin payable penalty
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminPayablePenalty'
+        required: true
+      responses:
+        "204":
+          description: Successfully updated admin payable penalty
+        "400":
+          description: Bad request - Invalid input
+        "404":
+          description: Penalty reference type not found
+    delete:
+      tags:
+        - Admin Payable Penalties
+      summary: Delete an existing payable penalties configuration in MongoDB
+      operationId: delete-admin-payable-penalty
+      parameters:
+        - name: penalty_reference_type
+          in: path
+          description: Penalty reference type
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Successfully deleted admin payable penalty
+        "400":
+          description: Bad request - Invalid input
+        "404":
+          description: Penalty reference type not found
+components:
+  schemas:
+    AdminPayablePenalty:
+      required:
+        - email_send
+        - finance_payment
+        - payment_cost
+        - penalty
+      type: object
+      properties:
+        email_send:
+          $ref: "#/components/schemas/EmailSendConfig"
+        finance_payment:
+          $ref: "#/components/schemas/FinancePaymentConfig"
+        payment_cost:
+          $ref: "#/components/schemas/PaymentCostConfig"
+        penalty:
+          $ref: "#/components/schemas/PenaltyConfig"
+    EmailSendConfig:
+      required:
+        - app_id
+        - message_type
+      type: object
+      properties:
+        app_id:
+          type: string
+          enum:
+            - penalty-payment-api.penalty_payment_received_email
+            - penalty-payment-api.sanctions_roe_penalty_payment_received_email
+          example: penalty-payment-api.penalty_payment_received_email
+        message_type:
+          type: string
+          enum:
+            - penalty_payment_received_email
+            - sanctions_roe_penalty_payment_received_email
+          example: penalty_payment_received_email
+    FinancePaymentConfig:
+      required:
+        - account_statuses
+        - company_code
+        - dunning_statuses
+        - ledger_codes
+        - transaction_sub_types
+        - transaction_type
+      type: object
+      properties:
+        account_statuses:
+          type: array
+          items:
+            type: string
+            example: CHS
+        company_code:
+          type: string
+          example: LP
+        dunning_statuses:
+          type: array
+          items:
+            type: string
+            example: 'PEN1        '
+        ledger_codes:
+          type: array
+          items:
+            type: string
+            example: EW
+        transaction_sub_types:
+          type: array
+          items:
+            type: string
+            example: C1
+        transaction_type:
+          type: string
+          example: 1
+    PaymentCostConfig:
+      required:
+        - class_of_payment
+        - description
+        - description_id
+        - product_type
+        - resource_kind
+      type: object
+      properties:
+        class_of_payment:
+          type: string
+          enum:
+            - penalty-lfp
+            - penalty-sanctions
+          example: penalty-lfp
+        description:
+          type: string
+          example: Late Filing Penalty
+        description_id:
+          type: string
+          example: late-filing-penalty
+        product_type:
+          type: string
+          example: late-filing-penalty
+        resource_kind:
+          type: string
+          example: late-filing-penalty#late-filing-penalty
+    PenaltyConfig:
+      required:
+        - enabled_from
+        - reason
+        - reference_regex
+        - reference_starts_with
+        - reference_type
+      type: object
+      properties:
+        enabled_from:
+          type: string
+          format: date-time
+          example: 2025-10-08T08:00:00Z
+        enabled_to:
+          type: string
+          format: date-time
+          example: 2025-10-08T08:00:00Z
+        reason:
+          type: string
+          example: Late filing of accounts
+        reference_regex:
+          type: string
+          example: "^[Aa]\\d{7}$"
+        reference_starts_with:
+          type: string
+          example: A
+        reference_type:
+          type: string
+          example: LATE_FILING
+    PostAdminPayablePenaltyResponse:
+      type: object
+      properties:
+        penalty_reference_type:
+          type: string
+          example: LATE_FILING
