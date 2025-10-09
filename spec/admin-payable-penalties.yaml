@@ -208,19 +208,24 @@ components:
           example: late-filing-penalty#late-filing-penalty
     PenaltyConfig:
       required:
+        - enabled_from
         - reason
-        - reference_enabled_at
         - reference_regex
         - reference_starts_with
         - reference_type
       type: object
       properties:
+        enabled_from:
+          type: string
+          format: date-time
+          example: 2025-10-08T08:00:00Z
+        enabled_to:
+          type: string
+          format: date-time
+          example: 2025-10-08T08:00:00Z
         reason:
           type: string
           example: Late filing of accounts
-        reference_enabled_at:
-          type: string
-          example: 2025-10-08T08:00:00Z
         reference_regex:
           type: string
           example: "^[Aa]\\d{7}$"
