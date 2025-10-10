@@ -57,7 +57,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			return
 		}
 
-		err = utils.GetValidator(request)
+		err = utils.GetValidator().Validate(request)
 
 		if err != nil {
 			log.ErrorC(requestId, err)
