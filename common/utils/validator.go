@@ -4,7 +4,13 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
-func GetValidator(request interface{}) error {
-	v := validator.New()
-	return v.Struct(request)
+type Validator struct {
+}
+
+func GetValidator() *Validator {
+	return &Validator{}
+}
+
+func (v *Validator) Validate(request interface{}) error {
+	return validator.New().Struct(request)
 }
