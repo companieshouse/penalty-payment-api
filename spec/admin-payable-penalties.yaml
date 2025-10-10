@@ -15,31 +15,22 @@ paths:
       summary: Add a new payable penalties configuration in MongoDB
       operationId: post-admin-payable-penalty
       requestBody:
-        description: Create a new admin payable penalty
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminPayablePenalty'
-        required: true
+        $ref: '#/components/requestBodies/AdminPayablePenaltyPostRequest'
       responses:
-        "201":
-          description: Successfully added admin payable penalty
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostAdminPayablePenaltyResponse'
-        "400":
+        '201':
+          $ref: '#/components/responses/AdminPayablePenaltySuccessResponse'
+        '400':
           description: Bad request - Invalid input
-  /admin/payable-penalties/{penalty_reference_type}:
+  /admin/payable-penalties/{id}:
     get:
       tags:
         - Admin Payable Penalties
       summary: Finds payable penalties configuration in MongoDB
       operationId: get-admin-payable-penalties
       parameters:
-        - name: penalty_reference_type
+        - name: id
           in: path
-          description: Penalty reference type e.g. LATE_FILING
+          description: Admin payable penalty id
           required: false
           schema:
             type: string
@@ -50,64 +41,83 @@ paths:
           schema:
             type: boolean
       responses:
-        "200":
-          description: A list of admin payable penalties
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AdminPayablePenalty'
-        "400":
+        '200':
+          $ref: '#/components/responses/AdminPayablePenaltiesSuccessResponse'
+        '400':
           description: Bad request - Invalid input
-        "404":
-          description: Penalty reference type not found
+        '404':
+          description: Admin payable penalty not found
     put:
       tags:
         - Admin Payable Penalties
       summary: Update an existing payable penalties configuration in MongoDB
       operationId: put-admin-payable-penalty
       parameters:
-        - name: penalty_reference_type
+        - name: id
           in: path
-          description: Penalty reference type
+          description: Admin payable penalty id
           required: true
           schema:
             type: string
       requestBody:
-        description: Updates an existing admin payable penalty
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminPayablePenalty'
-        required: true
+        $ref: '#/components/requestBodies/AdminPayablePenaltyPutRequest'
       responses:
-        "204":
-          description: Successfully updated admin payable penalty
-        "400":
+        '200':
+          $ref: '#/components/responses/AdminPayablePenaltySuccessResponse'
+        '400':
           description: Bad request - Invalid input
-        "404":
-          description: Penalty reference type not found
+        '404':
+          description: Admin payable penalty not found
     delete:
       tags:
         - Admin Payable Penalties
       summary: Delete an existing payable penalties configuration in MongoDB
       operationId: delete-admin-payable-penalty
       parameters:
-        - name: penalty_reference_type
+        - name: id
           in: path
-          description: Penalty reference type
+          description: Admin payable penalty id
           required: true
           schema:
             type: string
       responses:
-        "204":
+        '204':
           description: Successfully deleted admin payable penalty
-        "400":
+        '400':
           description: Bad request - Invalid input
-        "404":
-          description: Penalty reference type not found
+        '404':
+          description: Admin payable penalty not found
 components:
+  requestBodies:
+    AdminPayablePenaltyPostRequest:
+      description: Create a new admin payable penalty
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminPayablePenalty'
+      required: true
+    AdminPayablePenaltyPutRequest:
+      description: Updates an existing admin payable penalty
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminPayablePenalty'
+      required: true
+  responses:
+    AdminPayablePenaltySuccessResponse:
+      description: Successfully saved admin payable penalty
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminPayablePenaltyWithIdAndMetadata'
+    AdminPayablePenaltiesSuccessResponse:
+      description: A list of admin payable penalties
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/AdminPayablePenaltyWithIdAndMetadata'
   schemas:
     AdminPayablePenalty:
       required:
@@ -125,6 +135,26 @@ components:
           $ref: "#/components/schemas/PaymentCostConfig"
         penalty:
           $ref: "#/components/schemas/PenaltyConfig"
+    AdminPayablePenaltyWithIdAndMetadata:
+      type: object
+      properties:
+        id:
+          type: string
+          example: LATE_FILING
+        created_at:
+          type: string
+          format: date-time
+          example: 2025-10-06T08:00:00.000Z
+        created_by:
+          $ref: "#/components/schemas/UserDetails"
+        updated_at:
+          type: string
+          format: date-time
+          example: 2025-10-10T11:50:00.000Z
+        updated_by:
+          $ref: "#/components/schemas/UserDetails"
+      allOf:
+        - $ref: '#/components/schemas/AdminPayablePenalty'
     EmailSendConfig:
       required:
         - app_id
@@ -222,7 +252,7 @@ components:
         enabled_to:
           type: string
           format: date-time
-          example: 2025-10-08T08:00:00Z
+          example: 2030-01-01T00:00:00Z
         reason:
           type: string
           example: Late filing of accounts
@@ -235,9 +265,9 @@ components:
         reference_type:
           type: string
           example: LATE_FILING
-    PostAdminPayablePenaltyResponse:
+    UserDetails:
       type: object
       properties:
-        penalty_reference_type:
+        email:
           type: string
-          example: LATE_FILING
+          example: someone@example.co.uk
