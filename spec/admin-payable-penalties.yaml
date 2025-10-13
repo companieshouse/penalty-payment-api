@@ -21,19 +21,12 @@ paths:
           $ref: '#/components/responses/AdminPayablePenaltySuccessResponse'
         '400':
           description: Bad request - Invalid input
-  /admin/payable-penalties/{id}:
     get:
       tags:
         - Admin Payable Penalties
       summary: Finds payable penalties configuration in MongoDB
-      operationId: get-admin-payable-penalties
+      operationId: get-admin-payable-penalties-list
       parameters:
-        - name: id
-          in: path
-          description: Admin payable penalty id
-          required: false
-          schema:
-            type: string
         - name: penalty_reference_enabled
           in: query
           description: Penalty reference enabled
@@ -42,7 +35,25 @@ paths:
             type: boolean
       responses:
         '200':
-          $ref: '#/components/responses/AdminPayablePenaltiesSuccessResponse'
+          $ref: '#/components/responses/AdminPayablePenaltiesSuccessListResponse'
+        '400':
+          description: Bad request - Invalid input
+  /admin/payable-penalties/{id}:
+    get:
+      tags:
+        - Admin Payable Penalties
+      summary: Finds an existing payable penalties configuration in MongoDB
+      operationId: get-admin-payable-penalties
+      parameters:
+        - name: id
+          in: path
+          description: Admin payable penalty id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/AdminPayablePenaltySuccessResponse'
         '400':
           description: Bad request - Invalid input
         '404':
@@ -110,7 +121,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AdminPayablePenaltyWithIdAndMetadata'
-    AdminPayablePenaltiesSuccessResponse:
+    AdminPayablePenaltiesSuccessListResponse:
       description: A list of admin payable penalties
       content:
         application/json:
