@@ -1,4 +1,5 @@
 CHS_ENV_HOME ?= $(HOME)/.chs_env
+GOPATH ?= $(OLDPWD)
 TESTS        ?= ./...
 COVERAGE_OUT = coverage.out
 
@@ -6,6 +7,7 @@ bin          := penalty-payment-api
 version      ?= unversioned
 xunit_output := test.xml
 lint_output  := lint.txt
+govulncheck   := golang.org/x/vuln/cmd/govulncheck@latest
 
 .EXPORT_ALL_VARIABLES:
 GO111MODULE = on
@@ -22,7 +24,7 @@ fmt:
 	go fmt ./...
 
 .PHONY: build
-build: arch fmt
+build: arch fmt depvulncheck
 ifeq ($(shell uname; uname -p), Darwin arm)
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-linux-musl-gcc CXX=x86_64-linux-musl-g++ go build --ldflags '-linkmode external -extldflags "-static"' -o ecs-image-build/app/$(bin)
 	cp -R ./assets ecs-image-build/app
@@ -96,21 +98,10 @@ lint:
 	gometalinter --install
 	gometalinter ./... > $(lint_output); true
 
-.PHONY: security-check
-security-check dependency-check:
-	@go get golang.org/x/vuln/cmd/govulncheck
-	@go get github.com/sonatype-nexus-community/nancy@latest
-	@go list -json -deps ./... | nancy sleuth -o json | jq
-	@go build -o ${GOBIN} golang.org/x/vuln/cmd/govulncheck
-	@govulncheck ./...
-
-.PHONY: security-check-summary
-security-check-summary:
-	@go get golang.org/x/vuln/cmd/govulncheck
-	@go get github.com/sonatype-nexus-community/nancy@latest
-	@LOW=0 MED=0 HIGH=0 CRIT=0 res=`go list -json -deps ./... | nancy sleuth -o json | jq -c '.vulnerable[].Vulnerabilities[].CvssScore'`; for score in $$res; do if [ $${score:1:1} -ge 9 ]; then CRIT=$$(($$CRIT+1)); elif [ $${score:1:1} -ge 7 ]; then HIGH=$$(($$HIGH+1)); elif [ $${score:1:1} -ge 4 ]; then MED=$$(($$MED+1)); else LOW=$$(($$LOW+1)); fi; done; echo -e "CRITICAL=$$CRIT\nHigh=$$HIGH\nMedium=$$MED\nLow=$$LOW";
-	@go build -o ${GOBIN} golang.org/x/vuln/cmd/govulncheck
-	@OTHER=`govulncheck ./... | grep "More info:" | wc -l | tr -d ' '`; echo -e "\nOther=$$OTHER"
+.PHONY: depvulncheck
+depvulncheck:
+	go install $(govulncheck)
+	CGO_ENABLED=1 $(GOPATH)/bin/govulncheck -show verbose ./...
 
 .PHONY: docker-image
 docker-image: dist
