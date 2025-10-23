@@ -3,16 +3,19 @@
 An API for retrieving penalties from the E5 finance system and recording / viewing penalty payments
 
 ## Requirements
+
 In order to run this API locally you will need to install the following:
 
 - [Go](https://golang.org/doc/install)
 - [Git](https://git-scm.com/downloads)
 
 ## Getting Started
+
 1. Clone this repository: `go get github.com/companieshouse/penalty-payment-api`
 2. Build the executable: `make build`
 
 ## Configuration
+
 | Variable                                      | Default | Description                                                                  | Config Location                                                          |
 |:----------------------------------------------|:-------:|:-----------------------------------------------------------------------------|--------------------------------------------------------------------------|
 | `API_KEY`                                     |   `-`   | API Key to call payments API                                                 | Terraform Vault - To update, please create platform request              |
