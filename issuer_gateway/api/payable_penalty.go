@@ -17,7 +17,6 @@ func PayablePenalty(params types.PayablePenaltyParams) (*models.TransactionItem,
 	transaction := params.Transaction
 	penaltyDetailsMap := params.PenaltyDetailsMap
 	apDaoSvc := params.AccountPenaltiesDaoService
-	allowedTransactionsMap := params.AllowedTransactionsMap
 	requestId := params.RequestId
 
 	accountPenaltiesParams := types.AccountPenaltiesParams{
@@ -25,7 +24,6 @@ func PayablePenalty(params types.PayablePenaltyParams) (*models.TransactionItem,
 		CustomerCode:               customerCode,
 		CompanyCode:                companyCode,
 		PenaltyDetailsMap:          penaltyDetailsMap,
-		AllowedTransactionsMap:     allowedTransactionsMap,
 		AccountPenaltiesDaoService: apDaoSvc,
 		RequestId:                  requestId,
 	}

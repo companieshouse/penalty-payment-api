@@ -30,13 +30,12 @@ func AccountPenalties(params types.AccountPenaltiesParams) (*models.TransactionL
 	companyCode := params.CompanyCode
 	penaltyDetailsMap := params.PenaltyDetailsMap
 	apDaoSvc := params.AccountPenaltiesDaoService
-	allowedTransactionsMap := params.AllowedTransactionsMap
 	requestId := params.RequestId
 
 	cfg, err := getConfig()
 	if err != nil {
 		log.ErrorC(requestId, fmt.Errorf("error getting config: %v", err))
-		return nil, services.Error, nil
+		return nil, services.Error, err
 	}
 
 	companyInfoLogData := log.Data{"customer_code": customerCode, "company_code": companyCode}
@@ -58,7 +57,7 @@ func AccountPenalties(params types.AccountPenaltiesParams) (*models.TransactionL
 	// Generate the CH preferred format of the results i.e. classify the transactions into
 	// payable "penalty" types or non-payable "other" types
 	generatedTransactionListFromAccountPenalties, err :=
-		generateTransactionList(accountPenalties, penaltyRefType, penaltyDetailsMap, allowedTransactionsMap, cfg, requestId)
+		generateTransactionList(accountPenalties, penaltyRefType, penaltyDetailsMap, cfg, requestId)
 	if err != nil {
 		err = fmt.Errorf("error generating transaction list from account penalties: [%v]", err)
 		log.ErrorC(requestId, err)

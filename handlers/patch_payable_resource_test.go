@@ -44,16 +44,6 @@ var e5ValidationError = `
 }
 `
 var penaltyDetailsMap = &config.PenaltyDetailsMap{}
-var allowedTransactionsMap = &models.AllowedTransactionMap{
-	Types: map[string]map[string]bool{
-		"1": {
-			"EJ": true,
-			"EU": true,
-			"S1": true,
-			"A2": true,
-		},
-	},
-}
 
 // reduces the boilerplate code needed to create, dispatch and unmarshal response body
 func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *models.PatchResourceRequest,
@@ -77,7 +67,7 @@ func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *mode
 	ctx = context.WithValue(ctx, httpsession.ContextKeySession, &session.Session{})
 
 	h := PayResourceHandler(payableResourceService, e5.NewClient("foo", "e5api"),
-		penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+		penaltyDetailsMap, apDaoSvc)
 	req := httptest.NewRequest(http.MethodPost, "/", body).WithContext(ctx)
 	res := httptest.NewRecorder()
 
@@ -98,13 +88,13 @@ func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *mode
 
 // Mock function for erroring when preparing and sending kafka message
 func mockSendEmailKafkaMessageError(_ models.PayableResource, _ *http.Request,
-	_ *config.PenaltyDetailsMap, _ *models.AllowedTransactionMap, _ dao.AccountPenaltiesDaoService) error {
+	_ *config.PenaltyDetailsMap, _ dao.AccountPenaltiesDaoService) error {
 	return errors.New("error")
 }
 
 // Mock function for successful preparing and sending of kafka message
 func mockSendEmailKafkaMessage(_ models.PayableResource, _ *http.Request,
-	_ *config.PenaltyDetailsMap, _ *models.AllowedTransactionMap, _ dao.AccountPenaltiesDaoService) error {
+	_ *config.PenaltyDetailsMap, _ dao.AccountPenaltiesDaoService) error {
 	return nil
 }
 
@@ -190,7 +180,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			ctx = context.WithValue(ctx, httpsession.ContextKeySession, &session.Session{})
 
 			h := PayResourceHandler(payableResourceService, e5.NewClient("foo", "e5api"),
-				penaltyDetailsMap, allowedTransactionsMap, nil)
+				penaltyDetailsMap, nil)
 			req := httptest.NewRequest(http.MethodPost, "/", nil).WithContext(ctx)
 			res := httptest.NewRecorder()
 

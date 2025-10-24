@@ -19,8 +19,7 @@ import (
 var accountPenalties = api.AccountPenalties
 
 // HandleGetPenalties retrieves the penalty details for the supplied customer code from e5
-func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
+func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestId := req.Header.Get("X-Request-ID")
 		log.InfoC(requestId, "start GET penalties request")
@@ -47,7 +46,6 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 			CustomerCode:               customerCode,
 			CompanyCode:                companyCode,
 			PenaltyDetailsMap:          penaltyDetailsMap,
-			AllowedTransactionsMap:     allowedTransactionsMap,
 			AccountPenaltiesDaoService: apDaoSvc,
 			RequestId:                  requestId,
 		}

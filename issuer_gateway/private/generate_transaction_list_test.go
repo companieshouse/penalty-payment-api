@@ -15,16 +15,6 @@ import (
 
 var now = time.Now().Truncate(time.Millisecond)
 var yesterday = time.Now().AddDate(0, 0, -1).Truncate(time.Millisecond)
-var allowedTransactionMap = &models.AllowedTransactionMap{
-	Types: map[string]map[string]bool{
-		"1": {
-			"EJ": true,
-			"EU": true,
-			"S1": true,
-			"A2": true,
-		},
-	},
-}
 
 var cfg = config.Config{}
 var SanctionsMultipleTransactionSubType = "S1,A2"
@@ -34,6 +24,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 	customerCode := "12345678"
 	overSeasEntityId := "OE123456"
 	otherTransactionSubType := "Other"
+	penaltyTransactionType := "1"
 	euTransactionSubType := "EU"
 	pen1DunningStatus := addTrailingSpacesToDunningStatus(PEN1DunningStatus)
 	dcaDunningStatus := addTrailingSpacesToDunningStatus(DCADunningStatus)
@@ -42,6 +33,9 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 	lfpPenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.LateFilingPenaltyRefType)
 	sanctionsPenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.SanctionsPenaltyRefType)
 	sanctionsRoePenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.SanctionsRoePenaltyRefType)
+	transactionAllowed = func(transactionType string, transactionSubtype string) bool {
+		return (transactionType == penaltyTransactionType) && (transactionSubtype != otherTransactionSubType)
+	}
 
 	Convey("error when first etag generator fails", t, func() {
 		etagGenerator = func() (string, error) {
@@ -50,7 +44,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, &cfg, "")
 
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
@@ -68,7 +62,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, &cfg, "")
 
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
@@ -83,7 +77,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, pen1DunningStatus, penaltyRefType, true)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, &cfg, "")
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -115,7 +109,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, &cfg, "")
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -149,7 +143,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			customerCode, utils.LateFilingPenaltyCompanyCode, otherTransactionSubType, pen1DunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			otherAccountPenalties, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			otherAccountPenalties, penaltyRefType, lfpPenaltyDetailsMap, &cfg, "")
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -184,7 +178,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, dcaDunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, &cfg, "")
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -217,7 +211,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			customerCode, utils.SanctionsCompanyCode, SanctionsTransactionSubType, pen1DunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, &cfg, "")
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -251,7 +245,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, pen1DunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, &cfg, "")
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -285,7 +279,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			customerCode, utils.SanctionsCompanyCode, SanctionsTransactionSubType, dcaDunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, &cfg, "")
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -319,7 +313,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, dcaDunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, &cfg, "")
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -520,7 +514,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
-				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -600,7 +594,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
-				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -674,7 +668,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
-				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -755,7 +749,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
-				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -829,7 +823,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
-				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -928,7 +922,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
-				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -963,7 +957,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				closedAt := &now
-				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := getPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, &cfg)
 
 				So(got, ShouldEqual, ClosedPendingAllocationPayableStatus)
 			})
@@ -979,8 +973,8 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		closedAt := time.Now()
 		e5Transactions := []models.AccountPenaltiesDataDao{*oldPaidPenalty, *newPaidPenalty}
 
-		So(getPayableStatus(types.Penalty.String(), oldPaidPenalty, &closedAt, e5Transactions, allowedTransactionMap, &cfg), ShouldEqual, ClosedPayableStatus)
-		So(getPayableStatus(types.Penalty.String(), newPaidPenalty, &closedAt, e5Transactions, allowedTransactionMap, &cfg), ShouldEqual, ClosedPendingAllocationPayableStatus)
+		So(getPayableStatus(types.Penalty.String(), oldPaidPenalty, &closedAt, e5Transactions, &cfg), ShouldEqual, ClosedPayableStatus)
+		So(getPayableStatus(types.Penalty.String(), newPaidPenalty, &closedAt, e5Transactions, &cfg), ShouldEqual, ClosedPendingAllocationPayableStatus)
 
 	})
 
@@ -1052,7 +1046,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
-				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -1127,7 +1121,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
-				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -1160,7 +1154,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
-				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := getPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})

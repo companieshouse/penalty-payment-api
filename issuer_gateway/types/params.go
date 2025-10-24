@@ -11,7 +11,6 @@ type AccountPenaltiesParams struct {
 	CustomerCode               string
 	CompanyCode                string
 	PenaltyDetailsMap          *config.PenaltyDetailsMap
-	AllowedTransactionsMap     *models.AllowedTransactionMap
 	AccountPenaltiesDaoService dao.AccountPenaltiesDaoService
 	RequestId                  string
 }
@@ -22,7 +21,6 @@ type PayablePenaltyParams struct {
 	CompanyCode                string
 	Transaction                models.TransactionItem
 	PenaltyDetailsMap          *config.PenaltyDetailsMap
-	AllowedTransactionsMap     *models.AllowedTransactionMap
 	AccountPenaltiesDaoService dao.AccountPenaltiesDaoService
 	RequestId                  string
 }

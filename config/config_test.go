@@ -23,9 +23,7 @@ const (
 	AccountPenaltiesCollection             = `PPS_MONGODB_ACCOUNT_PENALTIES_COLLECTION`
 	AccountPenaltiesTTL                    = `PPS_ACCOUNT_PENALTIES_TTL`
 	BrokerAddr                             = `KAFKA_BROKER_ADDR`
-	ZookeeperURL                           = `KAFKA_ZOOKEEPER_ADDR`
 	Kafka3BrokerAddr                       = `KAFKA3_BROKER_ADDR`
-	Kafka3ZookeeperURL                     = `KAFKA3_ZOOKEEPER_ADDR`
 	SchemaRegistryURL                      = `SCHEMA_REGISTRY_URL`
 	EmailSendTopic                         = `EMAIL_SEND_TOPIC`
 	PenaltyPaymentsProcessingTopic         = `PENALTY_PAYMENTS_PROCESSING_TOPIC`
@@ -230,67 +228,6 @@ details:
 				So(err, ShouldBeNil)
 				So(penaltyDetailsMap.Name, ShouldEqual, "penalty details")
 				So(penaltyDetailsMap.Details[utils.LateFilingPenaltyRefType].EmailReceivedAppId, ShouldEqual, "penalty-payment-api.penalty_payment_received_email")
-			})
-		})
-	})
-}
-
-func TestUnitGetAllowedTransactions(t *testing.T) {
-	Convey("Given the main method tries to load the penalty types yaml file", t, func() {
-		Convey("When the file does not exist", func() {
-			_, err := GetAllowedTransactions("pen_types.yml")
-			Convey("Then an error should be returned", func() {
-				So(err.Error(), ShouldEqual, "open pen_types.yml: no such file or directory")
-			})
-		})
-		Convey("When the yaml file is in an incorrect format", func() {
-			testYaml := []byte(`
-	name: penalty types
-	` + "invalid_yaml")
-			tmpFile, err := os.CreateTemp("", "config_*.yaml")
-			if err != nil {
-				t.Fatalf("Failed to create tmp file: %v", err)
-			}
-			defer os.Remove(tmpFile.Name())
-
-			if _, err := tmpFile.Write(testYaml); err != nil {
-				t.Fatalf("Failed to write tmp file: %v", err)
-			}
-
-			_, err = LoadPenaltyDetails(tmpFile.Name())
-
-			Convey("Then an error should be returned", func() {
-				So(err.Error(), ShouldEqual, "yaml: line 2: found character that cannot start any token")
-			})
-
-		})
-		Convey("When the yaml file exists and is in the correct format", func() {
-			testYaml := []byte(`
-description: transaction types and subtypes of allowed penalties
-allowed_transactions:
- 1:
-   C1:
-     true
-`)
-			tmpFile, err := os.CreateTemp("", "config_*.yaml")
-			if err != nil {
-				t.Fatalf("Failed to create tmp file: %v", err)
-			}
-			defer os.Remove(tmpFile.Name())
-
-			if _, err := tmpFile.Write(testYaml); err != nil {
-				t.Fatalf("Failed to write tmp file: %v", err)
-			}
-
-			allowedTransactionsMap, err := GetAllowedTransactions(tmpFile.Name())
-			if err != nil {
-				t.Fatalf("Expected no error but got: %v", err)
-			}
-
-			Convey("Then the allowed transactions should be returned", func() {
-				So(err, ShouldBeNil)
-				So(allowedTransactionsMap.Description, ShouldEqual, "transaction types and subtypes of allowed penalties")
-				So(allowedTransactionsMap.Types["1"]["C1"], ShouldEqual, true)
 			})
 		})
 	})

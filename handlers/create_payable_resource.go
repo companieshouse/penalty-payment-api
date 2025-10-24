@@ -22,7 +22,7 @@ var payablePenalty = api.PayablePenalty
 
 // CreatePayableResourceHandler takes a http requests and creates a new payable resource
 func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
-	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
+	penaltyDetailsMap *config.PenaltyDetailsMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestId := r.Header.Get("X-Request-ID")
 		log.InfoC(requestId, "start POST payable resource request")
@@ -49,13 +49,12 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 
 		// Create validation context
 		validationCtx := validationContext{
-			PenaltyRefType:         penaltyRefType,
-			CustomerCode:           customerCode,
-			CompanyCode:            companyCode,
-			RequestID:              requestId,
-			AccountPenaltiesDao:    apDaoSvc,
-			PenaltyDetailsMap:      penaltyDetailsMap,
-			AllowedTransactionsMap: allowedTransactionMap,
+			PenaltyRefType:      penaltyRefType,
+			CustomerCode:        customerCode,
+			CompanyCode:         companyCode,
+			RequestID:           requestId,
+			AccountPenaltiesDao: apDaoSvc,
+			PenaltyDetailsMap:   penaltyDetailsMap,
 		}
 
 		payablePenalties, err := validateTransactions(request.Transactions, validationCtx)
@@ -133,13 +132,12 @@ func extractRequestData(w http.ResponseWriter, r *http.Request, request models.P
 
 // validationContext holds related config and context needed for transaction validation
 type validationContext struct {
-	PenaltyRefType         string
-	CustomerCode           string
-	CompanyCode            string
-	RequestID              string
-	AccountPenaltiesDao    dao.AccountPenaltiesDaoService
-	PenaltyDetailsMap      *config.PenaltyDetailsMap
-	AllowedTransactionsMap *models.AllowedTransactionMap
+	PenaltyRefType      string
+	CustomerCode        string
+	CompanyCode         string
+	RequestID           string
+	AccountPenaltiesDao dao.AccountPenaltiesDaoService
+	PenaltyDetailsMap   *config.PenaltyDetailsMap
 }
 
 // validateTransactions ensures the transactions are valid payable penalties that exist in E5
@@ -152,7 +150,6 @@ func validateTransactions(transactions []models.TransactionItem, validationCtx v
 			CompanyCode:                validationCtx.CompanyCode,
 			PenaltyDetailsMap:          validationCtx.PenaltyDetailsMap,
 			Transaction:                transaction,
-			AllowedTransactionsMap:     validationCtx.AllowedTransactionsMap,
 			AccountPenaltiesDaoService: validationCtx.AccountPenaltiesDao,
 			RequestId:                  validationCtx.RequestID,
 		}

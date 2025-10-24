@@ -13,9 +13,10 @@ import (
 )
 
 var etagGenerator = utils.GenerateEtag
+var transactionAllowed = config.TransactionAllowed
 
 func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao, penaltyRefType string, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string) (*models.TransactionListResponse, error) {
+	cfg *config.Config, requestId string) (*models.TransactionListResponse, error) {
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := etagGenerator()
 	if err != nil {
@@ -29,8 +30,8 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 
 	// Loop through penalties and construct CH resources
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
-		transactionType := getTransactionType(&accountPenalty, allowedTransactionsMap)
-		payableStatus := getPayableStatus(transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, allowedTransactionsMap, cfg)
+		transactionType := getTransactionType(&accountPenalty)
+		payableStatus := getPayableStatus(transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, cfg)
 		transactionListItem, err := buildTransactionListItemFromAccountPenalty(&accountPenalty, penaltyDetailsMap, penaltyRefType, transactionType, payableStatus, requestId)
 		if err != nil {
 			return nil, err
@@ -69,11 +70,11 @@ func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesData
 	return transactionListItem, nil
 }
 
-func getTransactionType(e5Transaction *models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap) string {
+func getTransactionType(e5Transaction *models.AccountPenaltiesDataDao) string {
 	// Each penalty needs to be checked and identified as a 'penalty' or 'other'. This allows penalty-payment-web to determine
 	// which transactions are payable. This is done using a yaml file to map payable transactions
 	// Check if the penalty is allowed and set to 'penalty' if it is
-	if _, ok := allowedTransactionsMap.Types[e5Transaction.TransactionType][e5Transaction.TransactionSubType]; ok {
+	if transactionAllowed(e5Transaction.TransactionType, e5Transaction.TransactionSubType) {
 		return types.Penalty.String()
 	} else {
 		return types.Other.String()
@@ -130,12 +131,12 @@ const (
 )
 
 func getPayableStatus(transactionType string, e5Transaction *models.AccountPenaltiesDataDao, closedAt *time.Time,
-	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config) string {
+	e5Transactions []models.AccountPenaltiesDataDao, cfg *config.Config) string {
 	if types.Penalty.String() == transactionType {
 		if penaltyTransactionSubTypeDisabled(e5Transaction, cfg) {
 			return DisabledPayableStatus
 		}
-		closedPayableStatus, isClosed := checkClosedPayableStatus(e5Transaction, closedAt, e5Transactions, allowedTransactionsMap)
+		closedPayableStatus, isClosed := checkClosedPayableStatus(e5Transaction, closedAt, e5Transactions)
 		if isClosed {
 			return closedPayableStatus
 		}
@@ -150,7 +151,7 @@ func getPayableStatus(transactionType string, e5Transaction *models.AccountPenal
 }
 
 func checkClosedPayableStatus(penalty *models.AccountPenaltiesDataDao, closedAt *time.Time,
-	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap) (payableStatus string, isClosed bool) {
+	e5Transactions []models.AccountPenaltiesDataDao) (payableStatus string, isClosed bool) {
 	if (penalty.IsPaid && closedAt != nil) &&
 		penaltyPaidToday(closedAt) &&
 		!penaltyPaymentAllocated(penalty) {
@@ -158,16 +159,15 @@ func checkClosedPayableStatus(penalty *models.AccountPenaltiesDataDao, closedAt 
 	}
 
 	if penalty.IsPaid || penalty.OutstandingAmount <= 0 || checkDunningStatus(penalty, DCADunningStatus) ||
-		len(getUnpaidCosts(penalty, e5Transactions, allowedTransactionsMap)) > 0 {
+		len(getUnpaidCosts(penalty, e5Transactions)) > 0 {
 		return ClosedPayableStatus, true
 	}
 	return "", false
 }
 
-func getUnpaidCosts(penalty *models.AccountPenaltiesDataDao, e5Transactions []models.AccountPenaltiesDataDao,
-	allowedTransactionsMap *models.AllowedTransactionMap) (unpaidCosts []models.AccountPenaltiesDataDao) {
+func getUnpaidCosts(penalty *models.AccountPenaltiesDataDao, e5Transactions []models.AccountPenaltiesDataDao) (unpaidCosts []models.AccountPenaltiesDataDao) {
 	for _, e5Transaction := range e5Transactions {
-		transactionType := getTransactionType(&e5Transaction, allowedTransactionsMap)
+		transactionType := getTransactionType(&e5Transaction)
 		if (e5Transaction.TransactionReference != penalty.TransactionReference && !e5Transaction.IsPaid) &&
 			(types.Other.String() == transactionType && penalty.MadeUpDate == e5Transaction.MadeUpDate) {
 			unpaidCosts = append(unpaidCosts, e5Transaction)

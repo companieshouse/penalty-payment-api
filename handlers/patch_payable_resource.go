@@ -28,7 +28,7 @@ var (
 // PayResourceHandler will update the resource to mark it as paid and also tell the finance system that the
 // transaction(s) associated with it are paid.
 func PayResourceHandler(payableResourceService *services.PayableResourceService, e5Client e5.ClientInterface, penaltyPaymentDetails *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) http.Handler {
+	apDaoSvc dao.AccountPenaltiesDaoService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestId := r.Header.Get("X-Request-ID")
 		log.InfoC(requestId, "start PATCH payable resource request")
@@ -89,7 +89,7 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		wg.Add(3)
 
 		log.InfoC(requestId, "sending confirmation email", log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
-		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
+		go sendConfirmationEmail(resource, payment, r, w, penaltyPaymentDetails, apDaoSvc)
 		log.InfoC(requestId, "updating payable resource as paid", log.Data{"customer_code": resource.CustomerCode, "payable_ref": resource.PayableRef})
 		go updateAsPaidInDatabase(resource, payment, payableResourceService, requestId, w)
 
@@ -126,7 +126,7 @@ func paymentsProcessingEnabled(requestId string) bool {
 }
 
 func sendConfirmationEmail(resource *models.PayableResource, payment *validators.PaymentInformation, r *http.Request, w http.ResponseWriter,
-	penaltyPaymentDetails *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) {
+	penaltyPaymentDetails *config.PenaltyDetailsMap, apDaoSvc dao.AccountPenaltiesDaoService) {
 
 	logContext := log.Data{
 		"payable_ref":       resource.PayableRef,
@@ -137,7 +137,7 @@ func sendConfirmationEmail(resource *models.PayableResource, payment *validators
 
 	// Send confirmation email
 	defer wg.Done()
-	err := handleSendEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
+	err := handleSendEmailKafkaMessage(*resource, r, penaltyPaymentDetails, apDaoSvc)
 	if err != nil {
 		log.ErrorR(r, err, logContext)
 		w.WriteHeader(http.StatusInternalServerError)

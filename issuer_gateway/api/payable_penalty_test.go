@@ -57,18 +57,10 @@ func accountPenaltiesResponse(unpaidPenaltyCount int) *models.TransactionListRes
 
 func generateParams(daoService dao.AccountPenaltiesDaoService, transaction models.TransactionItem) types.PayablePenaltyParams {
 	return types.PayablePenaltyParams{
-		PenaltyRefType:    utils.LateFilingPenaltyRefType,
-		CompanyCode:       utils.LateFilingPenaltyCompanyCode,
-		CustomerCode:      "10000024",
-		PenaltyDetailsMap: &config.PenaltyDetailsMap{},
-		AllowedTransactionsMap: &models.AllowedTransactionMap{
-			Types: map[string]map[string]bool{
-				"1": {
-					"EJ": true,
-					"EU": true,
-				},
-			},
-		},
+		PenaltyRefType:             utils.LateFilingPenaltyRefType,
+		CompanyCode:                utils.LateFilingPenaltyCompanyCode,
+		CustomerCode:               "10000024",
+		PenaltyDetailsMap:          &config.PenaltyDetailsMap{},
 		Transaction:                transaction,
 		RequestId:                  "",
 		AccountPenaltiesDaoService: daoService,

@@ -48,7 +48,7 @@ func serveCreatePayableResourceHandler(body []byte, payableResourceService dao.P
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	res := httptest.NewRecorder()
 
-	handler := CreatePayableResourceHandler(payableResourceService, apDaoSvc, penaltyDetailsMap, allowedTransactionsMap)
+	handler := CreatePayableResourceHandler(payableResourceService, apDaoSvc, penaltyDetailsMap)
 	handler.ServeHTTP(res, req.WithContext(testContext(withAuthUserDetails, customerCode)))
 
 	return res
@@ -88,66 +88,6 @@ var e5ResponseLateFiling = `
       "transactionType": "1",
       "transactionSubType": "EU",
       "typeDescription": "Penalty Ltd Wel & Eng <=1m     LTDWA    ",
-      "dueDate": "2017-12-12",
-      "accountStatus": "CHS",
-      "dunningStatus": "PEN1        "
-    }
-  ]
-}
-`
-
-var e5ResponseSanctions = `
-{
-  "page": {
-    "size": 1,
-    "totalElements": 1,
-    "totalPages": 1,
-    "number": 0
-  },
-  "data": [
-    {
-      "companyCode": "C1",
-      "ledgerCode": "E1",
-      "customerCode": "10000024",
-      "transactionReference": "P1234567",
-      "transactionDate": "2017-11-28",
-      "madeUpDate": "2017-02-28",
-      "amount": 150,
-      "outstandingAmount": 150,
-      "isPaid": false,
-      "transactionType": "1",
-      "transactionSubType": "S1",
-      "typeDescription": "Penalty Ltd Wel & Eng <=1m     LTDWA    ",
-      "dueDate": "2017-12-12",
-      "accountStatus": "CHS",
-      "dunningStatus": "PEN1        "
-    }
-  ]
-}
-`
-
-var e5ResponseSanctionsRoe = `
-{
-  "page": {
-    "size": 1,
-    "totalElements": 1,
-    "totalPages": 1,
-    "number": 0
-  },
-  "data": [
-    {
-      "companyCode": "C1",
-      "ledgerCode": "FU",
-      "customerCode": "OE123456",
-      "transactionReference": "U1234567",
-      "transactionDate": "2017-11-28",
-      "madeUpDate": "2017-02-28",
-      "amount": 150,
-      "outstandingAmount": 150,
-      "isPaid": false,
-      "transactionType": "1",
-      "transactionSubType": "A2",
-      "typeDescription": "Failure to update",
       "dueDate": "2017-12-12",
       "accountStatus": "CHS",
       "dunningStatus": "PEN1        "
@@ -301,9 +241,10 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseMultipleTx))
 
-		// as there are two transaction, the Times is 2 here, possible enhancement to remove this duplicate call
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenaltyCompanyCode, "").Return(nil, nil).Times(2)
-		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil).Times(2)
+		transactionItem := utils.BuildTestTransactionItem(false, false, "LATE_FILING", 250.0)
+		payablePenalty = func(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
+			return &transactionItem, errors.New("error")
+		}
 
 		body := buildRequestBody(customerCode, false, false, []string{penaltyRef1, penaltyRef2})
 
@@ -315,11 +256,12 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 	Convey("internal server error when failing to create payable resource", t, func() {
 		setGetCompanyCodeFromTransactionMock(utils.LateFilingPenaltyCompanyCode)
 
-		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseLateFiling))
+		transactionItem := utils.BuildTestTransactionItem(false, false, "SANCTIONS", 250.0)
+		payablePenalty = func(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
+			return &transactionItem, nil
+		}
 
 		mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any(), "").Return(errors.New("any error"))
-		mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, utils.LateFilingPenaltyCompanyCode, "").Return(nil, nil)
-		mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil)
 
 		body := buildRequestBody(customerCode, false, false, []string{penaltyRef1})
 
@@ -329,48 +271,43 @@ func TestUnitCreatePayableResourceHandler(t *testing.T) {
 	})
 
 	Convey("successfully creating a payable request", t, func() {
+
 		testCases := []struct {
-			name        string
-			companyCode string
-			penaltyRef  string
-			urlE5       string
-			e5Response  string
+			penaltyRefType string
+			companyCode    string
+			penaltyRef     string
+			amount         float64
 		}{
 			{
-				name:        "Late Filing",
-				companyCode: utils.LateFilingPenaltyCompanyCode,
-				penaltyRef:  "A1234567",
-				urlE5: "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" +
-					utils.LateFilingPenaltyCompanyCode + "&fromDate=1990-01-01",
-				e5Response: e5ResponseLateFiling,
+				penaltyRefType: "LATE_FILING",
+				companyCode:    utils.LateFilingPenaltyCompanyCode,
+				penaltyRef:     "A1234567",
+				amount:         250.0,
 			},
 			{
-				name:        "Sanctions",
-				companyCode: utils.SanctionsCompanyCode,
-				penaltyRef:  "P1234567",
-				urlE5: "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" +
-					utils.SanctionsCompanyCode + "&fromDate=1990-01-01",
-				e5Response: e5ResponseSanctions,
+				penaltyRefType: "SANCTIONS",
+				companyCode:    utils.SanctionsCompanyCode,
+				penaltyRef:     "P1234567",
+				amount:         350.0,
 			},
 			{
-				name:        "Sanctions ROE",
-				companyCode: utils.SanctionsCompanyCode,
-				penaltyRef:  "U1234567",
-				urlE5: "https://e5/arTransactions/10000024?ADV_userName=SYSTEM&companyCode=" +
-					utils.SanctionsCompanyCode + "&fromDate=1990-01-01",
-				e5Response: e5ResponseSanctionsRoe,
+				penaltyRefType: "SANCTIONS_ROE",
+				companyCode:    utils.SanctionsCompanyCode,
+				penaltyRef:     "U1234567",
+				amount:         300.0,
 			},
 		}
 
 		for _, tc := range testCases {
-			Convey(tc.name, func() {
+			Convey(tc.penaltyRefType, func() {
 				setGetCompanyCodeFromTransactionMock(tc.companyCode)
 
-				httpmock.RegisterResponder("GET", tc.urlE5, httpmock.NewStringResponder(200, tc.e5Response))
+				transactionItem := utils.BuildTestTransactionItem(false, false, tc.penaltyRefType, tc.amount)
+				payablePenalty = func(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
+					return &transactionItem, nil
+				}
 
 				mockPrDaoSvc.EXPECT().CreatePayableResource(gomock.Any(), "").Return(nil)
-				mockApDaoSvc.EXPECT().GetAccountPenalties(customerCode, tc.companyCode, "").Return(nil, nil)
-				mockApDaoSvc.EXPECT().CreateAccountPenalties(gomock.Any(), "").Return(nil)
 
 				body := buildRequestBody(customerCode, false, false, []string{tc.penaltyRef})
 

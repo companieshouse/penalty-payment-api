@@ -55,13 +55,13 @@ func main() {
 		return
 	}
 
-	allowedTransactionsMap, err := config.GetAllowedTransactions("assets/penalty_types.yml")
+	err = config.LoadPenaltyConfig()
 	if err != nil {
 		log.Error(fmt.Errorf(exitErrorFormat, err), nil)
 		return
 	}
 
-	handlers.Register(mainRouter, cfg, prDaoService, apDaoService, penaltyDetailsMap, allowedTransactionsMap)
+	handlers.Register(mainRouter, cfg, prDaoService, apDaoService, penaltyDetailsMap)
 
 	if cfg.FeatureFlagPaymentsProcessingEnabled {
 		ctx, cancel := context.WithCancel(context.Background())

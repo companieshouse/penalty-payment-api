@@ -6,7 +6,6 @@ import (
 )
 
 var penaltyDetailsMap = &config.PenaltyDetailsMap{}
-var allowedTransactionsMap = &models.AllowedTransactionMap{}
 var customerCode = "NI123456"
 var transactionItem = models.TransactionItem{
 	PenaltyRef: "A1234567",

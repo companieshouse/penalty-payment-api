@@ -25,7 +25,6 @@ func buildGetPenaltiesRequest(customerCode string) *http.Request {
 
 func TestUnitHandleGetPenalties(t *testing.T) {
 	penaltyDetailsMap := &config.PenaltyDetailsMap{}
-	allowedTransactionsMap := &models.AllowedTransactionMap{}
 
 	Convey("Given a request to get penalties", t, func() {
 		mockedAccountPenalties := func(params types.AccountPenaltiesParams) (*models.TransactionListResponse, services.ResponseType, error) {
@@ -63,7 +62,7 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 			req := buildGetPenaltiesRequest(tc.companyCode)
 			rr := httptest.NewRecorder()
 
-			handler := HandleGetPenalties(nil, penaltyDetailsMap, allowedTransactionsMap)
+			handler := HandleGetPenalties(nil, penaltyDetailsMap)
 			handler.ServeHTTP(rr, req)
 
 			So(rr.Code, ShouldEqual, tc.response)
@@ -77,7 +76,7 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req := buildGetPenaltiesRequest("NI123546")
 
-		handler := HandleGetPenalties(nil, penaltyDetailsMap, allowedTransactionsMap)
+		handler := HandleGetPenalties(nil, penaltyDetailsMap)
 		handler.ServeHTTP(rr, req)
 
 		So(rr.Code, ShouldEqual, http.StatusBadRequest)

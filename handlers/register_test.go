@@ -22,7 +22,7 @@ func TestUnitRegisterRoutes(t *testing.T) {
 
 		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
-		Register(router, &config.Config{}, mockPrDaoSvc, mockApDaoSvc, penaltyDetailsMap, allowedTransactionsMap)
+		Register(router, &config.Config{}, mockPrDaoSvc, mockApDaoSvc, penaltyDetailsMap)
 
 		healthCheckPath, _ := router.GetRoute("healthcheck").GetPathTemplate()
 		healthFinanceCheckPath, _ := router.GetRoute("healthcheck-finance-system").GetPathTemplate()
