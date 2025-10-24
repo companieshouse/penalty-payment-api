@@ -21,7 +21,7 @@ type kafkaContainer struct {
 }
 
 func NewKafkaContainer() StoppableContainer {
-	const KafkaNetworkName = "kafka-net"
+	const KafkaNetworkName = "kafka-network"
 	kafkaNetwork := createNetwork(KafkaNetworkName)
 
 	return &kafkaContainer{
