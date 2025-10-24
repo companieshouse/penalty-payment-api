@@ -268,9 +268,9 @@ func TestUnitGetAllowedTransactions(t *testing.T) {
 			testYaml := []byte(`
 description: transaction types and subtypes of allowed penalties
 allowed_transactions:
-  1:
-    C1:
-      true
+ 1:
+   C1:
+     true
 `)
 			tmpFile, err := os.CreateTemp("", "config_*.yaml")
 			if err != nil {

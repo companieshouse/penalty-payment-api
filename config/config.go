@@ -9,6 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/companieshouse/gofigure"
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 )
 
@@ -103,6 +104,63 @@ func GetAllowedTransactions(fileName string) (*models.AllowedTransactionMap, err
 	}
 
 	return &allowedTransactions, nil
+}
+
+type PenaltyConfig struct {
+	PenaltyTypesConfig     []finance_config.FinancePenaltyTypeConfig
+	PayablePenaltiesConfig []finance_config.FinancePayablePenaltyConfig
+}
+
+var penaltyConfig PenaltyConfig
+
+func LoadPenaltyConfig() error {
+	var financePenaltyTypesConfig finance_config.FinancePenaltyTypesConfig
+	var financePayablePenaltiesConfig finance_config.FinancePayablePenaltiesConfig
+
+	err := yaml.Unmarshal(finance_config.FinancePenaltyTypes, &financePenaltyTypesConfig)
+	if err != nil {
+		return err
+	}
+	err = yaml.Unmarshal(finance_config.FinancePayablePenalties, &financePayablePenaltiesConfig)
+	if err != nil {
+		return err
+	}
+
+	penaltyConfig.PenaltyTypesConfig = financePenaltyTypesConfig.FinancePenaltyTypes
+	penaltyConfig.PayablePenaltiesConfig = financePayablePenaltiesConfig.FinancePayablePenalties
+
+	return nil
+}
+
+func GetPayablePenaltiesConfig() []finance_config.FinancePayablePenaltyConfig {
+	return penaltyConfig.PayablePenaltiesConfig
+}
+
+func GetPenaltyTypesConfig() []finance_config.FinancePenaltyTypeConfig {
+	return penaltyConfig.PenaltyTypesConfig
+}
+
+func TransactionAllowed(transactionType string, transactionSubtype string) bool {
+	penaltyTypes := GetPenaltyTypesConfig()
+	for i := 0; i < len(penaltyTypes); i++ {
+		penaltyType := penaltyTypes[i]
+		if !penaltyType.Disabled && penaltyType.TransactionType == transactionType && penaltyType.TransactionSubtype == transactionSubtype {
+			return true
+		}
+	}
+	return false
+}
+
+func GetReasonForPenalty(transactionSubtype string) string {
+	penaltyTypes := GetPenaltyTypesConfig()
+	reasonForPenalty := "Penalty" //Default reason for penalty
+	for i := 0; i < len(penaltyTypes); i++ {
+		if penaltyTypes[i].TransactionSubtype == transactionSubtype {
+			reasonForPenalty = penaltyTypes[i].Reason
+		}
+	}
+
+	return reasonForPenalty
 }
 
 func LoadPenaltyDetails(fileName string) (*PenaltyDetailsMap, error) {
