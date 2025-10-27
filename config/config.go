@@ -124,26 +124,49 @@ func GetPenaltyTypesConfig() []finance_config.FinancePenaltyTypeConfig {
 }
 
 func TransactionAllowed(transactionType string, transactionSubtype string) bool {
-	penaltyTypes := GetPenaltyTypesConfig()
-	for i := 0; i < len(penaltyTypes); i++ {
-		penaltyType := penaltyTypes[i]
+	for _, penaltyType := range GetPenaltyTypesConfig() {
 		if !penaltyType.Disabled && penaltyType.TransactionType == transactionType && penaltyType.TransactionSubtype == transactionSubtype {
 			return true
 		}
 	}
+
 	return false
 }
 
 func GetReasonForPenalty(transactionSubtype string) string {
-	penaltyTypes := GetPenaltyTypesConfig()
 	reasonForPenalty := "Penalty" //Default reason for penalty
-	for i := 0; i < len(penaltyTypes); i++ {
-		if penaltyTypes[i].TransactionSubtype == transactionSubtype {
-			reasonForPenalty = penaltyTypes[i].Reason
+	for _, penaltyType := range GetPenaltyTypesConfig() {
+		if penaltyType.TransactionSubtype == transactionSubtype {
+			reasonForPenalty = penaltyType.Reason
 		}
 	}
 
 	return reasonForPenalty
+}
+
+func PenaltyReferenceTypeEnabled(penaltyReferenceType string) bool {
+	for _, payablePenalty := range GetPayablePenaltiesConfig() {
+		penalty := payablePenalty.Penalty
+		if penalty.ReferenceType == penaltyReferenceType && penaltyEnabled(penalty) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func penaltyEnabled(penalty *finance_config.PenaltyConfig) bool {
+	return penalty.EnabledTo.IsZero() || penalty.EnabledTo.After(time.Now())
+}
+
+func TransanctionSubTypeEnabled(transactionSubtype string) bool {
+	for _, penaltyType := range GetPenaltyTypesConfig() {
+		if penaltyType.TransactionSubtype == transactionSubtype && !penaltyType.Disabled {
+			return true
+		}
+	}
+
+	return false
 }
 
 func LoadPenaltyDetails(fileName string) (*PenaltyDetailsMap, error) {
