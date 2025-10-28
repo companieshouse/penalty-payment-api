@@ -35,6 +35,23 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/ServiceUnavailable'
+  /penalty-payment-api/penalty-reference-types:
+    get:
+      tags:
+        - Penalty Reference Types
+      description: Get a list of Penalty reference types
+      operationId: get-penalty-ref-types
+      responses:
+        "200":
+          description: A list of penalty reference types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PenaltyReferenceType'
+        "500":
+          description: There was a problem accessing configuration data
   /company/{company_number}/penalties/late-filing:
     get:
       tags:
@@ -529,3 +546,20 @@ components:
           enum:
             - late-filing-penalty
             - penalty-sanctions
+    PenaltyReferenceType:
+      type: object
+      properties:
+        enabled_from:
+          type: string
+          format: date-time
+        enabled_to:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        reference_regex:
+          type: string
+        reference_starts_with:
+          type: string
+        reference_type:
+          type: string
