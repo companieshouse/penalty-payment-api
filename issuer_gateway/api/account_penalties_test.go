@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 	"testing"
 	"time"
 
@@ -206,10 +207,10 @@ func TestUnitAccountPenalties(t *testing.T) {
 			3000, 3000, "penalty", "Late filing of accounts", "CLOSED")
 		assertTransactionListItem(listResponse.Items[1], "CF1", false, false,
 			"2021-04-09", "2018-06-30", "2021-04-09",
-			105, 105, "other", "Late filing of accounts", "CLOSED")
+			105, 105, "other", "", "CLOSED")
 		assertTransactionListItem(listResponse.Items[2], "FC1", false, false,
 			"2021-04-09", "2018-06-30", "2021-04-09",
-			80, 80, "other", "Late filing of accounts", "CLOSED")
+			80, 80, "other", "", "CLOSED")
 		assertTransactionListItem(listResponse.Items[3], "A0000002", true, false,
 			"2021-08-10", "2019-06-30", "2021-08-10",
 			3000, 0, "penalty", "Late filing of accounts", "CLOSED")
@@ -394,7 +395,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 			return &e5TransactionsResponse, nil
 		}
 		mockedGenerateTransactionList := func(accountPenalties *models.AccountPenaltiesDao, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
-			allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string) (*models.TransactionListResponse, error) {
+			allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string, reasonProvider private.ReasonProvider) (*models.TransactionListResponse, error) {
 			return &payableTransactionList, errors.New("error generating etag")
 		}
 
