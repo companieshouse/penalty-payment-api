@@ -13,7 +13,7 @@ import (
 // HandleGetPaymentDetails retrieves costs for a supplied company number and reference.
 func HandleGetPaymentDetails(penaltyDetailsMap *config.PenaltyDetailsMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		requestId := req.Header.Get("X-Request-ID")
+		requestId := log.Context(req)
 		log.InfoC(requestId, "start GET payment details request")
 
 		// get payable resource from context, put there by PayableResourceAuthenticationInterceptor

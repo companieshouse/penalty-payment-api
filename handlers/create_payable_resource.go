@@ -24,7 +24,7 @@ var payablePenalty = api.PayablePenalty
 func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
 	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestId := r.Header.Get("X-Request-ID")
+		requestId := log.Context(r)
 		log.InfoC(requestId, "start POST payable resource request")
 
 		request, err := decodeRequest(r)

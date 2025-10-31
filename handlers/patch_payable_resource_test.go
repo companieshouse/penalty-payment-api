@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/companieshouse/api-sdk-go/companieshouseapi"
+	"github.com/companieshouse/chs.go/log"
+	"github.com/companieshouse/chs.go/log/properties"
 	"github.com/companieshouse/go-session-handler/httpsession"
 	"github.com/companieshouse/go-session-handler/session"
 	"github.com/companieshouse/penalty-payment-api-core/constants"
@@ -216,6 +218,36 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			So(res.Code, ShouldEqual, http.StatusBadRequest)
 			So(body.Message, ShouldEqual, "the payable resource does not exist")
+		})
+
+		Convey("payment (from payments api) is cancelled", func() {
+			mockCtrl := gomock.NewController(t)
+			log.RegisterEventWithLevel("warn", properties.DEBUG) // Register 'warn' event
+			defer mockCtrl.Finish()
+
+			// stub the response from the payments api
+			p := buildMockedPaymentResource("cancelled", "150")
+			responder, _ := httpmock.NewJsonResponder(http.StatusOK, p)
+			httpmock.RegisterResponder(
+				http.MethodGet,
+				companieshouseapi.PaymentsBasePath+"/payments/123",
+				responder,
+			)
+			httpmock.RegisterResponder(
+				http.MethodGet,
+				companieshouseapi.PaymentsBasePath+"/private/payments/123/payment-details",
+				httpmock.NewStringResponder(http.StatusOK, "{}"),
+			)
+
+			// the payable resource in the request context
+			model := buildMockedPayableResource(false, 0)
+			ctx := context.WithValue(context.Background(), config.PayableResource, model)
+
+			reqBody := &models.PatchResourceRequest{Reference: "123"}
+			res, body := dispatchPayResourceHandler(ctx, t, reqBody, nil, nil)
+
+			So(res.Code, ShouldEqual, http.StatusNoContent)
+			So(body, ShouldBeNil)
 		})
 
 		Convey("payment (from payments api) is not paid", func() {
