@@ -28,7 +28,7 @@ type PayableResourceService struct {
 
 // GetPayableResource retrieves the payable resource with the given customer code and payable ref from the database
 func (s *PayableResourceService) GetPayableResource(req *http.Request, customerCode string, payableRef string) (*models.PayableResource, ResponseType, error) {
-	requestId := req.Header.Get("X-Request-ID")
+	requestId := log.Context(req)
 	payable, err := s.DAO.GetPayableResource(customerCode, payableRef, requestId)
 	if err != nil {
 		err = fmt.Errorf("error getting payable resource from db: [%v]", err)

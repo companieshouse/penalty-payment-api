@@ -21,7 +21,7 @@ import (
 func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
 	cfg, err := getConfig()
-	requestId := req.Header.Get("X-Request-Id")
+	requestId := log.Context(req)
 	if err != nil {
 		err = fmt.Errorf("error getting config for kafka message production: [%v]", err)
 		return err
@@ -153,7 +153,7 @@ func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource model
 		CHSURL:            cfg.CHSURL,
 	}
 
-	requestId := req.Header.Get("X-Request-Id")
+	requestId := log.Context(req)
 
 	logContext := log.Data{
 		"customer_code": payableResource.CustomerCode,
