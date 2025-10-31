@@ -15,7 +15,8 @@ import (
 var etagGenerator = utils.GenerateEtag
 
 func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao, penaltyRefType string, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string) (*models.TransactionListResponse, error) {
+	allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string,
+	reasonProvider ReasonProvider) (*models.TransactionListResponse, error) {
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := etagGenerator()
 	if err != nil {
@@ -30,8 +31,9 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 	// Loop through penalties and construct CH resources
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
 		transactionType := getTransactionType(&accountPenalty, allowedTransactionsMap)
+		reason := reasonProvider.GetReason(&accountPenalty)
 		payableStatus := getPayableStatus(transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, allowedTransactionsMap, cfg)
-		transactionListItem, err := buildTransactionListItemFromAccountPenalty(&accountPenalty, penaltyDetailsMap, penaltyRefType, transactionType, payableStatus, requestId)
+		transactionListItem, err := buildTransactionListItemFromAccountPenalty(&accountPenalty, penaltyDetailsMap, penaltyRefType, transactionType, reason, payableStatus, requestId)
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +45,8 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 }
 
 func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesDataDao,
-	penaltyDetailsMap *config.PenaltyDetailsMap, penaltyRefType string, transactionType string, payableStatus string, requestId string) (models.TransactionListItem, error) {
+	penaltyDetailsMap *config.PenaltyDetailsMap, penaltyRefType string, transactionType string,
+	reason string, payableStatus string, requestId string) (models.TransactionListItem, error) {
 	etag, err := etagGenerator()
 	if err != nil {
 		err = fmt.Errorf("error generating etag: [%v]", err)
@@ -63,7 +66,7 @@ func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesData
 	transactionListItem.OriginalAmount = dao.Amount
 	transactionListItem.Outstanding = dao.OutstandingAmount
 	transactionListItem.Type = transactionType
-	transactionListItem.Reason = getReason(dao)
+	transactionListItem.Reason = reason
 	transactionListItem.PayableStatus = payableStatus
 
 	return transactionListItem, nil
@@ -80,38 +83,11 @@ func getTransactionType(e5Transaction *models.AccountPenaltiesDataDao, allowedTr
 	}
 }
 
-func getReason(transaction *models.AccountPenaltiesDataDao) string {
-	switch transaction.CompanyCode {
-	case utils.LateFilingPenaltyCompanyCode:
-		return LateFilingPenaltyReason
-	case utils.SanctionsCompanyCode:
-		return getSanctionsReason(transaction)
-	default:
-		return PenaltyReason
-	}
-}
-
-func getSanctionsReason(transaction *models.AccountPenaltiesDataDao) string {
-	if transaction.TransactionSubType == SanctionsTransactionSubType &&
-		strings.TrimSpace(transaction.TypeDescription) == CS01TypeDescription {
-		return ConfirmationStatementReason
-	} else if transaction.TransactionSubType == SanctionsRoeFailureToUpdateTransactionSubType {
-		return SanctionsRoeFailureToUpdateReason
-	} else {
-		return PenaltyReason
-	}
-}
-
 const (
-	SanctionsTransactionType                      = "1"
-	SanctionsTransactionSubType                   = "S1"
-	SanctionsRoeFailureToUpdateTransactionSubType = "A2"
-	CS01TypeDescription                           = "CS01"
-
-	LateFilingPenaltyReason           = "Late filing of accounts"
-	ConfirmationStatementReason       = "Failure to file a confirmation statement"
-	SanctionsRoeFailureToUpdateReason = "Failure to update the Register of Overseas Entities"
-	PenaltyReason                     = "Penalty"
+	InvoiceTransactionType                            = "1"
+	SanctionsConfirmationStatementTransactionSubType  = "S1"
+	SanctionsFailedToVerifyIdentityTransactionSubType = "S3"
+	SanctionsRoeFailureToUpdateTransactionSubType     = "A2"
 
 	OpenPayableStatus                    = "OPEN"
 	DisabledPayableStatus                = "DISABLED"

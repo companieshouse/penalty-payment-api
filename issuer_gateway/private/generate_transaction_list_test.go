@@ -48,9 +48,10 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return "", errors.New("error generating etag")
 		}
 		penaltyRefType := utils.LateFilingPenaltyRefType
+		reasonProvider := &DefaultReasonProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider)
 
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
@@ -66,9 +67,10 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 		penaltyRefType := utils.LateFilingPenaltyRefType
+		reasonProvider := &DefaultReasonProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider)
 
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
@@ -81,9 +83,10 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, pen1DunningStatus, penaltyRefType, true)
+		reasonProvider := &DefaultReasonProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -113,9 +116,10 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 		penaltyRefType := utils.LateFilingPenaltyRefType
+		reasonProvider := &DefaultReasonProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -147,9 +151,10 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 		otherAccountPenalties := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.LateFilingPenaltyCompanyCode, otherTransactionSubType, pen1DunningStatus, penaltyRefType, false)
+		reasonProvider := &DefaultReasonProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			otherAccountPenalties, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			otherAccountPenalties, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -182,9 +187,10 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, dcaDunningStatus, penaltyRefType, false)
+		reasonProvider := &DefaultReasonProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -214,10 +220,11 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 		penaltyRefType := utils.SanctionsPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
-			customerCode, utils.SanctionsCompanyCode, SanctionsTransactionSubType, pen1DunningStatus, penaltyRefType, false)
+			customerCode, utils.SanctionsCompanyCode, SanctionsConfirmationStatementTransactionSubType, pen1DunningStatus, penaltyRefType, false)
+		reasonProvider := &DefaultReasonProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -236,7 +243,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			OriginalAmount:  250,
 			Outstanding:     250,
 			Type:            "penalty",
-			Reason:          ConfirmationStatementReason,
+			Reason:          SanctionsConfirmationStatementReason,
 			PayableStatus:   OpenPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
@@ -249,9 +256,10 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.SanctionsRoePenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, pen1DunningStatus, penaltyRefType, false)
+		reasonProvider := &DefaultReasonProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -282,10 +290,11 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		}
 		penaltyRefType := utils.SanctionsPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
-			customerCode, utils.SanctionsCompanyCode, SanctionsTransactionSubType, dcaDunningStatus, penaltyRefType, false)
+			customerCode, utils.SanctionsCompanyCode, SanctionsConfirmationStatementTransactionSubType, dcaDunningStatus, penaltyRefType, false)
+		reasonProvider := &DefaultReasonProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -304,7 +313,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			OriginalAmount:  250,
 			Outstanding:     250,
 			Type:            "penalty",
-			Reason:          ConfirmationStatementReason,
+			Reason:          SanctionsConfirmationStatementReason,
 			PayableStatus:   ClosedPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
@@ -317,9 +326,10 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.SanctionsRoePenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, dcaDunningStatus, penaltyRefType, false)
+		reasonProvider := &DefaultReasonProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "")
+			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -342,65 +352,6 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			PayableStatus:   ClosedPayableStatus,
 		}
 		So(transactionListItem, ShouldResemble, expected)
-	})
-}
-
-func TestUnit_getReason(t *testing.T) {
-	Convey("Get reason", t, func() {
-		type args struct {
-			penalty *models.AccountPenaltiesDataDao
-		}
-		testCases := []struct {
-			name string
-			args args
-			want string
-		}{
-			{
-				name: "Late filing of accounts",
-				args: args{penalty: &models.AccountPenaltiesDataDao{
-					CompanyCode:        utils.LateFilingPenaltyCompanyCode,
-					TransactionType:    "1",
-					TransactionSubType: "C1",
-				}},
-				want: LateFilingPenaltyReason,
-			},
-			{
-				name: "Failure to file a confirmation statement",
-				args: args{penalty: &models.AccountPenaltiesDataDao{
-					CompanyCode:        utils.SanctionsCompanyCode,
-					TransactionType:    SanctionsTransactionType,
-					TransactionSubType: SanctionsTransactionSubType,
-					TypeDescription:    "CS01                                    ",
-				}},
-				want: ConfirmationStatementReason,
-			},
-			{
-				name: "Failure to update the Register of Overseas Entities",
-				args: args{penalty: &models.AccountPenaltiesDataDao{
-					CompanyCode:        utils.SanctionsCompanyCode,
-					TransactionType:    SanctionsTransactionType,
-					TransactionSubType: SanctionsRoeFailureToUpdateTransactionSubType,
-				}},
-				want: SanctionsRoeFailureToUpdateReason,
-			},
-			{
-				name: "Penalty",
-				args: args{penalty: &models.AccountPenaltiesDataDao{
-					CompanyCode:        utils.SanctionsCompanyCode,
-					TransactionType:    SanctionsTransactionType,
-					TransactionSubType: SanctionsTransactionSubType,
-					TypeDescription:    "P&S Penalty                             ",
-				}},
-				want: PenaltyReason,
-			},
-		}
-		for _, tc := range testCases {
-			Convey(tc.name, func() {
-				got := getReason(tc.args.penalty)
-
-				So(got, ShouldEqual, tc.want)
-			})
-		}
 	})
 }
 
@@ -1048,7 +999,7 @@ func TestUnit_getPayableStatus(t *testing.T) {
 				want: DisabledPayableStatus,
 			},
 		}
-		cfg.DisabledPenaltyTransactionSubtypes = SanctionsTransactionSubType
+		cfg.DisabledPenaltyTransactionSubtypes = SanctionsConfirmationStatementTransactionSubType
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
@@ -1196,8 +1147,8 @@ func buildTestSanctionsAccountPenaltiesDataDao(isPaid bool, outstandingAmount fl
 		Amount:               250,
 		OutstandingAmount:    outstandingAmount,
 		IsPaid:               isPaid,
-		TransactionType:      SanctionsTransactionType,
-		TransactionSubType:   SanctionsTransactionSubType,
+		TransactionType:      InvoiceTransactionType,
+		TransactionSubType:   SanctionsConfirmationStatementTransactionSubType,
 		TypeDescription:      "CS01                                    ",
 		AccountStatus:        accountStatus,
 		DunningStatus:        dunningStatus,
@@ -1215,7 +1166,7 @@ func buildTestROEAccountPenaltiesDataDao(isPaid bool, outstandingAmount float64,
 		Amount:               250,
 		OutstandingAmount:    outstandingAmount,
 		IsPaid:               isPaid,
-		TransactionType:      SanctionsTransactionType,
+		TransactionType:      InvoiceTransactionType,
 		TransactionSubType:   SanctionsRoeFailureToUpdateTransactionSubType,
 		TypeDescription:      "PENU                                    ",
 		AccountStatus:        accountStatus,
@@ -1275,7 +1226,7 @@ func buildTestUnpaidAccountPenaltiesDao(customerCode, companyCode, transactionSu
 	case utils.SanctionsPenaltyRefType:
 		{
 			params.TransactionReference = "P1234567"
-			params.TransactionType = SanctionsTransactionType
+			params.TransactionType = InvoiceTransactionType
 			params.LedgerCode = "E1"
 			params.TypeDescription = "CS01                                    "
 		}
@@ -1289,7 +1240,7 @@ func buildTestUnpaidAccountPenaltiesDao(customerCode, companyCode, transactionSu
 	default:
 		{
 			params.TransactionReference = "U1234567"
-			params.TransactionType = SanctionsTransactionType
+			params.TransactionType = InvoiceTransactionType
 			params.LedgerCode = "FU"
 			params.TypeDescription = "Penalty Ltd Wel & Eng <=1m    LTDWA"
 		}
