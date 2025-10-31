@@ -76,6 +76,19 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			return
 		}
 
+		log.InfoC(requestId, "checking if payment was cancelled",
+			log.Data{"payment_ref": resource.PayableRef, "payable_ref": resource.PayableRef, "payment_status": payment.Status})
+		if payment.IsCancelled() {
+			log.Event("warn", requestId, log.Data{
+				"message":        "the payment was cancelled",
+				"payment_ref":    resource.PayableRef,
+				"payable_ref":    resource.PayableRef,
+				"payment_status": payment.Status,
+			})
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
 		log.InfoC(requestId, "validating payment", log.Data{"payable_ref": resource.PayableRef, "external_payment_id": payment.ExternalPaymentID})
 		err = validators.New().ValidateForPayment(*resource, *payment)
 		if err != nil {
