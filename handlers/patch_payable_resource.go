@@ -77,11 +77,11 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 		}
 
 		log.InfoC(requestId, "checking if payment was cancelled",
-			log.Data{"payment_ref": resource.PayableRef, "payable_ref": resource.PayableRef, "payment_status": payment.Status})
+			log.Data{"payment_ref": request.Reference, "payable_ref": resource.PayableRef, "payment_status": payment.Status})
 		if payment.IsCancelled() {
 			log.Event("warn", requestId, log.Data{
 				"message":        "the payment was cancelled",
-				"payment_ref":    resource.PayableRef,
+				"payment_ref":    request.Reference,
 				"payable_ref":    resource.PayableRef,
 				"payment_status": payment.Status,
 			})
