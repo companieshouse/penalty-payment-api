@@ -41,17 +41,19 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 	lfpPenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.LateFilingPenaltyRefType)
 	sanctionsPenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.SanctionsPenaltyRefType)
 	sanctionsRoePenaltyDetailsMap := buildTestPenaltyDetailsMap(utils.SanctionsRoePenaltyRefType)
+	transactionListItemEnrichmentProviders := TransactionListItemEnrichmentProviders{
+		ReasonProvider:        &DefaultReasonProvider{},
+		PayableStatusProvider: &DefaultPayableStatusProvider{},
+	}
 
 	Convey("error when first etag generator fails", t, func() {
 		etagGenerator = func() (string, error) {
 			return "", errors.New("error generating etag")
 		}
 		penaltyRefType := utils.LateFilingPenaltyRefType
-		reasonProvider := &DefaultReasonProvider{}
-		payableStatusProvider := &DefaultPayableStatusProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider, payableStatusProvider)
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
 
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
@@ -67,11 +69,9 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 		penaltyRefType := utils.LateFilingPenaltyRefType
-		reasonProvider := &DefaultReasonProvider{}
-		payableStatusProvider := &DefaultPayableStatusProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider, payableStatusProvider)
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
 
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
@@ -84,11 +84,9 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, pen1DunningStatus, penaltyRefType, true)
-		reasonProvider := &DefaultReasonProvider{}
-		payableStatusProvider := &DefaultPayableStatusProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider, payableStatusProvider)
+			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -118,11 +116,9 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 		penaltyRefType := utils.LateFilingPenaltyRefType
-		reasonProvider := &DefaultReasonProvider{}
-		payableStatusProvider := &DefaultPayableStatusProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider, payableStatusProvider)
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -154,11 +150,9 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 		otherAccountPenalties := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.LateFilingPenaltyCompanyCode, otherTransactionSubType, pen1DunningStatus, penaltyRefType, false)
-		reasonProvider := &DefaultReasonProvider{}
-		payableStatusProvider := &DefaultPayableStatusProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			otherAccountPenalties, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider, payableStatusProvider)
+			otherAccountPenalties, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -191,11 +185,9 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, dcaDunningStatus, penaltyRefType, false)
-		reasonProvider := &DefaultReasonProvider{}
-		payableStatusProvider := &DefaultPayableStatusProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider, payableStatusProvider)
+			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -226,11 +218,9 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.SanctionsPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.SanctionsCompanyCode, SanctionsConfirmationStatementTransactionSubType, pen1DunningStatus, penaltyRefType, false)
-		reasonProvider := &DefaultReasonProvider{}
-		payableStatusProvider := &DefaultPayableStatusProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider, payableStatusProvider)
+			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -262,11 +252,9 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.SanctionsRoePenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, pen1DunningStatus, penaltyRefType, false)
-		reasonProvider := &DefaultReasonProvider{}
-		payableStatusProvider := &DefaultPayableStatusProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider, payableStatusProvider)
+			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -298,11 +286,9 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.SanctionsPenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.SanctionsCompanyCode, SanctionsConfirmationStatementTransactionSubType, dcaDunningStatus, penaltyRefType, false)
-		reasonProvider := &DefaultReasonProvider{}
-		payableStatusProvider := &DefaultPayableStatusProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider, payableStatusProvider)
+			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -334,11 +320,9 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.SanctionsRoePenaltyRefType
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, dcaDunningStatus, penaltyRefType, false)
-		reasonProvider := &DefaultReasonProvider{}
-		payableStatusProvider := &DefaultPayableStatusProvider{}
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "", reasonProvider, payableStatusProvider)
+			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
