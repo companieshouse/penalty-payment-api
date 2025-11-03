@@ -541,7 +541,7 @@ components:
         product_type:
           type: string
           description: The product type of the cost. <br /><br /> For enumeration
-            descriptions see <code>product_type</code> section in the <a href='https://github.com/companieshouse/api-enumerations/blob/master/payments.yml'
+            descriptions see <code>product_type</code> section in the <a href='https://github.com/companieshouse/api-enumerations/blob/master/payments.yaml'
             rel='external'/>enumeration mappings</a>.<br /><br />
           enum:
             - late-filing-penalty

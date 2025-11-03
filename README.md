@@ -72,8 +72,3 @@ Pull image from ch-shared-services registry by running `docker pull 416670754337
 Alternatively, ensure you have the cross-compiler installed and use the Makefile to run the docker build command locally:
 1. `brew install filosottile/musl-cross/musl-cross`
 2. `make docker-image`
-
-## Vulnerability Checks
-
-1. Run the vulnerability scanner: `make security-check-summary`
-2. To see details of any CVEs found run: `make security-check`
