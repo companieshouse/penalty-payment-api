@@ -2,8 +2,6 @@ package private
 
 import (
 	"fmt"
-	"strings"
-	"time"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
@@ -16,7 +14,7 @@ var etagGenerator = utils.GenerateEtag
 
 func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao, penaltyRefType string, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string,
-	reasonProvider ReasonProvider) (*models.TransactionListResponse, error) {
+	reasonProvider ReasonProvider, payableStatusProvider PayableStatusProvider) (*models.TransactionListResponse, error) {
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := etagGenerator()
 	if err != nil {
@@ -32,7 +30,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
 		transactionType := getTransactionType(&accountPenalty, allowedTransactionsMap)
 		reason := reasonProvider.GetReason(&accountPenalty)
-		payableStatus := getPayableStatus(transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, allowedTransactionsMap, cfg)
+		payableStatus := payableStatusProvider.GetPayableStatus(transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, allowedTransactionsMap, cfg)
 		transactionListItem, err := buildTransactionListItemFromAccountPenalty(&accountPenalty, penaltyDetailsMap, penaltyRefType, transactionType, reason, payableStatus, requestId)
 		if err != nil {
 			return nil, err
@@ -89,11 +87,6 @@ const (
 	SanctionsFailedToVerifyIdentityTransactionSubType = "S3"
 	SanctionsRoeFailureToUpdateTransactionSubType     = "A2"
 
-	OpenPayableStatus                    = "OPEN"
-	DisabledPayableStatus                = "DISABLED"
-	ClosedPayableStatus                  = "CLOSED"
-	ClosedPendingAllocationPayableStatus = "CLOSED_PENDING_ALLOCATION"
-
 	CHSAccountStatus = "CHS"
 	DCAAccountStatus = "DCA"
 	HLDAccountStatus = "HLD"
@@ -104,92 +97,3 @@ const (
 	PEN2DunningStatus = "PEN2"
 	PEN3DunningStatus = "PEN3"
 )
-
-func getPayableStatus(transactionType string, e5Transaction *models.AccountPenaltiesDataDao, closedAt *time.Time,
-	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config) string {
-	if types.Penalty.String() == transactionType {
-		if penaltyTransactionSubTypeDisabled(e5Transaction, cfg) {
-			return DisabledPayableStatus
-		}
-		closedPayableStatus, isClosed := checkClosedPayableStatus(e5Transaction, closedAt, e5Transactions, allowedTransactionsMap)
-		if isClosed {
-			return closedPayableStatus
-		}
-
-		openPayableStatus, isOpen := checkOpenPayableStatus(e5Transaction)
-		if isOpen {
-			return openPayableStatus
-		}
-	}
-
-	return ClosedPayableStatus
-}
-
-func checkClosedPayableStatus(penalty *models.AccountPenaltiesDataDao, closedAt *time.Time,
-	e5Transactions []models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap) (payableStatus string, isClosed bool) {
-	if (penalty.IsPaid && closedAt != nil) &&
-		penaltyPaidToday(closedAt) &&
-		!penaltyPaymentAllocated(penalty) {
-		return ClosedPendingAllocationPayableStatus, true
-	}
-
-	if penalty.IsPaid || penalty.OutstandingAmount <= 0 || checkDunningStatus(penalty, DCADunningStatus) ||
-		len(getUnpaidCosts(penalty, e5Transactions, allowedTransactionsMap)) > 0 {
-		return ClosedPayableStatus, true
-	}
-	return "", false
-}
-
-func getUnpaidCosts(penalty *models.AccountPenaltiesDataDao, e5Transactions []models.AccountPenaltiesDataDao,
-	allowedTransactionsMap *models.AllowedTransactionMap) (unpaidCosts []models.AccountPenaltiesDataDao) {
-	for _, e5Transaction := range e5Transactions {
-		transactionType := getTransactionType(&e5Transaction, allowedTransactionsMap)
-		if (e5Transaction.TransactionReference != penalty.TransactionReference && !e5Transaction.IsPaid) &&
-			(types.Other.String() == transactionType && penalty.MadeUpDate == e5Transaction.MadeUpDate) {
-			unpaidCosts = append(unpaidCosts, e5Transaction)
-		}
-	}
-	return unpaidCosts
-}
-
-func checkOpenPayableStatus(penalty *models.AccountPenaltiesDataDao) (payableStatus string, isOpen bool) {
-	if penalty.CompanyCode == utils.LateFilingPenaltyCompanyCode &&
-		(checkDunningStatus(penalty, PEN1DunningStatus) || checkDunningStatus(penalty, PEN2DunningStatus) || checkDunningStatus(penalty, PEN3DunningStatus)) &&
-		(penalty.AccountStatus == CHSAccountStatus || penalty.AccountStatus == DCAAccountStatus || penalty.AccountStatus == HLDAccountStatus || penalty.AccountStatus == WDRAccountStatus) {
-		return OpenPayableStatus, true
-	} else if penalty.CompanyCode == utils.SanctionsCompanyCode &&
-		(checkDunningStatus(penalty, PEN1DunningStatus) || checkDunningStatus(penalty, PEN2DunningStatus)) &&
-		(penalty.AccountStatus == CHSAccountStatus || penalty.AccountStatus == DCAAccountStatus || penalty.AccountStatus == HLDAccountStatus) {
-		return OpenPayableStatus, true
-	}
-	return "", false
-}
-
-func penaltyPaidToday(closedAt *time.Time) bool {
-	now := time.Now()
-	y1, m1, d1 := now.Date()
-	y2, m2, d2 := closedAt.Date()
-	return y1 == y2 && m1 == m2 && d1 == d2
-}
-
-func checkDunningStatus(transaction *models.AccountPenaltiesDataDao, dunningStatus string) bool {
-	return strings.TrimSpace(transaction.DunningStatus) == dunningStatus
-}
-
-func penaltyPaymentAllocated(penalty *models.AccountPenaltiesDataDao) bool {
-	// The value of outstanding amount is 0 after penalty payment is allocated in E5
-	// and AccountPenalties cache is updated with E5 data
-	return penalty.OutstandingAmount == 0
-}
-
-func penaltyTransactionSubTypeDisabled(penalty *models.AccountPenaltiesDataDao, cfg *config.Config) bool {
-	trimDisabledSubtypes := strings.ReplaceAll(cfg.DisabledPenaltyTransactionSubtypes, " ", "")
-	disabledSubtypes := strings.Split(trimDisabledSubtypes, ",")
-	penaltySubType := penalty.TransactionSubType
-	for _, subType := range disabledSubtypes {
-		if penaltySubType == subType {
-			return true
-		}
-	}
-	return false
-}
