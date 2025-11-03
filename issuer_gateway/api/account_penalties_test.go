@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 	"testing"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
@@ -395,7 +395,8 @@ func TestUnitAccountPenalties(t *testing.T) {
 			return &e5TransactionsResponse, nil
 		}
 		mockedGenerateTransactionList := func(accountPenalties *models.AccountPenaltiesDao, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
-			allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string, reasonProvider private.ReasonProvider) (*models.TransactionListResponse, error) {
+			allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string,
+			reasonProvider private.ReasonProvider, payableStatus private.PayableStatusProvider) (*models.TransactionListResponse, error) {
 			return &payableTransactionList, errors.New("error generating etag")
 		}
 
