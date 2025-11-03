@@ -22,7 +22,7 @@ var accountPenalties = api.AccountPenalties
 func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		requestId := req.Header.Get("X-Request-ID")
+		requestId := log.Context(req)
 		log.InfoC(requestId, "start GET penalties request")
 
 		customerCode := req.Context().Value(config.CustomerCode).(string)

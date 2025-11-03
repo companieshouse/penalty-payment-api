@@ -30,7 +30,7 @@ var (
 func PayResourceHandler(payableResourceService *services.PayableResourceService, e5Client e5.ClientInterface, penaltyPaymentDetails *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestId := r.Header.Get("X-Request-ID")
+		requestId := log.Context(r)
 		log.InfoC(requestId, "start PATCH payable resource request")
 		// 1. get the payable resource out of the context. authorisation is already handled in the interceptor
 		i := r.Context().Value(config.PayableResource)
@@ -73,6 +73,18 @@ func PayResourceHandler(payableResourceService *services.PayableResourceService,
 			log.ErrorC(requestId, err)
 			m := models.NewMessageResponse("the payable resource does not exist")
 			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
+			return
+		}
+
+		log.InfoC(requestId, "checking if payment was cancelled",
+			log.Data{"payment_ref": request.Reference, "payable_ref": resource.PayableRef, "payment_status": payment.Status})
+		if payment.IsCancelled() {
+			log.InfoC(requestId, "the payment was cancelled", log.Data{
+				"payment_ref":    request.Reference,
+				"payable_ref":    resource.PayableRef,
+				"payment_status": payment.Status,
+			})
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 

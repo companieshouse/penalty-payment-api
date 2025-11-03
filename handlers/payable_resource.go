@@ -12,7 +12,7 @@ import (
 
 // HandleGetPayableResource retrieves the payable resource from request context
 func HandleGetPayableResource(w http.ResponseWriter, req *http.Request) {
-	requestId := req.Header.Get("X-Request-ID")
+	requestId := log.Context(req)
 	log.InfoC(requestId, "start GET payable resource request")
 
 	// get payable resource from context, put there by PayableResourceAuthenticationInterceptor

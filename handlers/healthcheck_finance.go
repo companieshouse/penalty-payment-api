@@ -12,7 +12,7 @@ import (
 
 // HandleHealthCheckFinanceSystem checks whether the e5 system is available to take requests
 func HandleHealthCheckFinanceSystem(w http.ResponseWriter, r *http.Request) {
-	requestId := r.Header.Get("X-Request-ID")
+	requestId := log.Context(r)
 
 	systemAvailableTime, systemUnavailable, parseError := api.CheckScheduledMaintenance(requestId)
 
