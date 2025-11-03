@@ -11,8 +11,6 @@ import (
 	"testing"
 
 	"github.com/companieshouse/api-sdk-go/companieshouseapi"
-	"github.com/companieshouse/chs.go/log"
-	"github.com/companieshouse/chs.go/log/properties"
 	"github.com/companieshouse/go-session-handler/httpsession"
 	"github.com/companieshouse/go-session-handler/session"
 	"github.com/companieshouse/penalty-payment-api-core/constants"
@@ -222,7 +220,6 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 		Convey("payment (from payments api) is cancelled", func() {
 			mockCtrl := gomock.NewController(t)
-			log.RegisterEventWithLevel("warn", properties.DEBUG) // Register 'warn' event
 			defer mockCtrl.Finish()
 
 			// stub the response from the payments api

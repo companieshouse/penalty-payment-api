@@ -17,7 +17,6 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/companieshouse/chs.go/kafka/resilience"
 	"github.com/companieshouse/chs.go/log"
-	"github.com/companieshouse/chs.go/log/properties"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/config"
@@ -38,7 +37,6 @@ func main() {
 
 	namespace := cfg.Namespace()
 	log.Namespace = namespace
-	log.RegisterEventWithLevel("warn", properties.DEBUG) // Register a new log event "warn"
 	log.Debug("Config", log.Data{"Config": cfg})
 
 	// Create router
