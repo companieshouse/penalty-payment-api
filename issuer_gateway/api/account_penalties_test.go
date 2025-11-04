@@ -396,7 +396,7 @@ func TestUnitAccountPenalties(t *testing.T) {
 		}
 		mockedGenerateTransactionList := func(accountPenalties *models.AccountPenaltiesDao, companyCode string, penaltyDetailsMap *config.PenaltyDetailsMap,
 			allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string,
-			reasonProvider private.ReasonProvider, payableStatus private.PayableStatusProvider) (*models.TransactionListResponse, error) {
+			transactionListItemEnrichmentProviders private.TransactionListItemEnrichmentProviders) (*models.TransactionListResponse, error) {
 			return &payableTransactionList, errors.New("error generating etag")
 		}
 

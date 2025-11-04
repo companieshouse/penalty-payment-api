@@ -12,9 +12,15 @@ import (
 
 var etagGenerator = utils.GenerateEtag
 
+// TransactionListItemEnrichmentProviders is used to enrich the get-penalties response
+type TransactionListItemEnrichmentProviders struct {
+	ReasonProvider        ReasonProvider
+	PayableStatusProvider PayableStatusProvider
+}
+
 func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao, penaltyRefType string, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string,
-	reasonProvider ReasonProvider, payableStatusProvider PayableStatusProvider) (*models.TransactionListResponse, error) {
+	transactionListItemEnrichmentProviders TransactionListItemEnrichmentProviders) (*models.TransactionListResponse, error) {
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := etagGenerator()
 	if err != nil {
@@ -29,8 +35,8 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 	// Loop through penalties and construct CH resources
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
 		transactionType := getTransactionType(&accountPenalty, allowedTransactionsMap)
-		reason := reasonProvider.GetReason(&accountPenalty)
-		payableStatus := payableStatusProvider.GetPayableStatus(transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, allowedTransactionsMap, cfg)
+		reason := transactionListItemEnrichmentProviders.ReasonProvider.GetReason(&accountPenalty)
+		payableStatus := transactionListItemEnrichmentProviders.PayableStatusProvider.GetPayableStatus(transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, allowedTransactionsMap, cfg)
 		transactionListItem, err := buildTransactionListItemFromAccountPenalty(&accountPenalty, penaltyDetailsMap, penaltyRefType, transactionType, reason, payableStatus, requestId)
 		if err != nil {
 			return nil, err

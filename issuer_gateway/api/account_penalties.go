@@ -57,10 +57,12 @@ func AccountPenalties(params types.AccountPenaltiesParams) (*models.TransactionL
 
 	// Generate the CH preferred format of the results i.e. classify the transactions into
 	// payable "penalty" types or non-payable "other" types
-	reasonProvider := &private.DefaultReasonProvider{}
-	payableStatusProvider := &private.DefaultPayableStatusProvider{}
+	transactionListItemEnrichmentProviders := private.TransactionListItemEnrichmentProviders{
+		ReasonProvider:        &private.DefaultReasonProvider{},
+		PayableStatusProvider: &private.DefaultPayableStatusProvider{},
+	}
 	generatedTransactionListFromAccountPenalties, err :=
-		generateTransactionList(accountPenalties, penaltyRefType, penaltyDetailsMap, allowedTransactionsMap, cfg, requestId, reasonProvider, payableStatusProvider)
+		generateTransactionList(accountPenalties, penaltyRefType, penaltyDetailsMap, allowedTransactionsMap, cfg, requestId, transactionListItemEnrichmentProviders)
 	if err != nil {
 		err = fmt.Errorf("error generating transaction list from account penalties: [%v]", err)
 		log.ErrorC(requestId, err)
