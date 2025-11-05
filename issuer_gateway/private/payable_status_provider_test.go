@@ -1063,7 +1063,7 @@ func buildSanctionsFailedToVerifyIdentityTestAccountPenaltiesDataDao(isPaid bool
 		IsPaid:               isPaid,
 		TransactionType:      InvoiceTransactionType,
 		TransactionSubType:   SanctionsFailedToVerifyIdentityTransactionSubType,
-		TypeDescription:      "CS01                                    ",
+		TypeDescription:      "CS01 IDV                                ",
 		AccountStatus:        accountStatus,
 		DunningStatus:        dunningStatus,
 	})
