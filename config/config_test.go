@@ -175,6 +175,77 @@ func TestUnitSensitiveConfig(t *testing.T) {
 	})
 }
 
+func TestUnitGetPenaltyConfig(t *testing.T) {
+	Convey("Given the config data has not been loaded", t, func() {
+		Convey("When GetPenaltyTypesConfig is called", func() {
+			penaltyTypesConfig := GetPenaltyTypesConfig()
+			Convey("Then it should return nil", func() {
+				So(penaltyTypesConfig, ShouldBeNil)
+			})
+		})
+		Convey("When GetPayablePenaltiesConfig is called", func() {
+			payablePenaltiesConfig := GetPayablePenaltiesConfig()
+			Convey("Then it should return nil", func() {
+				So(payablePenaltiesConfig, ShouldBeNil)
+			})
+		})
+	})
+	Convey("Given the config data is loaded successfully", t, func() {
+		err := LoadPenaltyConfig()
+		if err != nil {
+			Convey("When GetPenaltyTypesConfig is called", func() {
+				penaltyTypesConfig := GetPenaltyTypesConfig()
+				Convey("Then it should not return nil", func() {
+					So(penaltyTypesConfig, ShouldNotBeNil)
+					So(len(penaltyTypesConfig), ShouldBeGreaterThan, 0)
+				})
+			})
+			Convey("When GetPayablePenaltiesConfig is called", func() {
+				payablePenaltiesConfig := GetPayablePenaltiesConfig()
+				Convey("Then it should not return nil", func() {
+					So(payablePenaltiesConfig, ShouldNotBeNil)
+					So(len(payablePenaltiesConfig), ShouldBeGreaterThan, 0)
+				})
+			})
+		}
+	})
+}
+
+func TestUnitLoadPenaltyConfig(t *testing.T) {
+	Convey("Given the main method tries to load the penalty configuration", t, func() {
+		Convey("When penalty types config and payable penalties config are valid yaml", func() {
+			err := LoadPenaltyConfig()
+			Convey("Then no error should be returned", func() {
+				So(err, ShouldBeNil)
+			})
+			Convey("And the penalty types config should be loaded", func() {
+				penaltyTypesConfig := GetPenaltyTypesConfig()
+				So(penaltyTypesConfig, ShouldNotBeNil)
+				So(len(penaltyTypesConfig), ShouldBeGreaterThan, 0)
+			})
+			Convey("And the payable penalties config should be loaded", func() {
+				payablePenaltiesConfig := GetPayablePenaltiesConfig()
+				So(payablePenaltiesConfig, ShouldNotBeNil)
+				So(len(payablePenaltiesConfig), ShouldBeGreaterThan, 0)
+			})
+		})
+		Convey("When penalty types config is not a valid yaml", func() {
+			financePenaltyTypes = []byte(`finance penalty types invalid_yaml`)
+			err := LoadPenaltyConfig()
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+			})
+		})
+		Convey("When payable penalties config is not a valid yaml", func() {
+			financePayablePenalties = []byte(`finance payable penalties invalid_yaml`)
+			err := LoadPenaltyConfig()
+			Convey("Then an error should be returned", func() {
+				So(err, ShouldNotBeNil)
+			})
+		})
+	})
+}
+
 func TestUnitLoadPenaltyDetails(t *testing.T) {
 	Convey("Given the main method tries to load the penalty details yaml file", t, func() {
 		Convey("When the file does not exist", func() {
