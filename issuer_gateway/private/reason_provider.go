@@ -3,6 +3,7 @@ package private
 import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
+	"github.com/companieshouse/penalty-payment-api/config"
 )
 
 const (
@@ -12,6 +13,8 @@ const (
 	SanctionsRoeFailureToUpdateReason     = "Failure to update the Register of Overseas Entities"
 	PenaltyReason                         = "Penalty"
 )
+
+var getPenaltyTypesConfig = config.GetPenaltyTypesConfig
 
 type ReasonProvider interface {
 	GetReason(transaction *models.AccountPenaltiesDataDao) string
@@ -34,14 +37,10 @@ func (provider *DefaultReasonProvider) GetReason(transaction *models.AccountPena
 }
 
 func getSanctionsReason(transaction *models.AccountPenaltiesDataDao) string {
-	switch transaction.TransactionSubType {
-	case SanctionsConfirmationStatementTransactionSubType:
-		return SanctionsConfirmationStatementReason
-	case SanctionsFailedToVerifyIdentityTransactionSubType:
-		return SanctionsFailedToVerifyIdentityReason
-	case SanctionsRoeFailureToUpdateTransactionSubType:
-		return SanctionsRoeFailureToUpdateReason
-	default:
-		return PenaltyReason
+	for _, penaltyTypeConfig := range getPenaltyTypesConfig() {
+		if penaltyTypeConfig.TransactionSubtype == transaction.TransactionSubType {
+			return penaltyTypeConfig.Reason
+		}
 	}
+	return PenaltyReason
 }

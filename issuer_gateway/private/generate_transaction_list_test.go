@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
@@ -216,6 +217,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 		penaltyRefType := utils.SanctionsPenaltyRefType
+		getPenaltyTypesConfig = mockGetPenaltyTypesConfig
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.SanctionsCompanyCode, SanctionsConfirmationStatementTransactionSubType, pen1DunningStatus, penaltyRefType, false)
 
@@ -476,4 +478,21 @@ func buildTestPenaltyDetailsMap(penaltyRefType string) *config.PenaltyDetailsMap
 	}
 
 	return &penaltyDetailsMap
+}
+
+func mockGetPenaltyTypesConfig() []finance_config.FinancePenaltyTypeConfig {
+	return []finance_config.FinancePenaltyTypeConfig{
+		{
+			TransactionSubtype: SanctionsConfirmationStatementTransactionSubType,
+			Reason:             SanctionsConfirmationStatementReason,
+		},
+		{
+			TransactionSubtype: SanctionsRoeFailureToUpdateTransactionSubType,
+			Reason:             SanctionsRoeFailureToUpdateReason,
+		},
+		{
+			TransactionSubtype: SanctionsFailedToVerifyIdentityTransactionSubType,
+			Reason:             SanctionsFailedToVerifyIdentityReason,
+		},
+	}
 }

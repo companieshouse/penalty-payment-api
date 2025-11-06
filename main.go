@@ -49,6 +49,12 @@ func main() {
 	prDaoService := dao.NewPayableResourcesDaoService(mongoClientProvider, cfg)
 	apDaoService := dao.NewAccountPenaltiesDaoService(mongoClientProvider, cfg)
 
+	err = config.LoadPenaltyConfig()
+	if err != nil {
+		log.Error(fmt.Errorf(exitErrorFormat, err), nil)
+		return
+	}
+
 	penaltyDetailsMap, err := config.LoadPenaltyDetails("assets/penalty_details.yml")
 	if err != nil {
 		log.Error(fmt.Errorf(exitErrorFormat, err), nil)
