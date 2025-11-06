@@ -3,13 +3,37 @@ package private
 import (
 	"testing"
 
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+const (
+	SanctionsConfirmationStatementReason  = "Failure to file a confirmation statement"
+	SanctionsFailedToVerifyIdentityReason = "Failure to file a confirmation statement and identity verification statements for all directors"
+	SanctionsRoeFailureToUpdateReason     = "Failure to update the Register of Overseas Entities"
+)
+
 func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 	Convey("Get reason", t, func() {
+		getPenaltyTypesConfig = func() []finance_config.FinancePenaltyTypeConfig {
+			return []finance_config.FinancePenaltyTypeConfig{
+				{
+					TransactionSubtype: SanctionsConfirmationStatementTransactionSubType,
+					Reason:             SanctionsConfirmationStatementReason,
+				},
+				{
+					TransactionSubtype: SanctionsRoeFailureToUpdateTransactionSubType,
+					Reason:             SanctionsRoeFailureToUpdateReason,
+				},
+				{
+					TransactionSubtype: SanctionsFailedToVerifyIdentityTransactionSubType,
+					Reason:             SanctionsFailedToVerifyIdentityReason,
+				},
+			}
+		}
+
 		type args struct {
 			penalty *models.AccountPenaltiesDataDao
 		}
