@@ -8,7 +8,7 @@ import (
 const (
 	LateFilingPenaltyReason               = "Late filing of accounts"
 	SanctionsConfirmationStatementReason  = "Failure to file a confirmation statement"
-	SanctionsFailedToVerifyIdentityReason = "Failed to verify identity"
+	SanctionsFailedToVerifyIdentityReason = "Failure to file a confirmation statement and identity verification statements for all directors"
 	SanctionsRoeFailureToUpdateReason     = "Failure to update the Register of Overseas Entities"
 	PenaltyReason                         = "Penalty"
 )
