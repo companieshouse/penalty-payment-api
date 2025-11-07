@@ -737,6 +737,52 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 		}
 	})
 
+	Convey("Get closed instalment plan payable status for Late filing penalty with associated instalment plan", t, func() {
+		// Given
+		lateFilingPaidPenalty := buildPaidPenaltyTransaction("A3784631", "2025-05-02", "2024-12-31", 3000, "2025-05-02")
+		e5Transactions := []models.AccountPenaltiesDataDao{
+			buildInstalmentTransaction("A3784631-001", "2025-07-23", "2024-12-31", 300, "2024-08-26"),
+			buildInstalmentTransaction("A3784631-002", "2025-07-23", "2024-12-31", 300, "2024-09-26"),
+			buildInstalmentTransaction("A3784631-003", "2025-07-23", "2024-12-31", 300, "2024-10-26"),
+			buildInstalmentTransaction("A3784631-004", "2025-07-23", "2024-12-31", 300, "2024-11-26"),
+			buildInstalmentTransaction("A3784631-005", "2025-07-23", "2024-12-31", 300, "2024-12-26"),
+			lateFilingPaidPenalty,
+			buildInstalmentPlanTransaction("A3784631", "2025-07-23", "2024-12-31", 3000, "2025-07-23"),
+			buildInstalmentTransaction("A3784631-006", "2025-07-23", "2024-12-31", 125, "2025-01-26"),
+			buildPlanAdjustmentTransaction("A3784631", "2025-10-29", "2024-12-31", -1625, "2025-10-29"),
+		}
+
+		// When
+		provider := &DefaultPayableStatusProvider{}
+		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, allowedTransactionMap, &cfg)
+
+		// Then
+		So(got, ShouldEqual, ClosedInstalmentPlanPayableStatus)
+	})
+
+	Convey("Get closed payable status for Late filing penalty without an associated instalment plan", t, func() {
+		// Given
+		lateFilingPaidPenalty := buildPaidPenaltyTransaction("A3784631", "2025-05-02", "2024-12-31", 3000, "2025-05-02")
+		e5Transactions := []models.AccountPenaltiesDataDao{
+			buildInstalmentTransaction("A7138463-001", "2024-07-23", "2023-12-31", 300, "2023-08-26"),
+			buildInstalmentTransaction("A7138463-002", "2024-07-23", "2023-12-31", 300, "2023-09-26"),
+			buildInstalmentTransaction("A7138463-003", "2024-07-23", "2023-12-31", 300, "2023-10-26"),
+			buildInstalmentTransaction("A7138463-004", "2024-07-23", "2023-12-31", 300, "2023-11-26"),
+			buildInstalmentTransaction("A7138463-005", "2024-07-23", "2023-12-31", 300, "2023-12-26"),
+			lateFilingPaidPenalty,
+			buildInstalmentPlanTransaction("A7138463", "2024-07-23", "2023-12-31", 3000, "2024-07-23"),
+			buildInstalmentTransaction("A7138463-006", "2024-07-23", "2023-12-31", 125, "2024-01-26"),
+			buildPlanAdjustmentTransaction("A7138463", "2024-10-29", "2023-12-31", -1625, "2024-10-29"),
+		}
+
+		// When
+		provider := &DefaultPayableStatusProvider{}
+		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, allowedTransactionMap, &cfg)
+
+		// Then
+		So(got, ShouldEqual, ClosedPayableStatus)
+	})
+
 	Convey("Get closed payable status for an existing paid penalty from E5 in the same account as a newly paid penalty", t, func() {
 		oldPaidPenalty := buildSanctionsRoeTestAccountPenaltiesDataDao(true, 0, CHSAccountStatus,
 			addTrailingSpacesToDunningStatus(PEN1DunningStatus))
@@ -1088,4 +1134,84 @@ func buildSanctionsRoeTestAccountPenaltiesDataDao(isPaid bool, outstandingAmount
 	})
 
 	return &dataDao
+}
+
+func buildInstalmentTransaction(transactionReference string, transactionDate string, madeUpDate string, amount float64, dueDate string) models.AccountPenaltiesDataDao {
+	return models.AccountPenaltiesDataDao{
+		CompanyCode:          "LP",
+		LedgerCode:           "EW",
+		CustomerCode:         "12345678",
+		TransactionReference: transactionReference,
+		TransactionDate:      transactionDate,
+		MadeUpDate:           madeUpDate,
+		Amount:               amount,
+		OutstandingAmount:    0,
+		IsPaid:               true,
+		TransactionType:      "1",
+		TransactionSubType:   "I1",
+		TypeDescription:      "Instalment                              ",
+		DueDate:              dueDate,
+		AccountStatus:        "CHS",
+		DunningStatus:        "IPEN1       ",
+	}
+}
+
+func buildPaidPenaltyTransaction(transactionReference string, transactionDate string, madeUpDate string, amount float64, dueDate string) models.AccountPenaltiesDataDao {
+	return models.AccountPenaltiesDataDao{
+		CompanyCode:          "LP",
+		LedgerCode:           "EW",
+		CustomerCode:         "12345678",
+		TransactionReference: transactionReference,
+		TransactionDate:      transactionDate,
+		MadeUpDate:           madeUpDate,
+		Amount:               amount,
+		OutstandingAmount:    0,
+		IsPaid:               true,
+		TransactionType:      "1",
+		TransactionSubType:   "EL",
+		TypeDescription:      "Double DBL LTD E&W> 6 MNTHS   DLTWD     ",
+		DueDate:              dueDate,
+		AccountStatus:        "CHS",
+		DunningStatus:        "PEN2        ",
+	}
+}
+
+func buildInstalmentPlanTransaction(transactionReference string, transactionDate string, madeUpDate string, amount float64, dueDate string) models.AccountPenaltiesDataDao {
+	return models.AccountPenaltiesDataDao{
+		CompanyCode:          "LP",
+		LedgerCode:           "EW",
+		CustomerCode:         "12345678",
+		TransactionReference: transactionReference,
+		TransactionDate:      transactionDate,
+		MadeUpDate:           madeUpDate,
+		Amount:               amount,
+		OutstandingAmount:    0,
+		IsPaid:               true,
+		TransactionType:      "P",
+		TransactionSubType:   "00",
+		TypeDescription:      "Instalment Plan                         ",
+		DueDate:              dueDate,
+		AccountStatus:        "CHS",
+		DunningStatus:        "            ",
+	}
+}
+
+func buildPlanAdjustmentTransaction(transactionReference string, transactionDate string, madeUpDate string, amount float64, dueDate string) models.AccountPenaltiesDataDao {
+	return models.AccountPenaltiesDataDao{
+		CompanyCode:          "LP",
+		LedgerCode:           "EW",
+		CustomerCode:         "12345678",
+		TransactionReference: transactionReference,
+		TransactionDate:      transactionDate,
+		MadeUpDate:           madeUpDate,
+		Amount:               amount,
+		OutstandingAmount:    0,
+		IsPaid:               true,
+		TransactionType:      "7",
+		TransactionSubType:   "08",
+		TypeDescription:      "Plan Adjustment                         ",
+		DueDate:              dueDate,
+		AccountStatus:        "CHS",
+		DunningStatus:        "            ",
+	}
 }

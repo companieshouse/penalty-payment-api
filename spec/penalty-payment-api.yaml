@@ -3,7 +3,7 @@ info:
   title: Penalty Payment API
   description: An API for retrieving penalties from the E5 finance system and recording
     / viewing penalty payments
-  version: 1.4.0
+  version: 1.5.0
 servers:
   - url: https://api.companieshouse.gov.uk/
 tags:
@@ -397,21 +397,17 @@ components:
           type: string
           enum:
             - penalty
-            - double-penalty
-            - court-costs
             - other
         reason:
           type: string
-          enum:
-            - Late filing of accounts
-            - Failure to file a confirmation statement
-            - Penalty
+          example: Late filing of accounts
         payable_status:
           type: string
           enum:
             - OPEN
             - CLOSED
             - CLOSED_PENDING_ALLOCATION
+            - CLOSED_INSTALMENT_PLAN
             - DISABLED
     PaymentDetails:
       title: PaymentDetails
