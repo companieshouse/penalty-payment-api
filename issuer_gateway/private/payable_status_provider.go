@@ -15,6 +15,7 @@ const (
 	DisabledPayableStatus                = "DISABLED"
 	ClosedPayableStatus                  = "CLOSED"
 	ClosedPendingAllocationPayableStatus = "CLOSED_PENDING_ALLOCATION"
+	ClosedInstalmentPlanPayableStatus    = "CLOSED_INSTALMENT_PLAN"
 )
 
 type PayableStatusProvider interface {
@@ -52,11 +53,29 @@ func checkClosedPayableStatus(penalty *models.AccountPenaltiesDataDao, closedAt 
 		return ClosedPendingAllocationPayableStatus, true
 	}
 
+	if checkClosedInstalmentPlanPayableStatus(penalty, e5Transactions) {
+		return ClosedInstalmentPlanPayableStatus, true
+	}
+
 	if penalty.IsPaid || penalty.OutstandingAmount <= 0 || checkDunningStatus(penalty, DCADunningStatus) ||
 		len(getUnpaidCosts(penalty, e5Transactions, allowedTransactionsMap)) > 0 {
 		return ClosedPayableStatus, true
 	}
 	return "", false
+}
+
+func checkClosedInstalmentPlanPayableStatus(penalty *models.AccountPenaltiesDataDao, e5Transactions []models.AccountPenaltiesDataDao) bool {
+	for _, e5Transaction := range e5Transactions {
+		if isInstalmentPlanTransaction(penalty, e5Transaction) {
+			return true
+		}
+	}
+	return false
+}
+
+func isInstalmentPlanTransaction(penalty *models.AccountPenaltiesDataDao, e5Transaction models.AccountPenaltiesDataDao) bool {
+	return e5Transaction.MadeUpDate == penalty.MadeUpDate &&
+		(e5Transaction.TransactionType == "P" && e5Transaction.TransactionSubType == "00")
 }
 
 func getUnpaidCosts(penalty *models.AccountPenaltiesDataDao, e5Transactions []models.AccountPenaltiesDataDao,
