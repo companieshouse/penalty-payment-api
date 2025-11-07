@@ -34,8 +34,7 @@ func (provider *DefaultReasonProvider) GetReason(transaction *models.AccountPena
 }
 
 func getSanctionsReason(transaction *models.AccountPenaltiesDataDao) string {
-	penaltyTypesConfig := getPenaltyTypesConfig()
-	for _, penaltyTypeConfig := range penaltyTypesConfig {
+	for _, penaltyTypeConfig := range getPenaltyTypesConfig() {
 		if penaltyTypeConfig.TransactionSubtype == transaction.TransactionSubType {
 			return penaltyTypeConfig.Reason
 		}
