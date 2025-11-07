@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -237,6 +238,7 @@ func TestUnitLoadPenaltyConfig(t *testing.T) {
 			})
 		})
 		Convey("When payable penalties config is not a valid yaml", func() {
+			financePenaltyTypes = finance_config.FinancePenaltyTypes
 			financePayablePenalties = []byte(`finance payable penalties invalid_yaml`)
 			err := LoadPenaltyConfig()
 			Convey("Then an error should be returned", func() {
