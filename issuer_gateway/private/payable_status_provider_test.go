@@ -783,6 +783,36 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 		So(got, ShouldEqual, ClosedPayableStatus)
 	})
 
+	Convey("Get closed pen strategy exhausted payable status for Late filing penalty with associated penalty write off", t, func() {
+		// Given
+		lateFilingPaidPenalty := buildPaidPenaltyTransaction("A3137684", "2022-10-05", "2021-10-31", 750, "2022-10-05")
+		e5Transactions := []models.AccountPenaltiesDataDao{
+			buildExhaustedWriteOffTransaction("EXHAUSTED WRITE", "2024-03-20", "2021-10-31", -750, "2024-03-20"),
+		}
+
+		// When
+		provider := &DefaultPayableStatusProvider{}
+		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, allowedTransactionMap, &cfg)
+
+		// Then
+		So(got, ShouldEqual, ClosedPenStrategyExhaustedPayableStatus)
+	})
+
+	Convey("Get closed payable status for Late filing penalty without an associated penalty write off", t, func() {
+		// Given
+		lateFilingPaidPenalty := buildPaidPenaltyTransaction("A3137684", "2022-10-05", "2021-10-31", 750, "2022-10-05")
+		e5Transactions := []models.AccountPenaltiesDataDao{
+			buildExhaustedWriteOffTransaction("EXHAUSTED WRITE", "2024-03-20", "2023-10-31", -750, "2024-03-20"),
+		}
+
+		// When
+		provider := &DefaultPayableStatusProvider{}
+		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, allowedTransactionMap, &cfg)
+
+		// Then
+		So(got, ShouldEqual, ClosedPayableStatus)
+	})
+
 	Convey("Get closed payable status for an existing paid penalty from E5 in the same account as a newly paid penalty", t, func() {
 		oldPaidPenalty := buildSanctionsRoeTestAccountPenaltiesDataDao(true, 0, CHSAccountStatus,
 			addTrailingSpacesToDunningStatus(PEN1DunningStatus))
@@ -1096,6 +1126,26 @@ func buildSanctionsConfirmationStatementTestAccountPenaltiesDataDao(isPaid bool,
 	})
 
 	return &dataDao
+}
+
+func buildExhaustedWriteOffTransaction(transactionReference string, transactionDate string, madeUpDate string, amount float64, dueDate string) models.AccountPenaltiesDataDao {
+	return models.AccountPenaltiesDataDao{
+		CompanyCode:          "LP",
+		LedgerCode:           "EW",
+		CustomerCode:         "12345678",
+		TransactionReference: transactionReference,
+		TransactionDate:      transactionDate,
+		MadeUpDate:           madeUpDate,
+		Amount:               amount,
+		OutstandingAmount:    0,
+		IsPaid:               true,
+		TransactionType:      "4",
+		TransactionSubType:   "82",
+		TypeDescription:      "W/PEN STRATEGY EXHAUSTED                ",
+		DueDate:              dueDate,
+		AccountStatus:        "CHS",
+		DunningStatus:        "DCA         ",
+	}
 }
 
 func buildSanctionsFailedToVerifyIdentityTestAccountPenaltiesDataDao(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
