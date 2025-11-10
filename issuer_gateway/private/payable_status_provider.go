@@ -11,11 +11,12 @@ import (
 )
 
 const (
-	OpenPayableStatus                    = "OPEN"
-	DisabledPayableStatus                = "DISABLED"
-	ClosedPayableStatus                  = "CLOSED"
-	ClosedPendingAllocationPayableStatus = "CLOSED_PENDING_ALLOCATION"
-	ClosedInstalmentPlanPayableStatus    = "CLOSED_INSTALMENT_PLAN"
+	OpenPayableStatus                       = "OPEN"
+	DisabledPayableStatus                   = "DISABLED"
+	ClosedPayableStatus                     = "CLOSED"
+	ClosedPendingAllocationPayableStatus    = "CLOSED_PENDING_ALLOCATION"
+	ClosedInstalmentPlanPayableStatus       = "CLOSED_INSTALMENT_PLAN"
+	ClosedPenStrategyExhaustedPayableStatus = "CLOSED_PEN_STRATEGY_EXHAUSTED"
 )
 
 type PayableStatusProvider interface {
@@ -57,6 +58,10 @@ func checkClosedPayableStatus(penalty *models.AccountPenaltiesDataDao, closedAt 
 		return ClosedInstalmentPlanPayableStatus, true
 	}
 
+	if checkClosedPenStrategyExhaustedPayableStatus(penalty, e5Transactions) {
+		return ClosedPenStrategyExhaustedPayableStatus, true
+	}
+
 	if penalty.IsPaid || penalty.OutstandingAmount <= 0 || checkDunningStatus(penalty, DCADunningStatus) ||
 		len(getUnpaidCosts(penalty, e5Transactions, allowedTransactionsMap)) > 0 {
 		return ClosedPayableStatus, true
@@ -76,6 +81,20 @@ func checkClosedInstalmentPlanPayableStatus(penalty *models.AccountPenaltiesData
 func isInstalmentPlanTransaction(penalty *models.AccountPenaltiesDataDao, e5Transaction models.AccountPenaltiesDataDao) bool {
 	return e5Transaction.MadeUpDate == penalty.MadeUpDate &&
 		(e5Transaction.TransactionType == "P" && e5Transaction.TransactionSubType == "00")
+}
+
+func checkClosedPenStrategyExhaustedPayableStatus(penalty *models.AccountPenaltiesDataDao, e5Transactions []models.AccountPenaltiesDataDao) bool {
+	for _, e5Transaction := range e5Transactions {
+		if isExhaustedWriteOffTransaction(penalty, e5Transaction) {
+			return true
+		}
+	}
+	return false
+}
+
+func isExhaustedWriteOffTransaction(penalty *models.AccountPenaltiesDataDao, e5Transaction models.AccountPenaltiesDataDao) bool {
+	return e5Transaction.MadeUpDate == penalty.MadeUpDate &&
+		(e5Transaction.TransactionType == "4" && e5Transaction.TransactionSubType == "82")
 }
 
 func getUnpaidCosts(penalty *models.AccountPenaltiesDataDao, e5Transactions []models.AccountPenaltiesDataDao,
