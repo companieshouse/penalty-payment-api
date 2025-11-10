@@ -408,6 +408,7 @@ components:
             - CLOSED
             - CLOSED_PENDING_ALLOCATION
             - CLOSED_INSTALMENT_PLAN
+            - CLOSED_PEN_STRATEGY_EXHAUSTED
             - DISABLED
     PaymentDetails:
       title: PaymentDetails

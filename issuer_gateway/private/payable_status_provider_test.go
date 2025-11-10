@@ -783,11 +783,11 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 		So(got, ShouldEqual, ClosedPayableStatus)
 	})
 
-	Convey("Get closed instalment plan payable status for Late filing penalty with associated instalment plan", t, func() {
+	Convey("Get closed pen strategy exhausted payable status for Late filing penalty with associated penalty write off", t, func() {
 		// Given
-		lateFilingPaidPenalty := buildPaidPenaltyTransaction("A3784631", "2025-05-02", "2024-12-31", 3000, "2025-05-02")
+		lateFilingPaidPenalty := buildPaidPenaltyTransaction("A3137684", "2022-10-05", "2021-10-31", 750, "2022-10-05")
 		e5Transactions := []models.AccountPenaltiesDataDao{
-			buildExhaustedWriteOffTransaction("A3784631-001", "2025-07-23", "2024-12-31", 300, "2024-08-26"),
+			buildExhaustedWriteOffTransaction("EXHAUSTED WRITE", "2024-03-20", "2021-10-31", -750, "2024-03-20"),
 		}
 
 		// When
@@ -796,6 +796,21 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 
 		// Then
 		So(got, ShouldEqual, ClosedPenStrategyExhaustedPayableStatus)
+	})
+
+	Convey("Get closed payable status for Late filing penalty without an associated penalty write off", t, func() {
+		// Given
+		lateFilingPaidPenalty := buildPaidPenaltyTransaction("A3137684", "2022-10-05", "2021-10-31", 750, "2022-10-05")
+		e5Transactions := []models.AccountPenaltiesDataDao{
+			buildExhaustedWriteOffTransaction("EXHAUSTED WRITE", "2024-03-20", "2023-10-31", -750, "2024-03-20"),
+		}
+
+		// When
+		provider := &DefaultPayableStatusProvider{}
+		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, allowedTransactionMap, &cfg)
+
+		// Then
+		So(got, ShouldEqual, ClosedPayableStatus)
 	})
 
 	Convey("Get closed payable status for an existing paid penalty from E5 in the same account as a newly paid penalty", t, func() {
