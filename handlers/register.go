@@ -53,6 +53,9 @@ func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.Payab
 	mainRouter.HandleFunc("/penalty-payment-api/healthcheck", healthCheck).Methods(http.MethodGet).Name("healthcheck")
 	mainRouter.HandleFunc("/penalty-payment-api/healthcheck/finance-system", HandleHealthCheckFinanceSystem).Methods(http.MethodGet).Name("healthcheck-finance-system")
 
+	configProvider := config.NewConfigurationProvider()
+	mainRouter.HandleFunc("/penalty-payment-api/configuration", HandleConfiguration(configProvider)).Methods(http.MethodGet).Name("configuration")
+
 	appRouter := mainRouter.PathPrefix("/company/{customer_code}").Subrouter()
 	appRouter.HandleFunc("/penalties/late-filing", HandleGetPenalties(apDaoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties-legacy")
 	appRouter.HandleFunc("/penalties/{penalty_reference_type}", HandleGetPenalties(apDaoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties")

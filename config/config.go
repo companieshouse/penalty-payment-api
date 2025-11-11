@@ -98,6 +98,11 @@ func LoadPenaltyConfig() error {
 	return nil
 }
 
+type PenaltyConfigProvider interface {
+	GetPenaltyTypesConfig() []finance_config.FinancePenaltyTypeConfig
+	GetPayablePenaltiesConfig() []finance_config.FinancePayablePenaltyConfig
+}
+
 func GetPayablePenaltiesConfig() []finance_config.FinancePayablePenaltyConfig {
 	return penaltyConfig.PayablePenaltiesConfig
 }

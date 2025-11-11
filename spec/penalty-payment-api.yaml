@@ -52,6 +52,33 @@ paths:
                   $ref: '#/components/schemas/PenaltyReferenceType'
         "500":
           description: There was a problem accessing configuration data
+  /penalty-payment-api/configuration:
+    get:
+      tags:
+        - Penalty Configuration
+      description: Returns configuration data based on the provided query parameter `type`
+      operationId: get-penalty-configuration
+      parameters:
+        - name: type
+          in: query
+          required: true
+          description: The type of configuration to retrieve
+          schema:
+            type: string
+            enum:
+              - penaltyTypesConfig
+              - payablePenaltiesConfig
+      responses:
+        "200":
+          description: Configuration data for the requested type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigResponse'
+        "400":
+          description: Bad request - Invalid input
+        "500":
+          description: There was a problem handling your request
   /company/{company_number}/penalties/late-filing:
     get:
       tags:
@@ -560,3 +587,95 @@ components:
           type: string
         reference_type:
           type: string
+    ConfigResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "payablePenaltiesConfig"
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/PenaltyTypeConfig'
+            - $ref: '#/components/schemas/PayablePenaltyConfig'
+    PenaltyTypeConfig:
+      type: object
+      properties:
+        TransactionType:
+          type: string
+          example: "1"
+        TransactionSubtype:
+          type: string
+          example: "C1"
+        Description:
+          type: string
+          example: "Late Filing Penalty"
+        Disabled:
+          type: boolean
+          example: false
+        Reason:
+          type: string
+          example: "Late filing of accounts"
+    PayablePenaltyConfig:
+      type: object
+      properties:
+        EmailSend:
+          type: object
+          properties:
+            AppId:
+              type: string
+              example: "1"
+            MessageType:
+              type: string
+              example: "payment-reminder"
+        FinancePayment:
+          type: object
+          properties:
+            CompanyCode:
+              type: string
+              example: "LFP"
+            TransactionType:
+              type: string
+              example: "1"
+        PaymentCost:
+          type: object
+          properties:
+            ClassOfPayment:
+              type: string
+              example: "penalty-lfp"
+            Description:
+              type: string
+              example: "Late Filing Penalty"
+            DescriptionId:
+              type: string
+              example: "Late Filing Penalty"
+        Penalty:
+          type: object
+          properties:
+            Reason:
+              type: string
+              example: "Late filing of accounts"
+            EnabledFrom:
+              type: string
+              format: date-time
+              example: "2025-11-06T13:58:02Z"
+            EnabledTo:
+              type: string
+              format: date-time
+              example: "2025-11-06T14:58:02Z"
+        Id:
+          type: string
+          example: "1"
+        CreatedAt:
+          type: string
+          format: date-time
+          example: "2025-11-06T13:58:02Z"
+        CreatedBy:
+          type: string
+          example: "admin"
+        UpdatedAt:
+          type: string
+          format: date-time
+          example: "2025-11-06T13:58:02Z"
+        UpdatedBy:
+          type: string
+          example: "admin"
