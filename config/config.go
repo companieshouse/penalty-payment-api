@@ -9,7 +9,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/companieshouse/gofigure"
-	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 )
 
@@ -68,42 +67,6 @@ type PenaltyDetails struct {
 	ProductType        string `yaml:"ProductType"`
 	EmailReceivedAppId string `yaml:"EmailReceivedAppId"`
 	EmailMsgType       string `yaml:"EmailMsgType"`
-}
-
-type PenaltyConfig struct {
-	PenaltyTypesConfig     []finance_config.FinancePenaltyTypeConfig
-	PayablePenaltiesConfig []finance_config.FinancePayablePenaltyConfig
-}
-
-var penaltyConfig PenaltyConfig
-var financePenaltyTypes = finance_config.FinancePenaltyTypes
-var financePayablePenalties = finance_config.FinancePayablePenalties
-
-func LoadPenaltyConfig() error {
-	var financePenaltyTypesConfig finance_config.FinancePenaltyTypesConfig
-	var financePayablePenaltiesConfig finance_config.FinancePayablePenaltiesConfig
-
-	err := yaml.Unmarshal(financePenaltyTypes, &financePenaltyTypesConfig)
-	if err != nil {
-		return err
-	}
-	err = yaml.Unmarshal(financePayablePenalties, &financePayablePenaltiesConfig)
-	if err != nil {
-		return err
-	}
-
-	penaltyConfig.PenaltyTypesConfig = financePenaltyTypesConfig.FinancePenaltyTypes
-	penaltyConfig.PayablePenaltiesConfig = financePayablePenaltiesConfig.FinancePayablePenalties
-
-	return nil
-}
-
-func GetPayablePenaltiesConfig() []finance_config.FinancePayablePenaltyConfig {
-	return penaltyConfig.PayablePenaltiesConfig
-}
-
-func GetPenaltyTypesConfig() []finance_config.FinancePenaltyTypeConfig {
-	return penaltyConfig.PenaltyTypesConfig
 }
 
 // Get returns a pointer to a Config instance
