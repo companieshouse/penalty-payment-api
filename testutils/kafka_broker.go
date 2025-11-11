@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
 	"github.com/companieshouse/chs.go/log"
+	"github.com/google/uuid"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -22,8 +22,8 @@ type kafkaContainer struct {
 }
 
 func NewKafkaContainer() StoppableContainer {
-	KafkaNetworkName := fmt.Sprintf("kafka-network-%d", time.Now().UnixNano())
-	kafkaNetwork := createNetwork(KafkaNetworkName)
+	kafkaNetworkName := fmt.Sprintf("kafka-network-%s", uuid.NewString())
+	kafkaNetwork := createNetwork(kafkaNetworkName)
 
 	return &kafkaContainer{
 		network: kafkaNetwork,
@@ -35,7 +35,7 @@ func NewKafkaContainer() StoppableContainer {
 				Env: map[string]string{
 					"ALLOW_ANONYMOUS_LOGIN": "YES",
 				},
-				Networks: []string{KafkaNetworkName},
+				Networks: []string{kafkaNetworkName},
 				Name:     "zookeeper",
 			},
 		},
@@ -57,7 +57,7 @@ func NewKafkaContainer() StoppableContainer {
 					"BITNAMI_DEBUG":                            "true",
 				},
 				Cmd:      []string{},
-				Networks: []string{KafkaNetworkName},
+				Networks: []string{kafkaNetworkName},
 			},
 		},
 	}
