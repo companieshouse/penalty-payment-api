@@ -61,7 +61,6 @@ func TestIntegrationConsume(t *testing.T) {
 
 	// Start Kafka container
 	kafkaContainer := testutils.NewKafkaContainer()
-	kafkaContainer.Stop()
 	kafkaContainer.Start()
 	defer kafkaContainer.Stop()
 
