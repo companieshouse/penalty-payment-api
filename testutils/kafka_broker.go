@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/testcontainers/testcontainers-go"
@@ -21,7 +22,7 @@ type kafkaContainer struct {
 }
 
 func NewKafkaContainer() StoppableContainer {
-	const KafkaNetworkName = "kafka-network"
+	KafkaNetworkName := fmt.Sprintf("kafka-network-%d", time.Now().UnixNano())
 	kafkaNetwork := createNetwork(KafkaNetworkName)
 
 	return &kafkaContainer{
