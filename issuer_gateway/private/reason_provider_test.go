@@ -37,7 +37,7 @@ func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 				want: SanctionsConfirmationStatementReason,
 			},
 			{
-				name: "Failure to file a confirmation statement and identity verification statements for all directors",
+				name: "Failure to deliver a confirmation statement together with the verification statement(s)",
 				args: args{penalty: &models.AccountPenaltiesDataDao{
 					CompanyCode:        utils.SanctionsCompanyCode,
 					TransactionType:    InvoiceTransactionType,
