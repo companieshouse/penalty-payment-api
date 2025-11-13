@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/finance_config"
@@ -29,9 +30,16 @@ func HandleConfiguration(cfg config.PenaltyConfigProvider) http.HandlerFunc {
 
 		// Loop through the original slice
 		for _, p := range cfg.GetPayablePenaltiesConfig() {
-			// Add each struct to the new slice
 			penaltyValue := *p.Penalty
-			response = append(response, penaltyValue)
+			now := time.Now()
+
+			enabledFrom := penaltyValue.EnabledFrom
+			enabledTo := penaltyValue.EnabledTo
+
+			if (enabledFrom != nil && now.After(*enabledFrom)) &&
+				(enabledTo == nil || now.Before(*enabledTo)) {
+				response = append(response, penaltyValue)
+			}
 		}
 
 		// Encode response as JSON
