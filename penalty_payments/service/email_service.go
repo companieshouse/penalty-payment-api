@@ -19,7 +19,7 @@ import (
 
 // SendEmailKafkaMessage sends a kafka message to the email-sender to send an email
 func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
+	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService, configProvider config.PenaltyConfigProvider) error {
 	cfg, err := getConfig()
 	requestId := log.Context(req)
 	if err != nil {
@@ -57,7 +57,7 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 
 	log.InfoC(requestId, "preparing email send message", logContext)
 	message, err := prepareEmailKafkaMessage(
-		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc, topic)
+		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc, topic, configProvider)
 	if err != nil {
 		err = fmt.Errorf("error preparing email send kafka message with schema: [%v]", err)
 		return err
@@ -86,8 +86,9 @@ func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Req
 }
 
 // prepareEmailKafkaMessage generates the kafka message that is to be sent
-func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService, topic string) (*producer.Message, error) {
+func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource,
+	req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap,
+	apDaoSvc dao.AccountPenaltiesDaoService, topic string, configProvider config.PenaltyConfigProvider) (*producer.Message, error) {
 	cfg, err := getConfig()
 	if err != nil {
 		err = fmt.Errorf("error getting config: [%v]", err)
@@ -127,7 +128,7 @@ func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource model
 		AccountPenaltiesDaoService: apDaoSvc,
 		RequestId:                  "",
 	}
-	payablePenalty, err := getPayablePenalty(params)
+	payablePenalty, err := getPayablePenalty(params, configProvider)
 	if err != nil {
 		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)
 		return nil, err

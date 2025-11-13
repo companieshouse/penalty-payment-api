@@ -22,7 +22,7 @@ var payablePenalty = api.PayablePenalty
 
 // CreatePayableResourceHandler takes a http requests and creates a new payable resource
 func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
-	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
+	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionMap *models.AllowedTransactionMap, configProvider config.PenaltyConfigProvider) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestId := log.Context(r)
 		log.InfoC(requestId, "start POST payable resource request")
@@ -58,7 +58,7 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 			AllowedTransactionsMap: allowedTransactionMap,
 		}
 
-		payablePenalties, err := validateTransactions(request.Transactions, validationCtx)
+		payablePenalties, err := validateTransactions(request.Transactions, validationCtx, configProvider)
 		if err != nil {
 			log.ErrorC(requestId, errors.New("invalid request - failed matching against e5"))
 			utils.WriteJSONWithStatus(w, r, models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time"), http.StatusBadRequest)
@@ -143,7 +143,7 @@ type validationContext struct {
 }
 
 // validateTransactions ensures the transactions are valid payable penalties that exist in E5
-func validateTransactions(transactions []models.TransactionItem, validationCtx validationContext) ([]models.TransactionItem, error) {
+func validateTransactions(transactions []models.TransactionItem, validationCtx validationContext, configProvider config.PenaltyConfigProvider) ([]models.TransactionItem, error) {
 	var payablePenalties []models.TransactionItem
 	for _, transaction := range transactions {
 		params := types.PayablePenaltyParams{
@@ -156,7 +156,7 @@ func validateTransactions(transactions []models.TransactionItem, validationCtx v
 			AccountPenaltiesDaoService: validationCtx.AccountPenaltiesDao,
 			RequestId:                  validationCtx.RequestID,
 		}
-		payablePenalty, err := payablePenalty(params)
+		payablePenalty, err := payablePenalty(params, configProvider)
 		if err != nil {
 			return nil, err
 		}

@@ -20,7 +20,7 @@ var accountPenalties = api.AccountPenalties
 
 // HandleGetPenalties retrieves the penalty details for the supplied customer code from e5
 func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
+	allowedTransactionsMap *models.AllowedTransactionMap, configProvider config.PenaltyConfigProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestId := log.Context(req)
 		log.InfoC(requestId, "start GET penalties request")
@@ -51,7 +51,7 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 			AccountPenaltiesDaoService: apDaoSvc,
 			RequestId:                  requestId,
 		}
-		transactionListResponse, responseType, err := accountPenalties(params)
+		transactionListResponse, responseType, err := accountPenalties(params, configProvider)
 
 		if err != nil {
 			log.ErrorC(requestId, fmt.Errorf("error calling e5 to get transactions: %v", err))

@@ -2,16 +2,18 @@ package config
 
 import "github.com/companieshouse/penalty-payment-api-core/finance_config"
 
-type ConfigurationProvider struct{}
+type ConfigurationProvider struct {
+	penaltyConfig *PenaltyConfig
+}
 
-func NewConfigurationProvider() PenaltyConfigProvider {
-	return &ConfigurationProvider{}
+func NewConfigurationProvider(cfg *PenaltyConfig) PenaltyConfigProvider {
+	return &ConfigurationProvider{penaltyConfig: cfg}
 }
 
 func (r *ConfigurationProvider) GetPenaltyTypesConfig() []finance_config.FinancePenaltyTypeConfig {
-	return penaltyConfig.PenaltyTypesConfig
+	return r.penaltyConfig.PenaltyTypesConfig
 }
 
 func (r *ConfigurationProvider) GetPayablePenaltiesConfig() []finance_config.FinancePayablePenaltyConfig {
-	return penaltyConfig.PayablePenaltiesConfig
+	return r.penaltyConfig.PayablePenaltiesConfig
 }

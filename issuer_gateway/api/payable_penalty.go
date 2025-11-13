@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 )
@@ -10,7 +11,7 @@ import (
 var getAccountPenalties = AccountPenalties
 var getMatchingPenalty = private.MatchPenalty
 
-func PayablePenalty(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
+func PayablePenalty(params types.PayablePenaltyParams, configProvider config.PenaltyConfigProvider) (*models.TransactionItem, error) {
 	penaltyRefType := params.PenaltyRefType
 	customerCode := params.CustomerCode
 	companyCode := params.CompanyCode
@@ -29,7 +30,7 @@ func PayablePenalty(params types.PayablePenaltyParams) (*models.TransactionItem,
 		AccountPenaltiesDaoService: apDaoSvc,
 		RequestId:                  requestId,
 	}
-	response, _, err := getAccountPenalties(accountPenaltiesParams)
+	response, _, err := getAccountPenalties(accountPenaltiesParams, configProvider)
 	if err != nil {
 		log.ErrorC(requestId, err)
 		return nil, err

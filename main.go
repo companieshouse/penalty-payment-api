@@ -49,7 +49,7 @@ func main() {
 	prDaoService := dao.NewPayableResourcesDaoService(mongoClientProvider, cfg)
 	apDaoService := dao.NewAccountPenaltiesDaoService(mongoClientProvider, cfg)
 
-	err = config.LoadPenaltyConfig()
+	penaltyConfig, err := config.LoadPenaltyConfig()
 	if err != nil {
 		log.Error(fmt.Errorf(exitErrorFormat, err), nil)
 		return
@@ -67,7 +67,7 @@ func main() {
 		return
 	}
 
-	handlers.Register(mainRouter, cfg, prDaoService, apDaoService, penaltyDetailsMap, allowedTransactionsMap)
+	handlers.Register(mainRouter, cfg, prDaoService, apDaoService, penaltyDetailsMap, allowedTransactionsMap, penaltyConfig)
 
 	if cfg.FeatureFlagPaymentsProcessingEnabled {
 		ctx, cancel := context.WithCancel(context.Background())

@@ -3,9 +3,9 @@ package private
 import (
 	"testing"
 
-	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
+	"github.com/companieshouse/penalty-payment-api/config"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -17,25 +17,26 @@ const (
 
 func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 	Convey("Get reason", t, func() {
-		getPenaltyTypesConfig = func() []finance_config.FinancePenaltyTypeConfig {
-			return []finance_config.FinancePenaltyTypeConfig{
-				{
-					TransactionSubtype: SanctionsConfirmationStatementTransactionSubType,
-					Reason:             SanctionsConfirmationStatementReason,
-				},
-				{
-					TransactionSubtype: SanctionsRoeFailureToUpdateTransactionSubType,
-					Reason:             SanctionsRoeFailureToUpdateReason,
-				},
-				{
-					TransactionSubtype: SanctionsFailedToVerifyIdentityTransactionSubType,
-					Reason:             SanctionsFailedToVerifyIdentityReason,
-				},
-			}
-		}
+		//getPenaltyTypesConfig = func() []finance_config.FinancePenaltyTypeConfig {
+		//	return []finance_config.FinancePenaltyTypeConfig{
+		//		{
+		//			TransactionSubtype: SanctionsConfirmationStatementTransactionSubType,
+		//			Reason:             SanctionsConfirmationStatementReason,
+		//		},
+		//		{
+		//			TransactionSubtype: SanctionsRoeFailureToUpdateTransactionSubType,
+		//			Reason:             SanctionsRoeFailureToUpdateReason,
+		//		},
+		//		{
+		//			TransactionSubtype: SanctionsFailedToVerifyIdentityTransactionSubType,
+		//			Reason:             SanctionsFailedToVerifyIdentityReason,
+		//		},
+		//	}
+		//}
 
 		type args struct {
-			penalty *models.AccountPenaltiesDataDao
+			penalty        *models.AccountPenaltiesDataDao
+			configProvider config.PenaltyConfigProvider
 		}
 		testCases := []struct {
 			name string
@@ -100,7 +101,7 @@ func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				provider := &DefaultReasonProvider{}
-				got := provider.GetReason(tc.args.penalty)
+				got := provider.GetReason(tc.args.penalty, tc.args.configProvider)
 				So(got, ShouldEqual, tc.want)
 			})
 		}

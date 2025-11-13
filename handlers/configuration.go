@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/companieshouse/chs.go/log"
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
@@ -20,30 +21,17 @@ type ConfigResponse struct {
 // HandleConfiguration returns an HTTP handler that serves configuration data
 func HandleConfiguration(cfg config.PenaltyConfigProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Extract query parameter
-		configType := r.URL.Query().Get("type")
-
 		// Set response headers
 		w.Header().Set("Content-Type", "application/json")
 
-		var configData interface{}
+		// Create a new slice to hold the extracted structs
+		var response []finance_config.PenaltyConfig
 
-		// Determine which config to return
-		switch configType {
-		case "penaltyTypesConfig":
-			configData = cfg.GetPenaltyTypesConfig()
-		case "payablePenaltiesConfig":
-			configData = cfg.GetPayablePenaltiesConfig()
-		default:
-			m := models.NewMessageResponse("invalid configuration type supplied")
-			utils.WriteJSONWithStatus(w, r, m, http.StatusBadRequest)
-			return
-		}
-
-		// Prepare response
-		response := ConfigResponse{
-			Type: configType,
-			Data: configData,
+		// Loop through the original slice
+		for _, p := range cfg.GetPayablePenaltiesConfig() {
+			// Add each struct to the new slice
+			penaltyValue := *p.Penalty
+			response = append(response, penaltyValue)
 		}
 
 		// Encode response as JSON

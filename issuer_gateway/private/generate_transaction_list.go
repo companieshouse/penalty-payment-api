@@ -18,9 +18,12 @@ type TransactionListItemEnrichmentProviders struct {
 	PayableStatusProvider PayableStatusProvider
 }
 
-func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao, penaltyRefType string, penaltyDetailsMap *config.PenaltyDetailsMap,
+func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao,
+	penaltyRefType string, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string,
-	transactionListItemEnrichmentProviders TransactionListItemEnrichmentProviders) (*models.TransactionListResponse, error) {
+	transactionListItemEnrichmentProviders TransactionListItemEnrichmentProviders,
+	configProvider config.PenaltyConfigProvider) (*models.TransactionListResponse, error) {
+
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := etagGenerator()
 	if err != nil {
@@ -35,7 +38,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 	// Loop through penalties and construct CH resources
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
 		transactionType := getTransactionType(&accountPenalty, allowedTransactionsMap)
-		reason := transactionListItemEnrichmentProviders.ReasonProvider.GetReason(&accountPenalty)
+		reason := transactionListItemEnrichmentProviders.ReasonProvider.GetReason(&accountPenalty, configProvider)
 		payableStatus := transactionListItemEnrichmentProviders.PayableStatusProvider.GetPayableStatus(transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, allowedTransactionsMap, cfg)
 		transactionListItem, err := buildTransactionListItemFromAccountPenalty(&accountPenalty, penaltyDetailsMap, penaltyRefType, transactionType, reason, payableStatus, requestId)
 		if err != nil {

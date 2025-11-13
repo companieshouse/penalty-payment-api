@@ -54,7 +54,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders, nil)
 
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
@@ -72,7 +72,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders, nil)
 
 		So(err.Error(), ShouldStartWith, "error generating etag")
 		So(transactionList, ShouldBeNil)
@@ -87,7 +87,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, pen1DunningStatus, penaltyRefType, true)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
+			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders, nil)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -119,7 +119,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 		penaltyRefType := utils.LateFilingPenaltyRefType
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
+			lfpAccountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders, nil)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -153,7 +153,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			customerCode, utils.LateFilingPenaltyCompanyCode, otherTransactionSubType, pen1DunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			otherAccountPenalties, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
+			otherAccountPenalties, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders, nil)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -188,7 +188,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			customerCode, utils.LateFilingPenaltyCompanyCode, euTransactionSubType, dcaDunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
+			accountPenaltiesDao, penaltyRefType, lfpPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders, nil)
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
 		transactionListItems := transactionList.Items
@@ -217,12 +217,12 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			return etag, nil
 		}
 		penaltyRefType := utils.SanctionsPenaltyRefType
-		getPenaltyTypesConfig = mockGetPenaltyTypesConfig
+		//getPenaltyTypesConfig = mockGetPenaltyTypesConfig
 		accountPenaltiesDao := buildTestUnpaidAccountPenaltiesDao(
 			customerCode, utils.SanctionsCompanyCode, SanctionsConfirmationStatementTransactionSubType, pen1DunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
+			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders, nil)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -256,7 +256,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, pen1DunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
+			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders, nil)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -290,7 +290,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			customerCode, utils.SanctionsCompanyCode, SanctionsConfirmationStatementTransactionSubType, dcaDunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
+			accountPenaltiesDao, penaltyRefType, sanctionsPenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders, nil)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)
@@ -324,7 +324,7 @@ func TestUnitGenerateTransactionListFromE5Response(t *testing.T) {
 			overSeasEntityId, utils.SanctionsCompanyCode, SanctionsRoeFailureToUpdateTransactionSubType, dcaDunningStatus, penaltyRefType, false)
 
 		transactionList, err := GenerateTransactionListFromAccountPenalties(
-			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders)
+			accountPenaltiesDao, penaltyRefType, sanctionsRoePenaltyDetailsMap, allowedTransactionMap, &cfg, "", transactionListItemEnrichmentProviders, nil)
 
 		So(err, ShouldBeNil)
 		So(transactionList, ShouldNotBeNil)

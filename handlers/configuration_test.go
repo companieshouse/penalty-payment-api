@@ -17,6 +17,7 @@ import (
 type mockConfigProvider struct {
 	penaltyTypesConfig     []finance_config.FinancePenaltyTypeConfig
 	payablePenaltiesConfig []finance_config.FinancePayablePenaltyConfig
+	penaltyConfig          []finance_config.PenaltyConfig
 }
 
 func (m mockConfigProvider) GetPenaltyTypesConfig() []finance_config.FinancePenaltyTypeConfig {

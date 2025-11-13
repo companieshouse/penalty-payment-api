@@ -70,45 +70,36 @@ type PenaltyDetails struct {
 	EmailMsgType       string `yaml:"EmailMsgType"`
 }
 
+// PenaltyConfig holds your penalty-related configurations
 type PenaltyConfig struct {
 	PenaltyTypesConfig     []finance_config.FinancePenaltyTypeConfig
 	PayablePenaltiesConfig []finance_config.FinancePayablePenaltyConfig
+}
+
+// PenaltyConfigProvider defines the interface for accessing penalty configs
+type PenaltyConfigProvider interface {
+	GetPenaltyTypesConfig() []finance_config.FinancePenaltyTypeConfig
+	GetPayablePenaltiesConfig() []finance_config.FinancePayablePenaltyConfig
 }
 
 var penaltyConfig PenaltyConfig
 var financePenaltyTypes = finance_config.FinancePenaltyTypes
 var financePayablePenalties = finance_config.FinancePayablePenalties
 
-func LoadPenaltyConfig() error {
+func LoadPenaltyConfig() (PenaltyConfig, error) {
 	var financePenaltyTypesConfig finance_config.FinancePenaltyTypesConfig
 	var financePayablePenaltiesConfig finance_config.FinancePayablePenaltiesConfig
 
 	err := yaml.Unmarshal(financePenaltyTypes, &financePenaltyTypesConfig)
-	if err != nil {
-		return err
-	}
-	err = yaml.Unmarshal(financePayablePenalties, &financePayablePenaltiesConfig)
-	if err != nil {
-		return err
+	err2 := yaml.Unmarshal(financePayablePenalties, &financePayablePenaltiesConfig)
+	if err != nil || err2 != nil {
+		return PenaltyConfig{}, nil
 	}
 
 	penaltyConfig.PenaltyTypesConfig = financePenaltyTypesConfig.FinancePenaltyTypes
 	penaltyConfig.PayablePenaltiesConfig = financePayablePenaltiesConfig.FinancePayablePenalties
 
-	return nil
-}
-
-type PenaltyConfigProvider interface {
-	GetPenaltyTypesConfig() []finance_config.FinancePenaltyTypeConfig
-	GetPayablePenaltiesConfig() []finance_config.FinancePayablePenaltyConfig
-}
-
-func GetPayablePenaltiesConfig() []finance_config.FinancePayablePenaltyConfig {
-	return penaltyConfig.PayablePenaltiesConfig
-}
-
-func GetPenaltyTypesConfig() []finance_config.FinancePenaltyTypeConfig {
-	return penaltyConfig.PenaltyTypesConfig
+	return penaltyConfig, nil
 }
 
 // Get returns a pointer to a Config instance
