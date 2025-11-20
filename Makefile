@@ -27,10 +27,8 @@ fmt:
 build: arch fmt depvulncheck
 ifeq ($(shell uname; uname -p), Darwin arm)
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-linux-musl-gcc CXX=x86_64-linux-musl-g++ go build --ldflags '-linkmode external -extldflags "-static"' -o ecs-image-build/app/$(bin)
-	cp -R ./assets ecs-image-build/app
 else
 	CGO_ENABLED=0 go build -o ecs-image-build/app/$(bin)
-	cp -R ./assets ecs-image-build/app
 endif
 
 .PHONY: test
@@ -78,8 +76,7 @@ endif
 	$(info Packaging version: $(version))
 	$(eval tmpdir := $(shell mktemp -d build-XXXXXXXXXX))
 	cp ./ecs-image-build/app/$(bin) $(tmpdir)
-	cp -r ./assets  $(tmpdir)/assets
-	cd $(tmpdir) && zip -r ../$(bin)-$(version).zip $(bin) assets
+	cd $(tmpdir) && zip -r ../$(bin)-$(version).zip $(bin)
 	rm -rf $(tmpdir)
 
 .PHONY: dist

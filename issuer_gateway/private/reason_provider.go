@@ -1,9 +1,9 @@
 package private
 
 import (
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
-	"github.com/companieshouse/penalty-payment-api/config"
 )
 
 const (
@@ -11,21 +11,19 @@ const (
 	PenaltyReason           = "Penalty"
 )
 
-var getPenaltyTypesConfig = config.GetPenaltyTypesConfig
-
 type ReasonProvider interface {
-	GetReason(transaction *models.AccountPenaltiesDataDao) string
+	GetReason(transaction *models.AccountPenaltiesDataDao, penaltyTypes []finance_config.FinancePenaltyTypeConfig) string
 }
 
 type DefaultReasonProvider struct{}
 
-func (provider *DefaultReasonProvider) GetReason(transaction *models.AccountPenaltiesDataDao) string {
+func (provider *DefaultReasonProvider) GetReason(transaction *models.AccountPenaltiesDataDao, penaltyTypes []finance_config.FinancePenaltyTypeConfig) string {
 	if transaction.TransactionType == InvoiceTransactionType {
 		switch transaction.CompanyCode {
 		case utils.LateFilingPenaltyCompanyCode:
 			return LateFilingPenaltyReason
 		case utils.SanctionsCompanyCode:
-			return getSanctionsReason(transaction)
+			return getSanctionsReason(transaction, penaltyTypes)
 		default:
 			return PenaltyReason
 		}
@@ -33,8 +31,9 @@ func (provider *DefaultReasonProvider) GetReason(transaction *models.AccountPena
 	return ""
 }
 
-func getSanctionsReason(transaction *models.AccountPenaltiesDataDao) string {
-	for _, penaltyTypeConfig := range getPenaltyTypesConfig() {
+func getSanctionsReason(transaction *models.AccountPenaltiesDataDao, penaltyTypes []finance_config.FinancePenaltyTypeConfig) string {
+
+	for _, penaltyTypeConfig := range penaltyTypes {
 		if penaltyTypeConfig.TransactionSubtype == transaction.TransactionSubType {
 			return penaltyTypeConfig.Reason
 		}

@@ -5,7 +5,6 @@ import (
 
 	"github.com/companieshouse/chs.go/authentication"
 	"github.com/companieshouse/chs.go/log"
-	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/e5"
 	"github.com/companieshouse/penalty-payment-api/common/services"
@@ -20,8 +19,7 @@ var payableResourceService *services.PayableResourceService
 
 // Register defines the route mappings for the main router and it's subrouters
 func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.PayableResourceDaoService,
-	apDaoService dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap) {
+	apDaoService dao.AccountPenaltiesDaoService) {
 
 	payableResourceService = &services.PayableResourceService{
 		Config: cfg,
@@ -52,11 +50,15 @@ func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.Payab
 
 	mainRouter.HandleFunc("/penalty-payment-api/healthcheck", healthCheck).Methods(http.MethodGet).Name("healthcheck")
 	mainRouter.HandleFunc("/penalty-payment-api/healthcheck/finance-system", HandleHealthCheckFinanceSystem).Methods(http.MethodGet).Name("healthcheck-finance-system")
+	mainRouter.HandleFunc("/penalty-payment-api/penalty-reference-types", HandleConfiguration).Methods(http.MethodGet).Name("get-penalty-ref-types")
+	mainRouter.Use(
+		middleware.PenaltyConfigMiddleware(),
+	)
 
 	appRouter := mainRouter.PathPrefix("/company/{customer_code}").Subrouter()
-	appRouter.HandleFunc("/penalties/late-filing", HandleGetPenalties(apDaoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties-legacy")
-	appRouter.HandleFunc("/penalties/{penalty_reference_type}", HandleGetPenalties(apDaoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodGet).Name("get-penalties")
-	appRouter.Handle("/penalties/payable", CreatePayableResourceHandler(prDaoService, apDaoService, penaltyDetailsMap, allowedTransactionsMap)).Methods(http.MethodPost).Name("create-payable")
+	appRouter.HandleFunc("/penalties/late-filing", HandleGetPenalties(apDaoService)).Methods(http.MethodGet).Name("get-penalties-legacy")
+	appRouter.HandleFunc("/penalties/{penalty_reference_type}", HandleGetPenalties(apDaoService)).Methods(http.MethodGet).Name("get-penalties")
+	appRouter.Handle("/penalties/payable", CreatePayableResourceHandler(prDaoService, apDaoService)).Methods(http.MethodPost).Name("create-payable")
 	appRouter.Use(
 		oauth2OnlyInterceptor.OAuth2OnlyAuthenticationIntercept,
 		userAuthInterceptor.UserAuthenticationIntercept,
@@ -67,14 +69,14 @@ func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.Payab
 	// PayableAuthenticationInterceptor
 	existingPayableRouter := appRouter.PathPrefix("/penalties/payable/{payable_ref}").Subrouter()
 	existingPayableRouter.HandleFunc("", HandleGetPayableResource).Name("get-payable").Methods(http.MethodGet)
-	existingPayableRouter.HandleFunc("/payment", HandleGetPaymentDetails(penaltyDetailsMap)).Methods(http.MethodGet).Name("get-payment-details")
+	existingPayableRouter.HandleFunc("/payment", HandleGetPaymentDetails).Methods(http.MethodGet).Name("get-payment-details")
 	existingPayableRouter.Use(payableAuthInterceptor.PayableAuthenticationIntercept)
 
 	// separate router for the patch request so that we can apply the interceptor to it without interfering with
 	// other routes
 	payResourceRouter := appRouter.PathPrefix("/penalties/payable/{payable_ref}/payment").Methods(http.MethodPatch).Subrouter()
 	payResourceRouter.Use(payableAuthInterceptor.PayableAuthenticationIntercept, authentication.ElevatedPrivilegesInterceptor)
-	payResourceRouter.Handle("", PayResourceHandler(payableResourceService, e5Client, penaltyDetailsMap, allowedTransactionsMap, apDaoService)).Name("mark-as-paid")
+	payResourceRouter.Handle("", PayResourceHandler(payableResourceService, e5Client, apDaoService)).Name("mark-as-paid")
 
 	// Set middleware across all routers and sub routers
 	mainRouter.Use(log.Handler)

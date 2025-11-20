@@ -11,7 +11,7 @@ import (
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
-	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/testutils"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -219,11 +219,8 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 					},
 				}
 
-				penaltyDetailsMap, err := config.LoadPenaltyDetails("../../assets/penalty_details.yml")
-				if err != nil {
-					log.Fatal(err)
-				}
-				penaltyDetails := penaltyDetailsMap.Details[tc.penaltyRefType]
+				penaltyConfig := testutils.LoadPenaltyConfigContext()
+				penaltyDetails := penaltyConfig.PenaltyDetailsMap.Details[tc.penaltyRefType]
 
 				response := PayableResourceToPaymentDetails(payable, penaltyDetails)
 

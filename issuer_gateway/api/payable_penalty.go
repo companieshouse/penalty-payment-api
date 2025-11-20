@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/configctx"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/private"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 )
@@ -10,26 +11,22 @@ import (
 var getAccountPenalties = AccountPenalties
 var getMatchingPenalty = private.MatchPenalty
 
-func PayablePenalty(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
+func PayablePenalty(params types.PayablePenaltyParams, penaltyConfig configctx.ConfigContext) (*models.TransactionItem, error) {
 	penaltyRefType := params.PenaltyRefType
 	customerCode := params.CustomerCode
 	companyCode := params.CompanyCode
 	transaction := params.Transaction
-	penaltyDetailsMap := params.PenaltyDetailsMap
 	apDaoSvc := params.AccountPenaltiesDaoService
-	allowedTransactionsMap := params.AllowedTransactionsMap
 	requestId := params.RequestId
 
 	accountPenaltiesParams := types.AccountPenaltiesParams{
 		PenaltyRefType:             penaltyRefType,
 		CustomerCode:               customerCode,
 		CompanyCode:                companyCode,
-		PenaltyDetailsMap:          penaltyDetailsMap,
-		AllowedTransactionsMap:     allowedTransactionsMap,
 		AccountPenaltiesDaoService: apDaoSvc,
 		RequestId:                  requestId,
 	}
-	response, _, err := getAccountPenalties(accountPenaltiesParams)
+	response, _, err := getAccountPenalties(accountPenaltiesParams, penaltyConfig)
 	if err != nil {
 		log.ErrorC(requestId, err)
 		return nil, err

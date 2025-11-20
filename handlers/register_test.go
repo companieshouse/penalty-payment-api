@@ -15,14 +15,13 @@ import (
 
 func TestUnitRegisterRoutes(t *testing.T) {
 	Convey("Register routes", t, func() {
-		penaltyDetailsMap = &config.PenaltyDetailsMap{}
 		router := mux.NewRouter()
 		mockCtrl := gomock.NewController(t)
 		defer mockCtrl.Finish()
 
 		mockPrDaoSvc := mocks.NewMockPayableResourceDaoService(mockCtrl)
 		mockApDaoSvc := mocks.NewMockAccountPenaltiesDaoService(mockCtrl)
-		Register(router, &config.Config{}, mockPrDaoSvc, mockApDaoSvc, penaltyDetailsMap, allowedTransactionsMap)
+		Register(router, &config.Config{}, mockPrDaoSvc, mockApDaoSvc)
 
 		healthCheckPath, _ := router.GetRoute("healthcheck").GetPathTemplate()
 		healthFinanceCheckPath, _ := router.GetRoute("healthcheck-finance-system").GetPathTemplate()
