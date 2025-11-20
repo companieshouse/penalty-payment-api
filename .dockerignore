@@ -1,6 +1,6 @@
 *
 
-!assets
+!middleware/assets
 !common
 !config
 !common/dao

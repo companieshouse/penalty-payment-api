@@ -2,15 +2,10 @@
 package config
 
 import (
-	"os"
 	"sync"
 	"time"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/companieshouse/gofigure"
-	"github.com/companieshouse/penalty-payment-api-core/finance_config"
-	"github.com/companieshouse/penalty-payment-api-core/models"
 )
 
 var cfg *Config
@@ -70,42 +65,6 @@ type PenaltyDetails struct {
 	EmailMsgType       string `yaml:"EmailMsgType"`
 }
 
-type PenaltyConfig struct {
-	PenaltyTypesConfig     []finance_config.FinancePenaltyTypeConfig
-	PayablePenaltiesConfig []finance_config.FinancePayablePenaltyConfig
-}
-
-var penaltyConfig PenaltyConfig
-var financePenaltyTypes = finance_config.FinancePenaltyTypes
-var financePayablePenalties = finance_config.FinancePayablePenalties
-
-func LoadPenaltyConfig() error {
-	var financePenaltyTypesConfig finance_config.FinancePenaltyTypesConfig
-	var financePayablePenaltiesConfig finance_config.FinancePayablePenaltiesConfig
-
-	err := yaml.Unmarshal(financePenaltyTypes, &financePenaltyTypesConfig)
-	if err != nil {
-		return err
-	}
-	err = yaml.Unmarshal(financePayablePenalties, &financePayablePenaltiesConfig)
-	if err != nil {
-		return err
-	}
-
-	penaltyConfig.PenaltyTypesConfig = financePenaltyTypesConfig.FinancePenaltyTypes
-	penaltyConfig.PayablePenaltiesConfig = financePayablePenaltiesConfig.FinancePayablePenalties
-
-	return nil
-}
-
-func GetPayablePenaltiesConfig() []finance_config.FinancePayablePenaltyConfig {
-	return penaltyConfig.PayablePenaltiesConfig
-}
-
-func GetPenaltyTypesConfig() []finance_config.FinancePenaltyTypeConfig {
-	return penaltyConfig.PenaltyTypesConfig
-}
-
 // Get returns a pointer to a Config instance
 // populated with values from environment or command-line flags
 func Get() (*Config, error) {
@@ -124,36 +83,4 @@ func Get() (*Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func GetAllowedTransactions(fileName string) (*models.AllowedTransactionMap, error) {
-	yamlFile, err := os.ReadFile(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	var allowedTransactions = models.AllowedTransactionMap{}
-
-	err = yaml.Unmarshal(yamlFile, &allowedTransactions)
-	if err != nil {
-		return nil, err
-	}
-
-	return &allowedTransactions, nil
-}
-
-func LoadPenaltyDetails(fileName string) (*PenaltyDetailsMap, error) {
-	yamlFile, err := os.ReadFile(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	var penaltyDetailsMap PenaltyDetailsMap
-
-	err = yaml.Unmarshal(yamlFile, &penaltyDetailsMap)
-	if err != nil {
-		return nil, err
-	}
-
-	return &penaltyDetailsMap, nil
 }

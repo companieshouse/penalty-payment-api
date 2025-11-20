@@ -7,11 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/configctx"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
+	"github.com/companieshouse/penalty-payment-api/testutils"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -24,11 +27,8 @@ func buildGetPenaltiesRequest(customerCode string) *http.Request {
 }
 
 func TestUnitHandleGetPenalties(t *testing.T) {
-	penaltyDetailsMap := &config.PenaltyDetailsMap{}
-	allowedTransactionsMap := &models.AllowedTransactionMap{}
-
 	Convey("Given a request to get penalties", t, func() {
-		mockedAccountPenalties := func(params types.AccountPenaltiesParams) (*models.TransactionListResponse, services.ResponseType, error) {
+		mockedAccountPenalties := func(params types.AccountPenaltiesParams, penaltyConfig configctx.ConfigContext) (*models.TransactionListResponse, services.ResponseType, error) {
 			customerCode := params.CustomerCode
 			if customerCode == "INVALID_COMPANY" {
 				return nil, services.Error, errors.New("error getting penalties")
@@ -58,12 +58,23 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 		getCompanyCode = mockedGetCompanyCode
 		accountPenalties = mockedAccountPenalties
 
+		penaltyConfig := testutils.LoadPenaltyConfigContext()
+
 		for _, tc := range testCases {
-
 			req := buildGetPenaltiesRequest(tc.companyCode)
-			rr := httptest.NewRecorder()
 
-			handler := HandleGetPenalties(nil, penaltyDetailsMap, allowedTransactionsMap)
+			ctxWithConfig := configctx.WithConfig(
+				req.Context(),
+				[]finance_config.FinancePenaltyTypeConfig{},
+				penaltyConfig.PayablePenaltyConfigs,
+				&config.PenaltyDetailsMap{},
+				&models.AllowedTransactionMap{},
+			)
+
+			req = req.WithContext(ctxWithConfig)
+
+			rr := httptest.NewRecorder()
+			handler := HandleGetPenalties(nil)
 			handler.ServeHTTP(rr, req)
 
 			So(rr.Code, ShouldEqual, tc.response)
@@ -77,7 +88,7 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 		rr := httptest.NewRecorder()
 		req := buildGetPenaltiesRequest("NI123546")
 
-		handler := HandleGetPenalties(nil, penaltyDetailsMap, allowedTransactionsMap)
+		handler := HandleGetPenalties(nil)
 		handler.ServeHTTP(rr, req)
 
 		So(rr.Code, ShouldEqual, http.StatusBadRequest)
