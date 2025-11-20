@@ -11,6 +11,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/configctx"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/gorilla/mux"
@@ -19,8 +20,7 @@ import (
 var accountPenalties = api.AccountPenalties
 
 // HandleGetPenalties retrieves the penalty details for the supplied customer code from e5
-func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap) http.HandlerFunc {
+func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestId := log.Context(req)
 		log.InfoC(requestId, "start GET penalties request")
@@ -41,17 +41,17 @@ func HandleGetPenalties(apDaoSvc dao.AccountPenaltiesDaoService, penaltyDetailsM
 			return
 		}
 
+		penaltyConfig := configctx.FromContext(req.Context())
+
 		// Call service layer to handle request to E5
 		params := types.AccountPenaltiesParams{
 			PenaltyRefType:             penaltyRefType,
 			CustomerCode:               customerCode,
 			CompanyCode:                companyCode,
-			PenaltyDetailsMap:          penaltyDetailsMap,
-			AllowedTransactionsMap:     allowedTransactionsMap,
 			AccountPenaltiesDaoService: apDaoSvc,
 			RequestId:                  requestId,
 		}
-		transactionListResponse, responseType, err := accountPenalties(params)
+		transactionListResponse, responseType, err := accountPenalties(params, *penaltyConfig)
 
 		if err != nil {
 			log.ErrorC(requestId, fmt.Errorf("error calling e5 to get transactions: %v", err))

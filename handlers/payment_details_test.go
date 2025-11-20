@@ -8,9 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/configctx"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -20,12 +22,38 @@ func serveGetPaymentDetailsHandler(payableResource *models.PayableResource) *htt
 	res := httptest.NewRecorder()
 
 	if payableResource != nil {
-		ctx := context.WithValue(req.Context(), config.PayableResource, payableResource)
+
+		ctx := req.Context()
+
+		penaltyDetailsMap := &config.PenaltyDetailsMap{
+			Name: "penalty details",
+			Details: map[string]config.PenaltyDetails{
+				utils.LateFilingPenaltyRefType: {
+					Description:        "Late Filing Penalty",
+					DescriptionId:      "late-filing-penalty",
+					ClassOfPayment:     "penalty-lfp",
+					ResourceKind:       "late-filing-penalty#late-filing-penalty",
+					ProductType:        "late-filing-penalty",
+					EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
+					EmailMsgType:       "penalty_payment_received_email",
+				},
+			},
+		}
+
+		ctx = configctx.WithConfig(ctx,
+			[]finance_config.FinancePenaltyTypeConfig{},
+			[]finance_config.FinancePayablePenaltyConfig{},
+			penaltyDetailsMap,
+			&models.AllowedTransactionMap{},
+		)
+
+		ctx = context.WithValue(ctx, config.PayableResource, payableResource)
+
 		req = req.WithContext(ctx)
+
 	}
 
-	penaltyDetailsMap := &config.PenaltyDetailsMap{}
-	HandleGetPaymentDetails(penaltyDetailsMap).ServeHTTP(res, req)
+	HandleGetPaymentDetails(res, req)
 
 	return res
 }

@@ -2,11 +2,8 @@ package service
 
 import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/config"
 )
 
-var penaltyDetailsMap = &config.PenaltyDetailsMap{}
-var allowedTransactionsMap = &models.AllowedTransactionMap{}
 var customerCode = "NI123456"
 var transactionItem = models.TransactionItem{
 	PenaltyRef: "A1234567",

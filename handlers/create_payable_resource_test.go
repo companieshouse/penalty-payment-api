@@ -11,10 +11,12 @@ import (
 	"testing"
 
 	"github.com/companieshouse/chs.go/authentication"
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/configctx"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/mocks"
 	"github.com/golang/mock/gomock"
@@ -41,15 +43,57 @@ func createPayableResourceHandlerTestSetup(t *testing.T) (*gomock.Controller, *m
 	return mockCtrl, mockPrDaoSvc, mockApDaoSvc, url, nil
 }
 
-func serveCreatePayableResourceHandler(body []byte, payableResourceService dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
-	withAuthUserDetails bool, customerCode string) *httptest.ResponseRecorder {
+func serveCreatePayableResourceHandler(body []byte, payableResourceService dao.PayableResourceDaoService,
+	apDaoSvc dao.AccountPenaltiesDaoService, withAuthUserDetails bool, customerCode string) *httptest.ResponseRecorder {
 	template := "/company/%s/penalties/payable"
 	path := fmt.Sprintf(template, customerCode)
 	req := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 	res := httptest.NewRecorder()
 
-	handler := CreatePayableResourceHandler(payableResourceService, apDaoSvc, penaltyDetailsMap, allowedTransactionsMap)
-	handler.ServeHTTP(res, req.WithContext(testContext(withAuthUserDetails, customerCode)))
+	baseCtx := testContext(withAuthUserDetails, customerCode)
+
+	penaltyDetailsMap := &config.PenaltyDetailsMap{
+		Name: "penalty details",
+		Details: map[string]config.PenaltyDetails{
+			utils.LateFilingPenaltyRefType: {
+				Description:        "Late Filing Penalty",
+				DescriptionId:      "late-filing-penalty",
+				ClassOfPayment:     "penalty-lfp",
+				ResourceKind:       "late-filing-penalty#late-filing-penalty",
+				ProductType:        "late-filing-penalty",
+				EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
+				EmailMsgType:       "penalty_payment_received_email",
+			},
+		},
+	}
+
+	allowedTransactionMap := &models.AllowedTransactionMap{
+		Types: map[string]map[string]bool{
+			"1": {
+				"EJ": true,
+				"EK": true,
+				"EL": true,
+				"EU": true,
+				"S1": true,
+				"A2": true,
+			},
+		},
+	}
+
+	// Wrap base context with ConfigContext
+	ctxWithConfig := configctx.WithConfig(
+		baseCtx,
+		[]finance_config.FinancePenaltyTypeConfig{},
+		[]finance_config.FinancePayablePenaltyConfig{},
+		penaltyDetailsMap,
+		allowedTransactionMap,
+	)
+
+	// Attach combined context to request
+	req = req.WithContext(ctxWithConfig)
+
+	handler := CreatePayableResourceHandler(payableResourceService, apDaoSvc)
+	handler.ServeHTTP(res, req)
 
 	return res
 }
@@ -397,7 +441,7 @@ func TestUnitCreatePayableResourceHandler_MockedPayablePenalty(t *testing.T) {
 
 		httpmock.RegisterResponder("GET", url, httpmock.NewStringResponder(200, e5ResponseMultipleTx))
 
-		payablePenalty = func(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
+		payablePenalty = func(params types.PayablePenaltyParams, penaltyConfig configctx.ConfigContext) (*models.TransactionItem, error) {
 			return nil, errors.New("error")
 		}
 

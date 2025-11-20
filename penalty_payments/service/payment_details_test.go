@@ -1,7 +1,6 @@
 package service
 
 import (
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,17 +8,12 @@ import (
 
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
-	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/testutils"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
-
-	penaltyDetailsMap, err := config.LoadPenaltyDetails("../../assets/penalty_details.yml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	penaltyDetails := penaltyDetailsMap.Details[utils.LateFilingPenaltyRefType]
+	ctx := testutils.LoadPenaltyConfigContext()
 
 	Convey("Get payment details no transactions - invalid data", t, func() {
 
@@ -49,6 +43,8 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 		}
 
 		service := &PaymentDetailsService{}
+
+		penaltyDetails := ctx.PenaltyDetailsMap.Details[utils.LateFilingPenaltyRefType]
 
 		paymentDetails, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
@@ -135,7 +131,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				service := &PaymentDetailsService{}
 
-				penaltyDetails := penaltyDetailsMap.Details[tc.penaltyRefType]
+				penaltyDetails := ctx.PenaltyDetailsMap.Details[tc.penaltyRefType]
 				paymentDetails, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 				expectedCost := models.Cost{
@@ -244,7 +240,7 @@ func TestUnitGetPaymentDetailsFromPayableResource(t *testing.T) {
 
 				service := &PaymentDetailsService{}
 
-				penaltyDetails := penaltyDetailsMap.Details[tc.penaltyRefType]
+				penaltyDetails := ctx.PenaltyDetailsMap.Details[tc.penaltyRefType]
 				paymentDetails, err := service.GetPaymentDetailsFromPayableResource(req, &payable, penaltyDetails)
 
 				expectedCost := models.Cost{

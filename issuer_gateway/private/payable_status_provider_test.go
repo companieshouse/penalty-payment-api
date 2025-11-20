@@ -7,10 +7,14 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
+	"github.com/companieshouse/penalty-payment-api/testutils"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
+
+	penaltyConfig := testutils.LoadPenaltyConfigContext()
+	allowedTransactionMap := penaltyConfig.AllowedTransactionMap
 
 	Convey("Get open payable status for late filing penalty", t, func() {
 		type args struct {
@@ -1082,7 +1086,8 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now,
+					[]models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -1090,7 +1095,8 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 	})
 }
 
-func buildLateFilingPenaltyTestAccountPenaltiesDataDao(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
+func buildLateFilingPenaltyTestAccountPenaltiesDataDao(isPaid bool, outstandingAmount float64,
+	accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
 	dataDao := buildTestAccountPenaltiesDataDao(AccountPenaltiesParams{
 		CompanyCode:          utils.LateFilingPenaltyCompanyCode,
 		LedgerCode:           "EW",
@@ -1109,7 +1115,8 @@ func buildLateFilingPenaltyTestAccountPenaltiesDataDao(isPaid bool, outstandingA
 	return &dataDao
 }
 
-func buildSanctionsConfirmationStatementTestAccountPenaltiesDataDao(isPaid bool, outstandingAmount float64, accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
+func buildSanctionsConfirmationStatementTestAccountPenaltiesDataDao(isPaid bool, outstandingAmount float64,
+	accountStatus, dunningStatus string) *models.AccountPenaltiesDataDao {
 	dataDao := buildTestAccountPenaltiesDataDao(AccountPenaltiesParams{
 		CompanyCode:          utils.SanctionsCompanyCode,
 		LedgerCode:           "E1",
@@ -1128,7 +1135,8 @@ func buildSanctionsConfirmationStatementTestAccountPenaltiesDataDao(isPaid bool,
 	return &dataDao
 }
 
-func buildExhaustedWriteOffTransaction(transactionReference string, transactionDate string, madeUpDate string, amount float64, dueDate string) models.AccountPenaltiesDataDao {
+func buildExhaustedWriteOffTransaction(transactionReference string, transactionDate string,
+	madeUpDate string, amount float64, dueDate string) models.AccountPenaltiesDataDao {
 	return models.AccountPenaltiesDataDao{
 		CompanyCode:          "LP",
 		LedgerCode:           "EW",

@@ -9,38 +9,16 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-const (
-	SanctionsConfirmationStatementReason  = "Failure to file a confirmation statement"
-	SanctionsFailedToVerifyIdentityReason = "Failure to file a confirmation statement and identity verification statements for all directors"
-	SanctionsRoeFailureToUpdateReason     = "Failure to update the Register of Overseas Entities"
-)
-
 func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 	Convey("Get reason", t, func() {
-		getPenaltyTypesConfig = func() []finance_config.FinancePenaltyTypeConfig {
-			return []finance_config.FinancePenaltyTypeConfig{
-				{
-					TransactionSubtype: SanctionsConfirmationStatementTransactionSubType,
-					Reason:             SanctionsConfirmationStatementReason,
-				},
-				{
-					TransactionSubtype: SanctionsRoeFailureToUpdateTransactionSubType,
-					Reason:             SanctionsRoeFailureToUpdateReason,
-				},
-				{
-					TransactionSubtype: SanctionsFailedToVerifyIdentityTransactionSubType,
-					Reason:             SanctionsFailedToVerifyIdentityReason,
-				},
-			}
-		}
 
 		type args struct {
 			penalty *models.AccountPenaltiesDataDao
 		}
 		testCases := []struct {
-			name string
-			args args
-			want string
+			name   string
+			args   args
+			reason string
 		}{
 			{
 				name: "Late filing of accounts",
@@ -49,7 +27,7 @@ func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 					TransactionType:    InvoiceTransactionType,
 					TransactionSubType: "C1",
 				}},
-				want: LateFilingPenaltyReason,
+				reason: LateFilingPenaltyReason,
 			},
 			{
 				name: "Failure to file a confirmation statement",
@@ -58,7 +36,7 @@ func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 					TransactionType:    InvoiceTransactionType,
 					TransactionSubType: SanctionsConfirmationStatementTransactionSubType,
 				}},
-				want: SanctionsConfirmationStatementReason,
+				reason: SanctionsConfirmationStatementReason,
 			},
 			{
 				name: "Failure to deliver a confirmation statement together with the verification statement(s)",
@@ -67,7 +45,7 @@ func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 					TransactionType:    InvoiceTransactionType,
 					TransactionSubType: SanctionsFailedToVerifyIdentityTransactionSubType,
 				}},
-				want: SanctionsFailedToVerifyIdentityReason,
+				reason: SanctionsFailedToVerifyIdentityReason,
 			},
 			{
 				name: "Sanctions Penalty - Unknown",
@@ -76,7 +54,7 @@ func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 					TransactionType:    InvoiceTransactionType,
 					TransactionSubType: "S2",
 				}},
-				want: PenaltyReason,
+				reason: PenaltyReason,
 			},
 			{
 				name: "Failure to update the Register of Overseas Entities",
@@ -85,7 +63,7 @@ func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 					TransactionType:    InvoiceTransactionType,
 					TransactionSubType: SanctionsRoeFailureToUpdateTransactionSubType,
 				}},
-				want: SanctionsRoeFailureToUpdateReason,
+				reason: SanctionsRoeFailureToUpdateReason,
 			},
 			{
 				name: "Other Transaction",
@@ -94,14 +72,21 @@ func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 					TransactionType:    "5",
 					TransactionSubType: "02",
 				}},
-				want: "",
+				reason: "",
 			},
 		}
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				provider := &DefaultReasonProvider{}
-				got := provider.GetReason(tc.args.penalty)
-				So(got, ShouldEqual, tc.want)
+				penaltyTypeConfigs := []finance_config.FinancePenaltyTypeConfig{
+					{
+						TransactionType:    tc.args.penalty.TransactionType,
+						TransactionSubtype: tc.args.penalty.TransactionSubType,
+						Reason:             tc.reason,
+					},
+				}
+				got := provider.GetReason(tc.args.penalty, penaltyTypeConfigs)
+				So(got, ShouldEqual, tc.reason)
 			})
 		}
 	})

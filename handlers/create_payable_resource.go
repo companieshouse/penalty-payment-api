@@ -13,6 +13,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/configctx"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/api"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/transformers"
@@ -20,9 +21,9 @@ import (
 
 var payablePenalty = api.PayablePenalty
 
-// CreatePayableResourceHandler takes a http requests and creates a new payable resource
-func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
-	penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionMap *models.AllowedTransactionMap) http.Handler {
+// CreatePayableResourceHandler takes an http requests and creates a new payable resource
+func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService,
+	apDaoSvc dao.AccountPenaltiesDaoService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestId := log.Context(r)
 		log.InfoC(requestId, "start POST payable resource request")
@@ -47,18 +48,18 @@ func CreatePayableResourceHandler(prDaoSvc dao.PayableResourceDaoService, apDaoS
 		request.CreatedBy = authUserDetails
 		log.DebugC(requestId, "successfully extracted request data", log.Data{"request": request})
 
+		penaltyConfig := configctx.FromContext(r.Context())
+
 		// Create validation context
 		validationCtx := validationContext{
-			PenaltyRefType:         penaltyRefType,
-			CustomerCode:           customerCode,
-			CompanyCode:            companyCode,
-			RequestID:              requestId,
-			AccountPenaltiesDao:    apDaoSvc,
-			PenaltyDetailsMap:      penaltyDetailsMap,
-			AllowedTransactionsMap: allowedTransactionMap,
+			PenaltyRefType:      penaltyRefType,
+			CustomerCode:        customerCode,
+			CompanyCode:         companyCode,
+			RequestID:           requestId,
+			AccountPenaltiesDao: apDaoSvc,
 		}
 
-		payablePenalties, err := validateTransactions(request.Transactions, validationCtx)
+		payablePenalties, err := validateTransactions(request.Transactions, validationCtx, *penaltyConfig)
 		if err != nil {
 			log.ErrorC(requestId, errors.New("invalid request - failed matching against e5"))
 			utils.WriteJSONWithStatus(w, r, models.NewMessageResponse("one or more of the transactions you want to pay for do not exist or are not payable at this time"), http.StatusBadRequest)
@@ -143,20 +144,18 @@ type validationContext struct {
 }
 
 // validateTransactions ensures the transactions are valid payable penalties that exist in E5
-func validateTransactions(transactions []models.TransactionItem, validationCtx validationContext) ([]models.TransactionItem, error) {
+func validateTransactions(transactions []models.TransactionItem, validationCtx validationContext, penaltyConfig configctx.ConfigContext) ([]models.TransactionItem, error) {
 	var payablePenalties []models.TransactionItem
 	for _, transaction := range transactions {
 		params := types.PayablePenaltyParams{
 			PenaltyRefType:             validationCtx.PenaltyRefType,
 			CustomerCode:               validationCtx.CustomerCode,
 			CompanyCode:                validationCtx.CompanyCode,
-			PenaltyDetailsMap:          validationCtx.PenaltyDetailsMap,
 			Transaction:                transaction,
-			AllowedTransactionsMap:     validationCtx.AllowedTransactionsMap,
 			AccountPenaltiesDaoService: validationCtx.AccountPenaltiesDao,
 			RequestId:                  validationCtx.RequestID,
 		}
-		payablePenalty, err := payablePenalty(params)
+		payablePenalty, err := payablePenalty(params, penaltyConfig)
 		if err != nil {
 			return nil, err
 		}

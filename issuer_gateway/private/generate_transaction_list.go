@@ -7,6 +7,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
+	"github.com/companieshouse/penalty-payment-api/configctx"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 )
 
@@ -18,9 +19,10 @@ type TransactionListItemEnrichmentProviders struct {
 	PayableStatusProvider PayableStatusProvider
 }
 
-func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao, penaltyRefType string, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, cfg *config.Config, requestId string,
+func GenerateTransactionListFromAccountPenalties(accountPenalties *models.AccountPenaltiesDao,
+	penaltyRefType string, penaltyConfig configctx.ConfigContext, cfg *config.Config, requestId string,
 	transactionListItemEnrichmentProviders TransactionListItemEnrichmentProviders) (*models.TransactionListResponse, error) {
+
 	payableTransactionList := models.TransactionListResponse{}
 	etag, err := etagGenerator()
 	if err != nil {
@@ -34,10 +36,12 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 
 	// Loop through penalties and construct CH resources
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
-		transactionType := getTransactionType(&accountPenalty, allowedTransactionsMap)
-		reason := transactionListItemEnrichmentProviders.ReasonProvider.GetReason(&accountPenalty)
-		payableStatus := transactionListItemEnrichmentProviders.PayableStatusProvider.GetPayableStatus(transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, allowedTransactionsMap, cfg)
-		transactionListItem, err := buildTransactionListItemFromAccountPenalty(&accountPenalty, penaltyDetailsMap, penaltyRefType, transactionType, reason, payableStatus, requestId)
+		transactionType := getTransactionType(&accountPenalty, penaltyConfig.AllowedTransactionMap)
+		reason := transactionListItemEnrichmentProviders.ReasonProvider.GetReason(&accountPenalty, penaltyConfig.PenaltyTypeConfigs)
+		payableStatus := transactionListItemEnrichmentProviders.PayableStatusProvider.GetPayableStatus(
+			transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, penaltyConfig.AllowedTransactionMap, cfg)
+		transactionListItem, err := buildTransactionListItemFromAccountPenalty(
+			&accountPenalty, penaltyConfig.PenaltyDetailsMap, penaltyRefType, transactionType, reason, payableStatus, requestId)
 		if err != nil {
 			return nil, err
 		}
