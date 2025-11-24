@@ -8,15 +8,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/configctx"
+	"github.com/companieshouse/penalty-payment-api/testutils"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func serveGetPaymentDetailsHandler(payableResource *models.PayableResource) *httptest.ResponseRecorder {
+func serveGetPaymentDetailsHandler(payableResource *models.PayableResource,
+	penaltyConfig configctx.ConfigContext) *httptest.ResponseRecorder {
 	path := "/company/12345/penalties/payable/321"
 	req := httptest.NewRequest(http.MethodGet, path, nil)
 	res := httptest.NewRecorder()
@@ -25,27 +26,9 @@ func serveGetPaymentDetailsHandler(payableResource *models.PayableResource) *htt
 
 		ctx := req.Context()
 
-		penaltyDetailsMap := &config.PenaltyDetailsMap{
-			Name: "penalty details",
-			Details: map[string]config.PenaltyDetails{
-				utils.LateFilingPenaltyRefType: {
-					Description:        "Late Filing Penalty",
-					DescriptionId:      "late-filing-penalty",
-					ClassOfPayment:     "penalty-lfp",
-					ResourceKind:       "late-filing-penalty#late-filing-penalty",
-					ProductType:        "late-filing-penalty",
-					EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
-					EmailMsgType:       "penalty_payment_received_email",
-				},
-			},
-		}
-
 		ctx = configctx.WithConfig(ctx,
-			[]finance_config.FinancePenaltyTypeConfig{},
-			[]finance_config.FinancePayablePenaltyConfig{},
-			penaltyDetailsMap,
-			&models.AllowedTransactionMap{},
-		)
+			penaltyConfig.PenaltyTypes,
+			penaltyConfig.PayablePenalties)
 
 		ctx = context.WithValue(ctx, config.PayableResource, payableResource)
 
@@ -98,10 +81,12 @@ func generateTestPayableResource(withTransaction bool, penaltyRef string) models
 }
 
 func TestUnitHandleGetPaymentDetails(t *testing.T) {
+	penaltyConfig := testutils.LoadPenaltyConfigContext()
+
 	Convey("No payable resource in request context", t, func() {
 		setGetPenaltyRefTypeFromTransactionMock(utils.LateFilingPenaltyRefType)
 
-		res := serveGetPaymentDetailsHandler(nil)
+		res := serveGetPaymentDetailsHandler(nil, penaltyConfig)
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
 
@@ -113,7 +98,7 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 
 		payable := generateTestPayableResource(false, "")
 
-		res := serveGetPaymentDetailsHandler(&payable)
+		res := serveGetPaymentDetailsHandler(&payable, penaltyConfig)
 		So(res.Code, ShouldEqual, http.StatusBadRequest)
 	})
 
@@ -122,7 +107,7 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 
 		payable := generateTestPayableResource(false, "")
 
-		res := serveGetPaymentDetailsHandler(&payable)
+		res := serveGetPaymentDetailsHandler(&payable, penaltyConfig)
 		So(res.Code, ShouldEqual, http.StatusNotFound)
 	})
 
@@ -159,7 +144,7 @@ func TestUnitHandleGetPaymentDetails(t *testing.T) {
 
 				payable := generateTestPayableResource(true, tc.penaltyRef)
 
-				res := serveGetPaymentDetailsHandler(&payable)
+				res := serveGetPaymentDetailsHandler(&payable, penaltyConfig)
 				So(res.Code, ShouldEqual, http.StatusOK)
 			})
 		}

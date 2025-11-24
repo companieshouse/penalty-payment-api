@@ -13,6 +13,12 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+const (
+	SanctionsConfirmationStatementReason  = "Failure to file a confirmation statement"
+	SanctionsFailedToVerifyIdentityReason = "Failure to deliver a confirmation statement together with the verification statement(s)"
+	SanctionsRoeFailureToUpdateReason     = "Failure to update the Register of Overseas Entities"
+)
+
 var now = time.Now().Truncate(time.Millisecond)
 var yesterday = time.Now().AddDate(0, 0, -1).Truncate(time.Millisecond)
 

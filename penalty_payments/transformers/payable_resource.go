@@ -6,9 +6,9 @@ import (
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/constants"
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
-	"github.com/companieshouse/penalty-payment-api/config"
 )
 
 var etagGenerator = utils.GenerateEtag
@@ -108,26 +108,26 @@ func PayableResourceDBToRequest(payableDao *models.PayableResourceDao) *models.P
 
 // PayableResourceToPaymentDetails will create a PaymentDetails resource (for integrating into payment service) from a PPS PayableResource
 func PayableResourceToPaymentDetails(payable *models.PayableResource,
-	penaltyDetails config.PenaltyDetails) *models.PaymentDetails {
+	paymentCost finance_config.PaymentCostConfig) *models.PaymentDetails {
 	var costs []models.Cost
 	for _, tx := range payable.Transactions {
 		cost := models.Cost{
 			Amount:                  fmt.Sprintf("%g", tx.Amount),
 			AvailablePaymentMethods: []string{"credit-card"},
-			ClassOfPayment:          []string{penaltyDetails.ClassOfPayment},
-			Description:             penaltyDetails.Description,
-			DescriptionIdentifier:   penaltyDetails.DescriptionId,
+			ClassOfPayment:          []string{paymentCost.ClassOfPayment},
+			Description:             paymentCost.Description,
+			DescriptionIdentifier:   paymentCost.DescriptionId,
 			Kind:                    "cost#cost",
-			ResourceKind:            penaltyDetails.ResourceKind,
-			ProductType:             penaltyDetails.ProductType,
+			ResourceKind:            paymentCost.ResourceKind,
+			ProductType:             paymentCost.ProductType,
 		}
 		costs = append(costs, cost)
 	}
 
 	payment := models.PaymentDetails{
-		Description: penaltyDetails.Description,
+		Description: paymentCost.Description,
 		Etag:        payable.Etag, // use the same Etag as PayableResource its built from - if PayableResource changes PaymentDetails may change too
-		Kind:        penaltyDetails.ResourceKind,
+		Kind:        paymentCost.ResourceKind,
 		Links: models.PaymentDetailsLinks{
 			Self:     payable.Links.Payment, // this is the payment details resource so should use payment link from PayableResource
 			Resource: payable.Links.Self,    // PayableResources Self link is the resource this PaymentDetails is paying for

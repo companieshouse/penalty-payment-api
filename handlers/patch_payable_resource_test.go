@@ -50,7 +50,7 @@ var e5ValidationError = `
 // reduces the boilerplate code needed to create, dispatch and unmarshal response body
 func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *models.PatchResourceRequest,
 	daoSvc dao.PayableResourceDaoService, apDaoSvc dao.AccountPenaltiesDaoService,
-	mockPayablePenaltyConfigs []finance_config.FinancePayablePenaltyConfig) (*httptest.ResponseRecorder, *models.ResponseResource) {
+	mockPayablePenaltyConfigs map[string]finance_config.FinancePayablePenaltyConfig) (*httptest.ResponseRecorder, *models.ResponseResource) {
 
 	payableResourceService := &services.PayableResourceService{}
 
@@ -75,11 +75,8 @@ func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *mode
 
 	ctxWithConfig := configctx.WithConfig(
 		req.Context(),
-		[]finance_config.FinancePenaltyTypeConfig{},
-		mockPayablePenaltyConfigs,
-		&config.PenaltyDetailsMap{},
-		&models.AllowedTransactionMap{},
-	)
+		map[string]map[string]finance_config.FinancePenaltyTypeConfig{},
+		mockPayablePenaltyConfigs)
 
 	h.ServeHTTP(res, req.WithContext(ctxWithConfig))
 
@@ -157,7 +154,7 @@ func buildMockedPayableResource(withTransaction bool, amount float64) *models.Pa
 
 func TestUnitPayResourceHandler(t *testing.T) {
 	penaltyConfig := testutils.LoadPenaltyConfigContext()
-	mockPayablePenaltyConfigs := penaltyConfig.PayablePenaltyConfigs
+	mockPayablePenaltyConfigs := penaltyConfig.PayablePenalties
 
 	Convey("PayResourceHandler tests", t, func() {
 		httpmock.Activate()
@@ -201,11 +198,8 @@ func TestUnitPayResourceHandler(t *testing.T) {
 
 			ctxWithConfig := configctx.WithConfig(
 				req.Context(),
-				[]finance_config.FinancePenaltyTypeConfig{},
-				penaltyConfig.PayablePenaltyConfigs,
-				&config.PenaltyDetailsMap{},
-				&models.AllowedTransactionMap{},
-			)
+				penaltyConfig.PenaltyTypes,
+				penaltyConfig.PayablePenalties)
 			req = req.WithContext(ctxWithConfig)
 
 			h.ServeHTTP(res, req.WithContext(ctx))

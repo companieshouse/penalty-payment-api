@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/companieshouse/penalty-payment-api-core/finance_config"
-	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/configctx"
 	"github.com/companieshouse/penalty-payment-api/handlers"
 	"github.com/companieshouse/penalty-payment-api/testutils"
@@ -26,11 +24,8 @@ func TestHandleConfiguration(t *testing.T) {
 
 		ctxWithConfig := configctx.WithConfig(
 			req.Context(),
-			penaltyConfig.PenaltyTypeConfigs,
-			penaltyConfig.PayablePenaltyConfigs,
-			penaltyConfig.PenaltyDetailsMap,
-			penaltyConfig.AllowedTransactionMap,
-		)
+			penaltyConfig.PenaltyTypes,
+			penaltyConfig.PayablePenalties)
 		req = req.WithContext(ctxWithConfig)
 
 		Convey("When HandleConfiguration is called", func() {
@@ -61,8 +56,12 @@ func TestHandleConfiguration(t *testing.T) {
 			EnabledTo:   &enabledTo,
 		}
 
-		mockPayablePenaltyConfigs := []finance_config.FinancePayablePenaltyConfig{
-			{Penalty: mockPenalty},
+		mockPayablePenaltyConfig := finance_config.FinancePayablePenaltyConfig{
+			Penalty: mockPenalty,
+		}
+
+		payablePenalties := map[string]finance_config.FinancePayablePenaltyConfig{
+			"FUTURE_PENALTY": mockPayablePenaltyConfig,
 		}
 
 		req := httptest.NewRequest(http.MethodGet, "/config", nil)
@@ -70,11 +69,8 @@ func TestHandleConfiguration(t *testing.T) {
 
 		ctxWithConfig := configctx.WithConfig(
 			req.Context(),
-			[]finance_config.FinancePenaltyTypeConfig{},
-			mockPayablePenaltyConfigs,
-			&config.PenaltyDetailsMap{},
-			&models.AllowedTransactionMap{},
-		)
+			map[string]map[string]finance_config.FinancePenaltyTypeConfig{},
+			payablePenalties)
 		req = req.WithContext(ctxWithConfig)
 
 		Convey("When HandleConfiguration is called", func() {

@@ -12,12 +12,13 @@ const (
 )
 
 type ReasonProvider interface {
-	GetReason(transaction *models.AccountPenaltiesDataDao, penaltyTypes []finance_config.FinancePenaltyTypeConfig) string
+	GetReason(transaction *models.AccountPenaltiesDataDao, penaltyTypes map[string]map[string]finance_config.FinancePenaltyTypeConfig) string
 }
 
 type DefaultReasonProvider struct{}
 
-func (provider *DefaultReasonProvider) GetReason(transaction *models.AccountPenaltiesDataDao, penaltyTypes []finance_config.FinancePenaltyTypeConfig) string {
+func (provider *DefaultReasonProvider) GetReason(transaction *models.AccountPenaltiesDataDao,
+	penaltyTypes map[string]map[string]finance_config.FinancePenaltyTypeConfig) string {
 	if transaction.TransactionType == InvoiceTransactionType {
 		switch transaction.CompanyCode {
 		case utils.LateFilingPenaltyCompanyCode:
@@ -31,12 +32,11 @@ func (provider *DefaultReasonProvider) GetReason(transaction *models.AccountPena
 	return ""
 }
 
-func getSanctionsReason(transaction *models.AccountPenaltiesDataDao, penaltyTypes []finance_config.FinancePenaltyTypeConfig) string {
-
-	for _, penaltyTypeConfig := range penaltyTypes {
-		if penaltyTypeConfig.TransactionSubtype == transaction.TransactionSubType {
-			return penaltyTypeConfig.Reason
-		}
+func getSanctionsReason(transaction *models.AccountPenaltiesDataDao,
+	penaltyTypes map[string]map[string]finance_config.FinancePenaltyTypeConfig) string {
+	if _, ok := penaltyTypes[transaction.TransactionType][transaction.TransactionSubType]; ok {
+		return penaltyTypes[transaction.TransactionType][transaction.TransactionSubType].Reason
+	} else {
+		return PenaltyReason
 	}
-	return PenaltyReason
 }

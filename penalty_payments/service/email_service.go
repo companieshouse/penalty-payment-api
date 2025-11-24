@@ -168,10 +168,11 @@ func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource model
 
 	messageID := "<" + payableResource.PayableRef + "." + strconv.Itoa(util.Random(0, 100000)) + "@companieshouse.gov.uk>"
 
+	emailSend := penaltyConfig.PayablePenalties[penaltyRefType].EmailSend
 	emailSendMessage := models.EmailSend{
-		AppID:        penaltyConfig.PenaltyDetailsMap.Details[penaltyRefType].EmailReceivedAppId,
+		AppID:        emailSend.AppId,
 		MessageID:    messageID,
-		MessageType:  penaltyConfig.PenaltyDetailsMap.Details[penaltyRefType].EmailMsgType,
+		MessageType:  emailSend.MessageType,
 		Data:         string(dataBytes),
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),

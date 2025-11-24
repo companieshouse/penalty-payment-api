@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/companieshouse/chs.go/log"
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
-	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/penalty_payments/transformers"
 )
 
@@ -18,8 +18,8 @@ type PaymentDetailsService struct {
 
 // GetPaymentDetailsFromPayableResource transforms a PayableResource into its corresponding Payment details resource
 func (service *PaymentDetailsService) GetPaymentDetailsFromPayableResource(req *http.Request,
-	payable *models.PayableResource, penaltyDetails config.PenaltyDetails) (*models.PaymentDetails, error) {
-	paymentDetails := transformers.PayableResourceToPaymentDetails(payable, penaltyDetails)
+	payable *models.PayableResource, paymentCost finance_config.PaymentCostConfig) (*models.PaymentDetails, error) {
+	paymentDetails := transformers.PayableResourceToPaymentDetails(payable, paymentCost)
 
 	if len(paymentDetails.Items) == 0 {
 		err := fmt.Errorf("no items in payment details transformed from payable resource [%s]", payable.PayableRef)

@@ -26,7 +26,7 @@ func HandleConfiguration(w http.ResponseWriter, r *http.Request) {
 
 	penaltyConfig := configctx.FromContext(r.Context())
 
-	for _, p := range penaltyConfig.PayablePenaltyConfigs {
+	for _, p := range penaltyConfig.PayablePenalties {
 		penaltyValue := *p.Penalty
 		now := time.Now()
 

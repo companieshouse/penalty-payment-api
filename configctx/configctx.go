@@ -4,28 +4,20 @@ import (
 	"context"
 
 	"github.com/companieshouse/penalty-payment-api-core/finance_config"
-	"github.com/companieshouse/penalty-payment-api-core/models"
-	"github.com/companieshouse/penalty-payment-api/config"
 )
 
 type ctxKey struct{}
 
 type ConfigContext struct {
-	PenaltyTypeConfigs    []finance_config.FinancePenaltyTypeConfig
-	PayablePenaltyConfigs []finance_config.FinancePayablePenaltyConfig
-	PenaltyDetailsMap     *config.PenaltyDetailsMap
-	AllowedTransactionMap *models.AllowedTransactionMap
+	PenaltyTypes     map[string]map[string]finance_config.FinancePenaltyTypeConfig
+	PayablePenalties map[string]finance_config.FinancePayablePenaltyConfig
 }
 
-func WithConfig(ctx context.Context, penaltyTypeConfigs []finance_config.FinancePenaltyTypeConfig,
-	payablePenaltyConfigs []finance_config.FinancePayablePenaltyConfig,
-	penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap) context.Context {
+func WithConfig(ctx context.Context, penaltyTypes map[string]map[string]finance_config.FinancePenaltyTypeConfig,
+	payablePenalties map[string]finance_config.FinancePayablePenaltyConfig) context.Context {
 	return context.WithValue(ctx, ctxKey{}, &ConfigContext{
-		penaltyTypeConfigs,
-		payablePenaltyConfigs,
-		penaltyDetailsMap,
-		allowedTransactionsMap})
+		penaltyTypes,
+		payablePenalties})
 }
 func FromContext(ctx context.Context) *ConfigContext {
 	cfg, _ := ctx.Value(ctxKey{}).(*ConfigContext)

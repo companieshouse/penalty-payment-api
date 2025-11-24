@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/services"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
@@ -65,11 +64,8 @@ func TestUnitHandleGetPenalties(t *testing.T) {
 
 			ctxWithConfig := configctx.WithConfig(
 				req.Context(),
-				[]finance_config.FinancePenaltyTypeConfig{},
-				penaltyConfig.PayablePenaltyConfigs,
-				&config.PenaltyDetailsMap{},
-				&models.AllowedTransactionMap{},
-			)
+				penaltyConfig.PenaltyTypes,
+				penaltyConfig.PayablePenalties)
 
 			req = req.WithContext(ctxWithConfig)
 

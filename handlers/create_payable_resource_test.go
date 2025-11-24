@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/companieshouse/chs.go/authentication"
-	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
@@ -19,6 +18,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/configctx"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 	"github.com/companieshouse/penalty-payment-api/mocks"
+	"github.com/companieshouse/penalty-payment-api/testutils"
 	"github.com/golang/mock/gomock"
 	"github.com/jarcoal/httpmock"
 	"github.com/pkg/errors"
@@ -52,44 +52,13 @@ func serveCreatePayableResourceHandler(body []byte, payableResourceService dao.P
 
 	baseCtx := testContext(withAuthUserDetails, customerCode)
 
-	penaltyDetailsMap := &config.PenaltyDetailsMap{
-		Name: "penalty details",
-		Details: map[string]config.PenaltyDetails{
-			utils.LateFilingPenaltyRefType: {
-				Description:        "Late Filing Penalty",
-				DescriptionId:      "late-filing-penalty",
-				ClassOfPayment:     "penalty-lfp",
-				ResourceKind:       "late-filing-penalty#late-filing-penalty",
-				ProductType:        "late-filing-penalty",
-				EmailReceivedAppId: "penalty-payment-api.penalty_payment_received_email",
-				EmailMsgType:       "penalty_payment_received_email",
-			},
-		},
-	}
+	penaltyConfig := testutils.LoadPenaltyConfigContext()
 
-	allowedTransactionMap := &models.AllowedTransactionMap{
-		Types: map[string]map[string]bool{
-			"1": {
-				"EJ": true,
-				"EK": true,
-				"EL": true,
-				"EU": true,
-				"S1": true,
-				"A2": true,
-			},
-		},
-	}
-
-	// Wrap base context with ConfigContext
 	ctxWithConfig := configctx.WithConfig(
 		baseCtx,
-		[]finance_config.FinancePenaltyTypeConfig{},
-		[]finance_config.FinancePayablePenaltyConfig{},
-		penaltyDetailsMap,
-		allowedTransactionMap,
-	)
+		penaltyConfig.PenaltyTypes,
+		penaltyConfig.PayablePenalties)
 
-	// Attach combined context to request
 	req = req.WithContext(ctxWithConfig)
 
 	handler := CreatePayableResourceHandler(payableResourceService, apDaoSvc)
