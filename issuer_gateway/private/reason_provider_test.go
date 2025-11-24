@@ -3,14 +3,15 @@ package private
 import (
 	"testing"
 
-	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
+	"github.com/companieshouse/penalty-payment-api/testutils"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 	Convey("Get reason", t, func() {
+		penaltyConfig := testutils.LoadPenaltyConfigContext()
 
 		type args struct {
 			penalty *models.AccountPenaltiesDataDao
@@ -78,14 +79,7 @@ func TestUnitDefaultReasonProvider_GetReason(t *testing.T) {
 		for _, tc := range testCases {
 			Convey(tc.name, func() {
 				provider := &DefaultReasonProvider{}
-				penaltyTypeConfigs := []finance_config.FinancePenaltyTypeConfig{
-					{
-						TransactionType:    tc.args.penalty.TransactionType,
-						TransactionSubtype: tc.args.penalty.TransactionSubType,
-						Reason:             tc.reason,
-					},
-				}
-				got := provider.GetReason(tc.args.penalty, penaltyTypeConfigs)
+				got := provider.GetReason(tc.args.penalty, penaltyConfig.PenaltyTypes)
 				So(got, ShouldEqual, tc.reason)
 			})
 		}

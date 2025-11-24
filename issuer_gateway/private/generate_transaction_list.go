@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/companieshouse/chs.go/log"
+	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
@@ -36,12 +37,12 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 
 	// Loop through penalties and construct CH resources
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
-		transactionType := getTransactionType(&accountPenalty, penaltyConfig.AllowedTransactionMap)
-		reason := transactionListItemEnrichmentProviders.ReasonProvider.GetReason(&accountPenalty, penaltyConfig.PenaltyTypeConfigs)
+		transactionType := getTransactionType(&accountPenalty, penaltyConfig.PenaltyTypes)
+		reason := transactionListItemEnrichmentProviders.ReasonProvider.GetReason(&accountPenalty, penaltyConfig.PenaltyTypes)
 		payableStatus := transactionListItemEnrichmentProviders.PayableStatusProvider.GetPayableStatus(
-			transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, penaltyConfig.AllowedTransactionMap, cfg)
+			transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, penaltyConfig.PenaltyTypes, cfg)
 		transactionListItem, err := buildTransactionListItemFromAccountPenalty(
-			&accountPenalty, penaltyConfig.PenaltyDetailsMap, penaltyRefType, transactionType, reason, payableStatus, requestId)
+			&accountPenalty, penaltyConfig.PayablePenalties, penaltyRefType, transactionType, reason, payableStatus, requestId)
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +54,7 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 }
 
 func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesDataDao,
-	penaltyDetailsMap *config.PenaltyDetailsMap, penaltyRefType string, transactionType string,
+	payablePenalties map[string]finance_config.FinancePayablePenaltyConfig, penaltyRefType string, transactionType string,
 	reason string, payableStatus string, requestId string) (models.TransactionListItem, error) {
 	etag, err := etagGenerator()
 	if err != nil {
@@ -66,7 +67,8 @@ func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesData
 	transactionListItem.Etag = etag
 	transactionListItem.ID = dao.TransactionReference
 	transactionListItem.IsPaid = dao.IsPaid
-	transactionListItem.Kind = penaltyDetailsMap.Details[penaltyRefType].ResourceKind
+
+	transactionListItem.Kind = payablePenalties[penaltyRefType].PaymentCost.ResourceKind
 	transactionListItem.IsDCA = checkDunningStatus(dao, DCADunningStatus)
 	transactionListItem.DueDate = dao.DueDate
 	transactionListItem.MadeUpDate = dao.MadeUpDate
@@ -80,11 +82,12 @@ func buildTransactionListItemFromAccountPenalty(dao *models.AccountPenaltiesData
 	return transactionListItem, nil
 }
 
-func getTransactionType(e5Transaction *models.AccountPenaltiesDataDao, allowedTransactionsMap *models.AllowedTransactionMap) string {
+func getTransactionType(e5Transaction *models.AccountPenaltiesDataDao,
+	penaltyTypes map[string]map[string]finance_config.FinancePenaltyTypeConfig) string {
 	// Each penalty needs to be checked and identified as a 'penalty' or 'other'. This allows penalty-payment-web to determine
 	// which transactions are payable. This is done using a yaml file to map payable transactions
 	// Check if the penalty is allowed and set to 'penalty' if it is
-	if _, ok := allowedTransactionsMap.Types[e5Transaction.TransactionType][e5Transaction.TransactionSubType]; ok {
+	if _, ok := penaltyTypes[e5Transaction.TransactionType][e5Transaction.TransactionSubType]; ok {
 		return types.Penalty.String()
 	} else {
 		return types.Other.String()

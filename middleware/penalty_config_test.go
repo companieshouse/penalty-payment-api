@@ -40,10 +40,8 @@ func TestPenaltyConfigMiddleware(t *testing.T) {
 
 			Convey("And the context should contain a non-nil ConfigContext", func() {
 				So(capturedCfg, ShouldNotBeNil)
-				So(capturedCfg.PenaltyDetailsMap, ShouldNotBeNil)
-				So(capturedCfg.AllowedTransactionMap, ShouldNotBeNil)
-				So(capturedCfg.PenaltyTypeConfigs, ShouldNotBeNil)
-				So(capturedCfg.PayablePenaltyConfigs, ShouldNotBeNil)
+				So(capturedCfg.PenaltyTypes, ShouldNotBeNil)
+				So(capturedCfg.PayablePenalties, ShouldNotBeNil)
 			})
 		})
 

@@ -1,6 +1,8 @@
 module github.com/companieshouse/penalty-payment-api
 
-go 1.24
+go 1.24.0
+
+toolchain go1.24.9
 
 require (
 	github.com/Shopify/sarama v1.24.0
@@ -11,7 +13,7 @@ require (
 	github.com/companieshouse/go-sdk-manager v0.1.12
 	github.com/companieshouse/go-session-handler v0.1.5
 	github.com/companieshouse/gofigure v0.1.4
-	github.com/companieshouse/penalty-payment-api-core v1.19.0
+	github.com/companieshouse/penalty-payment-api-core v1.20.0
 	github.com/docker/go-connections v0.5.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0

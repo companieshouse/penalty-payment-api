@@ -14,7 +14,6 @@ import (
 func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 
 	penaltyConfig := testutils.LoadPenaltyConfigContext()
-	allowedTransactionMap := penaltyConfig.AllowedTransactionMap
 
 	Convey("Get open payable status for late filing penalty", t, func() {
 		type args struct {
@@ -128,7 +127,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -209,7 +208,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -284,7 +283,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -366,7 +365,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -441,7 +440,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -523,7 +522,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -598,7 +597,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -698,7 +697,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 				penalty := tc.args.penalty
 				closedAt := &yesterday
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -734,7 +733,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 				penalty := tc.args.penalty
 				closedAt := &now
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, closedAt, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, ClosedPendingAllocationPayableStatus)
 			})
@@ -758,7 +757,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 
 		// When
 		provider := &DefaultPayableStatusProvider{}
-		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, allowedTransactionMap, &cfg)
+		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, penaltyConfig.PenaltyTypes, &cfg)
 
 		// Then
 		So(got, ShouldEqual, ClosedInstalmentPlanPayableStatus)
@@ -781,7 +780,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 
 		// When
 		provider := &DefaultPayableStatusProvider{}
-		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, allowedTransactionMap, &cfg)
+		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, penaltyConfig.PenaltyTypes, &cfg)
 
 		// Then
 		So(got, ShouldEqual, ClosedPayableStatus)
@@ -796,7 +795,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 
 		// When
 		provider := &DefaultPayableStatusProvider{}
-		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, allowedTransactionMap, &cfg)
+		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, penaltyConfig.PenaltyTypes, &cfg)
 
 		// Then
 		So(got, ShouldEqual, ClosedPenStrategyExhaustedPayableStatus)
@@ -811,7 +810,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 
 		// When
 		provider := &DefaultPayableStatusProvider{}
-		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, allowedTransactionMap, &cfg)
+		got := provider.GetPayableStatus(types.Penalty.String(), &lateFilingPaidPenalty, nil, e5Transactions, penaltyConfig.PenaltyTypes, &cfg)
 
 		// Then
 		So(got, ShouldEqual, ClosedPayableStatus)
@@ -826,8 +825,8 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 		closedAt := time.Now()
 		e5Transactions := []models.AccountPenaltiesDataDao{*oldPaidPenalty, *newPaidPenalty}
 		provider := &DefaultPayableStatusProvider{}
-		So(provider.GetPayableStatus(types.Penalty.String(), oldPaidPenalty, &closedAt, e5Transactions, allowedTransactionMap, &cfg), ShouldEqual, ClosedPayableStatus)
-		So(provider.GetPayableStatus(types.Penalty.String(), newPaidPenalty, &closedAt, e5Transactions, allowedTransactionMap, &cfg), ShouldEqual, ClosedPendingAllocationPayableStatus)
+		So(provider.GetPayableStatus(types.Penalty.String(), oldPaidPenalty, &closedAt, e5Transactions, penaltyConfig.PenaltyTypes, &cfg), ShouldEqual, ClosedPayableStatus)
+		So(provider.GetPayableStatus(types.Penalty.String(), newPaidPenalty, &closedAt, e5Transactions, penaltyConfig.PenaltyTypes, &cfg), ShouldEqual, ClosedPendingAllocationPayableStatus)
 
 	})
 
@@ -900,7 +899,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -976,7 +975,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -1052,7 +1051,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 			Convey(tc.name, func() {
 				penalty := tc.args.penalty
 				provider := &DefaultPayableStatusProvider{}
-				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now, []models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})
@@ -1087,7 +1086,7 @@ func TestUnitDefaultPayableStatusProvider_GetPayableStatus(t *testing.T) {
 				penalty := tc.args.penalty
 				provider := &DefaultPayableStatusProvider{}
 				got := provider.GetPayableStatus(types.Penalty.String(), penalty, &now,
-					[]models.AccountPenaltiesDataDao{*penalty}, allowedTransactionMap, &cfg)
+					[]models.AccountPenaltiesDataDao{*penalty}, penaltyConfig.PenaltyTypes, &cfg)
 
 				So(got, ShouldEqual, tc.want)
 			})

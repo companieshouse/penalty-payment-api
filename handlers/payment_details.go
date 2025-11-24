@@ -37,14 +37,14 @@ func HandleGetPaymentDetails(w http.ResponseWriter, req *http.Request) {
 
 	penaltyConfig := configctx.FromContext(req.Context())
 
-	penaltyDetails := penaltyConfig.PenaltyDetailsMap.Details[penaltyRefType]
-	log.DebugC(requestId, "penalty details", log.Data{"penaltyDetails": penaltyDetails})
+	payablePenaltyConfig := penaltyConfig.PayablePenalties[penaltyRefType]
+	log.DebugC(requestId, "payment cost", log.Data{"payment_cost": payablePenaltyConfig.PaymentCost})
 
 	// Get the payment details from the payable resource
 	logContext := log.Data{"customer_code": payableResource.CustomerCode, "payable_ref": payableResource.PayableRef}
 	log.InfoC(requestId, "getting payment details", logContext)
 	paymentDetails, err := paymentDetailsService.GetPaymentDetailsFromPayableResource(req,
-		payableResource, penaltyDetails)
+		payableResource, *payablePenaltyConfig.PaymentCost)
 	// can only return either an InvalidData or Success response type
 	if err != nil {
 		log.DebugC(requestId, fmt.Sprintf("invalid data getting payment details from payable resource so returning not found [%s]", err.Error()), logContext)

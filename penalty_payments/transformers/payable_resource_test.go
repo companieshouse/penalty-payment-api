@@ -220,9 +220,9 @@ func TestUnitPayableResourceToPaymentDetails(t *testing.T) {
 				}
 
 				penaltyConfig := testutils.LoadPenaltyConfigContext()
-				penaltyDetails := penaltyConfig.PenaltyDetailsMap.Details[tc.penaltyRefType]
+				penaltyDetails := penaltyConfig.PayablePenalties[tc.penaltyRefType]
 
-				response := PayableResourceToPaymentDetails(payable, penaltyDetails)
+				response := PayableResourceToPaymentDetails(payable, *penaltyDetails.PaymentCost)
 
 				_, filename, _, _ := runtime.Caller(0)
 				fmt.Printf("Current test filename: %s\n", filename)
