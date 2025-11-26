@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/penalty-payment-api-core/finance_config"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
@@ -23,17 +24,35 @@ const (
 type PayableStatusProvider interface {
 	GetPayableStatus(transactionType string, e5Transaction *models.AccountPenaltiesDataDao, closedAt *time.Time,
 		e5Transactions []models.AccountPenaltiesDataDao, penaltyTypes map[string]map[string]finance_config.FinancePenaltyTypeConfig,
-		cfg *config.Config) string
+		cfg *config.Config, financePaymentConfig finance_config.FinancePaymentConfig) string
 }
 
 type DefaultPayableStatusProvider struct{}
 
-func (provider *DefaultPayableStatusProvider) GetPayableStatus(transactionType string, e5Transaction *models.AccountPenaltiesDataDao, closedAt *time.Time,
-	e5Transactions []models.AccountPenaltiesDataDao, penaltyTypes map[string]map[string]finance_config.FinancePenaltyTypeConfig, cfg *config.Config) string {
+func (provider *DefaultPayableStatusProvider) GetPayableStatus(transactionType string, e5Transaction *models.AccountPenaltiesDataDao,
+	closedAt *time.Time, e5Transactions []models.AccountPenaltiesDataDao, penaltyTypes map[string]map[string]finance_config.FinancePenaltyTypeConfig,
+	cfg *config.Config, financePaymentConfig finance_config.FinancePaymentConfig) string {
 	if types.Penalty.String() == transactionType {
-		if penaltyTransactionSubTypeDisabled(e5Transaction, cfg) {
+		txType := e5Transaction.TransactionType
+		txSubtype := e5Transaction.TransactionSubType
+
+		if penaltyConfigTransactionSubTypeDisabled(txSubtype, cfg) {
 			return DisabledPayableStatus
 		}
+
+		found, disabled := penaltyTypeTransactionSubTypeStatus(penaltyTypes, txType, txSubtype)
+		if found {
+			if disabled {
+				return DisabledPayableStatus
+			}
+		} else {
+			return ClosedPayableStatus
+		}
+
+		if payablePenaltySubTypeAbsent(financePaymentConfig, txType, txSubtype) {
+			return ClosedPayableStatus
+		}
+
 		closedPayableStatus, isClosed := checkClosedPayableStatus(e5Transaction, closedAt, e5Transactions, penaltyTypes)
 		if isClosed {
 			return closedPayableStatus
@@ -141,14 +160,63 @@ func penaltyPaymentAllocated(penalty *models.AccountPenaltiesDataDao) bool {
 	return penalty.OutstandingAmount == 0
 }
 
-func penaltyTransactionSubTypeDisabled(penalty *models.AccountPenaltiesDataDao, cfg *config.Config) bool {
+// penaltyConfigTransactionSubTypeDisabled checks the config override that is set via the DISABLED_PENALTY_TRANSACTION_SUBTYPES
+// environment variable that can be used to disable a subtype
+func penaltyConfigTransactionSubTypeDisabled(txSubtype string, cfg *config.Config) bool {
+	log.Debug("Disabled subtypes: ", log.Data{
+		"DISABLED_PENALTY_TRANSACTION_SUBTYPES": cfg.DisabledPenaltyTransactionSubtypes})
 	trimDisabledSubtypes := strings.ReplaceAll(cfg.DisabledPenaltyTransactionSubtypes, " ", "")
 	disabledSubtypes := strings.Split(trimDisabledSubtypes, ",")
-	penaltySubType := penalty.TransactionSubType
+	penaltySubType := txSubtype
 	for _, subType := range disabledSubtypes {
 		if penaltySubType == subType {
 			return true
 		}
 	}
+
 	return false
+}
+
+// penaltyTypeTransactionSubTypeStatus returns a boolean to indicate if the subtype has been found in the financial
+// penalty type config, and a boolean to return the status of the disabled config value if set
+func penaltyTypeTransactionSubTypeStatus(penaltyTypes map[string]map[string]finance_config.FinancePenaltyTypeConfig, txType, txSubType string) (bool, bool) {
+	subtypesMap, ok := penaltyTypes[txType]
+	if !ok || subtypesMap == nil {
+		log.Info("Penalty Type Config transaction type not found: ", log.Data{
+			"transaction_type": txType})
+		return false, false
+	}
+
+	subtypeCfg, ok := subtypesMap[txSubType]
+	if !ok {
+		log.Info("Penalty Type Config transaction subtype not found: ", log.Data{
+			"transaction_subtype": txSubType})
+		return false, false
+	}
+
+	log.Info("Penalty Type Config transaction subtype not found: ", log.Data{
+		"transaction_subtype": txSubType,
+		"disabled":            subtypeCfg.Disabled})
+
+	return true, subtypeCfg.Disabled
+}
+
+// payablePenaltySubTypeAbsent returns a boolean to indicate if the subtype exists in the finance payment configuration
+func payablePenaltySubTypeAbsent(financePaymentConfig finance_config.FinancePaymentConfig, txType, txSubType string) bool {
+	if financePaymentConfig.TransactionType != txType {
+		log.Info("Finance Payment Config transaction subtype not found: ", log.Data{
+			"transaction_subtype": txType})
+		return true
+	}
+
+	for _, v := range financePaymentConfig.TransactionSubTypes {
+		if v == txSubType {
+			return false
+		}
+	}
+
+	log.Info("Finance Payment Config transaction subtype not found: ", log.Data{
+		"transaction_subtype": txSubType})
+
+	return true
 }

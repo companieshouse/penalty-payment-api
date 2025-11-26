@@ -35,12 +35,15 @@ func GenerateTransactionListFromAccountPenalties(accountPenalties *models.Accoun
 	payableTransactionList.Etag = etag
 	payableTransactionList.TotalResults = len(accountPenalties.AccountPenalties)
 
+	financePaymentConfig := penaltyConfig.PayablePenalties[penaltyRefType].FinancePayment
+
 	// Loop through penalties and construct CH resources
 	for _, accountPenalty := range accountPenalties.AccountPenalties {
 		transactionType := getTransactionType(&accountPenalty, penaltyConfig.PenaltyTypes)
 		reason := transactionListItemEnrichmentProviders.ReasonProvider.GetReason(&accountPenalty, penaltyConfig.PenaltyTypes)
 		payableStatus := transactionListItemEnrichmentProviders.PayableStatusProvider.GetPayableStatus(
-			transactionType, &accountPenalty, accountPenalties.ClosedAt, accountPenalties.AccountPenalties, penaltyConfig.PenaltyTypes, cfg)
+			transactionType, &accountPenalty, accountPenalties.ClosedAt,
+			accountPenalties.AccountPenalties, penaltyConfig.PenaltyTypes, cfg, *financePaymentConfig)
 		transactionListItem, err := buildTransactionListItemFromAccountPenalty(
 			&accountPenalty, penaltyConfig.PayablePenalties, penaltyRefType, transactionType, reason, payableStatus, requestId)
 		if err != nil {
