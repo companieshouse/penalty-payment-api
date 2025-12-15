@@ -77,7 +77,6 @@ func TestSendEmailMessageViaChsKafkaApi_UsesChsKafkaApiURL(t *testing.T) {
 
 		getConfig = func() (*config.Config, error) {
 			return &config.Config{
-				EmailSendTopic: "topic",
 				ChsKafkaApiURL: "http://test-kafka-api",
 			}, nil
 		}
@@ -90,7 +89,7 @@ func TestSendEmailMessageViaChsKafkaApi_UsesChsKafkaApiURL(t *testing.T) {
 
 		// Mock prepareEmailMessage to avoid unrelated errors
 		prepareEmailMessage = func(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-			allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService, topic string) (*models.EmailSend, error) {
+			allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
 			return &models.EmailSend{Data: "{}", MessageType: "email", EmailAddress: "testemail@test.com", MessageID: "123abc", AppID: "qwerty"}, nil
 		}
 
@@ -103,8 +102,6 @@ func TestSendEmailMessageViaChsKafkaApi_UsesChsKafkaApiURL(t *testing.T) {
 func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
-	topic := "email-send"
 
 	Convey("Given the PrepareKafkaMessage is called", t, func() {
 		// Save all globals that may be mocked
@@ -162,7 +159,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 					getConfig = mockedConfigGet
 
 					Convey("Then an error should be returned", func() {
-						_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, topic)
+						_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 						So(err, ShouldResemble, errors.New("error getting config: ["+errMsg+"]"))
 					})
 				})
@@ -177,7 +174,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			getConfig = mockedConfigGet
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, topic)
+				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldStartWith, "error getting company name: [")
 			})
@@ -199,7 +196,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			getCompanyName = mockedGetCompanyName
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, topic)
+				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "error getting company code")
 			})
@@ -221,7 +218,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			getPenaltyRefTypeFromTransaction = mockedGetPenaltyRefTypeFromTransaction
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, topic)
+				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 				So(err, ShouldResemble, errors.New("error getting penalty ref type"))
 			})
@@ -246,7 +243,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 					Transactions: []models.TransactionItem{},
 				}
 
-				_, err := prepareEmailMessage(payableResourceNoItems, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc, topic)
+				_, err := prepareEmailMessage(payableResourceNoItems, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc)
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldStartWith, "empty transactions list in payable resource:")
 			})
@@ -268,7 +265,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			Convey("Then an error should be returned", func() {
 				mockApDaoSvc.EXPECT().GetAccountPenalties(gomock.Any(), gomock.Any(), "").Return(nil, nil)
 
-				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc, topic)
+				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc)
 				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldStartWith, "error getting transaction for penalty: [")
 			})
@@ -290,7 +287,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			getPayablePenalty = mockedGetPayablePenalty
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, topic)
+				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 				So(err, ShouldResemble, errors.New("error parsing made up date: [parsing time \"\" as \"2006-01-02\": cannot parse \"\" as \"2006\"]"))
 			})
@@ -317,7 +314,6 @@ func TestSendEmailMessageViaChsKafkaApi_MissingScenarios(t *testing.T) {
 
 		getConfig = func() (*config.Config, error) {
 			return &config.Config{
-				EmailSendTopic: "topic",
 				ChsKafkaApiURL: "http://test-kafka-api",
 			}, nil
 		}
@@ -325,7 +321,7 @@ func TestSendEmailMessageViaChsKafkaApi_MissingScenarios(t *testing.T) {
 		// Successful POST and header check
 		Convey("When everything succeeds and header is set", func() {
 			prepareEmailMessage = func(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService, topic string) (*models.EmailSend, error) {
+				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
 				return &models.EmailSend{Data: "{}"}, nil
 			}
 
@@ -337,7 +333,7 @@ func TestSendEmailMessageViaChsKafkaApi_MissingScenarios(t *testing.T) {
 		// Marshal error
 		Convey("When prepareEmailMessage returns a struct that cannot be marshaled", func() {
 			prepareEmailMessage = func(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService, topic string) (*models.EmailSend, error) {
+				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
 				// Intentionally return a struct with a field that cannot be marshaled
 				return nil, nil
 			}
@@ -351,7 +347,7 @@ func TestSendEmailMessageViaChsKafkaApi_MissingScenarios(t *testing.T) {
 		// Request creation error
 		Convey("When newRequestFunc returns an error", func() {
 			prepareEmailMessage = func(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService, topic string) (*models.EmailSend, error) {
+				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
 				return &models.EmailSend{Data: "{}"}, nil
 			}
 			newRequestFunc = func(method, url string, body io.Reader) (*http.Request, error) {
@@ -364,7 +360,7 @@ func TestSendEmailMessageViaChsKafkaApi_MissingScenarios(t *testing.T) {
 		// HTTP client error
 		Convey("When client.Do returns an error", func() {
 			prepareEmailMessage = func(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService, topic string) (*models.EmailSend, error) {
+				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
 				return &models.EmailSend{Data: "{}"}, nil
 			}
 			newRequestFunc = func(method, url string, body io.Reader) (*http.Request, error) {

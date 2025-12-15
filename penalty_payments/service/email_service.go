@@ -29,7 +29,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 		return fmt.Errorf("error getting config for sending email message chs-kafka-api: [%v]", err)
 	}
 
-	message, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc, cfg.EmailSendTopic)
+	message, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 	if err != nil || message == nil {
 		return fmt.Errorf("error preparing email message for chs-kafka-api: [%v]", err)
 	}
@@ -58,13 +58,24 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 	request.Header.Add("Authorization", cfg.ChsKafkaApiKey)
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	httpClient.Do(request)
+	response, err := httpClient.Do(request)
+
+	if err != nil && response.StatusCode != http.StatusAccepted {
+		logContext := log.Data{
+			"customer_code": payableResource.CustomerCode,
+			"payable_ref":   payableResource.PayableRef,
+		}
+		err = fmt.Errorf("failed to send email send message: [%v]", err)
+		log.ErrorC(requestId, err, logContext)
+		return err
+	}
+
 	log.InfoC(requestId, "Successfully sent email message to chs-kafka-api")
 
 	return nil
 }
 
-func realPrepareEmailMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService, topic string) (*models.EmailSend, error) {
+func realPrepareEmailMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
 	cfg, err := getConfig()
 	if err != nil {
 		return nil, fmt.Errorf("error getting config: [%v]", err)
@@ -141,7 +152,7 @@ func realPrepareEmailMessage(payableResource models.PayableResource, req *http.R
 	return &models.EmailSend{
 		AppID:        penaltyDetailsMap.Details[penaltyRefType].EmailReceivedAppId,
 		MessageID:    messageID,
-		MessageType:  "email",
+		MessageType:  penaltyDetailsMap.Details[penaltyRefType].EmailMsgType,
 		Data:         string(jsonData),
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),
