@@ -75,7 +75,6 @@ func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *mode
 	}
 
 	ctx = context.WithValue(ctx, httpsession.ContextKeySession, &session.Session{})
-
 	h := PayResourceHandler(payableResourceService, e5.NewClient("foo", "e5api"),
 		penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 	req := httptest.NewRequest(http.MethodPost, "/", body).WithContext(ctx)
@@ -97,13 +96,13 @@ func dispatchPayResourceHandler(ctx context.Context, t *testing.T, reqBody *mode
 }
 
 // Mock function for erroring when preparing and sending kafka message
-func mockSendEmailKafkaMessageError(_ models.PayableResource, _ *http.Request,
+func mockSendEmailMessageError(_ models.PayableResource, _ *http.Request,
 	_ *config.PenaltyDetailsMap, _ *models.AllowedTransactionMap, _ dao.AccountPenaltiesDaoService) error {
 	return errors.New("error")
 }
 
 // Mock function for successful preparing and sending of kafka message
-func mockSendEmailKafkaMessage(_ models.PayableResource, _ *http.Request,
+func mockSendEmailMessage(_ models.PayableResource, _ *http.Request,
 	_ *config.PenaltyDetailsMap, _ *models.AllowedTransactionMap, _ dao.AccountPenaltiesDaoService) error {
 	return nil
 }
@@ -315,7 +314,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka messages
-			handleSendEmailKafkaMessage = mockSendEmailKafkaMessageError
+			handleSendEmailMessage = mockSendEmailMessageError
 			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
@@ -365,7 +364,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka messages
-			handleSendEmailKafkaMessage = mockSendEmailKafkaMessage
+			handleSendEmailMessage = mockSendEmailMessage
 			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessageError
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
@@ -421,7 +420,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka messages
-			handleSendEmailKafkaMessage = mockSendEmailKafkaMessage
+			handleSendEmailMessage = mockSendEmailMessage
 			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
@@ -469,7 +468,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka messages
-			handleSendEmailKafkaMessage = mockSendEmailKafkaMessage
+			handleSendEmailMessage = mockSendEmailMessage
 			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}
@@ -518,7 +517,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka messages
-			handleSendEmailKafkaMessage = mockSendEmailKafkaMessage
+			handleSendEmailMessage = mockSendEmailMessage
 			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
 			getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransactionError
 
@@ -568,7 +567,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
-			handleSendEmailKafkaMessage = mockSendEmailKafkaMessage
+			handleSendEmailMessage = mockSendEmailMessage
 			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
 			getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
@@ -618,7 +617,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
-			handleSendEmailKafkaMessage = mockSendEmailKafkaMessage
+			handleSendEmailMessage = mockSendEmailMessage
 			handlePaymentProcessingKafkaMessage = mockPaymentsProcessingKafkaMessage
 			getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
@@ -673,7 +672,7 @@ func TestUnitPayResourceHandler(t *testing.T) {
 			ctx := context.WithValue(context.Background(), config.PayableResource, model)
 
 			// stub kafka message
-			handleSendEmailKafkaMessage = mockSendEmailKafkaMessage
+			handleSendEmailMessage = mockSendEmailMessage
 			getCompanyCodeFromTransaction = mockedGetCompanyCodeFromTransaction
 
 			reqBody := &models.PatchResourceRequest{Reference: "123"}

@@ -15,3 +15,6 @@ lint.txt
 # Mac files
 .DS_Store
 ._*
+
+coverage.out
+./vscode/

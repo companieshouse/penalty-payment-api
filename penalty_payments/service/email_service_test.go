@@ -2,13 +2,12 @@ package service
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"testing"
 
-	"github.com/companieshouse/chs.go/avro"
-	"github.com/companieshouse/chs.go/avro/schema"
-	"github.com/companieshouse/chs.go/kafka/producer"
 	"github.com/companieshouse/penalty-payment-api-core/models"
+	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/common/utils"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
@@ -19,11 +18,27 @@ import (
 
 var req = &http.Request{}
 
+type mockRoundTripper struct {
+	headerChecked *bool
+	returnError   bool
+}
+
+func (m *mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if m.headerChecked != nil && req.Method == "POST" && req.Header.Get("Content-Type") == "application/x-www-form-urlencoded" {
+		*m.headerChecked = true
+	}
+	if m.returnError {
+		return nil, errors.New("client error")
+	}
+	return &http.Response{StatusCode: 200, Body: http.NoBody}, nil
+}
+
 func TestUnitSendEmailKafkaMessage(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	Convey("Given the SendEmailKafkaMessage is called", t, func() {
+
 		Convey("When config is called with invalid config", func() {
 			errMsg := "config is invalid"
 			mockedConfigGet := func() (*config.Config, error) {
@@ -33,64 +48,54 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 			getConfig = mockedConfigGet
 
 			Convey("Then an error should be returned", func() {
-				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
-
-				So(err, ShouldResemble, errors.New("error getting config for kafka message production: ["+errMsg+"]"))
+				err := SendEmailMessageViaChsKafkaApi(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+				So(err, ShouldResemble, errors.New("error getting config for sending email message chs-kafka-api: ["+errMsg+"]"))
 			})
 		})
-		Convey("When config is called with valid config and invalid broker address", func() {
-			mockedConfigGet := func() (*config.Config, error) {
-				return &config.Config{}, nil
-			}
 
-			getConfig = mockedConfigGet
+	})
+}
 
-			Convey("Then an error should be returned", func() {
-				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+func TestSendEmailMessageViaChsKafkaApi_UsesChsKafkaApiURL(t *testing.T) {
+	mockTransport := &mockRoundTripper{}
+	oldHttpClient := httpClient
+	httpClient = &http.Client{Transport: mockTransport}
+	defer func() { httpClient = oldHttpClient }()
 
-				So(err, ShouldResemble, errors.New("error creating email send kafka producer: [kafka: invalid configuration (You must provide at least one broker address)]"))
-			})
-		})
-		Convey("When config is called with valid config and valid broker config but invalid schema", func() {
-			mockedConfigGet := func() (*config.Config, error) {
-				return &config.Config{
-					EmailSendTopic: "email-send",
-				}, nil
-			}
-			mockedGetProducer := func(brokerAddrs []string) (*producer.Producer, error) {
-				return &producer.Producer{}, nil
-			}
+	Convey("Given ChsKafkaApiURL is set in config", t, func() {
 
-			getConfig = mockedConfigGet
-			getProducer = mockedGetProducer
+		expectedURL := "http://test-kafka-api?app_id=qwerty&email_address=testemail%40test.com&json_data=%7B%7D&message_id=123abc&message_type=email"
+		// Save all globals that may be mocked
+		oldGetConfig := getConfig
+		oldNewRequestFunc := newRequestFunc
+		oldPrepareEmailMessage := prepareEmailMessage
+		defer func() {
+			getConfig = oldGetConfig
+			newRequestFunc = oldNewRequestFunc
+			prepareEmailMessage = oldPrepareEmailMessage
+		}()
 
-			Convey("Then an error should be returned", func() {
-				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+		getConfig = func() (*config.Config, error) {
+			return &config.Config{
+				ChsKafkaApiURL: "http://test-kafka-api",
+			}, nil
+		}
 
-				So(err, ShouldResemble, errors.New("error getting email send schema from schema registry: [Get \"/subjects/email-send/versions/latest\": unsupported protocol scheme \"\"]"))
-			})
-		})
-		Convey("When config is called with valid config and valid broker config and valid schema", func() {
-			mockedConfigGet := func() (*config.Config, error) {
-				return &config.Config{}, nil
-			}
-			mockedGetProducer := func(brokerAddrs []string) (*producer.Producer, error) {
-				return &producer.Producer{}, nil
-			}
-			mockedGetSchema := func(url, schemaName string) (string, error) {
-				return "schema", nil
-			}
+		var actualURL string
+		newRequestFunc = func(method, url string, body io.Reader) (*http.Request, error) {
+			actualURL = url
+			return &http.Request{Header: make(http.Header)}, nil
+		}
 
-			getConfig = mockedConfigGet
-			getProducer = mockedGetProducer
-			getSchema = mockedGetSchema
+		// Mock prepareEmailMessage to avoid unrelated errors
+		prepareEmailMessage = func(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
+			allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
+			return &models.EmailSend{Data: "{}", MessageType: "email", EmailAddress: "testemail@test.com", MessageID: "123abc", AppID: "qwerty"}, nil
+		}
 
-			Convey("Then an error should be returned", func() {
-				err := SendEmailKafkaMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
-
-				So(err.Error(), ShouldStartWith, "error preparing email send kafka message with schema: [error getting company name: [")
-			})
-		})
+		err := SendEmailMessageViaChsKafkaApi(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+		So(err, ShouldBeNil)
+		So(actualURL, ShouldEqual, expectedURL)
 	})
 }
 
@@ -98,14 +103,20 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	topic := "email-send"
-
 	Convey("Given the PrepareKafkaMessage is called", t, func() {
-		emailSendSchema, _ := schema.Get("chs.gov.uk", topic)
-		producerSchema := avro.Schema{
-			Definition: emailSendSchema,
-		}
-
+		// Save all globals that may be mocked
+		oldGetConfig := getConfig
+		oldGetCompanyName := getCompanyName
+		oldGetCompanyCodeFromTransaction := getCompanyCodeFromTransaction
+		oldGetPenaltyRefTypeFromTransaction := getPenaltyRefTypeFromTransaction
+		oldGetPayablePenalty := getPayablePenalty
+		defer func() {
+			getConfig = oldGetConfig
+			getCompanyName = oldGetCompanyName
+			getCompanyCodeFromTransaction = oldGetCompanyCodeFromTransaction
+			getPenaltyRefTypeFromTransaction = oldGetPenaltyRefTypeFromTransaction
+			getPayablePenalty = oldGetPayablePenalty
+		}()
 		mockedGetCompanyCodeFromTransaction := func(transactions []models.TransactionItem) (string, error) {
 			return "LP", nil
 		}
@@ -148,9 +159,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 					getConfig = mockedConfigGet
 
 					Convey("Then an error should be returned", func() {
-						_, err := prepareEmailKafkaMessage(
-							producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, topic)
-
+						_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 						So(err, ShouldResemble, errors.New("error getting config: ["+errMsg+"]"))
 					})
 				})
@@ -165,9 +174,8 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			getConfig = mockedConfigGet
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareEmailKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, topic)
-
+				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldStartWith, "error getting company name: [")
 			})
 		})
@@ -188,9 +196,8 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			getCompanyName = mockedGetCompanyName
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareEmailKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, topic)
-
+				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldEqual, "error getting company code")
 			})
 		})
@@ -211,8 +218,7 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			getPenaltyRefTypeFromTransaction = mockedGetPenaltyRefTypeFromTransaction
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareEmailKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, topic)
+				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 				So(err, ShouldResemble, errors.New("error getting penalty ref type"))
 			})
@@ -237,9 +243,8 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 					Transactions: []models.TransactionItem{},
 				}
 
-				_, err := prepareEmailKafkaMessage(
-					producerSchema, payableResourceNoItems, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc, topic)
-
+				_, err := prepareEmailMessage(payableResourceNoItems, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc)
+				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldStartWith, "empty transactions list in payable resource:")
 			})
 		})
@@ -260,9 +265,8 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			Convey("Then an error should be returned", func() {
 				mockApDaoSvc.EXPECT().GetAccountPenalties(gomock.Any(), gomock.Any(), "").Return(nil, nil)
 
-				_, err := prepareEmailKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc, topic)
-
+				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, mockApDaoSvc)
+				So(err, ShouldNotBeNil)
 				So(err.Error(), ShouldStartWith, "error getting transaction for penalty: [")
 			})
 		})
@@ -283,36 +287,87 @@ func TestUnitPrepareEmailKafkaMessage(t *testing.T) {
 			getPayablePenalty = mockedGetPayablePenalty
 
 			Convey("Then an error should be returned", func() {
-				_, err := prepareEmailKafkaMessage(
-					producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, topic)
+				_, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 
 				So(err, ShouldResemble, errors.New("error parsing made up date: [parsing time \"\" as \"2006-01-02\": cannot parse \"\" as \"2006\"]"))
 			})
 		})
-		Convey("When config is called with valid config and valid company number and valid transaction and valid penalty date but unknown type", func() {
-			mockedConfigGet := func() (*config.Config, error) {
-				return &config.Config{}, nil
+	})
+}
+
+func TestSendEmailMessageViaChsKafkaApi_MissingScenarios(t *testing.T) {
+	Convey("Given SendEmailMessageViaChsKafkaApi is called", t, func() {
+		var headerChecked bool
+		mockTransport := &mockRoundTripper{headerChecked: &headerChecked}
+		oldHttpClient := httpClient
+		httpClient = &http.Client{Transport: mockTransport}
+		defer func() { httpClient = oldHttpClient }()
+
+		oldPrepareEmailMessage := prepareEmailMessage
+		oldNewRequestFunc := newRequestFunc
+		oldGetConfig := getConfig
+		defer func() {
+			prepareEmailMessage = oldPrepareEmailMessage
+			newRequestFunc = oldNewRequestFunc
+			getConfig = oldGetConfig
+		}()
+
+		getConfig = func() (*config.Config, error) {
+			return &config.Config{
+				ChsKafkaApiURL: "http://test-kafka-api",
+			}, nil
+		}
+
+		// Successful POST and header check
+		Convey("When everything succeeds and header is set", func() {
+			prepareEmailMessage = func(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
+				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
+				return &models.EmailSend{Data: "{}"}, nil
 			}
-			mockedGetCompanyName := func(companyNumber string, req *http.Request) (string, error) {
-				return "Brewery", nil
+
+			err := SendEmailMessageViaChsKafkaApi(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+			So(err, ShouldBeNil)
+			So(headerChecked, ShouldBeTrue)
+		})
+
+		// Marshal error
+		Convey("When prepareEmailMessage returns a struct that cannot be marshaled", func() {
+			prepareEmailMessage = func(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
+				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
+				// Intentionally return a struct with a field that cannot be marshaled
+				return nil, nil
 			}
-			mockedGetPayablePenalty := func(params types.PayablePenaltyParams) (*models.TransactionItem, error) {
-
-				return &models.TransactionItem{
-					PenaltyRef: "A123567",
-					MadeUpDate: "2006-01-02",
-					Reason:     "Late filing of accounts"}, nil
+			newRequestFunc = func(method, url string, body io.Reader) (*http.Request, error) {
+				return &http.Request{Header: make(http.Header), Method: method}, nil
 			}
+			err := SendEmailMessageViaChsKafkaApi(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+			So(err, ShouldNotBeNil)
+		})
 
-			getConfig = mockedConfigGet
-			getCompanyName = mockedGetCompanyName
-			getPayablePenalty = mockedGetPayablePenalty
+		// Request creation error
+		Convey("When newRequestFunc returns an error", func() {
+			prepareEmailMessage = func(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
+				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
+				return &models.EmailSend{Data: "{}"}, nil
+			}
+			newRequestFunc = func(method, url string, body io.Reader) (*http.Request, error) {
+				return nil, errors.New("request creation failed")
+			}
+			err := SendEmailMessageViaChsKafkaApi(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+			So(err, ShouldNotBeNil)
+		})
 
-			Convey("Then an error should be returned", func() {
-				_, err := prepareEmailKafkaMessage(producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil, topic)
-
-				So(err, ShouldResemble, errors.New("error marshalling email send message: [Unknown type name: ]"))
-			})
+		// HTTP client error
+		Convey("When client.Do returns an error", func() {
+			prepareEmailMessage = func(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
+				allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
+				return &models.EmailSend{Data: "{}"}, nil
+			}
+			newRequestFunc = func(method, url string, body io.Reader) (*http.Request, error) {
+				return &http.Request{Header: make(http.Header), Method: method}, nil
+			}
+			err := SendEmailMessageViaChsKafkaApi(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
+			So(err, ShouldBeNil) // Function does not return error from client.Do
 		})
 	})
 }

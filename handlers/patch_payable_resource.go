@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	handleSendEmailKafkaMessage         = service.SendEmailKafkaMessage
+	handleSendEmailMessage              = service.SendEmailMessageViaChsKafkaApi
 	handlePaymentProcessingKafkaMessage = service.PaymentProcessingKafkaMessage
 	wg                                  sync.WaitGroup
 	getConfig                           = config.Get
@@ -149,7 +149,7 @@ func sendConfirmationEmail(resource *models.PayableResource, payment *validators
 
 	// Send confirmation email
 	defer wg.Done()
-	err := handleSendEmailKafkaMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
+	err := handleSendEmailMessage(*resource, r, penaltyPaymentDetails, allowedTransactionsMap, apDaoSvc)
 	if err != nil {
 		log.ErrorR(r, err, logContext)
 		w.WriteHeader(http.StatusInternalServerError)

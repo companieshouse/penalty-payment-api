@@ -28,7 +28,6 @@ type Config struct {
 	BrokerAddr                             []string     `env:"KAFKA_BROKER_ADDR"                            flag:"broker-addr"                              flagDesc:"Kafka broker address"`
 	Kafka3BrokerAddr                       []string     `env:"KAFKA3_BROKER_ADDR"                           flag:"kafka3-broker-addr"                       flagDesc:"Kafka3 broker address"`
 	SchemaRegistryURL                      string       `env:"SCHEMA_REGISTRY_URL"                          flag:"schema-registry-url"                      flagDesc:"Schema registry url"`
-	EmailSendTopic                         string       `env:"EMAIL_SEND_TOPIC"                             flag:"email-send-topic"                         flagDesc:"Kafka topic to send emails"`
 	PenaltyPaymentsProcessingTopic         string       `env:"PENALTY_PAYMENTS_PROCESSING_TOPIC"            flag:"penalty-payments-processing-topic"        flagDesc:"Penalty payments processing topic"`
 	PenaltyPaymentsProcessingMaxRetries    string       `env:"PENALTY_PAYMENTS_PROCESSING_MAX_RETRIES"      flag:"penalty-payments-processing-max-retries"  flagDesc:"Penalty payments processing max retry attempts for transient errors"`
 	PenaltyPaymentsProcessingRetryDelay    string       `env:"PENALTY_PAYMENTS_PROCESSING_RETRY_DELAY"      flag:"penalty-payments-processing-retry-delay"  flagDesc:"Penalty payments processing retry delay for transient errors"`
@@ -45,6 +44,8 @@ type Config struct {
 	WeeklyMaintenanceDay                   time.Weekday `env:"WEEKLY_MAINTENANCE_DAY"                       flag:"weekly-maintenance-day"                   flagDesc:"The day on which Weekly E5 maintenance takes place"`
 	PlannedMaintenanceStart                string       `env:"PLANNED_MAINTENANCE_START_TIME"               flag:"planned-maintenance-start-time"           flagDesc:"The time of the day at which Planned E5 maintenance starts"`
 	PlannedMaintenanceEnd                  string       `env:"PLANNED_MAINTENANCE_END_TIME"                 flag:"planned-maintenance-end-time"             flagDesc:"The time of the day at which Planned E5 maintenance ends"`
+	ChsKafkaApiURL                         string       `env:"CHS_KAFKA_API_URL"                            flag:"chs-kafka-api-url"                        flagDesc:"CHS Kafka API URL"`
+	ChsKafkaApiKey                         string       `env:"CHS_KAFKA_API_KEY"                            flag:"chs-kafka-api-key"                        flagDesc:"CHS Kafka API Key"`
 }
 
 // Namespace implements service.Config Namespace.

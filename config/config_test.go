@@ -122,7 +122,6 @@ func TestUnitSensitiveConfig(t *testing.T) {
 			BrokerAddr:                             []string{brokerAddrConst},
 			Kafka3BrokerAddr:                       []string{kafka3BrokerAddrConst},
 			SchemaRegistryURL:                      SchemaRegistryURLConst,
-			EmailSendTopic:                         EmailSendTopicConst,
 			PenaltyPaymentsProcessingTopic:         PenaltyPaymentsProcessingTopicConst,
 			PenaltyPaymentsProcessingMaxRetries:    PenaltyPaymentsProcessingMaxRetriesConst,
 			PenaltyPaymentsProcessingRetryDelay:    PenaltyPaymentsProcessingRetryDelayConst,

@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
-	"github.com/companieshouse/chs.go/avro"
-	"github.com/companieshouse/chs.go/kafka/producer"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/filing-notification-sender/util"
 	"github.com/companieshouse/penalty-payment-api-core/models"
@@ -17,93 +16,78 @@ import (
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
 )
 
-// SendEmailKafkaMessage sends a kafka message to the email-sender to send an email
-func SendEmailKafkaMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
-	cfg, err := getConfig()
+var prepareEmailMessage = realPrepareEmailMessage
+var newRequestFunc = http.NewRequest
+var httpClient = &http.Client{}
+
+func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
+
 	requestId := log.Context(req)
+
+	cfg, err := getConfig()
 	if err != nil {
-		err = fmt.Errorf("error getting config for kafka message production: [%v]", err)
-		return err
+		return fmt.Errorf("error getting config for sending email message chs-kafka-api: [%v]", err)
 	}
 
-	brokerAddrs := cfg.BrokerAddr
-	topic := cfg.EmailSendTopic
-
-	logContext := log.Data{
-		"customer_code": payableResource.CustomerCode,
-		"payable_ref":   payableResource.PayableRef,
-		"broker_addrs":  brokerAddrs,
-		"topic":         topic,
+	message, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
+	if err != nil || message == nil {
+		return fmt.Errorf("error preparing email message for chs-kafka-api: [%v]", err)
 	}
 
-	log.InfoC(requestId, "getting email send kafka producer", logContext)
-	kafkaProducer, err := getProducer(brokerAddrs)
+	baseURL, err := url.Parse(cfg.ChsKafkaApiURL)
 	if err != nil {
-		err = fmt.Errorf("error creating email send kafka producer: [%v]", err)
-		return err
+		return fmt.Errorf("invalid base URL: [%v]", err)
 	}
 
-	log.DebugC(requestId, "getting email send avro schema", logContext)
-	emailSendSchema, err := getSchema(cfg.SchemaRegistryURL, topic)
+	log.DebugC(requestId, "email send message prepared successfully", log.Data{"message": message})
+
+	params := url.Values{}
+	params.Set("app_id", message.AppID)
+	params.Set("message_id", message.MessageID)
+	params.Set("message_type", message.MessageType)
+	params.Set("json_data", message.Data)
+	params.Set("email_address", message.EmailAddress)
+
+	baseURL.RawQuery = params.Encode()
+
+	request, err := newRequestFunc("POST", baseURL.String(), nil)
 	if err != nil {
-		err = fmt.Errorf("error getting email send schema from schema registry: [%v]", err)
-		return err
-	}
-	producerSchema := &avro.Schema{
-		Definition: emailSendSchema,
-	}
-	log.DebugC(requestId, "email send avro schema", logContext, log.Data{"schema": producerSchema})
-
-	log.InfoC(requestId, "preparing email send message", logContext)
-	message, err := prepareEmailKafkaMessage(
-		*producerSchema, payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc, topic)
-	if err != nil {
-		err = fmt.Errorf("error preparing email send kafka message with schema: [%v]", err)
-		return err
+		return fmt.Errorf("error creating POST request to chs-kafka-api: [%v]", err)
 	}
 
-	log.DebugC(requestId, "email send message prepared successfully", log.Data{
-		"message.Value":     message.Value,
-		"message.Topic":     message.Topic,
-		"message.Partition": message.Partition,
-		"message.Key":       message.Key,
-	})
+	request.Header.Add("Authorization", cfg.ChsKafkaApiKey)
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	partition, offset, err := kafkaProducer.Send(message)
-	if err != nil {
+	response, err := httpClient.Do(request)
+
+	if err != nil && response.StatusCode != http.StatusAccepted {
+		logContext := log.Data{
+			"customer_code": payableResource.CustomerCode,
+			"payable_ref":   payableResource.PayableRef,
+		}
 		err = fmt.Errorf("failed to send email send message: [%v]", err)
 		log.ErrorC(requestId, err, logContext)
 		return err
 	}
-	log.InfoC(requestId, "successfully published email send message", logContext, log.Data{
-		"kafka_topic":     topic,
-		"kafka_partition": partition,
-		"kafka_offset":    offset,
-	})
+
+	log.InfoC(requestId, "Successfully sent email message to chs-kafka-api")
 
 	return nil
 }
 
-// prepareEmailKafkaMessage generates the kafka message that is to be sent
-func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
-	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService, topic string) (*producer.Message, error) {
+func realPrepareEmailMessage(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
 	cfg, err := getConfig()
 	if err != nil {
-		err = fmt.Errorf("error getting config: [%v]", err)
-		return nil, err
+		return nil, fmt.Errorf("error getting config: [%v]", err)
 	}
 
 	companyName, err := getCompanyName(payableResource.CustomerCode, req)
 	if err != nil {
-		err = fmt.Errorf("error getting company name: [%v]", err)
-		return nil, err
+		return nil, fmt.Errorf("error getting company name: [%v]", err)
 	}
 
-	// Ensure payableResource contains at least one transaction
-	if payableResource.Transactions == nil || len(payableResource.Transactions) == 0 {
-		err = fmt.Errorf("empty transactions list in payable resource: %v", payableResource.PayableRef)
-		return nil, err
+	if len(payableResource.Transactions) == 0 {
+		return nil, fmt.Errorf("empty transactions list in payable resource: %v", payableResource.PayableRef)
 	}
 
 	companyCode, err := getCompanyCodeFromTransaction(payableResource.Transactions)
@@ -129,15 +113,12 @@ func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource model
 	}
 	payablePenalty, err := getPayablePenalty(params)
 	if err != nil {
-		err = fmt.Errorf("error getting transaction for penalty: [%v]", err)
-		return nil, err
+		return nil, fmt.Errorf("error getting transaction for penalty: [%v]", err)
 	}
 
-	// Convert madeUpDate to readable format for email
 	madeUpDate, err := time.Parse("2006-01-02", payablePenalty.MadeUpDate)
 	if err != nil {
-		err = fmt.Errorf("error parsing made up date: [%v]", err)
-		return nil, err
+		return nil, fmt.Errorf("error parsing made up date: [%v]", err)
 	}
 
 	dataFieldMessage := models.DataField{
@@ -149,42 +130,31 @@ func prepareEmailKafkaMessage(emailSendSchema avro.Schema, payableResource model
 		CompanyName:       companyName,
 		FilingDescription: payablePenalty.Reason,
 		To:                payableResource.CreatedBy.Email,
-		Subject:           fmt.Sprintf("Confirmation of your Companies House penalty payment"),
+		Subject:           "Confirmation of your Companies House penalty payment",
 		CHSURL:            cfg.CHSURL,
 	}
-
 	requestId := log.Context(req)
 
 	logContext := log.Data{
 		"customer_code": payableResource.CustomerCode,
 		"payable_ref":   payableResource.PayableRef,
 	}
+
 	log.DebugC(requestId, "email send message data field", logContext, log.Data{"data_field": dataFieldMessage})
 
-	dataBytes, err := json.Marshal(dataFieldMessage)
+	jsonData, err := json.Marshal(dataFieldMessage)
 	if err != nil {
-		err = fmt.Errorf("error marshalling dataFieldMessage: [%v]", err)
-		return nil, err
+		return nil, fmt.Errorf("error marshalling dataFieldMessage: [%v]", err)
 	}
 
 	messageID := "<" + payableResource.PayableRef + "." + strconv.Itoa(util.Random(0, 100000)) + "@companieshouse.gov.uk>"
 
-	emailSendMessage := models.EmailSend{
+	return &models.EmailSend{
 		AppID:        penaltyDetailsMap.Details[penaltyRefType].EmailReceivedAppId,
 		MessageID:    messageID,
 		MessageType:  penaltyDetailsMap.Details[penaltyRefType].EmailMsgType,
-		Data:         string(dataBytes),
+		Data:         string(jsonData),
 		EmailAddress: payableResource.CreatedBy.Email,
 		CreatedAt:    time.Now().String(),
-	}
-
-	log.DebugC(requestId, "email send message", logContext, log.Data{"email_send": emailSendMessage})
-
-	messageBytes, err := emailSendSchema.Marshal(emailSendMessage)
-	if err != nil {
-		err = fmt.Errorf("error marshalling email send message: [%v]", err)
-		return nil, err
-	}
-
-	return &producer.Message{Value: messageBytes, Topic: topic}, nil
+	}, nil
 }

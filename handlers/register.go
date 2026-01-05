@@ -44,7 +44,6 @@ func Register(mainRouter *mux.Router, cfg *config.Config, prDaoService dao.Payab
 	}
 
 	e5Client := e5.NewClient(cfg.E5Username, cfg.E5APIURL)
-
 	userAuthInterceptor := &authentication.UserAuthenticationInterceptor{
 		AllowAPIKeyUser:                true,
 		RequireElevatedAPIKeyPrivilege: true,
