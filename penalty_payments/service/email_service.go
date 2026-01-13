@@ -62,7 +62,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 
 	response, err := httpClient.Do(request)
 
-	if err != nil && (response == nil || response.StatusCode != http.StatusAccepted) {
+	if err != nil && (response == nil || response.StatusCode != http.StatusCreated) {
 		logContext := log.Data{
 			"customer_code": payableResource.CustomerCode,
 			"payable_ref":   payableResource.PayableRef,
