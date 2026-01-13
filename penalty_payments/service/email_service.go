@@ -20,7 +20,8 @@ var prepareEmailMessage = realPrepareEmailMessage
 var newRequestFunc = http.NewRequest
 var httpClient = &http.Client{}
 
-func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
+func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
 
 	requestId := log.Context(req)
 
@@ -61,7 +62,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 
 	response, err := httpClient.Do(request)
 
-	if err != nil && response.StatusCode != http.StatusAccepted {
+	if err != nil && (response == nil || response.StatusCode != http.StatusAccepted) {
 		logContext := log.Data{
 			"customer_code": payableResource.CustomerCode,
 			"payable_ref":   payableResource.PayableRef,
