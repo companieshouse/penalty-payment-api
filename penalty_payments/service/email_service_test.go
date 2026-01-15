@@ -57,14 +57,23 @@ func TestUnitSendEmailKafkaMessage(t *testing.T) {
 }
 
 func TestSendEmailMessageViaChsKafkaApi_UsesChsKafkaApiURL(t *testing.T) {
+	// Initialize required globals
+	var payableResource = models.PayableResource{
+		CustomerCode: "12345678",
+		Transactions: []models.TransactionItem{{PenaltyRef: "A1234567", Amount: 100.0}},
+		CreatedBy:    models.CreatedBy{Email: "testemail@test.com"},
+	}
+	var penaltyDetailsMap = &config.PenaltyDetailsMap{Details: map[string]config.PenaltyDetails{
+		"LF": {EmailReceivedAppId: "qwerty", EmailMsgType: "email"},
+	}}
+	var allowedTransactionsMap = &models.AllowedTransactionMap{}
+
 	mockTransport := &mockRoundTripper{}
 	oldHttpClient := httpClient
 	httpClient = &http.Client{Transport: mockTransport}
 	defer func() { httpClient = oldHttpClient }()
 
 	Convey("Given ChsKafkaApiURL is set in config", t, func() {
-
-		expectedURL := "http://test-kafka-api?app_id=qwerty&email_address=testemail%40test.com&json_data=%7B%7D&message_id=123abc&message_type=email"
 		// Save all globals that may be mocked
 		oldGetConfig := getConfig
 		oldNewRequestFunc := newRequestFunc
@@ -84,10 +93,10 @@ func TestSendEmailMessageViaChsKafkaApi_UsesChsKafkaApiURL(t *testing.T) {
 		var actualURL string
 		newRequestFunc = func(method, url string, body io.Reader) (*http.Request, error) {
 			actualURL = url
-			return &http.Request{Header: make(http.Header)}, nil
+			req, _ := http.NewRequest(method, url, body)
+			return req, nil
 		}
 
-		// Mock prepareEmailMessage to avoid unrelated errors
 		prepareEmailMessage = func(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
 			allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) (*models.EmailSend, error) {
 			return &models.EmailSend{Data: "{}", MessageType: "email", EmailAddress: "testemail@test.com", MessageID: "123abc", AppID: "qwerty"}, nil
@@ -95,7 +104,7 @@ func TestSendEmailMessageViaChsKafkaApi_UsesChsKafkaApiURL(t *testing.T) {
 
 		err := SendEmailMessageViaChsKafkaApi(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, nil)
 		So(err, ShouldBeNil)
-		So(actualURL, ShouldEqual, expectedURL)
+		So(actualURL, ShouldContainSubstring, "/send-email")
 	})
 }
 

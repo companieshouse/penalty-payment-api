@@ -22,3 +22,6 @@
 !go.sum
 !main.go
 !bin/go_build
+
+# Ignore code coverage files
+report.json

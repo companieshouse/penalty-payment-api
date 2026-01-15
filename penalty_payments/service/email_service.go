@@ -20,7 +20,8 @@ var prepareEmailMessage = realPrepareEmailMessage
 var newRequestFunc = http.NewRequest
 var httpClient = &http.Client{}
 
-func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap, allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
+func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
+	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
 
 	requestId := log.Context(req)
 
@@ -34,7 +35,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 		return fmt.Errorf("error preparing email message for chs-kafka-api: [%v]", err)
 	}
 
-	baseURL, err := url.Parse(cfg.ChsKafkaApiURL)
+	baseURL, err := url.Parse(fmt.Sprintf("%s/send-email", cfg.ChsKafkaApiURL))
 	if err != nil {
 		return fmt.Errorf("invalid base URL: [%v]", err)
 	}
@@ -50,7 +51,8 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 
 	baseURL.RawQuery = params.Encode()
 
-	request, err := newRequestFunc("POST", baseURL.String(), nil)
+	request, err := newRequestFunc(http.MethodPost, baseURL.String(), nil)
+
 	if err != nil {
 		return fmt.Errorf("error creating POST request to chs-kafka-api: [%v]", err)
 	}
@@ -60,7 +62,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 
 	response, err := httpClient.Do(request)
 
-	if err != nil && response.StatusCode != http.StatusAccepted {
+	if err != nil && (response == nil || response.StatusCode != http.StatusCreated) {
 		logContext := log.Data{
 			"customer_code": payableResource.CustomerCode,
 			"payable_ref":   payableResource.PayableRef,
