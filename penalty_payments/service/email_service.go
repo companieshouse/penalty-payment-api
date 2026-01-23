@@ -56,8 +56,6 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 	if err != nil {
 		return fmt.Errorf("error creating POST request to chs-kafka-api: [%v]", err)
 	}
-
-	request.Header.Add("Authorization", cfg.ChsKafkaApiKey)
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	response, err := httpClient.Do(request)

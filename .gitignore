@@ -2,6 +2,7 @@
 penalty-payment-api
 penalty-payment-api-*.zip
 build.log
+report.json
 
 # Test output
 test.xml
