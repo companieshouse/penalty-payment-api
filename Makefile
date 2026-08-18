@@ -100,7 +100,7 @@ lint:
 
 .PHONY: depvulncheck
 depvulncheck:
-	go install $(govulncheck)
+	GOTOOLCHAIN=go1.26.0+auto go install $(govulncheck)
 	CGO_ENABLED=1 $(GOPATH)/bin/govulncheck -show verbose ./...
 
 .PHONY: docker-image
