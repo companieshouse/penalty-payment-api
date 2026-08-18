@@ -26,7 +26,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 
 	api, err := manager.GetSDK(req)
 	if err != nil {
-		log.ErrorR(req, err, log.Data{"payment_reference": payableResource.PayableRef})
+		return fmt.Errorf("error getting API-SDK: [%v]", err)
 	}
 
 	message, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
