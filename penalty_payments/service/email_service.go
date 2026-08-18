@@ -3,8 +3,9 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/companieshouse/api-sdk-go/companieshouseapi"
+	"github.com/companieshouse/go-sdk-manager/manager"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
@@ -17,17 +18,15 @@ import (
 )
 
 var prepareEmailMessage = realPrepareEmailMessage
-var newRequestFunc = http.NewRequest
-var httpClient = &http.Client{}
 
 func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req *http.Request, penaltyDetailsMap *config.PenaltyDetailsMap,
 	allowedTransactionsMap *models.AllowedTransactionMap, apDaoSvc dao.AccountPenaltiesDaoService) error {
 
 	requestId := log.Context(req)
 
-	cfg, err := getConfig()
+	api, err := manager.GetSDK(req)
 	if err != nil {
-		return fmt.Errorf("error getting config for sending email message chs-kafka-api: [%v]", err)
+		log.ErrorR(req, err, log.Data{"payment_reference": payableResource.PayableRef})
 	}
 
 	message, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
@@ -35,41 +34,18 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 		return fmt.Errorf("error preparing email message for chs-kafka-api: [%v]", err)
 	}
 
-	baseURL, err := url.Parse(fmt.Sprintf("%s/send-email", cfg.ChsKafkaApiURL))
-	if err != nil {
-		return fmt.Errorf("invalid base URL: [%v]", err)
+	emailSendRequest := companieshouseapi.EmailSendRequest{
+		AppID:        message.MessageID,
+		MessageID:    message.MessageID,
+		MessageType:  message.MessageType,
+		Data:         message.Data,
+		EmailAddress: message.EmailAddress,
 	}
 
-	log.DebugC(requestId, "email send message prepared successfully", log.Data{"message": message})
-
-	params := url.Values{}
-	params.Set("app_id", message.AppID)
-	params.Set("message_id", message.MessageID)
-	params.Set("message_type", message.MessageType)
-	params.Set("json_data", message.Data)
-	params.Set("email_address", message.EmailAddress)
-
-	baseURL.RawQuery = params.Encode()
-
-	request, err := newRequestFunc(http.MethodPost, baseURL.String(), nil)
-
+	_, err = api.EmailSendService.Request(&emailSendRequest).Do()
 	if err != nil {
-		return fmt.Errorf("error creating POST request to chs-kafka-api: [%v]", err)
-	}
-
-	request.Header.Add("Authorization", cfg.ChsKafkaApiKey)
-	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-	response, err := httpClient.Do(request)
-
-	if err != nil && (response == nil || response.StatusCode != http.StatusCreated) {
-		logContext := log.Data{
-			"customer_code": payableResource.CustomerCode,
-			"payable_ref":   payableResource.PayableRef,
-		}
-		err = fmt.Errorf("failed to send email send message: [%v]", err)
-		log.ErrorC(requestId, err, logContext)
-		return err
+		log.ErrorR(req, err, log.Data{"message_id": message.MessageID, "message_type": message.MessageType})
+		return fmt.Errorf("error sending email message: [%v]", err)
 	}
 
 	log.InfoC(requestId, "Successfully sent email message to chs-kafka-api")
@@ -135,6 +111,7 @@ func realPrepareEmailMessage(payableResource models.PayableResource, req *http.R
 		Subject:           "Confirmation of your Companies House penalty payment",
 		CHSURL:            cfg.CHSURL,
 	}
+
 	requestId := log.Context(req)
 
 	logContext := log.Data{
