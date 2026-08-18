@@ -35,7 +35,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 	}
 
 	emailSendRequest := companieshouseapi.EmailSendRequest{
-		AppID:        message.MessageID,
+		AppID:        message.AppID,
 		MessageID:    message.MessageID,
 		MessageType:  message.MessageType,
 		Data:         message.Data,
