@@ -8,7 +8,6 @@ import (
 	"io"
 
 	"github.com/companieshouse/chs.go/log"
-	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 )
 
@@ -42,7 +41,7 @@ func (c *standardContainer) Start() {
 	if err != nil {
 		panic(err)
 	}
-	port, err := containerInstance.MappedPort(context.TODO(), nat.Port(c.req.ExposedPorts[0]))
+	port, err := containerInstance.MappedPort(context.TODO(), c.req.ExposedPorts[0])
 	if err != nil {
 		panic(err)
 	}
