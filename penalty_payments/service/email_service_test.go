@@ -28,7 +28,7 @@ const Amount = 300
 const PenaltyReason = "Late filing of accounts"
 const CompanyName = "Test Company"
 
-func TestSendEmailMessageViaChsKafkaApi(t *testing.T) {
+func TestUnitSendEmailMessageViaChsKafkaApi(t *testing.T) {
 	apiURL := "https://api.companieshouse.gov.uk"
 	httpmock.Activate()
 	// Set the prepareEmailMessage back to the actual implementation after unit tests
