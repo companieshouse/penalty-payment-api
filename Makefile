@@ -98,10 +98,12 @@ lint:
 	gometalinter --install
 	gometalinter ./... > $(lint_output); true
 
+# Exclude /testutils package from vulncheck as it's never exposed and test packages should be ignored
+PROD_PACKAGES := $(shell go list ./... | grep -v '/testutils')
 .PHONY: depvulncheck
 depvulncheck:
 	GOTOOLCHAIN=go1.26.0+auto go install $(govulncheck)
-	CGO_ENABLED=1 $(GOPATH)/bin/govulncheck -show verbose ./...
+	CGO_ENABLED=1 $(GOPATH)/bin/govulncheck -show verbose $(PROD_PACKAGES)
 
 .PHONY: docker-image
 docker-image: dist
