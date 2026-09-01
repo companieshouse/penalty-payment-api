@@ -3,14 +3,14 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/companieshouse/api-sdk-go/companieshouseapi"
-	"github.com/companieshouse/go-sdk-manager/manager"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/companieshouse/api-sdk-go/companieshouseapi"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/filing-notification-sender/util"
+	"github.com/companieshouse/go-sdk-manager/manager"
 	"github.com/companieshouse/penalty-payment-api-core/models"
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/config"
@@ -31,7 +31,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 
 	message, err := prepareEmailMessage(payableResource, req, penaltyDetailsMap, allowedTransactionsMap, apDaoSvc)
 	if err != nil || message == nil {
-		return fmt.Errorf("error preparing email message for chs-kafka-api: [%v]", err)
+		return fmt.Errorf("error preparing email message for chs-kafka-api-java: [%v]", err)
 	}
 
 	emailSendRequest := companieshouseapi.EmailSendRequest{
@@ -48,7 +48,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 		return fmt.Errorf("error sending email message: [%v]", err)
 	}
 
-	log.InfoC(requestId, "Successfully sent email message to chs-kafka-api")
+	log.InfoC(requestId, "Successfully sent email message to chs-kafka-api-java")
 
 	return nil
 }

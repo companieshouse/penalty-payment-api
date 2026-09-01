@@ -221,7 +221,7 @@ func TestUnitRealPrepareEmailMessage(t *testing.T) {
 		So(preparedEmailMessage.Data, ShouldContainSubstring, PenaltyReason)
 		So(preparedEmailMessage.Data, ShouldContainSubstring, CompanyName)
 		So(preparedEmailMessage.EmailAddress, ShouldEqual, EmailAddress)
-		So(preparedEmailMessage.CreatedAt, ShouldNotBeNil)
+		So(preparedEmailMessage.CreatedAt, ShouldNotBeEmpty)
 	})
 
 }
