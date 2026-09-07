@@ -6,13 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"io"
 	"strings"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/google/uuid"
 	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 type kafkaContainer struct {
@@ -29,9 +29,12 @@ func NewKafkaContainer() StoppableContainer {
 		network: kafkaNetwork,
 		zookeeper: &standardContainer{
 			req: testcontainers.ContainerRequest{
-				Image:        "bitnami/zookeeper:3",
+				Image:        "bitnamilegacy/zookeeper:3.9.3-debian-12-r22",
 				ExposedPorts: []string{"2181/tcp"},
-				WaitingFor:   wait.ForAll(wait.ForListeningPort("2181/tcp"), wait.ForLog("binding to port")),
+				WaitingFor: wait.ForAll(
+					wait.ForListeningPort("2181/tcp"),
+					wait.ForLog("binding to port"),
+				),
 				Env: map[string]string{
 					"ALLOW_ANONYMOUS_LOGIN": "YES",
 				},
@@ -42,9 +45,12 @@ func NewKafkaContainer() StoppableContainer {
 
 		kafka: &standardContainer{
 			req: testcontainers.ContainerRequest{
-				Image:        "bitnami/kafka:3",
+				Image:        "bitnamilegacy/kafka:3.3.2-debian-11-r11",
 				ExposedPorts: []string{"9093/tcp"},
-				WaitingFor:   wait.ForAll(wait.ForListeningPort("9093/tcp"), wait.ForLog("started (kafka.server.KafkaServer)")),
+				WaitingFor: wait.ForAll(
+					wait.ForListeningPort("9093/tcp"),
+					wait.ForLog("started (kafka.server.KafkaServer)"),
+				),
 				Env: map[string]string{
 					"KAFKA_CFG_LISTENERS":                      "PLAINTEXT://0.0.0.0:9093,BROKER://0.0.0.0:9092",
 					"KAFKA_CFG_ADVERTISED_LISTENERS":           "BROKER://localhost:9092",
