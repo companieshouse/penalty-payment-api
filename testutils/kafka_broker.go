@@ -6,13 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"io"
 	"strings"
 
 	"github.com/companieshouse/chs.go/log"
 	"github.com/google/uuid"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 type kafkaContainer struct {
