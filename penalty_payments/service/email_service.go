@@ -3,11 +3,11 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	companieshouseapi2 "github.com/companieshouse/private-api-sdk-go/companieshouseapi"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/companieshouse/api-sdk-go/companieshouseapi"
 	"github.com/companieshouse/chs.go/log"
 	"github.com/companieshouse/filing-notification-sender/util"
 	"github.com/companieshouse/go-sdk-manager/manager"
@@ -24,7 +24,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 
 	requestId := log.Context(req)
 
-	api, err := manager.GetSDK(req)
+	internalApi, err := manager.GetPrivateSDK(req)
 	if err != nil {
 		return fmt.Errorf("error getting API-SDK: [%v]", err)
 	}
@@ -34,7 +34,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 		return fmt.Errorf("error preparing email message for chs-kafka-api-java: [%v]", err)
 	}
 
-	emailSendRequest := companieshouseapi.EmailSendRequest{
+	emailSendRequest := companieshouseapi2.EmailSendRequest{
 		AppID:        message.AppID,
 		MessageID:    message.MessageID,
 		MessageType:  message.MessageType,
@@ -42,7 +42,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 		EmailAddress: message.EmailAddress,
 	}
 
-	_, err = api.EmailSendService.Request(&emailSendRequest).Do()
+	_, err = internalApi.EmailSendService.Request(&emailSendRequest).Do()
 	if err != nil {
 		log.ErrorR(req, err, log.Data{"message_id": message.MessageID, "message_type": message.MessageType})
 		return fmt.Errorf("error sending email message: [%v]", err)

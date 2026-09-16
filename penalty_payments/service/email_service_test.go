@@ -15,8 +15,6 @@ import (
 	"testing"
 )
 
-var req = &http.Request{}
-
 const AppId = "chs-monitor-notification-matcher.filing"
 const MessageType = "monitor"
 const MessageID = "msg-001"
@@ -29,7 +27,7 @@ const PenaltyReason = "Late filing of accounts"
 const CompanyName = "Test Company"
 
 func TestUnitSendEmailMessageViaChsKafkaApi(t *testing.T) {
-	apiURL := "https://api.companieshouse.gov.uk"
+	internalApiURL := "http://localhost:4001"
 	httpmock.Activate()
 	// Set the prepareEmailMessage back to the actual implementation after unit tests
 	t.Cleanup(func() {
@@ -52,7 +50,7 @@ func TestUnitSendEmailMessageViaChsKafkaApi(t *testing.T) {
 		// Given
 		prepareEmailMessage = testPrepareEmailMessageSuccess
 		defer httpmock.Reset()
-		httpmock.RegisterResponder(http.MethodPost, apiURL+"/send-email", httpmock.NewStringResponder(400, "{}"))
+		httpmock.RegisterResponder(http.MethodPost, internalApiURL+"/send-email", httpmock.NewStringResponder(400, "{}"))
 
 		// When
 		errorResult := SendEmailMessageViaChsKafkaApi(models.PayableResource{}, &http.Request{}, nil, nil, nil)
@@ -65,7 +63,7 @@ func TestUnitSendEmailMessageViaChsKafkaApi(t *testing.T) {
 		// Given
 		prepareEmailMessage = testPrepareEmailMessageSuccess
 		defer httpmock.Reset()
-		httpmock.RegisterResponder(http.MethodPost, apiURL+"/send-email", httpmock.NewStringResponder(200, "{}"))
+		httpmock.RegisterResponder(http.MethodPost, internalApiURL+"/send-email", httpmock.NewStringResponder(200, "{}"))
 
 		// When
 		errorResult := SendEmailMessageViaChsKafkaApi(models.PayableResource{}, &http.Request{}, nil, nil, nil)
