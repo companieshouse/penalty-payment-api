@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	companieshouseapi2 "github.com/companieshouse/private-api-sdk-go/companieshouseapi"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,6 +14,7 @@ import (
 	"github.com/companieshouse/penalty-payment-api/common/dao"
 	"github.com/companieshouse/penalty-payment-api/config"
 	"github.com/companieshouse/penalty-payment-api/issuer_gateway/types"
+	"github.com/companieshouse/private-api-sdk-go/companieshouseapi"
 )
 
 var prepareEmailMessage = realPrepareEmailMessage
@@ -34,7 +34,7 @@ func SendEmailMessageViaChsKafkaApi(payableResource models.PayableResource, req 
 		return fmt.Errorf("error preparing email message for chs-kafka-api-java: [%v]", err)
 	}
 
-	emailSendRequest := companieshouseapi2.EmailSendRequest{
+	emailSendRequest := companieshouseapi.EmailSendRequest{
 		AppID:        message.AppID,
 		MessageID:    message.MessageID,
 		MessageType:  message.MessageType,
