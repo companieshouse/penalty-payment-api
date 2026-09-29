@@ -12,6 +12,7 @@ require (
 	github.com/companieshouse/go-session-handler v0.1.7
 	github.com/companieshouse/gofigure v0.1.8
 	github.com/companieshouse/penalty-payment-api-core v1.20.1
+	github.com/companieshouse/private-api-sdk-go v0.1.20
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
@@ -35,7 +36,6 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/companieshouse/envconf v0.1.7 // indirect
-	github.com/companieshouse/private-api-sdk-go v0.1.16 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
