@@ -38,8 +38,8 @@ github.com/companieshouse/gofigure v0.1.8 h1:hJDX0821RpO33lUJ032qFcjjFfWO2O3gQkz
 github.com/companieshouse/gofigure v0.1.8/go.mod h1:DUCbfp3ANvMjAiRaEEaCZds2s5tcKHu5hGJYh8Q0h/s=
 github.com/companieshouse/penalty-payment-api-core v1.20.1 h1:/nqxWlH+4ct5l4b9HGqZJYoeEHBXbnT564Z/yxKTyF4=
 github.com/companieshouse/penalty-payment-api-core v1.20.1/go.mod h1:gLPA1tq+DDgJXK4CSgCXcaQIVkR+PZWEAIvTxCNPOq8=
-github.com/companieshouse/private-api-sdk-go v0.1.20 h1:y2N47tlO9tZ+8agb9RXOzNxMJ5OzxNdGCtKUw4OsD7M=
-github.com/companieshouse/private-api-sdk-go v0.1.20/go.mod h1:z29/cDSBxXoLooHpucoKmnOtdTUCVUrRZK9wfUHFlRg=
+github.com/companieshouse/private-api-sdk-go v0.1.21 h1:Zgy9Y0xxaN3dHadFxuAQjnZclwxhNK2U3rw9jQjw2c8=
+github.com/companieshouse/private-api-sdk-go v0.1.21/go.mod h1:z29/cDSBxXoLooHpucoKmnOtdTUCVUrRZK9wfUHFlRg=
 github.com/containerd/errdefs v1.0.0 h1:tg5yIfIlQIrxYtu9ajqY42W3lpS19XqdxRQeEwYG8PI=
 github.com/containerd/errdefs v1.0.0/go.mod h1:+YBYIdtsnF4Iw6nWZhJcqGSg/dwvV7tyJ/kCkyJ2k+M=
 github.com/containerd/errdefs/pkg v0.3.0 h1:9IKJ06FvyNlexW690DXuQNx2KA2cUJXx151Xdx3ZPPE=

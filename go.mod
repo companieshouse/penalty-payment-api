@@ -12,7 +12,7 @@ require (
 	github.com/companieshouse/go-session-handler v0.1.7
 	github.com/companieshouse/gofigure v0.1.8
 	github.com/companieshouse/penalty-payment-api-core v1.20.1
-	github.com/companieshouse/private-api-sdk-go v0.1.20
+	github.com/companieshouse/private-api-sdk-go v0.1.21
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
